@@ -78,13 +78,16 @@ void call_scripts() {
 }
 
 int find_closest( float *x, float *y, float *X, float *Y, int N, float new_X1, float new_X2, float new_Y1, float new_Y2 ) {
- float y_to_x_scaling_factor= fabsf( new_X2 - new_X1 ) / fabsf( new_Y2 - new_Y1 );
+ float y_to_x_scaling_factor;
  int i;
  float best_dist;
  float best_x, best_y;
+ int best_dist_num;
+
+ y_to_x_scaling_factor= fabsf( new_X2 - new_X1 ) / fabsf( new_Y2 - new_Y1 );
  best_x= X[0];
  best_y= Y[0];
- int best_dist_num= 0;
+ best_dist_num= 0;
  best_dist= ( ( *x ) - X[0] ) * ( ( *x ) - X[0] ) + ( ( *y ) - Y[0] ) * ( ( *y ) - Y[0] ) * y_to_x_scaling_factor * y_to_x_scaling_factor; //!!
  for ( i= 1; i < N; i++ ) {
   if ( ( ( *x ) - X[i] ) * ( ( *x ) - X[i] ) + ( ( *y ) - Y[i] ) * ( ( *y ) - Y[i] ) * y_to_x_scaling_factor * y_to_x_scaling_factor < best_dist ) {
@@ -114,8 +117,8 @@ void save_viewed_star_number( char *viewed_star_outfilename ) {
 void load_viewed_star_numbers( char *mark_as_viewed, int Max_number_of_lines, char **outfilename ) {
  FILE *f;
  int i;
- f= fopen( "vast_viewed_lightcurves.log", "r" );
  char star[OUTFILENAME_LENGTH];
+ f= fopen( "vast_viewed_lightcurves.log", "r" );
  if ( f == NULL )
   return;
  while ( 0 < fscanf( f, "%s", star ) ) {
@@ -295,16 +298,18 @@ int main( int argc, char **argv ) {
  // for nanosleep()
  struct timespec requested_time;
  struct timespec remaining;
- requested_time.tv_sec= 0;
- requested_time.tv_nsec= 100000000;
 
  /* Options for getopt() */
- // extern int opterr; // if you use this, you should just include <unistd.h>, not declare opterr manually
- opterr= 0; // There's variable opterr in getopt.h which will avoid printing the the error to stderr if you set it to 0.
  int n;
  const char *const shortopt= "t9";
  const struct option longopt[]= { { "ds9", 0, NULL, '9' }, { "tsearch", 0, NULL, 't' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
  int nextopt;
+
+ requested_time.tv_sec= 0;
+ requested_time.tv_nsec= 100000000;
+
+ // extern int opterr; // if you use this, you should just include <unistd.h>, not declare opterr manually
+ opterr= 0; // There's variable opterr in getopt.h which will avoid printing the the error to stderr if you set it to 0.
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {
   case '9':

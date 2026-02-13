@@ -43,11 +43,13 @@ void generate_finder_chart_timestring( char *finder_chart_timestring_output,
                                        double double_fractional_seconds_only,
                                        const char *tymesys_str_in,
                                        double exposure ) {
+ char coma_or_whitespace_character_after_timesys;
+
  if ( finder_chart_timestring_output == NULL ) {
   return;
  }
 
- char coma_or_whitespace_character_after_timesys= ',';
+ coma_or_whitespace_character_after_timesys= ',';
  if ( strcmp( tymesys_str_in, " " ) == 0 ) {
   coma_or_whitespace_character_after_timesys= ' ';
  }
@@ -270,30 +272,32 @@ double get_TTminusUTC_in_days( double jdUT, int *output_timesys ) {
  FILE *tai_utc_dat;
  double TTminusUTC_days;
  double *jd_leap_second;
+ double *TAI_minus_UTC;
+ double tai_utc;
+ char str1[256], str2[256];
+ int i;
+ int n_leap_sec= 0;
+ double MJD;
+ double *MJD0;
+ double *leap_second_rate;
+
+ MJD= jdUT - 2400000.5; // for leap second calculation before 1972 JAN  1
+
  jd_leap_second= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( jd_leap_second == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for jd_leap_second\n" );
   exit( EXIT_FAILURE );
  }
- double *TAI_minus_UTC;
  TAI_minus_UTC= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( TAI_minus_UTC == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for TAI_minus_UTC\n" );
   exit( EXIT_FAILURE );
  }
- double tai_utc;
- char str1[256], str2[256];
- int i;
- int n_leap_sec= 0;
-
- double MJD= jdUT - 2400000.5; // for leap second calculation before 1972 JAN  1
- double *MJD0;
  MJD0= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( MJD0 == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for MJD0\n" );
   exit( EXIT_FAILURE );
  }
- double *leap_second_rate;
  leap_second_rate= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( leap_second_rate == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for leap_second_rate\n" );
@@ -795,7 +799,10 @@ void sanitize_positive_float_string( char *str ) {
 }
 
 void parse_seconds_and_fraction( const char *Tm_s, char *Tm_s_full_seconds_only, char *Tm_s_fractional_seconds_only ) {
- char *decimal_point= strchr( Tm_s, '.' );
+ char *decimal_point;
+ size_t full_seconds_length;
+
+ decimal_point= strchr( Tm_s, '.' );
 
  if ( decimal_point == NULL ) {
   // No decimal point found, treat as integer
@@ -803,7 +810,7 @@ void parse_seconds_and_fraction( const char *Tm_s, char *Tm_s_full_seconds_only,
   strcpy( Tm_s_fractional_seconds_only, "0.0" );
  } else {
   // Copy full seconds
-  size_t full_seconds_length= decimal_point - Tm_s;
+  full_seconds_length= decimal_point - Tm_s;
   strncpy( Tm_s_full_seconds_only, Tm_s, full_seconds_length );
   Tm_s_full_seconds_only[full_seconds_length]= '\0';
 
@@ -883,6 +890,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  char formed_str_DATEOBS[FLEN_CARD];
  char formed_str_EXPTIME[FLEN_CARD];
+
+ // Variables moved here from mid-function for C89/C90 compatibility
+ int is_compressed_image;
+ int zimage_value;
+ int status_before_EXPSTART_EXPEND_test;
+ struct tm structureTIME2;
+
  memset( formed_str_DATEOBS, 0, FLEN_CARD );
  memset( formed_str_EXPTIME, 0, FLEN_CARD );
  //
@@ -980,8 +994,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  // Check if this is a compressed image by looking for ZIMAGE keyword
  // For compressed images, keep reading from the current (image) HDU
- int is_compressed_image= 0;
- int zimage_value;
+ is_compressed_image= 0;
  status= 0;
  fits_read_key( fptr, TLOGICAL, "ZIMAGE", &zimage_value, NULL, &status );
  if ( status == 0 && zimage_value == 1 ) {
@@ -1207,7 +1220,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  }
 
  // If both EXPSTART and EXPEND keywords are present - we want to use them instead of DATE-OBS and EXPTIME
- int status_before_EXPSTART_EXPEND_test= status;
+ status_before_EXPSTART_EXPEND_test= status;
  fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
  if ( status == 0 ) {
   fits_read_key( fptr, TDOUBLE, "EXPEND", &inJD, NULL, &status );
@@ -1829,7 +1842,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   // that have time set through UT-END while date is correponding
   // to exposure start on the previous day.
   if ( exposure < 0.0 ) {
-   struct tm structureTIME2;
    structureTIME2.tm_sec= 0;
    structureTIME2.tm_min= 0;
    structureTIME2.tm_hour= 0;

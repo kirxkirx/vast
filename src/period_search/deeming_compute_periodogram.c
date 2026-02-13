@@ -47,14 +47,26 @@
 
 void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, double *z, int num_points, int num_bins ) {
  double min_x= INFINITY, max_x= -INFINITY;
- double *bin_log10x_sums= calloc( num_bins, sizeof( double ) );
- double *bin_log10x_means= calloc( num_bins, sizeof( double ) );
- double *bin_log10y_sums= calloc( num_bins, sizeof( double ) );
- double *bin_log10y_means= calloc( num_bins, sizeof( double ) );
- double *bin_log10z_sums= calloc( num_bins, sizeof( double ) );
- double *bin_log10z_means= calloc( num_bins, sizeof( double ) );
- int *bin_counts= calloc( num_bins, sizeof( int ) );
+ double *bin_log10x_sums;
+ double *bin_log10x_means;
+ double *bin_log10y_sums;
+ double *bin_log10y_means;
+ double *bin_log10z_sums;
+ double *bin_log10z_means;
+ int *bin_counts;
  int i;
+ double log_min_x, log_max_x, log_bin_width;
+ double log_x;
+ int bin_index;
+ FILE *binned_powerspectrum_file;
+
+ bin_log10x_sums= calloc( num_bins, sizeof( double ) );
+ bin_log10x_means= calloc( num_bins, sizeof( double ) );
+ bin_log10y_sums= calloc( num_bins, sizeof( double ) );
+ bin_log10y_means= calloc( num_bins, sizeof( double ) );
+ bin_log10z_sums= calloc( num_bins, sizeof( double ) );
+ bin_log10z_means= calloc( num_bins, sizeof( double ) );
+ bin_counts= calloc( num_bins, sizeof( int ) );
 
  // Find the minimum and maximum values of x
  for ( i= 0; i < num_points; i++ ) {
@@ -67,9 +79,9 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  }
 
  // Compute the bin width in log space
- double log_min_x= log10( min_x );
- double log_max_x= log10( max_x );
- double log_bin_width= ( log_max_x - log_min_x ) / num_bins;
+ log_min_x= log10( min_x );
+ log_max_x= log10( max_x );
+ log_bin_width= ( log_max_x - log_min_x ) / num_bins;
 
  if ( NULL == bin_log10x_sums || NULL == bin_log10x_means || NULL == bin_log10y_sums || NULL == bin_log10y_means || NULL == bin_log10z_sums || NULL == bin_log10z_means || NULL == bin_counts ) {
   fprintf( stderr, "ERROR allocating memory in bin_log_power_spectrum_points_and_write_to_file()\n" );
@@ -78,8 +90,8 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
 
  // Bin the points
  for ( i= 0; i < num_points; i++ ) {
-  double log_x= log10( x[i] );
-  int bin_index= (int)( ( log_x - log_min_x ) / log_bin_width );
+  log_x= log10( x[i] );
+  bin_index= (int)( ( log_x - log_min_x ) / log_bin_width );
   if ( bin_index < 0 ) {
    bin_index= 0;
   }
@@ -105,7 +117,7 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
   }
  }
 
- FILE *binned_powerspectrum_file= fopen( "binned_powerspectrum.periodogram", "w" );
+ binned_powerspectrum_file= fopen( "binned_powerspectrum.periodogram", "w" );
  if ( NULL == binned_powerspectrum_file ) {
   fprintf( stderr, "ERROR opening file binned_powerspectrum.periodogram for writing! \n" );
   free( bin_log10x_sums );
@@ -404,65 +416,18 @@ double compute_LK_reciprocal_theta( double *jd, double *m, unsigned long N_obs, 
 
 int main( int argc, char **argv ) {
 
- if ( argc < 5 ) {
-  fprintf( stderr, "Usage:\n Search for the best period\n  %s lightcurve.dat Pmax Pmin Step\n or search for the best period AND estimeate it's significance through lightcurve shuffling\n  %s lightcurve.dat Pmax Pmin Step Niterations\n", argv[0], argv[0] );
-  return 1;
- }
-
  FILE *lcfile= NULL;
  FILE *LK_periodogramfile= NULL;
  FILE *DFT_periodogramfile= NULL;
  FILE *LS_periodogramfile= NULL;
 
- double pmax= atof( argv[2] );
- double pmin= atof( argv[3] );
- double step= atof( argv[4] );
+ double pmax;
+ double pmin;
+ double step;
  double tmp_period_shuffle;
-
- // Range check
- if ( pmax <= 0.0 ) {
-  fprintf( stderr, "ERROR: pmax should be > 0\n" );
-  return 1;
- }
- if ( pmin <= 0.0 ) {
-  fprintf( stderr, "ERROR: pmin should be > 0\n" );
-  return 1;
- }
- if ( pmin == pmax ) {
-  fprintf( stderr, "ERROR: pmax should be > pmin\n" );
-  return 1;
- }
- if ( pmin > pmax ) {
-  // fprintf(stderr,"WARNING: pmax should be > pmin, assuming the input order is mixed-up\n");
-  tmp_period_shuffle= pmax;
-  pmax= pmin;
-  pmin= tmp_period_shuffle;
- }
- if ( step <= 0.0 ) {
-  fprintf( stderr, "ERROR: the phase step should be > 0\n" );
-  return 1;
- }
- if ( step > 0.5 ) {
-  fprintf( stderr, "ERROR: the phase step should be < 0.5\n" );
-  return 1;
- }
 
  int shuffle_iteration;
  int shuffle_iterations= 0;
- if ( argc == 6 ) {
-  shuffle_iterations= atoi( argv[5] );
-  // Check range!
-  if ( shuffle_iterations < 0 ) {
-   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be <0\n" );
-   return 1;
-  }
-  if ( shuffle_iterations > 1000000 ) {
-   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be >1000000\n" );
-   return 1;
-  }
- }
- if ( shuffle_iterations > 0 )
-  fprintf( stderr, "Lightcurve shuffle iterations: %d\n", shuffle_iterations );
 
  double fmin; //=1.0/pmax;
  double fmax; //=1.0/pmin;
@@ -518,6 +483,74 @@ int main( int argc, char **argv ) {
  // RNG initialization
  const gsl_rng_type *RNG_TYPE;
  gsl_rng *r= NULL;
+
+ // Select operation mode
+ // Use all methods by default
+ int compute_LombScargle= 1; // 1 - yes, 0 - no
+ int compute_Deeming= 1;     // 1 - yes, 0 - no
+ int compute_LK= 1;          // 1 - yes, 0 - no
+
+ // FAP-related variables
+ unsigned long N_freq_presumably_independent;
+ double N_freq_presumably_independent__HorneBaliunas_style;
+ double FAP_single;
+ double Psingle;
+ double FAP;
+ double FAP__HorneBaliunas_style;
+
+ if ( argc < 5 ) {
+  fprintf( stderr, "Usage:\n Search for the best period\n  %s lightcurve.dat Pmax Pmin Step\n or search for the best period AND estimeate it's significance through lightcurve shuffling\n  %s lightcurve.dat Pmax Pmin Step Niterations\n", argv[0], argv[0] );
+  return 1;
+ }
+
+ pmax= atof( argv[2] );
+ pmin= atof( argv[3] );
+ step= atof( argv[4] );
+
+ // Range check
+ if ( pmax <= 0.0 ) {
+  fprintf( stderr, "ERROR: pmax should be > 0\n" );
+  return 1;
+ }
+ if ( pmin <= 0.0 ) {
+  fprintf( stderr, "ERROR: pmin should be > 0\n" );
+  return 1;
+ }
+ if ( pmin == pmax ) {
+  fprintf( stderr, "ERROR: pmax should be > pmin\n" );
+  return 1;
+ }
+ if ( pmin > pmax ) {
+  // fprintf(stderr,"WARNING: pmax should be > pmin, assuming the input order is mixed-up\n");
+  tmp_period_shuffle= pmax;
+  pmax= pmin;
+  pmin= tmp_period_shuffle;
+ }
+ if ( step <= 0.0 ) {
+  fprintf( stderr, "ERROR: the phase step should be > 0\n" );
+  return 1;
+ }
+ if ( step > 0.5 ) {
+  fprintf( stderr, "ERROR: the phase step should be < 0.5\n" );
+  return 1;
+ }
+
+ shuffle_iterations= 0;
+ if ( argc == 6 ) {
+  shuffle_iterations= atoi( argv[5] );
+  // Check range!
+  if ( shuffle_iterations < 0 ) {
+   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be <0\n" );
+   return 1;
+  }
+  if ( shuffle_iterations > 1000000 ) {
+   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be >1000000\n" );
+   return 1;
+  }
+ }
+ if ( shuffle_iterations > 0 )
+  fprintf( stderr, "Lightcurve shuffle iterations: %d\n", shuffle_iterations );
+
  // if we'll be shuffling the lightcurve
  if ( shuffle_iterations > 0 ) {
   // create a generator chosen by the
@@ -529,11 +562,6 @@ int main( int argc, char **argv ) {
  }
  // done RNG initialization
 
- // Select operation mode
- // Use all methods by default
- int compute_LombScargle= 1; // 1 - yes, 0 - no
- int compute_Deeming= 1;     // 1 - yes, 0 - no
- int compute_LK= 1;          // 1 - yes, 0 - no
  if ( 0 == strcmp( "deeming_compute_periodogram", basename( argv[0] ) ) ) {
   // Only Deeming
   compute_LombScargle= 0; // 1 - yes, 0 - no
@@ -811,7 +839,7 @@ int main( int argc, char **argv ) {
   //  naively estimate FAP
   //  estimate the number of independent frequencies
   df= 1.0 / T;
-  unsigned long N_freq_presumably_independent= (unsigned long)( ( fmax - fmin ) / df + 0.5 );
+  N_freq_presumably_independent= (unsigned long)( ( fmax - fmin ) / df + 0.5 );
   // update the estimated number of independent frequencies following the shaman ritual of Schwarzenberg-Czerny (2003), Sec. 5.3
   // https://ui.adsabs.harvard.edu/abs/2003ASPC..292..383S/abstract
   if ( N_freq_presumably_independent > N_freq ) {
@@ -822,12 +850,12 @@ int main( int argc, char **argv ) {
   }
   // alternative way of computing the number of independent frequencies from Horne & Baliunas (1986) eq. (13)
   // https://ui.adsabs.harvard.edu/abs/1986ApJ...302..757H/abstract
-  double N_freq_presumably_independent__HorneBaliunas_style= -6.362 + 1.193 * N_obs + 0.00098 * N_obs * N_obs;
+  N_freq_presumably_independent__HorneBaliunas_style= -6.362 + 1.193 * N_obs + 0.00098 * N_obs * N_obs;
   // compute FAP
-  double FAP_single= exp( -1.0 * noshuffle_LS_periodogram_max );
-  double Psingle= 1.0 - FAP_single;
-  double FAP= 1.0 - pow( Psingle, (double)N_freq_presumably_independent );
-  double FAP__HorneBaliunas_style= 1.0 - pow( Psingle, N_freq_presumably_independent__HorneBaliunas_style );
+  FAP_single= exp( -1.0 * noshuffle_LS_periodogram_max );
+  Psingle= 1.0 - FAP_single;
+  FAP= 1.0 - pow( Psingle, (double)N_freq_presumably_independent );
+  FAP__HorneBaliunas_style= 1.0 - pow( Psingle, N_freq_presumably_independent__HorneBaliunas_style );
   //
   //  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
   //  fprintf(stdout, " LS  FAP_HB= %lg for %lg presumably independent frequencies (FAP_single_freq= %lg )\n", FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, FAP_single);

@@ -84,13 +84,16 @@ static double quickselect( double *arr, int left, int right, int k ) {
 
 /* Find median of n doubles using quickselect - O(n) average time */
 static double median_of_n( double *arr, int n ) {
+ double lower;
+ double upper;
+
  if ( n % 2 == 1 ) {
   return quickselect( arr, 0, n - 1, n / 2 );
  }
 
  /* For even n, find both middle elements */
- double lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
- double upper= quickselect( arr, 0, n - 1, n / 2 );
+ lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
+ upper= quickselect( arr, 0, n - 1, n / 2 );
  return 0.5 * ( lower + upper );
 }
 
@@ -121,6 +124,10 @@ static double median_from_histogram_u16( const unsigned int *hist, long n ) {
  return 0.5 * ( (double)v1 + (double)v2 );
 }
 
+/* Keywords to check for duplicates in FITS headers */
+static const char *duplicate_check_keywords[]= { "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "EXTEND", "BZERO", "BSCALE" };
+static const int num_duplicate_check_keywords= sizeof( duplicate_check_keywords ) / sizeof( duplicate_check_keywords[0] );
+
 void check_and_remove_duplicate_keywords( const char *filename ) {
  fitsfile *fptr;       // FITS file pointer
  int status= 0;        // CFITSIO status
@@ -130,10 +137,6 @@ void check_and_remove_duplicate_keywords( const char *filename ) {
  int i, j; // counters
  int keyword_found;
  int keyword_length;
-
- // Keywords to check
- const char *keywords[]= { "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "EXTEND", "BZERO", "BSCALE" };
- int num_keywords= sizeof( keywords ) / sizeof( keywords[0] );
 
  // Open the FITS file
  if ( fits_open_file( &fptr, filename, READWRITE, &status ) ) {
@@ -156,10 +159,10 @@ void check_and_remove_duplicate_keywords( const char *filename ) {
  }
 
  // Iterate over each keyword
- for ( i= 0; i < num_keywords; i++ ) {
+ for ( i= 0; i < num_duplicate_check_keywords; i++ ) {
   // first_occurrence = 0;
   keyword_found= 0;
-  keyword_length= strlen( keywords[i] );
+  keyword_length= strlen( duplicate_check_keywords[i] );
 
   // Iterate through the header cards to find occurrences of the keyword
   for ( j= 1; j <= nkeys; j++ ) {
@@ -169,7 +172,7 @@ void check_and_remove_duplicate_keywords( const char *filename ) {
    }
 
    // Strict comparison: check if the card starts with the exact keyword
-   if ( strncmp( card, keywords[i], keyword_length ) == 0 &&
+   if ( strncmp( card, duplicate_check_keywords[i], keyword_length ) == 0 &&
         ( card[keyword_length] == ' ' || card[keyword_length] == '=' ) ) {
 
     if ( keyword_found == 0 ) {

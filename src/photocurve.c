@@ -134,25 +134,31 @@ int fit_photocurve( double *datax, double *datay, double *dataerr, int n, double
  // function_type = 5 is inverse photocurve!
 
  struct data Data;
- Data.n= n;
- Data.x= datax;
- Data.y= datay;
- Data.err= dataerr;
-
  const gsl_multifit_fdfsolver_type *T;
  gsl_multifit_fdfsolver *s;
  int status= 0;
  unsigned int iter= 0;
  const size_t N= (size_t)n;
  const size_t p= 4;
-
  double dof= n - p;
-
  double chi_normal_function;
  double chi_inverse_function;
-
- gsl_matrix *covar= gsl_matrix_alloc( p, p );
+ gsl_matrix *covar;
  gsl_multifit_function_fdf f;
+ gsl_vector_view parameters_vector;
+ const gsl_rng_type *TT;
+ gsl_rng *r;
+ int number_of_initial_parameter_guesses= 0;
+#if GSL_MAJOR_VERSION >= 2
+ gsl_matrix *J;
+#endif
+
+ Data.n= n;
+ Data.x= datax;
+ Data.y= datay;
+ Data.err= dataerr;
+
+ covar= gsl_matrix_alloc( p, p );
 
  /* Set initial guess for the fit */
  a[0]= 0.3;
@@ -160,7 +166,7 @@ int fit_photocurve( double *datax, double *datay, double *dataerr, int n, double
  a[2]= gsl_stats_min( datax, 1, n );
  a[3]= gsl_stats_min( datay, 1, n );
 
- gsl_vector_view parameters_vector= gsl_vector_view_array( a, p );
+ parameters_vector= gsl_vector_view_array( a, p );
 
  f.f= &photocurve_f;
  f.df= &photocurve_df;
@@ -199,14 +205,10 @@ int fit_photocurve( double *datax, double *datay, double *dataerr, int n, double
  f.params= &Data;
 
  // Monte Carlo
- const gsl_rng_type *TT;
- gsl_rng *r;
  gsl_rng_env_setup();
  TT= gsl_rng_default;
  r= gsl_rng_alloc( TT );
  // -----------
-
- int number_of_initial_parameter_guesses= 0;
 
  do {
   gsl_multifit_fdfsolver_set( s, &f, &parameters_vector.vector );
@@ -275,7 +277,7 @@ int fit_photocurve( double *datax, double *datay, double *dataerr, int n, double
 #if GSL_MAJOR_VERSION >= 2
  // Sure the dimentions should be f.n f.p ???
  // gsl_matrix *J = gsl_matrix_alloc(f.n, f.p);
- gsl_matrix *J= gsl_matrix_alloc( s->fdf->n, s->fdf->p );
+ J= gsl_matrix_alloc( s->fdf->n, s->fdf->p );
  gsl_multifit_fdfsolver_jac( s, J );
  gsl_multifit_covar( J, 0.0, covar );
  // free previousely allocated memory

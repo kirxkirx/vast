@@ -75,6 +75,7 @@ int fake_image_hack( char *input_string ) {
  unsigned int number_of_characters_inputs_str;
  unsigned int i, j; // counter
  double jd_from_string;
+ int is_T_found= 0;
 
  double year, month, day, iday, hour, ihour, min, imin, sec; // for handling the YYYY-MM-DD.DDDD format
 
@@ -139,7 +140,7 @@ int fake_image_hack( char *input_string ) {
  //
  // fprintf( stderr, "DEBUG03\n");
  // handle the white space between the input date and time instead of T
- int is_T_found= 0;
+ is_T_found= 0;
  if ( input_calendar_date_or_jd == 0 ) {
   // fprintf( stderr, "DEBUG04\n");
   strncpy( processed_input_string, input_string, FLEN_CARD );

@@ -97,6 +97,21 @@ void progress( int done, int all ) {
 
 int vast_remove_directory( const char *path ) {
  int error= 0;
+ int slashes_only;
+ size_t i;
+ char **dir_stack;
+ int stack_ptr;
+ char *curr_path;
+ DIR *d;
+ struct dirent *p;
+ struct stat statbuf;
+ size_t curr_len;
+ size_t name_len;
+ size_t path_len;
+ char *full_path;
+#if VAST_HAVE_POSIX_2008
+ int dfd;
+#endif
 
  // Safety checks for critical directories
  if ( path == NULL || path[0] == '\0' ) {
@@ -118,8 +133,7 @@ int vast_remove_directory( const char *path ) {
 
  // Simple path checks (without realpath)
  // Check if path contains only / characters
- int slashes_only= 1;
- size_t i;
+ slashes_only= 1;
  for ( i= 0; path[i] != '\0'; i++ ) {
   if ( path[i] != '/' ) {
    slashes_only= 0;
@@ -133,8 +147,8 @@ int vast_remove_directory( const char *path ) {
 
 // Replace recursive approach with iterative one using a stack
 #define MAX_DIR_DEPTH 3
- char **dir_stack= malloc( MAX_DIR_DEPTH * sizeof( char * ) );
- int stack_ptr= 0;
+ dir_stack= malloc( MAX_DIR_DEPTH * sizeof( char * ) );
+ stack_ptr= 0;
 
  if ( dir_stack == NULL ) {
   fprintf( stderr, "ERROR: Memory allocation failed for directory traversal stack\n" );
@@ -152,29 +166,27 @@ int vast_remove_directory( const char *path ) {
  while ( stack_ptr > 0 ) {
   // Pop directory from stack
   stack_ptr--;
-  char *curr_path= dir_stack[stack_ptr];
+  curr_path= dir_stack[stack_ptr];
 
-  DIR *d= opendir( curr_path );
+  d= opendir( curr_path );
   if ( d ) {
 #if VAST_HAVE_POSIX_2008
    // Modern POSIX.1-2008 implementation using directory file descriptors
    // to avoid TOCTOU (time-of-check time-of-use) race conditions
-   int dfd= dirfd( d );
-   struct dirent *p;
+   dfd= dirfd( d );
    while ( ( p= readdir( d ) ) ) {
     // Skip "." and ".."
     if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) )
      continue;
 
-    struct stat statbuf;
     if ( !fstatat( dfd, p->d_name, &statbuf, AT_SYMLINK_NOFOLLOW ) ) {
      if ( S_ISDIR( statbuf.st_mode ) ) {
       // If directory, construct full path and add to stack
-      size_t curr_len= strlen( curr_path );
-      size_t name_len= strlen( p->d_name );
-      size_t path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
+      curr_len= strlen( curr_path );
+      name_len= strlen( p->d_name );
+      path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
 
-      char *full_path= malloc( path_len );
+      full_path= malloc( path_len );
       if ( full_path == NULL ) {
        fprintf( stderr, "ERROR: Memory allocation failed\n" );
        error= 1;
@@ -219,18 +231,17 @@ int vast_remove_directory( const char *path ) {
    // 2. The race window is microseconds, requiring an attacker with local access
    // 3. Worst case outcome is a failed deletion with an error message (no security impact)
    // 4. There is no privilege escalation or data corruption risk
-   struct dirent *p;
    while ( ( p= readdir( d ) ) ) {
     // Skip "." and ".."
     if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) )
      continue;
 
     // Construct full path for this entry
-    size_t curr_len= strlen( curr_path );
-    size_t name_len= strlen( p->d_name );
-    size_t path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
+    curr_len= strlen( curr_path );
+    name_len= strlen( p->d_name );
+    path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
 
-    char *full_path= malloc( path_len );
+    full_path= malloc( path_len );
     if ( full_path == NULL ) {
      fprintf( stderr, "ERROR: Memory allocation failed\n" );
      error= 1;
@@ -244,7 +255,6 @@ int vast_remove_directory( const char *path ) {
      sprintf( full_path, "%s/%s", curr_path, p->d_name );
     }
 
-    struct stat statbuf;
     // lstat/unlink TOCTOU race: harmless for temp directory cleanup (see comment above)
     // lgtm[cpp/toctou-race-condition]
     // codeql[cpp/toctou-race-condition]
@@ -607,6 +617,10 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  char fitsfilename_to_test[FILENAME_LENGTH];
  char local_catalogfilename[FILENAME_LENGTH];
  FILE *f;
+ int found;
+ struct stat defSex;
+ struct stat cat;
+
  f= fopen( "vast_images_catalogs.log", "r" );
  if ( f == NULL ) {
   // Use PID to create a unique catalog name to avoid race conditions
@@ -614,7 +628,7 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
   sprintf( catalogfilename, "image_pid%05d.cat", (int)getpid() );
   return 1; // not only this image has not been processed, even "vast_images_catalogs.log" is not created yet!
  }
- int found= 0;
+ found= 0;
  while ( -1 < fscanf( f, "%s %s", local_catalogfilename, fitsfilename_to_test ) ) {
   if ( 0 == strcmp( fitsfilename_to_test, fitsfilename ) ) {
    safely_encode_user_input_string( catalogfilename, local_catalogfilename, FILENAME_LENGTH - 1 );
@@ -636,8 +650,6 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  } else {
   fclose( f );
   // Check if default.sex was modified after catalog's creation
-  struct stat defSex;
-  struct stat cat;
   stat( "default.sex", &defSex );
   stat( catalogfilename, &cat );
   if ( defSex.st_mtime > cat.st_mtime ) {

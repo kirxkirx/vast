@@ -68,8 +68,10 @@ void bin_lightcurve_in_phase( double *jd, double *phase, double *m, unsigned int
  double *internal_array_binnedmag;
  double *internal_array_binnedmag_sd;
  unsigned int i, j; // counters
- double binwidth= 1.0 / (double)N_bins;
+ double binwidth;
  unsigned int points_in_bin;
+
+ binwidth= 1.0 / (double)N_bins;
 
  // first handle some special cases
  if ( N_bins > ( *N_obs ) ) {

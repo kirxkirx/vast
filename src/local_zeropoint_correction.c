@@ -165,10 +165,15 @@ int guess_degrees_or_pixels( float **y, int N1, int N2 ) {
 
 double compute_distance_on_sphere( double RA1, double DEC1, double target_ra, double target_dec ) {
  double distance;
- double RA1_rad= RA1 * M_PI / 180.0;
- double DEC1_rad= DEC1 * M_PI / 180.0;
- double target_ra_rad= target_ra * M_PI / 180.0;
- double target_dec_rad= target_dec * M_PI / 180.0;
+ double RA1_rad;
+ double DEC1_rad;
+ double target_ra_rad;
+ double target_dec_rad;
+
+ RA1_rad= RA1 * M_PI / 180.0;
+ DEC1_rad= DEC1 * M_PI / 180.0;
+ target_ra_rad= target_ra * M_PI / 180.0;
+ target_dec_rad= target_dec * M_PI / 180.0;
 
  distance= 180.0 / M_PI * acos( cos( DEC1_rad ) * cos( target_dec_rad ) * cos( MAX( RA1_rad, target_ra_rad ) - MIN( RA1_rad, target_ra_rad ) ) + sin( DEC1_rad ) * sin( target_dec_rad ) );
  // fprintf(stderr,"###### %lf %lf  %lf %lf  %lf\n",RA1,DEC1,target_ra,target_dec,distance);

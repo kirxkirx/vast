@@ -1521,42 +1521,12 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  */
 char *get_sanitized_curl_proxy() {
  size_t i;
-
- const char *proxy_env= getenv( "VAST_CURL_PROXY" );
-
- // If not set, return NULL
- if ( proxy_env == NULL || strlen( proxy_env ) == 0 ) {
-  return NULL;
- }
-
- // Check for reasonable length (arbitrary limit of 512 chars)
- size_t len= strlen( proxy_env );
- if ( len > 512 ) {
-  fprintf( stderr, "WARNING: VAST_CURL_PROXY environment variable is too long (max 512 chars)\n" );
-  return NULL;
- }
-
- // Copy the string so we can safely work with it
- char *proxy_str= strdup( proxy_env );
- if ( proxy_str == NULL ) {
-  fprintf( stderr, "ERROR: Memory allocation failed for proxy string\n" );
-  return NULL;
- }
-
- // STRICT VALIDATION: Check for shell command separators and dangerous characters
+ const char *proxy_env;
+ size_t len;
+ char *proxy_str;
  const char *dangerous_chars[]= {
      ";", "&&", "||", "|", ">", "<", "`", "$", "(", ")", "{", "}",
      "\\", "\n", "\r", "\t", "\"", "'", "*", "?", "[", "]", "~", "#" };
-
- for ( i= 0; i < sizeof( dangerous_chars ) / sizeof( dangerous_chars[0] ); i++ ) {
-  if ( strstr( proxy_str, dangerous_chars[i] ) != NULL ) {
-   fprintf( stderr, "WARNING: VAST_CURL_PROXY contains forbidden character sequence: %s\n", dangerous_chars[i] );
-   free( proxy_str );
-   return NULL;
-  }
- }
-
- // Validate that all space-separated tokens are allowed curl proxy options
  const char *allowed_options[]= {
      "--proxy", "--proxy-user", "--proxy-pass", "--proxy-insecure",
      "--proxy-header", "--proxy-basic", "--proxy-digest", "--proxy-negotiate",
@@ -1566,22 +1536,69 @@ char *get_sanitized_curl_proxy() {
      "--proxy-service-name", "--proxy-ssl-allow-beast", "--proxy-tls13-ciphers",
      "--proxy-tlsuser", "--proxy-tlspassword", "--proxy-tlsauthtype",
      "-L", "--location", NULL };
+ char *proxy_copy;
+ char *token;
+ int has_valid_proxy_option;
+ int is_allowed;
+ char *proxy_option;
+ char *url_start;
+ char *url_end;
+ char url_buf[256];
+ size_t url_len;
+ char *user_option;
+ char *user_start;
+ char *user_end;
+ char user_buf[256];
+ size_t user_len;
+ char c;
+
+ proxy_env= getenv( "VAST_CURL_PROXY" );
+
+ // If not set, return NULL
+ if ( proxy_env == NULL || strlen( proxy_env ) == 0 ) {
+  return NULL;
+ }
+
+ // Check for reasonable length (arbitrary limit of 512 chars)
+ len= strlen( proxy_env );
+ if ( len > 512 ) {
+  fprintf( stderr, "WARNING: VAST_CURL_PROXY environment variable is too long (max 512 chars)\n" );
+  return NULL;
+ }
+
+ // Copy the string so we can safely work with it
+ proxy_str= strdup( proxy_env );
+ if ( proxy_str == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed for proxy string\n" );
+  return NULL;
+ }
+
+ // STRICT VALIDATION: Check for shell command separators and dangerous characters
+ for ( i= 0; i < sizeof( dangerous_chars ) / sizeof( dangerous_chars[0] ); i++ ) {
+  if ( strstr( proxy_str, dangerous_chars[i] ) != NULL ) {
+   fprintf( stderr, "WARNING: VAST_CURL_PROXY contains forbidden character sequence: %s\n", dangerous_chars[i] );
+   free( proxy_str );
+   return NULL;
+  }
+ }
+
+ // Validate that all space-separated tokens are allowed curl proxy options
 
  // Parse and validate each token
- char *proxy_copy= strdup( proxy_str );
+ proxy_copy= strdup( proxy_str );
  if ( proxy_copy == NULL ) {
   fprintf( stderr, "ERROR: Memory allocation failed\n" );
   free( proxy_str );
   return NULL;
  }
 
- char *token= strtok( proxy_copy, " " );
- int has_valid_proxy_option= 0;
+ token= strtok( proxy_copy, " " );
+ has_valid_proxy_option= 0;
 
  while ( token != NULL ) {
   // Check if this token is a curl option (starts with -)
   if ( token[0] == '-' ) {
-   int is_allowed= 0;
+   is_allowed= 0;
    for ( i= 0; allowed_options[i] != NULL; i++ ) {
     if ( strcmp( token, allowed_options[i] ) == 0 ) {
      is_allowed= 1;
@@ -1620,14 +1637,12 @@ char *get_sanitized_curl_proxy() {
  }
 
  // Additional validation: if it contains --proxy, validate the URL format
- char *proxy_option= strstr( proxy_str, "--proxy " );
+ proxy_option= strstr( proxy_str, "--proxy " );
  if ( proxy_option != NULL ) {
-  char *url_start= proxy_option + 8; // Skip "--proxy "
-  char *url_end= strchr( url_start, ' ' );
+  url_start= proxy_option + 8; // Skip "--proxy "
+  url_end= strchr( url_start, ' ' );
 
   // Extract just the URL part
-  char url_buf[256];
-  size_t url_len;
   if ( url_end != NULL ) {
    url_len= url_end - url_start;
   } else {
@@ -1655,14 +1670,12 @@ char *get_sanitized_curl_proxy() {
  }
 
  // Additional validation: if it contains --proxy-user, validate the format
- char *user_option= strstr( proxy_str, "--proxy-user " );
+ user_option= strstr( proxy_str, "--proxy-user " );
  if ( user_option != NULL ) {
-  char *user_start= user_option + 13; // Skip "--proxy-user "
-  char *user_end= strchr( user_start, ' ' );
+  user_start= user_option + 13; // Skip "--proxy-user "
+  user_end= strchr( user_start, ' ' );
 
   // Extract just the user:pass part
-  char user_buf[256];
-  size_t user_len;
   if ( user_end != NULL ) {
    user_len= user_end - user_start;
   } else {
@@ -1688,7 +1701,7 @@ char *get_sanitized_curl_proxy() {
 
  // Final safety check: ensure only alphanumeric, dash, dot, colon, slash, and space characters
  for ( i= 0; i < strlen( proxy_str ); i++ ) {
-  char c= proxy_str[i];
+  c= proxy_str[i];
   if ( !( isalnum( c ) || c == '-' || c == '.' || c == ':' || c == '/' || c == ' ' || c == '_' ) ) {
    fprintf( stderr, "WARNING: VAST_CURL_PROXY contains invalid character: %c\n", c );
    free( proxy_str );
@@ -1712,19 +1725,24 @@ char *get_sanitized_curl_proxy() {
  * Returns 0 on success, -1 on memory allocation failure.
  */
 static int parse_shell_args( const char *input_str, char ***argv, int *argc, int *capacity ) {
+ char *str_copy;
+ char *p;
+ char quote_char;
+ char token_buf[1024];
+ int token_len;
+ int new_capacity;
+ char **new_argv;
+
  if ( input_str == NULL || strlen( input_str ) == 0 ) {
   return 0; // Nothing to parse
  }
 
- char *str_copy= strdup( input_str );
+ str_copy= strdup( input_str );
  if ( str_copy == NULL ) {
   return -1;
  }
 
- char *p= str_copy;
- char quote_char;
- char token_buf[1024];
- int token_len;
+ p= str_copy;
 
  while ( *p != '\0' ) {
   // Skip leading whitespace
@@ -1767,8 +1785,8 @@ static int parse_shell_args( const char *input_str, char ***argv, int *argc, int
   if ( token_len > 0 ) {
    // Check if we need to grow the array
    if ( *argc >= *capacity - 1 ) { // -1 to leave room for NULL terminator
-    int new_capacity= *capacity * 2;
-    char **new_argv= realloc( *argv, new_capacity * sizeof( char * ) );
+    new_capacity= *capacity * 2;
+    new_argv= realloc( *argv, new_capacity * sizeof( char * ) );
     if ( new_argv == NULL ) {
      free( str_copy );
      return -1;
@@ -1910,8 +1928,11 @@ static int execute_curl_direct( const char *base_command, const char *proxy_sett
 char *construct_safe_curl_command( const char *base_command, const char *proxy_settings ) {
  // Allocate memory for the full command
  // Size estimation: base command + proxy settings (if any) + null terminator
- size_t command_size= strlen( base_command ) + ( proxy_settings ? strlen( proxy_settings ) + 1 : 0 ) + 7; // "curl" + space + space + null terminator
- char *safe_command= malloc( command_size );
+ size_t command_size;
+ char *safe_command;
+
+ command_size= strlen( base_command ) + ( proxy_settings ? strlen( proxy_settings ) + 1 : 0 ) + 7; // "curl" + space + space + null terminator
+ safe_command= malloc( command_size );
 
  if ( safe_command == NULL ) {
   fprintf( stderr, "ERROR: Memory allocation failed for curl command\n" );
@@ -1942,15 +1963,24 @@ char *construct_safe_curl_command( const char *base_command, const char *proxy_s
  * Returns 1 if replacement was made, 0 if pattern not found
  */
 int obscure_proxy_credentials( char *str ) {
+ const char *prefix;
+ size_t prefix_len;
+ char *start;
+ char *end;
+ size_t cred_len;
+ const char *replacement;
+ size_t replace_len;
+ size_t i;
+
  if ( str == NULL ) {
   return 0;
  }
 
- const char *prefix= "--proxy-user ";
- size_t prefix_len= strlen( prefix );
+ prefix= "--proxy-user ";
+ prefix_len= strlen( prefix );
 
  /* Find prefix in string */
- char *start= strstr( str, prefix );
+ start= strstr( str, prefix );
  if ( start == NULL ) {
   return 0;
  }
@@ -1959,23 +1989,22 @@ int obscure_proxy_credentials( char *str ) {
  start+= prefix_len;
 
  /* Find the end of credentials (space or end of string) */
- char *end= start;
+ end= start;
  while ( *end != '\0' && *end != ' ' ) {
   end++;
  }
 
  /* Get original credential length */
- size_t cred_len= end - start;
+ cred_len= end - start;
  if ( cred_len == 0 ) {
   return 0; /* No credentials found after prefix */
  }
 
  /* Create replacement with "user:password" */
- const char *replacement= "user:password";
- size_t replace_len= strlen( replacement );
+ replacement= "user:password";
+ replace_len= strlen( replacement );
 
  /* Replace credentials with replacement */
- size_t i;
  for ( i= 0; i < replace_len && i < cred_len; i++ ) {
   start[i]= replacement[i];
  }
@@ -2008,15 +2037,26 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  int vizquery_run_success;
  int search_stars_counter;
  int zero_radec_counter;
+ char *proxy_settings;
+ const char *ucac5_servers[3];
+ int server_order[3];
+ int server_idx;
+ int srv;
+ int ucac5_success;
+ FILE *ucac5_server_log;
+ int log_idx;
+ int sscanf_return_code;
 
  char path_to_vast_string[VAST_PATH_MAX];
+#ifdef DEBUGFILES
+ FILE *scan_ucac5_debug_ds9_region;
+#endif
  get_path_to_vast( path_to_vast_string );
 
  // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
  // return 1;
 
 #ifdef DEBUGFILES
- FILE *scan_ucac5_debug_ds9_region;
  scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
  fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
  fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
@@ -2072,89 +2112,75 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
 
  // Get proxy settings if available
- char *proxy_settings= get_sanitized_curl_proxy();
+ proxy_settings= get_sanitized_curl_proxy();
 
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast/tau)...\n" );
- // Randomly choose between the three servers
- // Seed the random number generator
+
+ // Try all three servers in random order before giving up
+ ucac5_servers[0]= "scan.sai.msu.ru";
+ ucac5_servers[1]= "vast.sai.msu.ru";
+ ucac5_servers[2]= "tau.kirx.net";
+
+ // Seed the random number generator and pick a random starting server
  srand( time( NULL ) );
- // Generate a random number (0, 1, or 2)
- int randChoice= rand() % 3;
+ server_order[0]= rand() % 3;
+ server_order[1]= ( server_order[0] + 1 ) % 3;
+ server_order[2]= ( server_order[0] + 2 ) % 3;
 
- // Construct base command
- // Initialize the allocated memory to null characters
- memset( base_command, '\0', BASE_COMMAND_LENGTH );
- if ( randChoice == 0 ) {
-  fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru\n" );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
- } else if ( randChoice == 1 ) {
-  fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru\n" );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
- } else {
-  fprintf( stderr, "Trying UCAC5 server: tau.kirx.net\n" );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
- }
- base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
-
- // Execute curl directly without shell interpretation (avoids command injection)
- fprintf( stderr, "Running curl to query UCAC5...\n" );
- vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
-
- if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-  fprintf( stderr, "First UCAC5 server attempt failed, trying alternative server\n" );
-
-  // Note the reverse order with respect to randChoice
-  if ( randChoice == 0 ) {
-   // This block will execute if the first executed command was the first option and it failed
-   fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru (fallback)\n" );
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
-  } else if ( randChoice == 1 ) {
-   // This block will execute if the first executed command was the second option and it failed
-   fprintf( stderr, "Trying UCAC5 server: tau.kirx.net (fallback)\n" );
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
+ ucac5_success= 0;
+ for ( server_idx= 0; server_idx < 3; server_idx++ ) {
+  srv= server_order[server_idx];
+  if ( server_idx == 0 ) {
+   fprintf( stderr, "Trying UCAC5 server: %s\n", ucac5_servers[srv] );
   } else {
-   // This block will execute if the first executed command was the third option and it failed
-   fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru (fallback)\n" );
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+   fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
+  }
+  memset( base_command, '\0', BASE_COMMAND_LENGTH );
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
-  }
+            vizquery_output_filename,
+            ucac5_servers[srv] );
+  base_command[BASE_COMMAND_LENGTH - 1]= '\0';
 
-  // Execute curl directly without shell interpretation (avoids command injection)
-  fprintf( stderr, "Running curl to query UCAC5 (fallback)...\n" );
+  fprintf( stderr, "Running curl to query UCAC5...\n" );
   vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
-  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-   fprintf( stderr, "ERROR: Both UCAC5 server attempts failed\n" );
-   // Free proxy settings if allocated
-   if ( proxy_settings != NULL ) {
-    free( proxy_settings );
+  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+   ucac5_success= 1;
+   if ( server_idx > 0 ) {
+    fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
    }
-   return 1;
+   break;
   }
+  fprintf( stderr, "UCAC5 server %s FAILED (attempt %d of 3)\n", ucac5_servers[srv], server_idx + 1 );
+ }
+
+ // Write server status summary to a log file (append mode, safe for parallel runs)
+ ucac5_server_log= fopen( "ucac5_server_status.log", "a" );
+ if ( ucac5_server_log != NULL ) {
+  for ( log_idx= 0; log_idx < 3; log_idx++ ) {
+   srv= server_order[log_idx];
+   if ( log_idx < server_idx ) {
+    fprintf( ucac5_server_log, "pid=%d server=%s status=FAILED\n", pid, ucac5_servers[srv] );
+   } else if ( log_idx == server_idx && ucac5_success ) {
+    fprintf( ucac5_server_log, "pid=%d server=%s status=OK\n", pid, ucac5_servers[srv] );
+   }
+  }
+  if ( !ucac5_success ) {
+   fprintf( ucac5_server_log, "pid=%d result=ALL_FAILED\n", pid );
+  }
+  fclose( ucac5_server_log );
+ }
+
+ if ( !ucac5_success ) {
+  fprintf( stderr, "ERROR: All three UCAC5 server attempts failed\n" );
+  if ( proxy_settings != NULL ) {
+   free( proxy_settings );
+  }
+  return 1;
  }
 
  // Free proxy settings if allocated
@@ -2183,7 +2209,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    continue;
 
   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  int sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
   if ( 6 > sscanf_return_code ) {
    continue;
   }
@@ -2297,15 +2323,20 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  int vizquery_run_success;
  int search_stars_counter;
  int zero_radec_counter;
+ char *proxy_settings;
+ int randChoice;
+ int sscanf_return_code;
 
  char path_to_vast_string[VAST_PATH_MAX];
+#ifdef DEBUGFILES
+ FILE *scan_ucac5_debug_ds9_region;
+#endif
  get_path_to_vast( path_to_vast_string );
 
  // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
  // return 1;
 
 #ifdef DEBUGFILES
- FILE *scan_ucac5_debug_ds9_region;
  scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
  fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
  fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
@@ -2361,7 +2392,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
 
  // Get proxy settings if available
- char *proxy_settings= get_sanitized_curl_proxy();
+ proxy_settings= get_sanitized_curl_proxy();
 
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5...\n" );
@@ -2369,7 +2400,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  // Seed the random number generator
  srand( time( NULL ) );
  // Generate a random number (0 or 1)
- int randChoice= rand() % 2;
+ randChoice= rand() % 2;
 
  // Construct base command
  // Initialize the allocated memory to null characters
@@ -2457,7 +2488,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
    continue;
 
   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  int sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
   if ( 6 > sscanf_return_code ) {
    continue;
   }
@@ -2894,6 +2925,25 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  struct detected_star *only_good_starsmatched_with_catalog;
  int N_only_good; // counter for the structures array above
 
+ double poly_coeff[10];
+
+ double local_correction_ra;
+ double local_correction_dec;
+ // double target_mag;
+ double target_ra;
+ double target_dec;
+ double target_x_pix;
+ double target_y_pix;
+ double current_accuracy, current_accuracy_ra, current_accuracy_dec;
+ double best_accuracy;
+ double current_search_radius;
+ double best_search_radius;
+ double best_local_correction_ra;
+ double best_local_correction_dec;
+ double cos_delta;
+ double z1_local[502];
+ double z2_local[502];
+
  // debug_dump_star_struct( stars, N ); exit(1); // !!!!!!!!!!!!!!!!!!!!!!!!!!
 
  x= malloc( N * sizeof( double ) );
@@ -2957,7 +3007,6 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  }
 
  // *** Find astrometric correction as a function of magnitude  ***
- double poly_coeff[10];
 
  for ( N_good= 0, i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
@@ -2990,20 +3039,6 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  }
 
  // *** Find local corrections  ***
- double local_correction_ra;
- double local_correction_dec;
- // double target_mag;
- double target_ra;
- double target_dec;
- double target_x_pix;
- double target_y_pix;
- double current_accuracy, current_accuracy_ra, current_accuracy_dec;
- double best_accuracy;
- double current_search_radius;
- double best_search_radius= REFERENCE_LOCAL_SOLUTION_RADIUS_DEG;
- double best_local_correction_ra;
- double best_local_correction_dec;
- double cos_delta;
 
  // Create a copy of the star catalog containing only the good ones matched with catalog
  only_good_starsmatched_with_catalog= malloc( N * sizeof( struct detected_star ) );
@@ -3030,13 +3065,10 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
                                   best_accuracy, best_search_radius, current_search_radius, distance, \
                                   current_accuracy_ra, current_accuracy_dec, current_accuracy, \
                                   best_local_correction_ra, best_local_correction_dec, \
-                                  local_correction_ra, local_correction_dec )
+                                  local_correction_ra, local_correction_dec, z1_local, z2_local )
 #endif
 #endif
  for ( j= 0; j < N; j++ ) {
-  // Thread-local arrays for collecting nearby star corrections
-  double z1_local[502];
-  double z2_local[502];
 
   if ( process_only_stars_matched_with_catalog == 1 && stars[j].matched_with_astrometric_catalog != 1 )
    continue;
@@ -3272,6 +3304,9 @@ int main( int argc, char **argv ) {
  char command_string[2 * FILENAME_LENGTH + VAST_PATH_MAX];
 
  char path_to_vast_string[VAST_PATH_MAX];
+#ifdef DEBUGFILES
+ FILE *solve_plate_debug;
+#endif
  get_path_to_vast( path_to_vast_string );
 
  number_of_stars_in_wcs_catalog= 0; // =0 just in case
@@ -3583,7 +3618,6 @@ int main( int argc, char **argv ) {
 #ifdef DEBUGFILES
  // Inspect the output
  // Note that the content of solve_plate_debug.txt corresponds to the LAST iteration
- FILE *solve_plate_debug;
  solve_plate_debug= fopen( "solve_plate_debug.txt", "w" );
  for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
   if ( stars[i].matched_with_astrometric_catalog == 1 )

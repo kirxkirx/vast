@@ -15,12 +15,12 @@
 #include "vast_limits.h"
 
 static inline int write_lightcurve_point(FILE *lc_file_descriptor, double jd, double mag, double mag_err, double x, double y, double app, char *string, char *comments_string) {
+ // Never print zero errors!
+ double nonzero_mag_err;
  //
  if( NULL == lc_file_descriptor ) {
   return 1;
  }
- // Never print zero errors!
- double nonzero_mag_err;
  // 0.0001 has to match the printf format %.4lf below
  if( mag_err < 0.0001 ) {
   nonzero_mag_err= 0.0001;

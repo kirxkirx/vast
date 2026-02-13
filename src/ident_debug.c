@@ -414,6 +414,7 @@ void write_matched_stars_ds9( struct Star *star1, struct Star *star2, int *Pos1,
  int i;
  char ref_filename[256];
  char cur_filename[256];
+ double dx, dy, dist;
 
  /* Create separate files for reference and current frames */
  snprintf( ref_filename, sizeof( ref_filename ), "ref_%s", filename );
@@ -440,9 +441,9 @@ void write_matched_stars_ds9( struct Star *star1, struct Star *star2, int *Pos1,
 
   /* Distance annotation for first 50 to avoid excessive clutter */
   if ( i < 50 ) {
-   double dx= star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
-   double dy= star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
-   double dist= sqrt( dx * dx + dy * dy );
+   dx= star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
+   dy= star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
+   dist= sqrt( dx * dx + dy * dy );
 
    fprintf( f, "# text(%.3f,%.3f) text={%.1f}\n",
             star1[Pos1[i]].x_frame + 8, star1[Pos1[i]].y_frame + 8, dist );
@@ -472,9 +473,9 @@ void write_matched_stars_ds9( struct Star *star1, struct Star *star2, int *Pos1,
 
   /* Distance annotation for first 50 to avoid excessive clutter */
   if ( i < 50 ) {
-   double dx= star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
-   double dy= star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
-   double dist= sqrt( dx * dx + dy * dy );
+   dx= star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
+   dy= star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
+   dist= sqrt( dx * dx + dy * dy );
 
    fprintf( f, "# text(%.3f,%.3f) text={%.1f}\n",
             star2[Pos2[i]].x_frame + 8, star2[Pos2[i]].y_frame + 8, dist );
@@ -565,6 +566,7 @@ int Very_Well_triangle_debug( struct Star *star1, int Number1, struct Star *star
  int i;
  int star_idx;
  int result;
+ FILE *f;
 
  /* Call original function */
  result= Very_Well_triangle( star1, Number1, star2, Number2, ecv_tr,
@@ -577,7 +579,7 @@ int Very_Well_triangle_debug( struct Star *star1, int Number1, struct Star *star
                                  "debug_best_triangle.reg" );
 
   /* Write detailed log about the best match */
-  FILE *f= fopen( "best_triangle_match.log", "w" );
+  f= fopen( "best_triangle_match.log", "w" );
   if ( f ) {
    fprintf( f, "=== BEST TRIANGLE MATCH ANALYSIS ===\n" );
    fprintf( f, "Best triangle index: %d\n", *nm );

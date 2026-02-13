@@ -75,7 +75,7 @@ done
 if [ -d selected ];then
  rm -rf selected/
 fi
-for i in vast*.log vast_list_of_all_stars.ds9 vast_list_of_all_stars.ds9.reg wcs.fit m_sigma_bin.tmp sysrem_input_star_list.lst* ref_frame_sextractor.cat util/convert/*~ bright_star_blend_check_*.sex ;do
+for i in vast*.log ucac5_server_status.log vast_list_of_all_stars.ds9 vast_list_of_all_stars.ds9.reg wcs.fit m_sigma_bin.tmp sysrem_input_star_list.lst* ref_frame_sextractor.cat util/convert/*~ bright_star_blend_check_*.sex ;do
  if [ -f "$i" ];then
   rm -f "$i"
  fi

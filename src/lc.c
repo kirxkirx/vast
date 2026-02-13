@@ -417,6 +417,7 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
  double hjd, mag, mag_err;
  char filter[10];
  int v_count= 0, g_count= 0;
+ char selected_filter[10];
 
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
@@ -447,7 +448,6 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
  }
 
  // Determine the filter with the most measurements
- char selected_filter[10];
  if ( v_count >= g_count ) {
   strcpy( selected_filter, "V" );
  } else {
@@ -524,6 +524,7 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
  char filter[10];
  int v_count= 0, g_count= 0;
  int header_found= 0;
+ char selected_filter[10];
 
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
@@ -558,7 +559,6 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
  }
 
  // Determine the filter with the most measurements
- char selected_filter[10];
  if ( v_count >= g_count ) {
   strcpy( selected_filter, "V" );
  } else {
@@ -745,6 +745,7 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  double mjd, mag, mag_err;
  char filter[10];
  int zg_count= 0, zr_count= 0, zi_count= 0;
+ char selected_filter[10];
 
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
@@ -805,7 +806,6 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  }
 
  // Determine the filter with the most measurements
- char selected_filter[10];
  if ( zg_count >= zr_count && zg_count >= zi_count ) {
   strcpy( selected_filter, "zg" );
  } else if ( zr_count >= zg_count && zr_count >= zi_count ) {
@@ -1028,6 +1028,13 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
  char converted_directory[VAST_PATH_MAX];
  char band[10];
+ char *token;
+ char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ int field_count;
+ char selected_band[10];
+ int max_count;
+ double temp_jd, temp_mag, temp_mag_err;
+ char temp_band[10];
 
  // Band counters - add more bands as needed
  int v_count= 0, b_count= 0, r_count= 0, i_count= 0;
@@ -1055,9 +1062,7 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
   // Parse: JD,Magnitude,Uncertainty,HQuncertainty,Band,...
   // Use a more robust approach - find the 5th comma-separated field
-  char *token;
-  char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-  int field_count= 0;
+  field_count= 0;
 
   strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
   line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0';
@@ -1096,8 +1101,7 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  }
 
  // Determine the band with the most measurements
- char selected_band[10];
- int max_count= 0;
+ max_count= 0;
 
  if ( v_count > max_count ) {
   max_count= v_count;
@@ -1182,11 +1186,11 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
   // Parse: JD,Magnitude,Uncertainty,HQuncertainty,Band,...
   // Use a more robust approach - parse the comma-separated fields
-  char *token;
-  char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-  int field_count= 0;
-  double temp_jd= 0.0, temp_mag= 0.0, temp_mag_err= 0.0;
-  char temp_band[10]= "";
+  field_count= 0;
+  temp_jd= 0.0;
+  temp_mag= 0.0;
+  temp_mag_err= 0.0;
+  temp_band[0]= '\0';
 
   strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
   line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0';
@@ -1905,12 +1909,12 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
 void remove_median_magnitude( float *mag, int N, double mag_zeropoint_for_log, double *JD_double_array_for_log ) {
  FILE *vast_lc_remove_median_magnitude_logfile;
  int i;
-
- (void)mag_zeropoint_for_log; // Unused, but kept for API consistency
  float *sorted_mag;
  float median_mag;
  float *corrected_mag;
  float E1, E2, E3, E4;
+
+ (void)mag_zeropoint_for_log; // Unused, but kept for API consistency
 
  if ( N == 0 ) {
   return;
@@ -2116,13 +2120,6 @@ int main( int argc, char **argv ) {
 
  double dmag, dmerr, dap, dx, dy;
 
- new_X1= 0.0;
- //
- new_X2= 0.0;
- new_Y1= 0.0;
- new_Y2= 0.0;
- //
-
  double UnixTime;
  time_t UnixTime_time_t;
  struct tm *structureTIME;
@@ -2144,6 +2141,13 @@ int main( int argc, char **argv ) {
  const struct option longopt[]= {
      { "ds9", 0, NULL, '9' }, { "debug", 0, NULL, 'd' }, { "save", 0, NULL, 's' }, { "png", 0, NULL, 'n' }, { "errorbars", 0, NULL, 'e' }, { "bindir", 1, NULL, 'b' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
  int nextopt;
+
+ new_X1= 0.0;
+ //
+ new_X2= 0.0;
+ new_Y1= 0.0;
+ new_Y2= 0.0;
+ //
  // struct stat buf;
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {

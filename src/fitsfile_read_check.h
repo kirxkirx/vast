@@ -141,6 +141,7 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  char safe_filename[FILENAME_LENGTH];
  //
  unsigned int i,cfitsio_image_cutout;
+ FILE *testfile;
  //
  if( (int)strlen(fitsfilename)>FILENAME_LENGTH ) {
   fprintf(stderr, "ERROR in fitsfile_read_check(): the input filename is too long: %d bytes while FILENAME_LENGTH=%d %s\n", (int)strlen(fitsfilename), FILENAME_LENGTH, fitsfilename);
@@ -152,7 +153,6 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  }
  //
  // Check if the file exist at all
- FILE *testfile;
  // do this check only if the file does not use CFITSIO image cutout interface
  cfitsio_image_cutout= 0;
  for( i=0; i<strlen(fitsfilename); i++ ) {

@@ -1124,43 +1124,16 @@ int main( int argc, char **argv ) {
 
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
- /// end of definitions
- lin_mag_A= lin_mag_B= lin_mag_C= 0.0; // just in case
-
- // Protection against strange free() crashes
- // setenv("MALLOC_CHECK_", "0", 1);
-
  char sextractor_catalog_filtering_results_string[2048];
 
- // char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
-
  // Moving object hack
- char moving_object= 0;
+ char moving_object;
  float *moving_object__user_array_x;
  float *moving_object__user_array_y;
  char str_moving_object_lightcurve_file[OUTFILENAME_LENGTH];
- //
-
- // memset(sextractor_catalog, 0, FILENAME_LENGTH); // just to make vlagrind happy
-
- print_vast_version();
-
- // argv[] parsing begins
- if ( argc == 1 ) {
-  // no command line arguments! Is this is a mistake or should we read the input list of images from a file
-  vast_list_of_input_images_with_time_corrections= fopen( "vast_list_of_input_images_with_time_corrections.txt", "r" );
-  // Check if we can open the file
-  if ( NULL == vast_list_of_input_images_with_time_corrections ) {
-   help_msg( argv[0], 0 );
-  } else {
-   fclose( vast_list_of_input_images_with_time_corrections );
-  }
-  //
- }
 
  // Options for getopt()
- char *cvalue= NULL;
-
+ char *cvalue;
  // const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
  const char *const shortopt= "a:b:cdefFgGhijJkKlmnopPqrst:uUvwx:y:z12345:6789";
  const struct option longopt[]= {
@@ -1205,6 +1178,68 @@ int main( int argc, char **argv ) {
      { "movingobject", 0, NULL, 'z' },
      { NULL, 0, NULL, 0 } }; // NULL string must be in the end
  int nextopt;
+
+ // TBA: unpacking and RGB image conversions
+ char **input_images_copy;
+
+ // Reading file which defines rectangular regions to exclude
+ double *X1;
+ double *Y1;
+ double *X2;
+ double *Y2;
+ int max_N_bad_regions_for_malloc;
+ int N_bad_regions;
+
+ // Fork-related variables
+ int n_fork;    //=get_number_of_cpu_cores(); // number of parallel threads
+ int i_fork; // counter for fork
+ int j_fork;    // another counter for fork
+ int fork_found_empty_slot;
+ int pid_of_child_that_finished;
+ int pid_status;
+ int *child_pids;
+
+ // Block-scoped variables moved to function top
+ pid_t wpid;
+ int waitstatus;
+ float debug_x;
+ float debug_y;
+ float debug_d;
+ int outliers_removed_this_iteration;
+ double raw_limiting_mag;
+ double transformed_limiting_mag;
+ double *current_image_mag_array;
+ double *current_image_snr_array;
+ int lim_mag_success;
+
+ /// end of definitions
+ lin_mag_A= lin_mag_B= lin_mag_C= 0.0; // just in case
+ moving_object= 0;
+
+ // Protection against strange free() crashes
+ // setenv("MALLOC_CHECK_", "0", 1);
+
+ // char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
+ //
+
+ // memset(sextractor_catalog, 0, FILENAME_LENGTH); // just to make vlagrind happy
+
+ print_vast_version();
+
+ // argv[] parsing begins
+ if ( argc == 1 ) {
+  // no command line arguments! Is this is a mistake or should we read the input list of images from a file
+  vast_list_of_input_images_with_time_corrections= fopen( "vast_list_of_input_images_with_time_corrections.txt", "r" );
+  // Check if we can open the file
+  if ( NULL == vast_list_of_input_images_with_time_corrections ) {
+   help_msg( argv[0], 0 );
+  } else {
+   fclose( vast_list_of_input_images_with_time_corrections );
+  }
+  //
+ }
+
+ cvalue= NULL;
  fprintf( stderr, "Parsing command line arguments...\n" );
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {
@@ -1923,8 +1958,6 @@ int main( int argc, char **argv ) {
  // TBA: unpacking and RGB image conversions using a copy of input_images[]
  /* TBA: unpacking and RGB image conversions using a copy of input_images[] */
 
- char **input_images_copy;
-
  /* allocate pointer array */
  input_images_copy= (char **)malloc( (size_t)Num * sizeof( char * ) );
  if ( input_images_copy == NULL ) {
@@ -2226,11 +2259,6 @@ int main( int argc, char **argv ) {
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////// Reading file which defines rectangular regions we want to completely exclude from the analysis ///////
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
- double *X1;
- double *Y1;
- double *X2;
- double *Y2;
- int max_N_bad_regions_for_malloc;
  max_N_bad_regions_for_malloc= count_lines_in_ASCII_file( "bad_region.lst" );
  X1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
  Y1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
@@ -2241,7 +2269,7 @@ int main( int argc, char **argv ) {
   vast_report_memory_error();
   return EXIT_FAILURE;
  }
- int N_bad_regions= 0;
+ N_bad_regions= 0;
  read_bad_CCD_regions_lst( X1, Y1, X2, Y2, &N_bad_regions );
 
  //////////////////////////////////////////////////////////////////////////////////////////
@@ -2304,15 +2332,8 @@ int main( int argc, char **argv ) {
  // but before the fork() loop that runs autodetect_aperture() on each image.
  system( "lib/restore_cached_sextractor_catalogs.sh" );
 
- int n_fork;    //=get_number_of_cpu_cores(); // number of parallel threads
- int i_fork= 0; // counter for fork
- int j_fork;    // another counter for fork
- int fork_found_empty_slot;
- int pid_of_child_that_finished;
- int pid_status;
- int *child_pids;
-
  // Set the desired number of threads
+ i_fork= 0;
  n_fork= get_number_of_cpu_cores();
 
 #ifdef VAST_ENABLE_OPENMP
@@ -3003,8 +3024,6 @@ int main( int argc, char **argv ) {
  /* Check if enough stars were detected on the reference frame */
  if ( NUMBER1 < MIN_NUMBER_OF_STARS_ON_FRAME || NUMBER3 < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   // Wait for the children to finish or the error message will be swamped in the normal output
-  pid_t wpid;
-  int waitstatus;
   while ( ( wpid= wait( &waitstatus ) ) > 0 )
    ; // this way, the father waits for all the child processes
   //
@@ -3546,9 +3565,9 @@ int main( int argc, char **argv ) {
      //}
 
      /// !!! Debug !!!
-     float debug_x= 2535.0;
-     float debug_y= 1901.5;
-     float debug_d= sqrt( ( STAR2[NUMBER2 - 1].x_frame - debug_x ) * ( STAR2[NUMBER2 - 1].x_frame - debug_x ) + ( STAR2[NUMBER2 - 1].y_frame - debug_y ) * ( STAR2[NUMBER2 - 1].y_frame - debug_y ) );
+     debug_x= 2535.0;
+     debug_y= 1901.5;
+     debug_d= sqrt( ( STAR2[NUMBER2 - 1].x_frame - debug_x ) * ( STAR2[NUMBER2 - 1].x_frame - debug_x ) + ( STAR2[NUMBER2 - 1].y_frame - debug_y ) * ( STAR2[NUMBER2 - 1].y_frame - debug_y ) );
      if ( debug_d < aperture ) {
       fprintf( stderr, "READING SEXTRACTOR CAT: %d  %.3f %.3f  (%f)  s=%d v=%6d\n", STAR2[NUMBER2 - 1].n, STAR2[NUMBER2 - 1].x_frame, STAR2[NUMBER2 - 1].y_frame, STAR2[NUMBER2 - 1].star_size, STAR2[NUMBER2 - 1].sextractor_flag, STAR2[NUMBER2 - 1].vast_flag );
      }
@@ -4382,30 +4401,27 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // First pass - remove really bad outliers using unweighted linear approximation
       // Optimized: batch removal of all outliers exceeding threshold, then refit
       fprintf( stderr, "Iteratively removing outliers from the linear mag-mag relation (unweighted fit)...\n" );
-      {
-       int outliers_removed_this_iteration;
-       wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-       do {
-        outliers_removed_this_iteration= 0;
-        // Scan from the end to safely remove multiple elements
-        for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
-         computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
-         abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
-         if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION ) {
-          // This point is an outlier - remove it
-          if ( apply_position_dependent_correction == 0 )
-           exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
-          else
-           exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
-          outliers_removed_this_iteration++;
-         }
+      wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+      do {
+       outliers_removed_this_iteration= 0;
+       // Scan from the end to safely remove multiple elements
+       for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
+        computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
+        abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
+        if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION ) {
+         // This point is an outlier - remove it
+         if ( apply_position_dependent_correction == 0 )
+          exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
+         else
+          exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
+         outliers_removed_this_iteration++;
         }
-        // Recompute fit only if we removed any outliers
-        if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
-         wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-        }
-       } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
-      }
+       }
+       // Recompute fit only if we removed any outliers
+       if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
+        wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+       }
+      } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
      } // Iteratively removing outliers from the linear mag-mag relation (unweighted fit)
 
      /* Check that we haven't dropped too many stars so the parabolic fit still make sence */
@@ -4525,34 +4541,31 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // Use linear function as the very first approximation
       wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       fprintf( stderr, "Iteratively removing outliers from the mag-mag relation (weighted linear/polynomial fit)...\n" );
-      {
-       int outliers_removed_this_iteration;
-       do {
-        outliers_removed_this_iteration= 0;
-        // Scan from the end to safely remove multiple elements
-        for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
-         computed_mag= poly_coeff[2] * poly_x[exclude_outlier_mags_counter] * poly_x[exclude_outlier_mags_counter] + poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
-         abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
-         if ( abs_computed_predicted_mag_diff > MAX_DIFF_POLY_MAG_CALIBRATION ) {
-          // This point is an outlier - remove it
-          if ( apply_position_dependent_correction == 0 )
-           exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
-          else
-           exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
-          outliers_removed_this_iteration++;
-         }
+      do {
+       outliers_removed_this_iteration= 0;
+       // Scan from the end to safely remove multiple elements
+       for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
+        computed_mag= poly_coeff[2] * poly_x[exclude_outlier_mags_counter] * poly_x[exclude_outlier_mags_counter] + poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
+        abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
+        if ( abs_computed_predicted_mag_diff > MAX_DIFF_POLY_MAG_CALIBRATION ) {
+         // This point is an outlier - remove it
+         if ( apply_position_dependent_correction == 0 )
+          exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
+         else
+          exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
+         outliers_removed_this_iteration++;
         }
-        // Recompute fit only if we removed any outliers
-        if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
-         // if ( photometric_calibration_type == 0 ) {
-         if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
-          wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-         } else {
-          wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-         }
+       }
+       // Recompute fit only if we removed any outliers
+       if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
+        // if ( photometric_calibration_type == 0 ) {
+        if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
+         wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+        } else {
+         wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
         }
-       } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
-      }
+       }
+      } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
       ////////////////////////////////////////////
       //
       // FILE *magcalibdebugfile;
@@ -4659,34 +4672,32 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     }
 
     // Calculate limiting magnitude for this image BEFORE transformation
-    {
-     double raw_limiting_mag= 99.0;
-     double transformed_limiting_mag= 99.0;
-     if ( NUMBER2 > 10 ) {
-      double *current_image_mag_array= malloc( sizeof( double ) * NUMBER2 );
-      double *current_image_snr_array= malloc( sizeof( double ) * NUMBER2 );
-      if ( current_image_mag_array != NULL && current_image_snr_array != NULL ) {
-       extract_mag_and_snr_from_structStar( STAR2, (size_t)NUMBER2, current_image_mag_array, current_image_snr_array );
-       int lim_mag_success= 0;
-       raw_limiting_mag= get_detection_limit_sn( current_image_mag_array, current_image_snr_array, (size_t)NUMBER2, MIN_SNR_TRANSIENT_DETECTION, &lim_mag_success );
-       if ( lim_mag_success == 1 && wpolyfit_exit_code == 0 ) {
-        // Transform using calibration coefficients (same formula as for star magnitudes)
-        if ( param_use_photocurve != 0 ) {
-         transformed_limiting_mag= eval_photocurve( raw_limiting_mag, poly_coeff, param_use_photocurve );
-        } else {
-         transformed_limiting_mag= poly_coeff[2] * raw_limiting_mag * raw_limiting_mag + poly_coeff[1] * raw_limiting_mag + poly_coeff[0];
-        }
+    raw_limiting_mag= 99.0;
+    transformed_limiting_mag= 99.0;
+    if ( NUMBER2 > 10 ) {
+     current_image_mag_array= malloc( sizeof( double ) * NUMBER2 );
+     current_image_snr_array= malloc( sizeof( double ) * NUMBER2 );
+     if ( current_image_mag_array != NULL && current_image_snr_array != NULL ) {
+      extract_mag_and_snr_from_structStar( STAR2, (size_t)NUMBER2, current_image_mag_array, current_image_snr_array );
+      lim_mag_success= 0;
+      raw_limiting_mag= get_detection_limit_sn( current_image_mag_array, current_image_snr_array, (size_t)NUMBER2, MIN_SNR_TRANSIENT_DETECTION, &lim_mag_success );
+      if ( lim_mag_success == 1 && wpolyfit_exit_code == 0 ) {
+       // Transform using calibration coefficients (same formula as for star magnitudes)
+       if ( param_use_photocurve != 0 ) {
+        transformed_limiting_mag= eval_photocurve( raw_limiting_mag, poly_coeff, param_use_photocurve );
+       } else {
+        transformed_limiting_mag= poly_coeff[2] * raw_limiting_mag * raw_limiting_mag + poly_coeff[1] * raw_limiting_mag + poly_coeff[0];
        }
       }
-      if ( current_image_mag_array != NULL )
-       free( current_image_mag_array );
-      if ( current_image_snr_array != NULL )
-       free( current_image_snr_array );
      }
-     // Write to vast_limiting_magnitude.log
-     if ( vast_limiting_mag_log != NULL ) {
-      fprintf( vast_limiting_mag_log, "%s  %.4f  %.4f\n", input_images[n], raw_limiting_mag, transformed_limiting_mag );
-     }
+     if ( current_image_mag_array != NULL )
+      free( current_image_mag_array );
+     if ( current_image_snr_array != NULL )
+      free( current_image_snr_array );
+    }
+    // Write to vast_limiting_magnitude.log
+    if ( vast_limiting_mag_log != NULL ) {
+     fprintf( vast_limiting_mag_log, "%s  %.4f  %.4f\n", input_images[n], raw_limiting_mag, transformed_limiting_mag );
     }
 
     if ( wpolyfit_exit_code == 0 ) {

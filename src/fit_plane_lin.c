@@ -46,6 +46,11 @@ static inline double ab( double *a, double *b, unsigned int n ) {
 void fit_plane_lin( double *x, double *y, double *z, unsigned int N, double *A, double *B, double *C ) {
  double da[9];
  double db[3];
+ gsl_matrix_view m;
+ gsl_vector_view b;
+ gsl_vector *vector_x;
+ int s;
+ gsl_permutation *p;
 
  da[0]= aa( x, N );
  da[1]= ab( y, x, N );
@@ -61,14 +66,12 @@ void fit_plane_lin( double *x, double *y, double *z, unsigned int N, double *A, 
  db[1]= ab( z, y, N );
  db[2]= a( z, N );
 
- gsl_matrix_view m= gsl_matrix_view_array( da, 3, 3 );
- gsl_vector_view b= gsl_vector_view_array( db, 3 );
+ m= gsl_matrix_view_array( da, 3, 3 );
+ b= gsl_vector_view_array( db, 3 );
 
- gsl_vector *vector_x= gsl_vector_alloc( 3 );
+ vector_x= gsl_vector_alloc( 3 );
 
- int s;
-
- gsl_permutation *p= gsl_permutation_alloc( 3 );
+ p= gsl_permutation_alloc( 3 );
 
  gsl_linalg_LU_decomp( &m.matrix, p, &s );
 

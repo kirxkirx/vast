@@ -2233,6 +2233,13 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  struct Triangle *tr1, *tr2;
  struct Ecv_triangles *ecv_tr;
  int Number1, Number2, key, n, Nt1, Nt2, nm;
+ int m;
+ float dx, dy;
+ unsigned int ii, iii;
+ double Ax, Bx, Cx, Ay, By, Cy;
+ double *x;
+ double *y;
+ double *z;
 
  // Set the number of reference stars based on the requested nuber supplied to his function as struct_pixel_coordinate_transformation->Number_of_main_star .
  Number1= (int)( (double)( struct_pixel_coordinate_transformation->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
@@ -2270,7 +2277,6 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  }
  // Now we make local copies of the reference star list (STAR3) and the list of stars detected on the current image
  // (STAR2). We may be requested to skip the first START_NUMBER3 or START_NUMBER2 stars in the structure if needed.
- int m;
  for ( n= START_NUMBER3, m= 0; n < NUMBER3; n++, m++ )
   Star_Copy( star1 + m, STAR3 + n );
  for ( n= START_NUMBER2, m= 0; n < NUMBER2; n++, m++ )
@@ -2386,26 +2392,26 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   // Now, if the match is good - we try to further refine the coordinate transoformation
   // if ( nm >= min_number_of_matched_stars ) {
   fprintf( stderr, "refining the coordinate transformation... " );
-  float dx, dy;                                                // coordinate corrections for a given star
-  unsigned int ii, iii;                                        // counters
-  double Ax, Bx, Cx, Ay, By, Cy;                               // coefficients for the two planes which will describe the residuals
-                                                               // in x (dx=Ax*x+Bx*y+Cx) and y (dy=Ay*x+By*y+Cy).
-                                                               // We will fit these two planes to the remaining systematic
-                                                               // residuals (dx,dy) and will compensate for them.
-  double *x= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // x coordinate of stars on the current frame
+  // coordinate corrections for a given star (dx, dy)
+  // counters (ii, iii)
+  // coefficients for the two planes which will describe the residuals
+  // in x (dx=Ax*x+Bx*y+Cx) and y (dy=Ay*x+By*y+Cy).
+  // We will fit these two planes to the remaining systematic
+  // residuals (dx,dy) and will compensate for them.
+  x= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // x coordinate of stars on the current frame
   if ( x == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
    exit( EXIT_FAILURE );
   };
-  double *y= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // y coordinate of stars on the current frame
+  y= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // y coordinate of stars on the current frame
   if ( y == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
    exit( EXIT_FAILURE );
   };
-  double *z= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // difference between the measured coordinates
-                                                               // and thouse assumed to be correct (measured
-                                                               // on the reference frame or avarage star position
-                                                               // from multiple frames (in the reference frame coordinate system).
+  z= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // difference between the measured coordinates
+                                                        // and thouse assumed to be correct (measured
+                                                        // on the reference frame or avarage star position
+                                                        // from multiple frames (in the reference frame coordinate system).
 
   if ( z == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );

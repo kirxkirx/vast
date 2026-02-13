@@ -29,11 +29,6 @@ int main() {
  FILE *lightcurvefile;
 
  double *a;
- a= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
- if ( a == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for array a(observations_per_star.c)\n" );
-  exit( EXIT_FAILURE );
- };
  double mean;
  double median;
  double max;
@@ -42,6 +37,12 @@ int main() {
  int number_of_stars= 0;
 
  char str[2048];
+
+ a= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+ if ( a == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for array a(observations_per_star.c)\n" );
+  exit( EXIT_FAILURE );
+ };
 
  dp= opendir( "./" );
  if ( dp != NULL ) {

@@ -220,12 +220,15 @@ static float quickselect( float *arr, int left, int right, int k ) {
 
 /* Find median of n floats using quickselect - O(n) average time */
 static float median_of_n( float *arr, int n ) {
+ float lower;
+ float upper;
+
  if ( n % 2 == 1 ) {
   return quickselect( arr, 0, n - 1, n / 2 );
  } else {
   /* For even n, find both middle elements */
-  float lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
-  float upper= quickselect( arr, 0, n - 1, n / 2 );
+  lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
+  upper= quickselect( arr, 0, n - 1, n / 2 );
   return 0.5f * ( lower + upper );
  }
 }
@@ -239,13 +242,14 @@ static void median_filter( const float *input, float *output, long width, long h
  long xi, yi;
  int window_size= filter_size * filter_size;
  int is_interior;
+ float *thread_work_buffer;
 
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel private( x, i, j, idx, xi, yi, is_interior )
+#pragma omp parallel private( x, i, j, idx, xi, yi, is_interior, thread_work_buffer )
  {
   /* Each thread gets its own work buffer */
-  float *thread_work_buffer= malloc( window_size * sizeof( float ) );
+  thread_work_buffer= malloc( window_size * sizeof( float ) );
   if ( thread_work_buffer != NULL ) {
 #pragma omp for
    for ( y= 0; y < height; y++ ) {
@@ -426,6 +430,9 @@ static int lacosmic_process( float *image, unsigned char *crmask, long width, lo
  int iter;
  int total_cr= 0;
  int new_cr;
+ float f;
+ int cond1;
+ int cond2;
 
  /* Allocate working arrays */
  float *upsampled= malloc( npix_2x * sizeof( float ) );
@@ -493,7 +500,7 @@ static int lacosmic_process( float *image, unsigned char *crmask, long width, lo
   median_filter( image, med3_img, width, height, 3, work_buffer );
   median_filter( med3_img, med7_img, width, height, 7, work_buffer );
   for ( i= 0; i < npix; i++ ) {
-   float f= ( med3_img[i] - med7_img[i] ) / noise[i];
+   f= ( med3_img[i] - med7_img[i] ) / noise[i];
    fine_struct[i]= ( f > 0.01f ) ? f : 0.01f;
   }
 
@@ -501,8 +508,8 @@ static int lacosmic_process( float *image, unsigned char *crmask, long width, lo
   /* cr_mask1: S' > cr_threshold */
   /* cr_mask2: S'/F > contrast */
   for ( i= 0; i < npix; i++ ) {
-   int cond1= ( snr_medsub[i] > cr_threshold );
-   int cond2= ( ( snr_medsub[i] / fine_struct[i] ) > contrast );
+   cond1= ( snr_medsub[i] > cr_threshold );
+   cond2= ( ( snr_medsub[i] / fine_struct[i] ) > contrast );
    iter_mask[i]= ( cond1 && cond2 ) ? 1 : 0;
   }
 
@@ -686,6 +693,10 @@ static int write_fits_image( const char *filename, float *data, long *naxes,
  int ii;
  char history[FLEN_CARD];
  int output_bitpix;
+ float val;
+ short *short_data;
+ double bzero_val;
+ double bscale_val;
 
  /* For integer output, we need to clip values and convert */
  unsigned short *ushort_data= NULL;
@@ -741,7 +752,7 @@ static int write_fits_image( const char *filename, float *data, long *naxes,
    return -1;
   }
   for ( i= 0; i < npixels; i++ ) {
-   float val= data[i];
+   val= data[i];
    if ( val < 0.0f )
     val= 0.0f;
    if ( val > 255.0f )
@@ -754,42 +765,39 @@ static int write_fits_image( const char *filename, float *data, long *naxes,
 
  case SHORT_IMG:
   /* For 16-bit unsigned output, we need to set BZERO=32768 and convert manually */
-  {
-   short *short_data;
-   double bzero_val= 32768.0;
-   double bscale_val= 1.0;
+  bzero_val= 32768.0;
+  bscale_val= 1.0;
 
-   short_data= malloc( npixels * sizeof( short ) );
-   if ( short_data == NULL ) {
-    fprintf( stderr, "ERROR: Couldn't allocate memory for output conversion\n" );
-    fits_close_file( fptr, &status );
-    return -1;
-   }
-
-   /* Set BZERO and BSCALE for unsigned 16-bit representation */
-   fits_update_key( fptr, TDOUBLE, "BZERO", &bzero_val, "offset for unsigned 16-bit", &status );
-   fits_update_key( fptr, TDOUBLE, "BSCALE", &bscale_val, "scale factor", &status );
-
-   /* Convert float to signed short: stored = physical - BZERO */
-   for ( i= 0; i < npixels; i++ ) {
-    float val= data[i];
-    /* Clip to valid unsigned 16-bit range */
-    if ( val < 1.0f )
-     val= 1.0f; /* Avoid 0 to not confuse VaST flag image */
-    if ( val > 65534.0f )
-     val= 65534.0f;
-    /* Convert physical value to stored value */
-    short_data[i]= (short)( val - 32768.0f + 0.5f );
-   }
-
-   /* Tell CFITSIO not to apply scaling when writing (we already did it) */
-   fits_set_bscale( fptr, 1.0, 0.0, &status );
-   fits_write_img( fptr, TSHORT, 1, npixels, short_data, &status );
-   /* Restore proper BZERO for reading */
-   fits_set_bscale( fptr, 1.0, 32768.0, &status );
-
-   free( short_data );
+  short_data= malloc( npixels * sizeof( short ) );
+  if ( short_data == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for output conversion\n" );
+   fits_close_file( fptr, &status );
+   return -1;
   }
+
+  /* Set BZERO and BSCALE for unsigned 16-bit representation */
+  fits_update_key( fptr, TDOUBLE, "BZERO", &bzero_val, "offset for unsigned 16-bit", &status );
+  fits_update_key( fptr, TDOUBLE, "BSCALE", &bscale_val, "scale factor", &status );
+
+  /* Convert float to signed short: stored = physical - BZERO */
+  for ( i= 0; i < npixels; i++ ) {
+   val= data[i];
+   /* Clip to valid unsigned 16-bit range */
+   if ( val < 1.0f )
+    val= 1.0f; /* Avoid 0 to not confuse VaST flag image */
+   if ( val > 65534.0f )
+    val= 65534.0f;
+   /* Convert physical value to stored value */
+   short_data[i]= (short)( val - 32768.0f + 0.5f );
+  }
+
+  /* Tell CFITSIO not to apply scaling when writing (we already did it) */
+  fits_set_bscale( fptr, 1.0, 0.0, &status );
+  fits_write_img( fptr, TSHORT, 1, npixels, short_data, &status );
+  /* Restore proper BZERO for reading */
+  fits_set_bscale( fptr, 1.0, 32768.0, &status );
+
+  free( short_data );
   break;
 
  case LONG_IMG:

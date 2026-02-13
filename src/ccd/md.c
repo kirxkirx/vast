@@ -11,6 +11,7 @@
 #include "../vast_limits.h" // for MAX( A, B)
 
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
+#define OVERSCAN_BINSIZE 8
 
 // This function will check if a record indicates the image has already been calibrated
 int check_history_keywords( char *record ) {
@@ -27,9 +28,17 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  //
 
  int i; // counter
-
- int posY= (int)( naxes[1] / 2 + 0.5 );
+ int posY;
  double *img_profile;
+ double left[OVERSCAN_BINSIZE];
+ double right[OVERSCAN_BINSIZE];
+ int right_ind;
+ double left_median;
+ double right_median;
+ double median;
+ unsigned short min_real_count_estimate;
+
+ posY= (int)( naxes[1] / 2 + 0.5 );
 
  if ( naxes[0] <= 0 ) {
   fprintf( stderr, "ERROR in detect_overscan2(): invalid value of naxes[0]=%ld\n", naxes[0] );
@@ -46,13 +55,8 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
   img_profile[i - posY * naxes[0]]= (double)image_array[i];
  }
 
- // int binsize= 64;
- int binsize= 8;
-
- double left[binsize];
- double right[binsize];
- int right_ind= naxes[0] - 1; // index for right part
- for ( i= 0; i < binsize; i++ ) {
+ right_ind= naxes[0] - 1; // index for right part
+ for ( i= 0; i < OVERSCAN_BINSIZE; i++ ) {
   left[i]= img_profile[i];
   right[i]= img_profile[right_ind - i];
  }
@@ -61,12 +65,12 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  free( img_profile );
 
  // sorting both parts of the image
- gsl_sort( left, 1, binsize );
- gsl_sort( right, 1, binsize );
+ gsl_sort( left, 1, OVERSCAN_BINSIZE );
+ gsl_sort( right, 1, OVERSCAN_BINSIZE );
 
  // calculating medians
- double left_median= gsl_stats_median_from_sorted_data( left, 1, binsize );
- double right_median= gsl_stats_median_from_sorted_data( right, 1, binsize );
+ left_median= gsl_stats_median_from_sorted_data( left, 1, OVERSCAN_BINSIZE );
+ right_median= gsl_stats_median_from_sorted_data( right, 1, OVERSCAN_BINSIZE );
 
  // do not test if the values seem high
  if ( left_median > 5000 && right_median > 5000 ) {
@@ -75,7 +79,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  }
 
  // getting median value of overscan
- double median= ( left_median < right_median ) ? left_median : right_median;
+ median= ( left_median < right_median ) ? left_median : right_median;
  if ( fabs( left_median - right_median ) < 10 * sqrt( median ) ) {
   fprintf( stdout, "No overscan detected! (left_median=%.1lf, right_median=%.1lf, sqrt(median)=%lf)\n", left_median, right_median, sqrt( median ) );
   return MIN_REAL_COUNT;
@@ -84,7 +88,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  // unsigned short min_real_count_estimate= (unsigned short)( median + 10 * sqrt( median ) );
  median= ( left_median > right_median ) ? left_median : right_median;
  // unsigned short min_real_count_estimate= (unsigned short)( median - 10 * sqrt( median ) );
- unsigned short min_real_count_estimate= (unsigned short)( MIN( left_median, right_median ) + 10 * sqrt( median ) );
+ min_real_count_estimate= (unsigned short)( MIN( left_median, right_median ) + 10 * sqrt( median ) );
  fprintf( stdout, "Overscan detected!  (left_median=%.1lf, right_median=%.1lf, sqrt(median)=%lf)\n", left_median, right_median, sqrt( median ) );
  return MAX( min_real_count_estimate, MIN_REAL_COUNT );
 }
@@ -113,6 +117,7 @@ int main( int argc, char *argv[] ) {
  int No_of_keys;
  int keys_left;
  long ii, j; // counters
+ int img_size;
 
  double bzero= 32768.0;
 
@@ -169,7 +174,7 @@ int main( int argc, char *argv[] ) {
  fits_get_img_type( fptr, &bitpix2, &status );
 
  // allocate memory
- int img_size= naxes[0] * naxes[1];
+ img_size= naxes[0] * naxes[1];
  if ( img_size <= 0 ) {
   fprintf( stderr, "ERROR: negative or zero image size\n" );
   exit( EXIT_FAILURE );
@@ -238,7 +243,7 @@ int main( int argc, char *argv[] ) {
  // min=0;
  fprintf( stderr, "Minimal real count (from overscan): %d\n", min );
 
- /* Делим на плоское поле */
+ /* О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ */
  for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
   // if( image_array[i] > min && float_flat_array[i] > min ){
   if ( float_flat_array[i] > min ) {

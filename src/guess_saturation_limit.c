@@ -533,6 +533,8 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  double sigma_estimated_from_MAD;
  double pixel_value_threshold= MIN_PIX_VALUE; // set to the default value so the compiler is happy
 
+ long naxes3;
+
  totpix= 0;   // reset
  median= 0.0; // reset
 
@@ -566,7 +568,6 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
 
   if ( status || naxis != 2 ) {
    if ( naxis == 3 ) {
-    long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 && naxes3 != 3 ) {
      fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (2)\n", naxis );
@@ -666,7 +667,6 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
 
   if ( status || naxis != 2 ) {
    if ( naxis == 3 ) {
-    long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 && naxes3 != 3 ) {
      fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (5)\n", naxis );
@@ -1169,6 +1169,8 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
 
  char str[256]; // for TSTRING type keys from FITS header
 
+ long naxes3;
+
  // do nothing if we don't need to
  if ( operation_mode == 0 ) {
   resulting_sextractor_cl_parameter_string[0]= '\0';
@@ -1199,7 +1201,6 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
 
   if ( status || naxis != 2 ) {
    if ( naxis == 3 ) {
-    long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 && naxes3 != 3 ) {
      fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (7)\n", naxis );

@@ -2062,6 +2062,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   
   echo "Plate-solving the images" | tee -a transient_factory_test31.txt
+  # Clean up UCAC5 server status log from previous run
+  rm -f ucac5_server_status.log
   # WCS-calibration (plate-solving)
   # This modified code should allow us to wait for plate solutions while allowing util/comets.sh et al. to run in the background
   declare -a calibrationPIDs  # Declare an array to hold PIDs
@@ -2124,6 +2126,12 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
    echo "ERROR found an unsoved plate in the field $FIELD" | tee -a transient_factory_test31.txt
+   # Dump UCAC5 server status log if it exists, to help diagnose which server(s) failed
+   if [ -s ucac5_server_status.log ];then
+    echo "=== UCAC5 server status log ===" | tee -a transient_factory_test31.txt
+    cat ucac5_server_status.log | tee -a transient_factory_test31.txt
+    echo "===============================" | tee -a transient_factory_test31.txt
+   fi
    break # no I actually want to abort on platte solve failure
    #continue
   fi

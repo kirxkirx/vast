@@ -40,6 +40,37 @@ double sgn( double a ) {
 // input_max_pair_diff_sigma - do not form pairs if magnitude difference is more than input_max_pair_diff_sigma*error
 void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs, int input_Nmax, double input_max_pair_diff_sigma, int input_use_time_based_weighting, double *output_J, double *output_K, double *output_L ) {
 
+ int i, j, k, n;
+
+ double J, J_forward, J_backward;
+ double K;
+ double L;
+
+ double mean_magnitude, old_mean_magnitude;
+
+ double a, b;
+
+ double *P;
+ double di, dj;
+
+ double sum, sum_w;
+
+ double sqrt_n_nm1;
+
+ double ws_binning_days; // Maximum time difference between points to form a pair
+                         // Will be set to a total lightcurve duration if time-based weighting is requested
+                         // by setting input_use_time_based_weighting=1
+ double dt;              //  the median of all pair time spans t_i+1 - t_i
+
+#ifdef DEBUGFILES
+ FILE *debugfile_sortedLC;
+ FILE *debugfile_stetsonJpair1;
+ FILE *debugfile_stetsonJpair2;
+ FILE *debugfile_stetsonJisolated;
+#endif
+
+ double *w;
+
 #ifdef DISABLE_INDEX_STETSON_JKL
  if ( DEFAULT_MAX_PAIR_DIFF_SIGMA == input_max_pair_diff_sigma && 0 == input_use_time_based_weighting ) {
   ( *output_J )= 0.0;
@@ -75,41 +106,14 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
   return;
  }
 
- int i, j, k, n;
+ ws_binning_days= WS_BINNING_DAYS;
+ dt= 1.0; // we initialize it to 1 to silance the compiler warning -Wmaybe-uninitialized
 
- double J, J_forward, J_backward;
- double K;
- double L;
-
- double mean_magnitude, old_mean_magnitude;
-
- double a, b;
-
- double *P= malloc( 4 * input_Nobs * sizeof( double ) );
+ P= malloc( 4 * input_Nobs * sizeof( double ) );
  if ( P == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for array P\n" );
   exit( EXIT_FAILURE );
  };
- double di, dj;
-
- double sum, sum_w;
-
- double sqrt_n_nm1;
-
- double ws_binning_days= WS_BINNING_DAYS; // Maximum time difference between points to form a pair
-                                          // Will be set to a total lightcurve duration if time-based weighting is requested
-                                          // by setting input_use_time_based_weighting=1
- double dt;                               //  the median of all pair time spans t_i+1 - t_i
- dt= 1.0;                                 // we initialize it to 1 to silance the compiler warning -Wmaybe-uninitialized
-
-#ifdef DEBUGFILES
- FILE *debugfile_sortedLC;
- FILE *debugfile_stetsonJpair1;
- FILE *debugfile_stetsonJpair2;
- FILE *debugfile_stetsonJisolated;
-#endif
-
- double *w;
 
  // Why 4?
  w= malloc( 4 * input_Nobs * sizeof( double ) );
@@ -403,16 +407,16 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
 
 double sign_only_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs ) {
 
-#ifdef DISABLE_INDEX_WELCH_STETSON_SIGN_ONLY
- return 0.0;
-#endif
-
  double I, I_forward; //,I_backward;
  int i, n;
 
  double mean_magnitude, sum;
 
  double *w;
+
+#ifdef DISABLE_INDEX_WELCH_STETSON_SIGN_ONLY
+ return 0.0;
+#endif
 
  w= malloc( input_Nobs * sizeof( double ) );
  if ( w == NULL ) {
@@ -456,10 +460,6 @@ double sign_only_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_ind
 
 double classic_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs ) {
 
-#ifdef DISABLE_INDEX_WELCH_STETSON
- return 0.0;
-#endif
-
  double I, I_forward, I_backward;
  int i, n;
 
@@ -471,6 +471,10 @@ double classic_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index
 #endif
 
  double *w;
+
+#ifdef DISABLE_INDEX_WELCH_STETSON
+ return 0.0;
+#endif
  w= malloc( input_Nobs * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory\n" );
@@ -615,13 +619,13 @@ double compute_IQR_of_sorted_data( double *sorted_data, int n ) {
 }
 
 double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
-#ifdef DISABLE_INDEX_IQR
- return 0.0;
-#endif
-
  double IQR; // the result
  double *x;  // copy of the input dataset that will be sorted
  int i;      // counter
+
+#ifdef DISABLE_INDEX_IQR
+ return 0.0;
+#endif
 
  // allocate memory
  x= malloc( n * sizeof( double ) );
@@ -1026,17 +1030,19 @@ double unbiased_estimation_of_standard_deviation_assuming_Gaussian_dist( double 
 }
 
 double N3_consecutive_samesign_deviations_in_sorted_lightcurve( size_t *input_array_index_p, double *input_m, int input_Nobs ) {
-#ifdef DISABLE_INDEX_N3
- return 0.0;
-#endif
-
  int i;     // a counter
- int N3= 0; // the result
+ int N3;    // the result
 
  double *data; // array to compute median
 
  double median;              // median magnitude of the lightcurve
  double mad_scaled_to_sigma; // MAD scaled to sigma
+
+#ifdef DISABLE_INDEX_N3
+ return 0.0;
+#endif
+
+ N3= 0;
 
  data= malloc( input_Nobs * sizeof( double ) );
  if ( data == NULL ) {
@@ -1071,14 +1077,14 @@ double N3_consecutive_samesign_deviations_in_sorted_lightcurve( size_t *input_ar
 }
 
 double lag1_autocorrelation_of_unsorted_lightcurve( double *JD, double *m, int N ) {
-#ifdef DISABLE_INDEX_LAG1_AUTOCORRELATION
- return 0.0;
-#endif
-
  int i;
  double result;
  double *data_x;
  double *data_y;
+
+#ifdef DISABLE_INDEX_LAG1_AUTOCORRELATION
+ return 0.0;
+#endif
 
  data_x= malloc( N * sizeof( double ) );
  if ( data_x == NULL ) {
@@ -1106,11 +1112,7 @@ double lag1_autocorrelation_of_unsorted_lightcurve( double *JD, double *m, int N
 }
 
 double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m, double *merr, int N_points_in_lightcurve ) {
-#ifdef DISABLE_INDEX_EXCURSIONS
- return 0.0;
-#endif
-
- double result= 0.0;
+ double result;
  int i, j, n_scan, n_scan_alloc; // counters
  double **scan_mag;
  double **scan_err;
@@ -1122,10 +1124,17 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
 
  int *points_in_scans;
 
- int scan_stop= 0;
+ int scan_stop;
 
  // Stuff for mean comparison
  double mean1, sigma1, mean2, sigma2;
+
+#ifdef DISABLE_INDEX_EXCURSIONS
+ return 0.0;
+#endif
+
+ result= 0.0;
+ scan_stop= 0;
 
  points_in_scans= malloc( N_points_in_lightcurve * sizeof( int ) );
  if ( points_in_scans == NULL ) {
@@ -1282,12 +1291,13 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
 
 // p is the array index
 double vonNeumann_ratio_eta_from_sorted_lightcurve( size_t *p, double *m, int N_points_in_lightcurve ) {
-#ifdef DISABLE_INDEX_VONNEUMANN_RATIO
- return 0.0;
-#endif
  double eta;
  double delta_squared, variance;
  int i; // just a counter
+
+#ifdef DISABLE_INDEX_VONNEUMANN_RATIO
+ return 0.0;
+#endif
 
  if ( N_points_in_lightcurve < 2 ) {
   fprintf( stderr, "ERROR in vonNeumann_ratio_eta_from_sorted_lightcurve(): N_points_in_lightcurve=%d<2\n", N_points_in_lightcurve );
@@ -1309,9 +1319,6 @@ double vonNeumann_ratio_eta_from_sorted_lightcurve( size_t *p, double *m, int N_
 }
 
 double excess_Abbe_value_from_sorted_lightcurve( size_t *p, double *JD, double *m, int N_points_in_lightcurve ) {
-#ifdef DISABLE_INDEX_EXCESS_ABBE_E_A
- return 0.0;
-#endif
  double E_A;   // the excess Abbe value
  double A;     // the Abbe value (eta/2) for the whole lightcurve
  double Asub;  // the Abbe value (eta/2) for a section of the lightcurve
@@ -1326,6 +1333,10 @@ double excess_Abbe_value_from_sorted_lightcurve( size_t *p, double *JD, double *
  double *JD_for_Asub;    // array to store dates of the lightcurve subsection
  double *m_for_Asub;     // array to store the lightcurve subsection
  size_t *index_for_Asub; // index to sort the lightcurve subsection
+
+#ifdef DISABLE_INDEX_EXCESS_ABBE_E_A
+ return 0.0;
+#endif
 
  if ( N_points_in_lightcurve < 2 ) {
   fprintf( stderr, "ERROR in excess_Abbe_value_from_sorted_lightcurve(): N_points_in_lightcurve=%d<2\n", N_points_in_lightcurve );
@@ -1417,15 +1428,15 @@ double excess_Abbe_value_from_sorted_lightcurve( size_t *p, double *JD, double *
 }
 
 double SB_variability_detection_statistic_of_sorted_lightcurve( size_t *p, double *m, double *merr, int N ) {
-#ifdef DISABLE_INDEX_SB
- return 0.0;
-#endif
-
  double SB;
  int i, j; // counter
  int M;    // is the number of groups of time-consecutive residuals of the same sign from a constant-brightness lightcurve model
  double group_sum;
  double mean_mag;
+
+#ifdef DISABLE_INDEX_SB
+ return 0.0;
+#endif
 
  mean_mag= gsl_stats_mean( m, 1, N );
 
@@ -1460,13 +1471,16 @@ double SB_variability_detection_statistic_of_sorted_lightcurve( size_t *p, doubl
 }
 
 double Normalized_excess_variance( double *m, double *merr, int N ) {
+ int i;              // counter
+ double result;      // result will be stored in this variable
+ double mean;        // weighted(?) mean magnitude
+
 #ifdef DISABLE_INDEX_NXS
  return 0.0;
 #endif
 
- int i;              // counter
- double result= 0.0; // result will be stored in this variable
- double mean= 0.0;   // weighted(?) mean magnitude
+ result= 0.0;
+ mean= 0.0;
 
  // compute mean magnitude
  mean= gsl_stats_mean( m, 1, N );
@@ -1490,10 +1504,6 @@ double Normalized_excess_variance( double *m, double *merr, int N ) {
 
 // Original version using full sort - kept for reference/comparison
 double compute_RoMS__fullsort( double *unsorted_m, double *unsorted_merr, int N ) {
-#ifdef DISABLE_INDEX_ROMS
- return 0.0;
-#endif
-
  double out_RoMS; // result will be stored here
  int i;           // counter
 
@@ -1501,6 +1511,10 @@ double compute_RoMS__fullsort( double *unsorted_m, double *unsorted_merr, int N 
  double median_m; // median mag.
 
  double *x; // a copy of the input array that will be sorted to compute median
+
+#ifdef DISABLE_INDEX_ROMS
+ return 0.0;
+#endif
 
  // allocate memory
  x= malloc( N * sizeof( double ) );
@@ -1530,14 +1544,14 @@ double compute_RoMS__fullsort( double *unsorted_m, double *unsorted_merr, int N 
 
 // Optimized version using quickselect - O(n) instead of O(n log n) for finding median
 double compute_RoMS( double *unsorted_m, double *unsorted_merr, int N ) {
-#ifdef DISABLE_INDEX_ROMS
- return 0.0;
-#endif
-
  double out_RoMS; // result will be stored here
  int i;           // counter
  double median_m; // median mag.
  double *x;       // a copy of the input array
+
+#ifdef DISABLE_INDEX_ROMS
+ return 0.0;
+#endif
 
  // allocate memory for copy (quickselect modifies the array)
  x= malloc( N * sizeof( double ) );
@@ -1578,12 +1592,13 @@ double compute_chi2( double *m, double *merr, int N ) {
 }
 
 double compute_peak_to_peak_AGN_v( double *m, double *merr, int N ) {
-#ifdef DISABLE_INDEX_PEAK_TO_PEAK_AGN_V
- return 0.0;
-#endif
  int i;                                      // counter
  double peak_to_peak_AGN_v;                  // result will be stored here
  double m_minus_sigma_max, m_plus_sigma_min; // extreme mag. values
+
+#ifdef DISABLE_INDEX_PEAK_TO_PEAK_AGN_V
+ return 0.0;
+#endif
  m_minus_sigma_max= m[0] - merr[0];
  m_plus_sigma_min= m[0] + merr[0];
  for ( i= 1; i < N; i++ ) {

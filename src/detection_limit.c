@@ -38,10 +38,11 @@ static int residuals_f( const gsl_vector *x, void *params, gsl_vector *f ) {
  struct fit_data *data= (struct fit_data *)params;
  double p0= gsl_vector_get( x, 0 );
  double p1= gsl_vector_get( x, 1 );
+ double model_sn;
  size_t i;
 
  for ( i= 0; i < data->n; i++ ) {
-  double model_sn= sn_model( data->mag[i], (double[]){ p0, p1 } );
+  model_sn= sn_model( data->mag[i], (double[]){ p0, p1 } );
   // Minimize residuals in logarithms for better stability
   gsl_vector_set( f, i, log10( data->sn[i] ) - log10( model_sn ) );
  }
@@ -60,10 +61,19 @@ static double root_f( double x, void *params ) {
 static void make_sn_model( double *mag, double *sn, size_t n, double *params ) {
  const size_t p= 2; // Number of parameters
  struct fit_data data= { n, mag, sn, params };
+ gsl_multifit_function_fdf f;
+ gsl_vector *x;
+ double max_sn;
+ size_t max_sn_idx;
+ double init_p0;
+ double init_p1;
+ const gsl_multifit_fdfsolver_type *T;
+ gsl_multifit_fdfsolver *solver;
+ int status;
+ size_t iter;
  size_t i;
 
  // Setup GSL fitting
- gsl_multifit_function_fdf f;
  f.f= &residuals_f;
  f.df= NULL; // We don't provide analytical derivatives
  f.fdf= NULL;
@@ -72,10 +82,10 @@ static void make_sn_model( double *mag, double *sn, size_t n, double *params ) {
  f.params= &data;
 
  // Initial parameter estimates
- gsl_vector *x= gsl_vector_alloc( p );
+ x= gsl_vector_alloc( p );
  // Compute initial parameters similar to Python version
- double max_sn= 0;
- size_t max_sn_idx= 0;
+ max_sn= 0;
+ max_sn_idx= 0;
  for ( i= 0; i < n; i++ ) {
   if ( sn[i] > max_sn ) {
    max_sn= sn[i];
@@ -84,20 +94,19 @@ static void make_sn_model( double *mag, double *sn, size_t n, double *params ) {
  }
 
  // Set initial parameters
- double init_p0= 0; // Will store median value
- double init_p1= pow( 10, -0.4 * mag[max_sn_idx] ) / ( max_sn * max_sn );
+ init_p0= 0; // Will store median value
+ init_p1= pow( 10, -0.4 * mag[max_sn_idx] ) / ( max_sn * max_sn );
 
  gsl_vector_set( x, 0, init_p0 );
  gsl_vector_set( x, 1, init_p1 );
 
  // Setup solver
- const gsl_multifit_fdfsolver_type *T= gsl_multifit_fdfsolver_lmsder;
- gsl_multifit_fdfsolver *solver= gsl_multifit_fdfsolver_alloc( T, n, p );
+ T= gsl_multifit_fdfsolver_lmsder;
+ solver= gsl_multifit_fdfsolver_alloc( T, n, p );
  gsl_multifit_fdfsolver_set( solver, &f, x );
 
  // Iterate to solve
- int status;
- size_t iter= 0;
+ iter= 0;
  do {
   iter++;
   status= gsl_multifit_fdfsolver_iterate( solver );
@@ -181,27 +190,37 @@ static int find_bracket( gsl_function *F, double x_start, double *x_lo, double *
 
 double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double target_sn,
                                int *success ) {
- size_t i;
- // Fit the model first
  double params[2];
+ struct root_params rp;
+ gsl_function F;
+ double max_mag;
+ double x_lo, x_hi;
+ int bracket_status;
+ const gsl_root_fsolver_type *T;
+ gsl_root_fsolver *solver;
+ int status;
+ size_t iter;
+ double root;
+ size_t i;
+
+ // Fit the model first
  make_sn_model( mag, mag_sn, n, params );
 
  // Setup root finding
- struct root_params rp= { params, target_sn };
- gsl_function F;
+ rp.fitted_params= params;
+ rp.target_sn= target_sn;
  F.function= &root_f;
  F.params= &rp;
 
  // Find maximum magnitude as starting point
- double max_mag= mag[0];
+ max_mag= mag[0];
  for ( i= 1; i < n; i++ ) {
   if ( mag[i] > max_mag )
    max_mag= mag[i];
  }
 
  // Find bracket for root
- double x_lo, x_hi;
- int bracket_status= find_bracket( &F, max_mag, &x_lo, &x_hi );
+ bracket_status= find_bracket( &F, max_mag, &x_lo, &x_hi );
  if ( bracket_status != GSL_SUCCESS ) {
   if ( success != NULL ) {
    *success= 0;
@@ -210,16 +229,15 @@ double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double tar
  }
 
  // Initialize root finder
- const gsl_root_fsolver_type *T= gsl_root_fsolver_brent;
- gsl_root_fsolver *solver= gsl_root_fsolver_alloc( T );
+ T= gsl_root_fsolver_brent;
+ solver= gsl_root_fsolver_alloc( T );
 
  // Setup solver with found bracket
  gsl_root_fsolver_set( solver, &F, x_lo, x_hi );
 
  // Iterate to find root
- int status;
- size_t iter= 0;
- double root= GSL_NAN;
+ iter= 0;
+ root= GSL_NAN;
 
  do {
   iter++;

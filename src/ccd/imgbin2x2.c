@@ -42,6 +42,8 @@ int main( int argc, char **argv ) {
  int bitpix, naxis;
  long naxes[2], fpixel[2];
 
+ float *input_data;
+
  long new_width;
  long new_height;
  float *output_data;
@@ -72,7 +74,7 @@ int main( int argc, char **argv ) {
  }
 
  // Allocate memory for the input image
- float *input_data= (float *)malloc( naxes[0] * naxes[1] * sizeof( float ) );
+ input_data= (float *)malloc( naxes[0] * naxes[1] * sizeof( float ) );
  if ( input_data == NULL ) {
   printf( "Memory allocation error\n" );
   return 1;

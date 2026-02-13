@@ -83,16 +83,17 @@ static double quickselect( double *arr, int left, int right, int k ) {
 
 /* Find median of n doubles using quickselect - O(n) average time */
 static double median_of_n( double *arr, int n ) {
+ double lower;
+ double upper;
+
  if ( n % 2 == 1 ) {
   return quickselect( arr, 0, n - 1, n / 2 );
  }
 
  /* For even n, find both middle elements */
- {
-  double lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
-  double upper= quickselect( arr, 0, n - 1, n / 2 );
-  return 0.5 * ( lower + upper );
- }
+ lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
+ upper= quickselect( arr, 0, n - 1, n / 2 );
+ return 0.5 * ( lower + upper );
 }
 
 void check_and_remove_duplicate_keywords( const char *filename ) {

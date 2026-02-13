@@ -27,6 +27,9 @@ void sort_file( const char *file_name ) {
  double julian_date;
  size_t i;
  int is_sorted= 1; // Assume sorted initially
+ FILE *file;
+ char output_file_name[OUTFILENAME_LENGTH];
+ FILE *output_file;
 
  data_arr= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( Data ) );
  if ( NULL == data_arr ) {
@@ -34,7 +37,7 @@ void sort_file( const char *file_name ) {
   return;
  }
 
- FILE *file= fopen( file_name, "r" );
+ file= fopen( file_name, "r" );
  if ( !file ) {
   sprintf( line, "sort_file() ERROR opening file %s", file_name );
   perror( line );
@@ -88,9 +91,8 @@ void sort_file( const char *file_name ) {
  qsort( data_arr, data_count, sizeof( Data ), compare_julian_date );
 
  // Write sorted data to the output file
- char output_file_name[OUTFILENAME_LENGTH];
  snprintf( output_file_name, sizeof( output_file_name ), "%s.sorted", file_name );
- FILE *output_file= fopen( output_file_name, "w" );
+ output_file= fopen( output_file_name, "w" );
 
  if ( !output_file ) {
   fprintf( stderr, "ERROR opening output file %s\n", output_file_name );
@@ -134,7 +136,11 @@ void sort_file_old( const char *file_name ) {
  double julian_date;
 
  size_t i;
- FILE *file= fopen( file_name, "r" );
+ FILE *file;
+ char output_file_name[OUTFILENAME_LENGTH];
+ FILE *output_file;
+
+ file= fopen( file_name, "r" );
  if ( !file ) {
   sprintf( line, "sort_file() ERROR opening file %s", file_name );
   perror( line );
@@ -165,9 +171,8 @@ void sort_file_old( const char *file_name ) {
  qsort( data_arr, data_count, sizeof( Data ), compare_julian_date );
 
  // Write sorted data to the output file
- char output_file_name[OUTFILENAME_LENGTH];
  snprintf( output_file_name, sizeof( output_file_name ), "%s.sorted", file_name );
- FILE *output_file= fopen( output_file_name, "w" );
+ output_file= fopen( output_file_name, "w" );
 
  if ( !output_file ) {
   fprintf( stderr, "ERROR opening output file %s\n", output_file_name );

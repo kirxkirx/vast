@@ -619,18 +619,14 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  int HIST[65536];
  int summa= 0;
  int hist_summa= 0;
- ( *max_i )= ( *min_i )= im[0];
-
  float X, Y;
-
  int test_i;
-
  int limit;
-
  long number_of_negative_pixels= 0;
  long number_of_nonnegative_pixels= 0;
-
  double fraction_of_negative_pixels= 0;
+
+ ( *max_i )= ( *min_i )= im[0];
 
  // int number_of_pixels_in_zoomed_image;
 
@@ -898,6 +894,12 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  float residual;
  float lcut, hcut;
  double rowrat;
+ float loop_x, loop_z;
+ int ng;
+ double sum_sigma, sumsq_sigma;
+ float pv;
+ double temp_sigma;
+ double xd, zd;
 
  if ( npix <= 0 ) {
   *zstart= 0.0f;
@@ -943,11 +945,11 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  sumz= 0.0;
 
  for ( i= 0; i < npix; i++ ) {
-  float x= normx[i];
-  float z= sample[i];
-  sumxsqr+= x * x;
-  sumxz+= z * x;
-  sumz+= z;
+  loop_x= normx[i];
+  loop_z= sample[i];
+  sumxsqr+= loop_x * loop_x;
+  sumxz+= loop_z * loop_x;
+  sumz+= loop_z;
  }
 
  // Solve for initial line coefficients
@@ -968,23 +970,22 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
 
   // Compute k-sigma threshold using only good pixels
   // Recompute sigma for good pixels
-  {
-   int ng= 0;
-   double sum= 0.0, sumsq= 0.0;
-   for ( i= 0; i < npix; i++ ) {
-    if ( badpix[i] == ZSCALE_GOOD_PIXEL ) {
-     float pv= flat[i];
-     ng++;
-     sum+= pv;
-     sumsq+= pv * pv;
-    }
+  ng= 0;
+  sum_sigma= 0.0;
+  sumsq_sigma= 0.0;
+  for ( i= 0; i < npix; i++ ) {
+   if ( badpix[i] == ZSCALE_GOOD_PIXEL ) {
+    pv= flat[i];
+    ng++;
+    sum_sigma+= pv;
+    sumsq_sigma+= pv * pv;
    }
-   if ( ng > 1 ) {
-    double temp= sumsq / ( ng - 1 ) - ( sum * sum ) / ( ng * ( ng - 1 ) );
-    sigma= ( temp > 0.0 ) ? (float)sqrt( temp ) : 0.0f;
-   } else {
-    sigma= 0.0f;
-   }
+  }
+  if ( ng > 1 ) {
+   temp_sigma= sumsq_sigma / ( ng - 1 ) - ( sum_sigma * sum_sigma ) / ( ng * ( ng - 1 ) );
+   sigma= ( temp_sigma > 0.0 ) ? (float)sqrt( temp_sigma ) : 0.0f;
+  } else {
+   sigma= 0.0f;
   }
 
   threshold= krej * sigma;
@@ -1008,12 +1009,12 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
       if ( badpix[j] != ZSCALE_BAD_PIXEL ) {
        if ( j <= i ) {
         // Already processed or current pixel - mark as bad and subtract
-        double x= normx[j];
-        double z= sample[j];
-        sumxsqr-= x * x;
-        sumxz-= z * x;
-        sumx-= x;
-        sumz-= z;
+        xd= normx[j];
+        zd= sample[j];
+        sumxsqr-= xd * xd;
+        sumxz-= zd * xd;
+        sumx-= xd;
+        sumz-= zd;
         badpix[j]= ZSCALE_BAD_PIXEL;
         ngoodpix--;
        } else {
@@ -1078,6 +1079,8 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  int ngoodpix;
  int minpix;
  int center_pixel;
+ int ds9_line;
+ int ds9_start;
 
  // Calculate sampling parameters
  // Try to get roughly nsample pixels spread evenly across the image
@@ -1111,24 +1114,21 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  // Sample the image (matching DS9 sampling pattern)
  // DS9 samples lines: (line_step+1)/2, (line_step+1)/2 + line_step, ...
  // To match DS9 with Y-flip, we transform each DS9 line index to flipped index
- {
-  int ds9_line;
-  int ds9_start= ( line_step + 1 ) / 2;
-  for ( ds9_line= ds9_start; ds9_line < naxes1; ds9_line+= line_step ) {
-   // Transform DS9 line to pgfv line (Y-flip): pgfv_line = naxes1 - 1 - ds9_line
-   line= naxes1 - 1 - ds9_line;
-   for ( col= 0; col < naxes0; col+= col_step ) {
-    value= im[line * naxes0 + col];
-    // Skip NaN and Inf values (matching DS9 behavior)
-    if ( isfinite( value ) ) {
-     sample[sample_count++]= value;
-     if ( sample_count >= max_sample )
-      break;
-    }
+ ds9_start= ( line_step + 1 ) / 2;
+ for ( ds9_line= ds9_start; ds9_line < naxes1; ds9_line+= line_step ) {
+  // Transform DS9 line to pgfv line (Y-flip): pgfv_line = naxes1 - 1 - ds9_line
+  line= naxes1 - 1 - ds9_line;
+  for ( col= 0; col < naxes0; col+= col_step ) {
+   value= im[line * naxes0 + col];
+   // Skip NaN and Inf values (matching DS9 behavior)
+   if ( isfinite( value ) ) {
+    sample[sample_count++]= value;
+    if ( sample_count >= max_sample )
+     break;
    }
-   if ( sample_count >= max_sample )
-    break;
   }
+  if ( sample_count >= max_sample )
+   break;
  }
 
  if ( sample_count < ZSCALE_MIN_NPIXELS ) {
@@ -1334,12 +1334,6 @@ int main( int argc, char **argv ) {
  float curX, curY, curX2, curY2;
  char curC= 'R';
  float tr[6];
- tr[0]= 0;
- tr[1]= 1;
- tr[2]= 0;
- tr[3]= 0;
- tr[4]= 0;
- tr[5]= 1;
  // int drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
  float drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
  float min_val;
@@ -1415,7 +1409,6 @@ int main( int argc, char **argv ) {
  float marker_offset_pix;
  float marker_length_pix;
  char namelabel[256];
- namelabel[0]= '\0';
 
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS]; // new
 
@@ -1477,6 +1470,97 @@ int main( int argc, char **argv ) {
  float polygondraw_x[5];
  float polygondraw_y[5];
 
+ // Reading file which defines rectangular regions we want to exclude
+ double *X1;
+ double *Y1;
+ double *X2;
+ double *Y2;
+ int max_N_bad_regions_for_malloc;
+ int N_bad_regions= 0;
+
+ int use_ds9= 0; // if 1 - use ds9 instead of pgplot to display an image
+ pid_t pid;
+ char ds9_region_filename[1024];
+
+ ////////////
+ FILE *manymarkersfile;
+ int manymrkerscounter;
+ float manymarkersX[1024];
+ float manymarkersY[1024];
+ char manymarkersstring[2048];
+ ////////////
+
+ char fov_string[1024];
+ float fov_float= 0.0;
+
+ int image_specified_on_command_line__0_is_yes= 0; // 0 - yes, 1 - no, we'll get the image name from log file
+
+ double fixed_aperture= 0.0;
+
+ // for nanosleep()
+ struct timespec requested_time;
+ struct timespec remaining;
+
+ //
+ int is_this_an_hla_image= 0; // 0 - no;  1 - yes; needed only to make proper labels
+
+ //
+ int is_this_north_up_east_left_image= 0; // For N/E labels on the finding chart
+
+ int magnitude_calibration_already_performed_flag= 0; // do not perform the magnitude calibration twice if set to 1
+
+ // Dummy vars
+ double position_x_pix;
+ double position_y_pix;
+
+ // variables to store cpgqvsz output
+ float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
+
+ //
+ int user_request_to_exit_with_nonzero_exit_code= 0;
+
+ // For reading the lightcurve statistics file (used by match_mode == 2)
+ FILE *lightcurve_statistics_file;
+ FILE *lightcurve_file;
+ double jd, x_pix, y_pix, app;
+ char lightcurve_filename[FILENAME_LENGTH];
+ char image_name_in_lightcurve[FILENAME_LENGTH];
+ float irrelevant_x, irrelevant_y; // To hold the X,Y values from stats file that we'll ignore
+ int found_ref_image;
+ double tmp_double;
+ char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+
+ // For aperture storage and median calculation (used by match_mode == 2)
+ float *sextractor_catalog__APP;
+ float *apertures_sorted;
+
+ // For PATH update (used by match_mode == 1, 3, 4)
+ char pathstring[8192];
+ char *env_path;
+
+ int param_nojdkeyword= 0; // Temporary fix!!! pgfv cannot accept the --nojdkeyword parameter yet, only the main program vast understands it
+
+ // Options for getopt()
+ char *cvalue= NULL;
+
+ const char *const shortopt= "a:w:9sdnlftb:";
+ const struct option longopt[]= {
+     { "apeture", 1, NULL, 'a' }, { "width", 1, NULL, 'w' }, { "ds9", 0, NULL, '9' }, { "imgsizestringinsideimg", 0, NULL, 's' }, { "datestringinsideimg", 0, NULL, 'd' }, { "nonortheastmarks", 0, NULL, 'n' }, { "nolabels", 0, NULL, 'l' }, { "targetmark", 0, NULL, 't' }, { "namelabel", 1, NULL, 'b' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
+ int nextopt;
+
+ // Initialize arrays and variables that require executable statements
+ tr[0]= 0;
+ tr[1]= 1;
+ tr[2]= 0;
+ tr[3]= 0;
+ tr[4]= 0;
+ tr[5]= 1;
+ namelabel[0]= '\0';
+ cpgqvsz_x1= cpgqvsz_x2= cpgqvsz_y1= cpgqvsz_y2= 0.0;
+ requested_time.tv_sec= 0;
+ requested_time.tv_nsec= 100000000;
+ pid= getpid();
+
  if ( 0 == strcmp( "make_finder_chart", basename( argv[0] ) ) ) {
   fprintf( stderr, "Plotting finder chart...\n" );
   finder_chart_mode= 1;
@@ -1498,11 +1582,6 @@ int main( int argc, char **argv ) {
  }
 
  // Reading file which defines rectangular regions we want to exclude
- double *X1;
- double *Y1;
- double *X2;
- double *Y2;
- int max_N_bad_regions_for_malloc;
  max_N_bad_regions_for_malloc= count_lines_in_ASCII_file( "bad_region.lst" );
  X1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
  Y1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
@@ -1512,77 +1591,8 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: cannot allocate memory for exclusion regions array X1, Y1, X2, Y2\n" );
   return 1;
  }
- int N_bad_regions= 0;
  read_bad_CCD_regions_lst( X1, Y1, X2, Y2, &N_bad_regions );
 
- int use_ds9= 0; // if 1 - use ds9 instead of pgplot to display an image
- pid_t pid= getpid();
- char ds9_region_filename[1024];
-
- ////////////
- FILE *manymarkersfile;
- int manymrkerscounter;
- float manymarkersX[1024];
- float manymarkersY[1024];
- char manymarkersstring[2048];
- ////////////
-
- char fov_string[1024];
- float fov_float= 0.0;
-
- int image_specified_on_command_line__0_is_yes= 0; // 0 - yes, 1 - no, we'll get the image name from log file
-
- double fixed_aperture= 0.0;
-
- // for nanosleep()
- struct timespec requested_time;
- struct timespec remaining;
- requested_time.tv_sec= 0;
- requested_time.tv_nsec= 100000000;
-
- //
- int is_this_an_hla_image= 0; // 0 - no;  1 - yes; needed only to make proper labels
-
- //
- int is_this_north_up_east_left_image= 0; // For N/E labels on the finding chart
-
- int magnitude_calibration_already_performed_flag= 0; // do not perform the magnitude calibration twice if set to 1
-
- // Dummy vars
- double position_x_pix;
- double position_y_pix;
-
- // variables to store cpgqvsz output
- float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
- cpgqvsz_x1= cpgqvsz_x2= cpgqvsz_y1= cpgqvsz_y2= 0.0;
-
- //
- int user_request_to_exit_with_nonzero_exit_code= 0;
-
- //// New ./pgfv calib
- // For reading the lightcurve statistics file
- // FILE *lightcurve_statistics_file;
- // FILE *lightcurve_file;
- // double jd, x_pix, y_pix, app;
- // char lightcurve_filename[FILENAME_LENGTH];
- // char image_name_in_lightcurve[FILENAME_LENGTH];
- // float irrelevant_x, irrelevant_y; // To hold the X,Y values from stats file that we'll ignore
- // int found_ref_image;
- // double tmp_double;
- // char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-
- // For aperture storage and median calculation
- // float *sextractor_catalog__APP; // New array for aperture values
- // float *apertures_sorted;        // For calculating median aperture
- ////
-
- // Options for getopt()
- char *cvalue= NULL;
-
- const char *const shortopt= "a:w:9sdnlftb:";
- const struct option longopt[]= {
-     { "apeture", 1, NULL, 'a' }, { "width", 1, NULL, 'w' }, { "ds9", 0, NULL, '9' }, { "imgsizestringinsideimg", 0, NULL, 's' }, { "datestringinsideimg", 0, NULL, 'd' }, { "nonortheastmarks", 0, NULL, 'n' }, { "nolabels", 0, NULL, 'l' }, { "targetmark", 0, NULL, 't' }, { "namelabel", 1, NULL, 'b' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
- int nextopt;
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {
   case 'a':
@@ -1886,22 +1896,6 @@ int main( int argc, char **argv ) {
  if ( match_mode == 2 ) {
   // Magnitude calibration mode
 
-  // We probably should move this up
-  // For reading lightcurve files
-  FILE *lightcurve_statistics_file;
-  FILE *lightcurve_file;
-  double jd, x_pix, y_pix, app;
-  char lightcurve_filename[FILENAME_LENGTH];
-  char image_name_in_lightcurve[FILENAME_LENGTH];
-  float irrelevant_x, irrelevant_y; // To hold the X,Y values from the stats file that we'll ignore
-  int found_ref_image;
-  double tmp_double;
-  char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-
-  // For aperture array and median calculation
-  float *sextractor_catalog__APP; // New array for aperture values
-  float *apertures_sorted;        // For calculating median aperture
-
   // Remove old calib.txt
   lightcurve_statistics_file= fopen( "calib.txt", "r" );
   if ( NULL != lightcurve_statistics_file ) {
@@ -2077,7 +2071,6 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "\nERROR: the input file %s does not appear to be a readable FITS image!\n", fits_image_name );
   return 1;
  }
- int param_nojdkeyword= 0; // Temporary fix!!! pgfv cannot accept the --nojdkeyword parameter yet, only the main program vast understands it
  gettime( fits_image_name, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, 0, finder_chart_timestring_output );
  if ( strlen( stderr_output ) < 10 ) {
   fprintf( stderr, "Warning after running gettime(): stderr_output is suspiciously short:\n" );
@@ -2147,8 +2140,7 @@ int main( int argc, char **argv ) {
  if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   // Check if the SExtractor executable (named "sex") is present in $PATH
   // Update PATH variable to make sure the local copy of SExtractor is there
-  char pathstring[8192];
-  char *env_path= getenv( "PATH" );
+  env_path= getenv( "PATH" );
   if ( env_path != NULL ) {
    strncpy( pathstring, env_path, 8192 - 1 - 8 );
    pathstring[8192 - 1 - 8]= '\0';

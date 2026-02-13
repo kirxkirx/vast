@@ -137,6 +137,12 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
  double ap[8]; // an array that holds multiple apertures
 
+ FILE *catalog;
+
+ char psfex_param_filename[512];
+ char psfex_XML_check_filename[512];
+ char psfex_log_entry_filename[512];
+
  /* Check if the file has already been processed */
  if ( 0 == find_catalog_in_vast_images_catalogs_log( fitsfilename, output_sextractor_catalog ) ) {
   sprintf( aperture_filename, "%s.aperture", output_sextractor_catalog );
@@ -277,7 +283,6 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
    return 99.0;
   }
-  FILE *catalog;
   catalog= fopen( sextractor_catalog_filename, "r" );
   if ( catalog == NULL ) {
    sprintf( error_message_string, "ERROR: cannot open SExtractor output catalog file %s\n", sextractor_catalog_filename );
@@ -409,10 +414,6 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   }
  }
  if ( do_PSF_fitting == 1 ) {
-
-  char psfex_param_filename[512];
-  char psfex_XML_check_filename[512];
-  char psfex_log_entry_filename[512];
 
   sprintf( psfex_param_filename, "%s.psfex_param", output_sextractor_catalog );
   sprintf( psfex_XML_check_filename, "%s.psfex_check.xml", output_sextractor_catalog );

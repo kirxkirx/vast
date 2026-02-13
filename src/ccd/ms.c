@@ -34,13 +34,15 @@ int is_bias_frame( fitsfile *fptr ) {
  char imagetyp[FLEN_VALUE];
  int status= 0;
  double exposure= 0.0;
+ char *start;
+ char *end;
 
  // First, try to read IMAGETYP
  fits_read_key( fptr, TSTRING, "IMAGETYP", imagetyp, NULL, &status );
  if ( status == 0 ) {
   // Trim leading and trailing whitespace
-  char *start= imagetyp;
-  char *end= imagetyp + strlen( imagetyp ) - 1;
+  start= imagetyp;
+  end= imagetyp + strlen( imagetyp ) - 1;
 
   while ( *start == ' ' || *start == '\t' )
    start++;

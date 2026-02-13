@@ -6,12 +6,13 @@
 
 void replace_last_slash_with_null( char *original_filename ) {
  int i;
+ int len;
 
  if ( original_filename == NULL ) {
   return;
  }
 
- int len= strlen( original_filename );
+ len= strlen( original_filename );
  // Traverse from the end of the string
  for ( i= len - 1; i >= 0; i-- ) {
   if ( original_filename[i] == '/' ) {
@@ -24,12 +25,13 @@ void replace_last_slash_with_null( char *original_filename ) {
 
 void replace_last_dot_with_null( char *original_filename ) {
  int i;
+ int len;
 
  if ( original_filename == NULL ) {
   return;
  }
 
- int len= strlen( original_filename );
+ len= strlen( original_filename );
  // Traverse from the end of the string
  for ( i= len - 1; i >= 0; i-- ) {
   if ( original_filename[i] == '.' ) {

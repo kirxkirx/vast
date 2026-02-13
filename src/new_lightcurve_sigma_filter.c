@@ -23,11 +23,7 @@ int main( int argc, char **argv ) {
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
- double *mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
- if ( mag_a == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for mag_a(new_lightcurve_sigma_filter.c)\n" );
-  exit( EXIT_FAILURE );
- };
+ double *mag_a;
  double median_mag;
  double mag_sigma;
  int i;
@@ -46,6 +42,12 @@ int main( int argc, char **argv ) {
  char **filenamelist;
  long filename_counter;
  long filenamelen;
+
+ mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
+ if ( mag_a == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for mag_a(new_lightcurve_sigma_filter.c)\n" );
+  exit( EXIT_FAILURE );
+ };
 
  if ( argc < 2 ) {
   fprintf( stderr, "Clean out*dat files from outliers (sigma clip).\n" );

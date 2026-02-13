@@ -9,12 +9,13 @@
 
 int wpolyfit( double *datax, double *datay, double *dataerr, int n, double *poly_coeff, double *chi2_not_reduced ) {
 
- gsl_set_error_handler_off();
-
  int i;
  double xi, yi, ei, chisq;
  gsl_matrix *X, *cov;
  gsl_vector *y, *w, *c;
+ gsl_multifit_linear_workspace *work;
+
+ gsl_set_error_handler_off();
 
  X= gsl_matrix_alloc( n, 3 );
  y= gsl_vector_alloc( n );
@@ -36,7 +37,7 @@ int wpolyfit( double *datax, double *datay, double *dataerr, int n, double *poly
   gsl_vector_set( w, i, 1.0 / ( ei * ei ) );
  }
 
- gsl_multifit_linear_workspace *work= gsl_multifit_linear_alloc( n, 3 );
+ work= gsl_multifit_linear_alloc( n, 3 );
  if ( 0 != gsl_multifit_wlinear( X, w, y, c, cov, &chisq, work ) ) {
   // error - GSL stuff clean up before exit
   gsl_matrix_free( X );
@@ -77,12 +78,13 @@ int wpolyfit( double *datax, double *datay, double *dataerr, int n, double *poly
 
 int wlinearfit( double *datax, double *datay, double *dataerr, int n, double *poly_coeff, double *chi2_not_reduced ) {
 
- gsl_set_error_handler_off();
-
  int i;
  double xi, yi, ei, chisq;
  gsl_matrix *X, *cov;
  gsl_vector *y, *w, *c;
+ gsl_multifit_linear_workspace *work;
+
+ gsl_set_error_handler_off();
 
  // reset poly_coeff[]
  poly_coeff[0]= poly_coeff[1]= poly_coeff[2]= poly_coeff[3]= 0.0;
@@ -109,7 +111,7 @@ int wlinearfit( double *datax, double *datay, double *dataerr, int n, double *po
   // gsl_vector_set(w, i, 1.0 / ei );
  }
 
- gsl_multifit_linear_workspace *work= gsl_multifit_linear_alloc( n, 2 );
+ work= gsl_multifit_linear_alloc( n, 2 );
  if ( 0 != gsl_multifit_wlinear( X, w, y, c, cov, &chisq, work ) ) {
   // error - GSL stuff clean up before exit
   gsl_matrix_free( X );
@@ -154,10 +156,11 @@ int dofit( const gsl_multifit_robust_type *T,
            const gsl_matrix *X, const gsl_vector *y,
            gsl_vector *c, gsl_matrix *cov ) {
  int s;
+ gsl_multifit_robust_workspace *work;
 
  gsl_set_error_handler_off(); // so the program doesn't crash if the the robust fit fails
 
- gsl_multifit_robust_workspace *work= gsl_multifit_robust_alloc( T, X->size1, X->size2 );
+ work= gsl_multifit_robust_alloc( T, X->size1, X->size2 );
 
  // Actually, the program segfaults here under some conditions
  s= gsl_multifit_robust( X, y, c, cov, work );
