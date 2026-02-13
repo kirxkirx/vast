@@ -878,14 +878,16 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
  double APASS_g;
  double APASS_g_err;
 
+ int found_end_marker= 0; // Variable to track if "#END#   " is present
+ int found_vizier_error_marker= 0; // Set to 1 if VizieR internal error is found
+
  f= fopen( vizquery_output_filename, "r" );
  if ( f == NULL ) {
   fprintf( stderr, "ERROR: Cannot open %s for reading in read_PANSTARRS1_from_vizquery()\n", vizquery_output_filename );
   return 1;
  }
  while ( NULL != fgets( string, 1024, f ) ) {
-  if ( string[0] == '#' )
-   continue;
+  // quickly check the first character of the input string
   if ( string[0] == '\n' )
    continue;
   if ( string[0] == '-' )
@@ -893,6 +895,23 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
   if ( string[0] == '_' )
    continue;
   if ( string[0] == ' ' )
+   continue;
+
+  // Check for "#END#   " at the start of the line
+  if ( strncmp( string, "#END#   ", 8 ) == 0 ) {
+   found_end_marker= 1;
+   break; // we are already at the end of input
+  }
+
+  // Check for "#INFO QUERY_STATUS=ERROR" - a sign of VizieR internal error
+  if ( strncmp( string, "#INFO QUERY_STATUS=ERROR", 24 ) == 0 ) {
+   found_vizier_error_marker= 1;
+   fprintf( stderr, "WARNING: found an error message in VizieR response!\n" );
+   break; // VizieR problem
+  }
+
+  // sadly, the following can only be checked after searching for "#END#   "
+  if ( string[0] == '#' )
    continue;
   if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
    continue;
@@ -1022,10 +1041,30 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
   } // for(i=0;i<N;i++)
  }
  fclose( f );
+ if ( 0 != found_end_marker ) {
+  fprintf( stderr, "#END# marker found - VizieR output is complete!\n" );
+ } else {
+  if ( 0 == found_vizier_error_marker ) {
+   fprintf( stderr, "#END# marker NOT found - VizieR output is truncated by network timeout!\n" );
+  }
+ }
  fprintf( stderr, "Matched %d stars with Pan-STARRS1.\n", N_stars_matched_with_photometric_catalog );
  if ( N_stars_matched_with_photometric_catalog < 5 ) {
-  fprintf( stderr, "ERROR: too few stars matched!\n" );
-  return 1;
+  // remove matched with photometric catalog marker from all stars
+  for ( i= 0; i < N; i++ ) {
+   stars[i].matched_with_photometric_catalog= 0;
+  }
+  if ( 0 != found_vizier_error_marker ) {
+   fprintf( stderr, "ERROR: VizieR internal error marker found!\n" );
+   return 1; // return code 1 means 'may retry' - VizieR errors are often transient
+  }
+  if ( 0 != found_end_marker ) {
+   fprintf( stderr, "ERROR: Too few stars matched and #END# marker found!\n" );
+   return 2; // return code 2 means 'do not retry'
+  } else {
+   fprintf( stderr, "ERROR: too few stars matched!\n" );
+   return 1; // return code 1 means 'may retry'
+  }
  }
  return 0;
 }
@@ -1204,7 +1243,7 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
   // Check for an internal VizieR error that will be maked by non-zero value of found_vizier_error_marker
   if ( 0 != found_vizier_error_marker ) {
    fprintf( stderr, "ERROR: VizieR internal error marker found!\n" );
-   return 2; // return code 2 means 'do not retry'
+   return 1; // return code 1 means 'may retry' - VizieR errors are often transient
   }
   // Check if VizieR interaction was a success or was there a network error (if we didn't get the #END# marker)
   if ( 0 != found_end_marker ) {
@@ -2705,6 +2744,9 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
 }
 
 int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+ int backoff_retry_count= 0;
+ int backoff_wait_time_sec= 1;
+
  char command[BASE_COMMAND_LENGTH];
  FILE *vizquery_input;
  int i;
@@ -2754,24 +2796,29 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
+ // Actually vizquery may return 0 on failure, it's the timeout that may return non-zero (while we may still have plenty of good data lines)
  if ( vizquery_run_success != 0 ) {
-  fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
-  sleep( 10 );
-  fprintf( stderr, "%s\n", command );
-  vizquery_run_success= system( command );
-  if ( vizquery_run_success != 0 ) {
-   fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
-   sleep( 10 );
-   fprintf( stderr, "%s\n", command );
-   vizquery_run_success= system( command );
-   if ( vizquery_run_success != 0 ) {
-    fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
-    exit( EXIT_FAILURE );
-   }
-  }
+  fprintf( stderr, "WARNING: it looks like there was a timeout while running lib/vizquery script.\n" );
  }
 
  vizquery_run_success= read_PANSTARRS1_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
+ // If the output of vizquery looks bad or empty or whatever - this is when we retry
+ // read_PANSTARRS1_from_vizquery returns 2 if the VizieR interaction was a success, but there are just too few stars
+ while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 3 ) {
+  backoff_retry_count= backoff_retry_count + 1;
+  backoff_wait_time_sec= backoff_wait_time_sec * 2;
+  fprintf( stderr, "WARNING: some problem reading the vizquery output for Pan-STARRS1. Is this an internet connection problem? Retrying in %d sec...\n", backoff_wait_time_sec );
+  sleep( backoff_wait_time_sec );
+  fprintf( stderr, "%s\n", command );
+  vizquery_run_success= system( command );
+  if ( vizquery_run_success != 0 ) {
+   fprintf( stderr, "WARNING: it looks like there was a timeout while running lib/vizquery script. (retry %d)\n", backoff_retry_count );
+  }
+  vizquery_run_success= read_PANSTARRS1_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
+  if ( vizquery_run_success != 0 ) {
+   fprintf( stderr, "WARNING: failed to get Pan-STARRS1 data with lib/vizquery script :(\n" );
+  }
+ }
 
  // delete temporary files only on success
  // if ( vizquery_run_success == 0 ) {
