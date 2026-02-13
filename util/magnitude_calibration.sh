@@ -402,6 +402,10 @@ if [ -f calib.txt_param ];then
  echo "Saving a copy of calib.txt_param in calib.txt_param_backup"
  cp calib.txt_param calib.txt_param_backup
 fi
+if [ -f calib.png ];then
+ echo "Saving a copy of calib.png in calib_backup.png"
+ cp calib.png calib_backup.png
+fi
 
 if [ "$2" == "linear" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_linear)

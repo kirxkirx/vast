@@ -83,7 +83,7 @@ done
 if [ -d vast_magnitude_calibration_details_log ];then
  rm -rf vast_magnitude_calibration_details_log/
 fi
-for i in calib.txt_backup *.calib_param *.calib *.struct octave-core out.wcs out.xyls *.bak util/*.bak lib/*.bak src/*.bak src/pgfv/*.bak BLS/*.bak periodFilter/*.bak src/ccd/*.bak src/diferential/*.bak ;do
+for i in calib.txt_backup calib_backup.png *.calib_param *.calib *.struct octave-core out.wcs out.xyls *.bak util/*.bak lib/*.bak src/*.bak src/pgfv/*.bak BLS/*.bak periodFilter/*.bak src/ccd/*.bak src/diferential/*.bak ;do
  if [ -f "$i" ];then
   rm -f "$i"
  fi
