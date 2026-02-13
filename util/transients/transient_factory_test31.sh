@@ -110,8 +110,9 @@ TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 EXCLUSION_LIST="../exclusion_list.txt"
 SYSREM_ITERATIONS=1
 UCAC5_PLATESOLVE_ITERATIONS=1
-#STARMATCH_RADIUS_PIX=4
 STARMATCH_RADIUS_PIX=3.5
+# Disable flag image check to speed-up processing
+VAST_OPTION_NOFLAGIMAGE="--noflagimage"
 
 # Compress calibrated-platesolved images using fpack?
 # Useful to reduce file size for archival storage at the cost of more disk I/O
@@ -223,6 +224,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
   BAD_REGION_FILE="../TICA_TESS_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_TICATESS.txt"
+  # We do want flag images to be created for TICA TESS images, so disable --noflagimage option
+  VAST_OPTION_NOFLAGIMAGE=" "
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=1
   PHOTOMETRIC_CALIBRATION="APASS_I"
@@ -1417,8 +1420,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" | tee -a transient_factory_test31.txt
   # --type 2 zero-point-only magnitude calibration requires fewer matched stars - useful for oblybrigthstars SE settings on very bright twilight images
-  echo "./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | tee -a transient_factory_test31.txt
-  ./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" > prelim_vast_run.log 2>&1  
+  echo "./vast --type 2 --norotation $VAST_OPTION_NOFLAGIMAGE --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | tee -a transient_factory_test31.txt
+  ./vast --type 2 --norotation $VAST_OPTION_NOFLAGIMAGE --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" > prelim_vast_run.log 2>&1  
   echo "wait" | tee -a transient_factory_test31.txt
   wait
   ## Special test for stuck camera ##
@@ -1929,9 +1932,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   VAST_RUN_START_UNIXSEC=$(date +%s)
   # Run VaST
   echo "
-  ./vast --norotation --noflagimage --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+  ./vast --norotation $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " | tee -a transient_factory_test31.txt
-  ./vast --norotation --noflagimage --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
+  ./vast --norotation $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
