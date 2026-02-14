@@ -379,6 +379,7 @@ int main( int argc, char **argv ) {
   strcpy( PGPLOT_CONTROL, "/XW" );
   if ( cpgbeg( 0, PGPLOT_CONTROL, 1, 1 ) != 1 )
    return EXIT_FAILURE;
+  cpgpap( 0.0, 1.0 ); // square window
 
   do {
 
@@ -390,17 +391,25 @@ int main( int argc, char **argv ) {
    }
 
    cpgeras();
-   cpgsvp( 0.08, 0.95, 0.1, 0.9 );
+   cpgsvp( 0.10, 0.90, 0.10, 0.90 ); // square viewport
    if ( change_limits_trigger == 2 || change_limits_trigger == 0 ) {
-    old_Y1= mincatmag - ( maxcatmag - mincatmag ) / 10;
-    old_Y2= maxcatmag + ( maxcatmag - mincatmag ) / 10;
-    new_Y1= old_Y1;
-    new_Y2= old_Y2;
+    // Compute square plot window: both axes get the same range
+    plot_range= ( maxinstmag - mininstmag ) * 1.2f;
+    if ( ( maxcatmag - mincatmag ) * 1.2f > plot_range ) {
+     plot_range= ( maxcatmag - mincatmag ) * 1.2f;
+    }
+    plot_midx= ( mininstmag + maxinstmag ) / 2.0f;
+    plot_midy= ( mincatmag + maxcatmag ) / 2.0f;
 
-    old_X1= mininstmag - ( maxinstmag - mininstmag ) / 10;
-    old_X2= maxinstmag + ( maxinstmag - mininstmag ) / 10;
+    old_X1= plot_midx - plot_range / 2.0f;
+    old_X2= plot_midx + plot_range / 2.0f;
     new_X1= old_X1;
     new_X2= old_X2;
+
+    old_Y1= plot_midy - plot_range / 2.0f;
+    old_Y2= plot_midy + plot_range / 2.0f;
+    new_Y1= old_Y1;
+    new_Y2= old_Y2;
    }
 
    cpgswin( new_X1, new_X2, new_Y1, new_Y2 );
