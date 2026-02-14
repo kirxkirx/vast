@@ -862,7 +862,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
 
   // Do not select triangles which imply large rotation if the user told us the frames are not rotated with respect to each other
   // if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > 0.052353 && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > 0.052353 )
-  if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD )
+  if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi + M_PI ) > MAX_NOROTATION_ANGLE_RAD )
    continue;
 
   // Scale(copy_star2, Number2, struct_pixel_coordinate_transformation->podobie);
@@ -2347,7 +2347,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  // 0.052353*180/pi = 3 deg, that was a reasoonable value for digitized photographic plates of the Moscow collection
  // if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > 0.052353 && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > 0.052353 ) {
  // 0.104719755119660 - 6 deg, may be reasonable value for NMW
- if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
+ if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi + M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
   fprintf( stderr, " rotation is large! Retrying...  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
 
   // We don't want to exit without freeing the memory allocated for the sturctures
@@ -2359,7 +2359,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  }
 
  // Check if the current frame is the same as the reference frame. This will be apparent by the rotation probr->fi=180.0 degrees.
- if ( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI - 180.0 ) < 0.0001 ) {
+ if ( fabs( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI ) - 180.0 ) < 0.0001 ) {
   fprintf( stderr, " rotation is exactly 180 degrees! Is this a reference image again? Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
 
   // We don't want to exit without freeing the memory allocated for te sturctures

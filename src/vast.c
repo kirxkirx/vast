@@ -4052,7 +4052,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        fprintf( stderr, "It is the reference frame again! File name match!\n" );
       struct_pixel_coordinate_transformation->fi= M_PI;
      }
-     if ( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI - 180.0 ) < 0.0001 ) {
+     if ( fabs( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI ) - 180.0 ) < 0.0001 ) {
       struct_pixel_coordinate_transformation->fi= M_PI; // set 180 even if it is not (but file name matches)!
       fprintf( stderr, " rotation is exactly 180 degrees! Is this the reference image again? Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
       Number_of_ecv_star= 0;
@@ -4076,7 +4076,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      sprintf( log_output, "rotation= %7.3lf  ", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
      write_string_to_log_file( log_output, sextractor_catalog );
      fprintf( stderr, "  rotation [degrees] = %7.3lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
-     if ( no_rotation == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
+     if ( no_rotation == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi + M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
       fprintf( stderr, " rotation is large! Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
       Number_of_ecv_star= 0;
      }
