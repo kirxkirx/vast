@@ -2430,6 +2430,13 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     ;;
   esac
   grep 'Estimated ref. image limiting mag.:' vast_summary.log >> transient_factory_test31.txt 2>&1
+  # Preserve calib.png plot for this field/config combination
+  if [ -f calib.png ];then
+   CALIB_PNG_NAME="calib_${FIELD}_$(basename "$SEXTRACTOR_CONFIG_FILE").png"
+   if cp calib.png transient_report/"$CALIB_PNG_NAME" ;then
+    echo "<br>Magnitude calibration plot:<br><img src=\"$CALIB_PNG_NAME\"><br>" >> transient_factory_test31.txt
+   fi
+  fi
   echo "____ End of magnitude calibration ____" | tee -a transient_factory_test31.txt
   record_timing "    MAGNITUDE_CALIBRATION" "$MAGCAL_START_UNIXSEC"
   MAGCAL_SANITY_CHECK_START_UNIXSEC=$(date +%s)
