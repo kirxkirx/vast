@@ -40,6 +40,9 @@ int main( int argc, char **argv ) {
  double sum1, sum2;
 
  float mincatmag, maxcatmag, mininstmag, maxinstmag;
+ float plot_range; // for square PNG plot: the larger of the two axis ranges (with padding)
+ float plot_midx, plot_midy; // midpoints of each axis
+ float plot_x1, plot_x2, plot_y1, plot_y2; // final square plot window
 
  float *computed_x;
  float *computed_y;
@@ -286,15 +289,25 @@ int main( int argc, char **argv ) {
  if ( operation_mode != 0 ) {
   setenv_localpgplot( argv[0] );
   if ( 1 == cpgbeg( 0, "calib.png/PNG", 1, 1 ) ) {
-   // White background, black foreground for PNG
+   // Square paper, white background, black foreground for PNG
+   cpgpap( 0.0, 1.0 ); // aspect ratio 1.0 = square
    cpgscr( 0, 1.0, 1.0, 1.0 );
    cpgscr( 1, 0.0, 0.0, 0.0 );
 
-   cpgsvp( 0.08, 0.95, 0.1, 0.9 );
-   cpgswin( mininstmag - ( maxinstmag - mininstmag ) / 10,
-            maxinstmag + ( maxinstmag - mininstmag ) / 10,
-            mincatmag - ( maxcatmag - mincatmag ) / 10,
-            maxcatmag + ( maxcatmag - mincatmag ) / 10 );
+   cpgsvp( 0.10, 0.90, 0.10, 0.90 ); // square viewport
+   // Compute a square plot window: both axes get the same range
+   // (the larger of the two padded data ranges)
+   plot_range= ( maxinstmag - mininstmag ) * 1.2f; // 10% padding on each side = 1.2x total
+   if ( ( maxcatmag - mincatmag ) * 1.2f > plot_range ) {
+    plot_range= ( maxcatmag - mincatmag ) * 1.2f;
+   }
+   plot_midx= ( mininstmag + maxinstmag ) / 2.0f;
+   plot_midy= ( mincatmag + maxcatmag ) / 2.0f;
+   plot_x1= plot_midx - plot_range / 2.0f;
+   plot_x2= plot_midx + plot_range / 2.0f;
+   plot_y1= plot_midy - plot_range / 2.0f;
+   plot_y2= plot_midy + plot_range / 2.0f;
+   cpgswin( plot_x1, plot_x2, plot_y1, plot_y2 );
 
    cpgscf( 1 );
    cpgbox( "BCNST1", 0.0, 0, "BCNST1", 0.0, 0 );
