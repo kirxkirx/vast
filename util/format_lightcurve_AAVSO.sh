@@ -113,10 +113,10 @@ VARIABLE_STAR_NAME="XX Xxx"
 # but we can try to guess star and filter name from the CBA file, if present
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" 1>&2
- VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
+ VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}' | tr -d '\r'`
  # Only import filter from CBA header if we didn't get it from vast_summary.log
  if [ "$FILTER" = "X" ];then
-  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
+  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}' | tr -d '\r'`
  fi
 fi
 
@@ -135,7 +135,7 @@ Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  AUTOMATIC_VARIABLE_STAR_NAME=$(util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done)
  # Handle 'V* BT Mon -- Nova' this kind of names appear when Simbad (if GCVS is down)
  AUTOMATIC_VARIABLE_STAR_NAME="${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}"
- AUTOMATIC_VARIABLE_STAR_NAME=$(echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}')
+ AUTOMATIC_VARIABLE_STAR_NAME=$(echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}' | tr -d '\r')
  #
  if [ -n "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
   echo "$AUTOMATIC_VARIABLE_STAR_NAME" | grep --silent -e 'Network error:' -e 'cannot connect'
@@ -154,7 +154,7 @@ fi
 AAVSO_OBSCODE="SKA"
 # the previous AAVSO file header should contain the correct OBSCODE
 if [ -s AAVSO_previously_used_header.txt ];then
- AAVSO_OBSCODE=`grep '#OBSCODE=' AAVSO_previously_used_header.txt | awk -F'=' '{print $2}'`
+ AAVSO_OBSCODE=`grep '#OBSCODE=' AAVSO_previously_used_header.txt | awk -F'=' '{print $2}' | tr -d '\r'`
  if [ -z "$AAVSO_OBSCODE" ];then
   echo "ERROR: cannot get OBSCODE from AAVSO_previously_used_header.txt"
   AAVSO_OBSCODE="XXX"
@@ -247,7 +247,7 @@ It seems you forgot to set the correct AAVSO observer code! Please search and re
 fi
 
 # Update the variable star name as the user might have changed it
-VARIABLE_STAR_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $1}' | head -n1`
+VARIABLE_STAR_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $1}' | head -n1 | tr -d '\r'`
 
 if [ -z "$VARIABLE_STAR_NAME" ];then
  echo "ERROR in AAVSO_report.txt : cannot find the variable star name"
@@ -267,7 +267,7 @@ fi
 VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME// /_}"
 
 # Filter name
-FILTER_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $5}' | head -n1`
+FILTER_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $5}' | head -n1 | tr -d '\r'`
 if [ -z "$FILTER_NAME" ];then
  echo "ERROR in AAVSO_report.txt : cannot find the filter name"
  exit 1

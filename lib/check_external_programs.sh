@@ -150,7 +150,7 @@ fi
 
 
 
-for TESTED_PROGRAM in $CC $FC $CXX awk sed bc wc cat cut sort uniq touch head tail grep basename ping curl wget $(lib/find_timeout_command.sh) find readlink file $MD5COMMAND df du gzip gunzip mktemp tee $C_HEADER_FILES $X11_DEVELOPEMENT_PACKAGE ;do
+for TESTED_PROGRAM in $CC $FC $CXX awk sed bc wc cat cut sort uniq touch head tail grep basename ping curl wget $(lib/find_timeout_command.sh) find readlink file $MD5COMMAND df du gzip gunzip mktemp tee tr $C_HEADER_FILES $X11_DEVELOPEMENT_PACKAGE ;do
  echo -n "Looking for $TESTED_PROGRAM - "
  if ! command -v $TESTED_PROGRAM &>/dev/null ;then
   MISSING_PROGRAM=1
