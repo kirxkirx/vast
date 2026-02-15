@@ -24,6 +24,7 @@ jobs:
                 libx11-dev libpng-dev \
                 git curl wget file bc \
                 ghostscript \
+                autoconf automake libtool \
                 python3 py3-pip py3-setuptools py3-wheel \
                 chromium chromium-chromedriver
 
