@@ -3217,6 +3217,8 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
     z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
     z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
     N_good++;
+    if ( N_good > 501 )
+     break; // too many stars
     // fprintf(stderr,"%lf %lf\n",only_good_starsmatched_with_catalog[i].ra_deg_measured,only_good_starsmatched_with_catalog[i].dec_deg_measured);
    }
   }
