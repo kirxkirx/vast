@@ -7,9 +7,9 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# Check OS - allow Linux and Darwin (Mac)
+# Check OS - allow Linux, Darwin (Mac), and FreeBSD
 OS_TYPE=$(uname)
-if [ "$OS_TYPE" != "Linux" ] && [ "$OS_TYPE" != "Darwin" ];then
+if [ "$OS_TYPE" != "Linux" ] && [ "$OS_TYPE" != "Darwin" ] && [ "$OS_TYPE" != "FreeBSD" ];then
  echo -en "\n"
  exit
 fi
