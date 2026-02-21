@@ -71,8 +71,8 @@ fi
 echo -e "\033[01;34mCompiling CFITSIO library\033[00m"
 echo "Using C compiler: $C_COMPILER"
 
-# Get optimization flags consistent with VaST build
-OPTIMIZATION_CFLAGS=$($VAST_DIR/lib/get_optimization_cflags.sh)
+# Get optimization flags consistent with VaST build (without LTO due to CFITSIO compatibility issues)
+OPTIMIZATION_CFLAGS=$($VAST_DIR/lib/get_optimization_cflags.sh nolto)
 echo "Using optimization flags: $OPTIMIZATION_CFLAGS"
 
 COMPILATION_ERROR=0

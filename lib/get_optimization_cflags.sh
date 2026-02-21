@@ -4,6 +4,9 @@
 # It combines flags from various detection scripts to ensure consistency
 # across the main build and library builds (CFITSIO, etc.)
 #
+# Usage: get_optimization_cflags.sh [nolto]
+#   nolto - Skip LTO flags (useful for libraries with compatibility issues)
+#
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -51,10 +54,12 @@ if [ -n "$MARCH_FLAGS" ];then
  OPTIMIZATION_CFLAGS="$OPTIMIZATION_CFLAGS $MARCH_FLAGS"
 fi
 
-# Link-Time Optimization
-LTO_FLAGS=$("$PATH_TO_LIB_DIR"/set_lto.sh)
-if [ -n "$LTO_FLAGS" ];then
- OPTIMIZATION_CFLAGS="$OPTIMIZATION_CFLAGS $LTO_FLAGS"
+# Link-Time Optimization (skip if 'nolto' argument provided)
+if [ "$1" != "nolto" ];then
+ LTO_FLAGS=$("$PATH_TO_LIB_DIR"/set_lto.sh)
+ if [ -n "$LTO_FLAGS" ];then
+  OPTIMIZATION_CFLAGS="$OPTIMIZATION_CFLAGS $LTO_FLAGS"
+ fi
 fi
 
 # OpenMP (if needed - though CFITSIO probably doesn't use it)
