@@ -567,6 +567,9 @@ if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
 
  # Make sure there are no white spaces in FIELD_OF_VIEW_ARCMIN
  FIELD_OF_VIEW_ARCMIN="${FIELD_OF_VIEW_ARCMIN// /}"
+ 
+ # Make sure there is no trailing decimal point before the format check
+ FIELD_OF_VIEW_ARCMIN=$(echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.0f", $1}')
 
  echo "$FIELD_OF_VIEW_ARCMIN" | awk '/^[0-9]*\.?[0-9]+$/ {exit !($1 > 0)}; {exit 1}'
  if [ $? -ne 0 ]; then
