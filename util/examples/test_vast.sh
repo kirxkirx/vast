@@ -12638,7 +12638,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ##### STEREO-A spacecraft transient detection test (Ceres) #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../STEREO-A-H1__test ];then
  cd .. || exit 1
@@ -12764,7 +12764,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### ATLAS Mira not in VSX ID test #####
