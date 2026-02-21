@@ -47,6 +47,17 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+
+# Set the default list of planets for the remote thing
+LIST_OF_PLANETS="Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon"
+
+# Check for special case - observations from STEREO-A spacecraft
+echo "$MPC_CODE" | grep -q '500@-234'
+if [ $? -eq 0 ];then
+ PLANETS_SH_LOCAL_OR_REMOTE="remote"
+ LIST_OF_PLANETS="$LIST_OF_PLANETS Earth Ceres Vesta Pallas Iris Hebe Juno Melpomene Eunomia Flora Bamberga Ganymed Nausikaa Massalia"
+fi
+
 # Try local skyfield-based computation first (unless explicitly set to "remote")
 if [ "$PLANETS_SH_LOCAL_OR_REMOTE" != "remote" ]; then
  if command -v python3 &>/dev/null && \
@@ -85,7 +96,8 @@ if [[ "$MPC_CODE" != *@* ]]; then
  MPC_CODE="${MPC_CODE}@399"
 fi
 
-for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;do
+#for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;do
+for PLANET_NAME in $LIST_OF_PLANETS ;do
  # Match the planet name to its PLANET_ID
  case "$PLANET_NAME" in
   "Mercury") PLANET_ID="199" ;;
@@ -98,6 +110,22 @@ for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;
   "Neptune") PLANET_ID="899" ;;
   "Pluto") PLANET_ID="999" ;;
   "Moon") PLANET_ID="301" ;;
+  "Earth") PLANET_ID="500" ;;
+  "Ceres") PLANET_ID="Ceres" ;;
+  "Vesta") PLANET_ID="Vesta" ;;
+  "Pallas") PLANET_ID="Pallas" ;;
+  "Iris") PLANET_ID="Iris" ;;
+  "Hebe") PLANET_ID="Hebe" ;;
+  "Juno") PLANET_ID="Juno" ;;
+  "Melpomene") PLANET_ID="Melpomene" ;;
+  "Eunomia") PLANET_ID="Eunomia" ;;
+  "Flora") PLANET_ID="Flora" ;;
+  "Bamberga") PLANET_ID="Bamberga" ;;
+  "Ganymed") PLANET_ID="1036" ;;
+# 9 Metis
+#  "Metis") PLANET_ID="Metis" ;;
+  "Nausikaa") PLANET_ID="192" ;;
+  "Massalia") PLANET_ID="Massalia" ;;
   *) echo "Invalid planet name" ; exit 1 ;;
  esac
  # As far as I can tell, JD is in UT time system

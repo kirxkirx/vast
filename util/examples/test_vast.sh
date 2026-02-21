@@ -12636,6 +12636,137 @@ fi
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
+##### STEREO-A spacecraft transient detection test (Ceres) #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+# Download the test dataset if needed
+if [ ! -d ../STEREO-A-H1__test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/STEREO-A-H1__test.tar.bz2" && tar -xvjf STEREO-A-H1__test.tar.bz2 && rm -f STEREO-A-H1__test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../STEREO-A-H1__test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "STEREO-A spacecraft transient detection test (Ceres) "
+ echo -n "STEREO-A spacecraft transient detection test (Ceres): " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Run transient search
+ REFERENCE_IMAGES=../STEREO-A-H1__test/reference_images util/transients/transient_factory_test31.sh ../STEREO-A-H1__test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA000_EXIT_CODE"
+ fi
+ #
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  # Check for errors, but ignore "no shift applied" and "Soft" messages
+  grep -v -i 'Soft' transient_report/index.html | grep -v -i 'no shift applied' | grep -q 'ERROR'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=$(grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html' | grep -v -i 'no shift applied')
+   CAT_RESULT="silenced"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### STEREOA_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # Check number of images processed
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA001_IMAGES_PROCESSED"
+  fi
+  # Check number of images used for photometry
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA002_IMAGES_USED_FOR_PHOTOMETRY"
+  fi
+  # Check that Ceres was detected
+  grep -q "Ceres" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA003_CERES_NOT_DETECTED"
+  else
+   # Check Ceres position is close to expected
+   # Expected position from JPL HORIZONS for JD 2461089.9281: 02:09:30.84 +07:10:46.9
+   # Detected position from transient_report should be within ~1 arcmin
+   CERES_DETECTED_POS=$(grep -o '[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9][0-9] [+-][0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9] Ceres' transient_report/index.html | head -1 | awk '{print $1" "$2}')
+   CERES_EXPECTED_POS="02:09:30.84 +07:10:46.9"
+   if [ -n "$CERES_DETECTED_POS" ];then
+    # Check if position is within 60 arcsec (0.0167 degrees) - generous tolerance for STEREO-A
+    if ! lib/put_two_sources_in_one_field $CERES_DETECTED_POS $CERES_EXPECTED_POS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0167 ? 0 : 1)}' ;then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA004_CERES_POSITION_MISMATCH_${CERES_DETECTED_POS// /_}_vs_${CERES_EXPECTED_POS// /_}"
+    fi
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA005_CERES_POSITION_NOT_PARSED"
+   fi
+  fi
+  # Check that Ceres is flagged as being in planets.txt
+  grep -q "This object is listed in planets.txt.*Ceres" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA006_CERES_NOT_FLAGGED_AS_PLANET"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA_ALL"
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSTEREO-A spacecraft transient detection test (Ceres) \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSTEREO-A spacecraft transient detection test (Ceres) \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ #exit 1
+ fail_early "Internet connection error"
+fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
 ##### ATLAS Mira not in VSX ID test #####
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then
@@ -32514,6 +32645,60 @@ if command -v python3 &>/dev/null && \
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_SOLAR_SYSTEM_INFO_PLANET_LOCAL_REMOTE_POSITION_noskyfield"
 fi
+
+# Test STEREO-A spacecraft position (MPC_CODE="500@-234") with planets and asteroids
+# This test verifies planet and asteroid positions from STEREO-A viewpoint
+MPC_CODE="500@-234" util/planets.sh 2461089.9281 > planets_stereoa.txt 2>/dev/null
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_STEREOA_FAILED"
+elif [ ! -s planets_stereoa.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_STEREOA_EMPTY"
+else
+ # Define reference positions for all objects (RA DEC format from HORIZONS)
+ # JD 2461089.9281 corresponds to 2026-02-18 10:16:27.840
+ declare -A STEREOA_REFERENCE_POSITIONS
+ STEREOA_REFERENCE_POSITIONS["Mercury"]="02:01:33.89 +13:08:17.4"
+ STEREOA_REFERENCE_POSITIONS["Venus"]="00:37:26.68 +02:25:29.3"
+ STEREOA_REFERENCE_POSITIONS["Mars"]="22:49:41.31 -08:51:10.9"
+ STEREOA_REFERENCE_POSITIONS["Jupiter"]="06:54:27.69 +23:07:55.7"
+ STEREOA_REFERENCE_POSITIONS["Saturn"]="00:21:08.35 -00:01:35.7"
+ STEREOA_REFERENCE_POSITIONS["Uranus"]="03:44:45.90 +19:37:42.9"
+ STEREOA_REFERENCE_POSITIONS["Neptune"]="00:09:04.08 -00:26:26.8"
+ STEREOA_REFERENCE_POSITIONS["Pluto"]="20:32:13.09 -22:52:49.1"
+ STEREOA_REFERENCE_POSITIONS["Moon"]="05:46:42.74 +23:25:48.2"
+ STEREOA_REFERENCE_POSITIONS["Earth"]="05:47:25.55 +23:25:59.2"
+ STEREOA_REFERENCE_POSITIONS["Ceres"]="02:09:30.84 +07:10:46.9"
+ STEREOA_REFERENCE_POSITIONS["Vesta"]="22:25:43.43 -13:02:43.7"
+ STEREOA_REFERENCE_POSITIONS["Pallas"]="23:09:34.56 +02:17:37.4"
+ STEREOA_REFERENCE_POSITIONS["Hebe"]="06:54:26.30 +23:07:55.5"
+ STEREOA_REFERENCE_POSITIONS["Melpomene"]="18:02:46.92 -10:56:24.6"
+ STEREOA_REFERENCE_POSITIONS["Eunomia"]="10:52:49.88 -08:55:50.1"
+ STEREOA_REFERENCE_POSITIONS["Flora"]="18:11:40.30 -18:42:14.5"
+ STEREOA_REFERENCE_POSITIONS["Bamberga"]="19:01:44.23 -34:14:04.8"
+ STEREOA_REFERENCE_POSITIONS["Ganymed"]="08:22:02.27 -09:47:47.6"
+ STEREOA_REFERENCE_POSITIONS["Nausikaa"]="20:44:37.55 -24:01:11.1"
+ STEREOA_REFERENCE_POSITIONS["Massalia"]="10:17:17.90 +10:00:26.9"
+
+ # Check each object
+ for OBJECT_NAME in "${!STEREOA_REFERENCE_POSITIONS[@]}" ;do
+  EXPECTED_POS="${STEREOA_REFERENCE_POSITIONS[$OBJECT_NAME]}"
+  ACTUAL_POS=$(grep "$OBJECT_NAME" planets_stereoa.txt | awk '{print $1" "$2}')
+
+  if [ -z "$ACTUAL_POS" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_STEREOA_${OBJECT_NAME}_MISSING"
+  else
+   # Check position within 10 arcsec (0.0028 degrees)
+   if ! lib/put_two_sources_in_one_field $ACTUAL_POS $EXPECTED_POS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0028 ? 0 : 1)}' ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_STEREOA_${OBJECT_NAME}_POSITION_MISMATCH_${ACTUAL_POS// /_}_vs_${EXPECTED_POS// /_}"
+   fi
+  fi
+ done
+fi
+rm -f planets_stereoa.txt
 
 
 for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt planets_header.txt moons.txt spacecraft.txt comets.txt comets_header.txt ;do

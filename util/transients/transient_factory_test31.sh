@@ -41,6 +41,10 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TICA_TESS"* ]] ; then
  echo "The input indicates the images are TICA TESS FFIs" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TICA_TESS_FFI"
 fi
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"STEREO-A-H1"* ]] ; then
+ echo "The input indicates the images are from STEREO-A-H1" | tee -a transient_factory_test31.txt
+ export CAMERA_SETTINGS="STEREO-A-H1"
+fi
 if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
  echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="ED80__Black"
@@ -252,8 +256,6 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   export MPC_CODE=C32
-  POINTING_ACCURACY_LIMIT_DEG_SOFT=0.2
-  POINTING_ACCURACY_LIMIT_DEG_HARD=0.5
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
    export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
@@ -367,6 +369,59 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # Let's try to reduce from 50 to 25
   # Nope, looks like we can avoid many mismatches with a larger edge ident
   FRAME_EDGE_OFFSET_PIX=100
+  # Do not compress fully calibrated images to reduce disk load
+  FPACK_FULLY_CALIBRATED_IMAGE="no"
+ fi
+ #
+ #
+ if [ "$CAMERA_SETTINGS" = "STEREO-A-H1" ];then
+  # STEREO-A-H1 solar corona imager
+  echo "### Using search settings for $CAMERA_SETTINGS camera ###" | tee -a transient_factory_test31.txt
+  export AAVSO_COMMENT_STRING="STEREO-A H1 solar corona imager"
+  export MPC_CODE="500@-234"
+  POINTING_ACCURACY_LIMIT_DEG_SOFT=2.0
+  POINTING_ACCURACY_LIMIT_DEG_HARD=2.0
+  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=70
+  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=70
+  MAX_NEW_IMG_MEAN_VALUE=999000
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
+  #MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  #MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # The input images will be calibrated
+  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # the script will try to find the most appropriate one based on temperature and time
+  #if [ -z "$DARK_FRAMES_DIR" ];then
+  # #export DARK_FRAMES_DIR=/home/apache/darks
+  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  #fi
+  # we don't usually have a luxury of multiple flat field frames to choose from
+  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
+  #if [ -z "$FLAT_FIELD_FILE" ];then
+  # #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
+  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
+  #fi
+  #
+  #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
+  #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+  unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+# production value
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="12.0"
+  FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex.${CAMERA_SETTINGS}"
+  # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
+  # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/${CAMERA_SETTINGS}_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list_${CAMERA_SETTINGS}.txt"
+  SYSREM_ITERATIONS=0
+  UCAC5_PLATESOLVE_ITERATIONS=1
+  #STARMATCH_RADIUS_PIX=4 # testing new values
+  # Let's try to reduce from 50 to 25
+  # Nope, looks like we can avoid many mismatches with a larger edge ident
+  FRAME_EDGE_OFFSET_PIX=10
   # Do not compress fully calibrated images to reduce disk load
   FPACK_FULLY_CALIBRATED_IMAGE="no"
  fi
@@ -690,7 +745,7 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  # $hell4eck says $@ needs to be double-quotted
  for INTPUT_IMAGE in "$@" ;do
   if [ -f "$INTPUT_IMAGE" ];then
-   util/get_image_date "$INTPUT_IMAGE" 2>&1 | grep 'Exposure' | awk '{printf "Last  image: %s %s %s %s\n", $9, $4, $5, $6}'
+   util/get_image_date "$INTPUT_IMAGE" 2>&1 | grep 'Exposure' | awk '{if ($6 == "=") {printf "Last  image: %s %s %s\n", $8, $4, $5} else {printf "Last  image: %s %s %s %s\n", $9, $4, $5, $6}}'
    break
   fi
  done
@@ -2154,14 +2209,15 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   ### ===> ASTROMETRIC ACCURACY LIMITS HARDCODED HERE <===
   # MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
   # are used for filtering candidates in util/transients/report_transient.sh
-  #MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
-  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f", ($1 > 10 ? 10 : $1)}')
+  if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT" ];then
+   MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f", ($1 > 10 ? 10 : $1)}')
+  fi
   export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT
   ### ===> ASTROMETRIC ACCURACY LIMITS HARDCODED HERE <===
-  #MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
-  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f", ($1*1.5 > 15 ? 15 : $1*1.5)}')
+  if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" ];then
+   MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f", ($1*1.5 > 15 ? 15 : $1*1.5)}')
+  fi
   export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT
-  #MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
   ### ===> ASTROMETRIC ACCURACY LIMITS HARDCODED HERE <===
   ### assume the astrometry is never worse than 10", even with huge TESS pixels (which is true, btw)
   #MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f", ($1*2.0 > 10 ? 10 : $1*2.0)}')
