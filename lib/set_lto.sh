@@ -52,31 +52,31 @@ GCC_MINOR_VERSION=`$CC -dumpversion | cut -f2 -d.` ;
 GONOGO=0 # 0 - no-go; 1 - go
 
 if [ $GCC_MAJOR_VERSION -gt 4 ];then
- LTO_OPTION="-flto=4 "
+ LTO_OPTION="-flto=4 -ffat-lto-objects "
  GONOGO=1
 fi
 
 # if >gcc-4.9  -flto=4
-if [ $GCC_MAJOR_VERSION -eq 4 ];then 
+if [ $GCC_MAJOR_VERSION -eq 4 ];then
  if [ $GCC_MINOR_VERSION -ge 9 ];then
-  LTO_OPTION="-flto=4 "
+  LTO_OPTION="-flto=4 -ffat-lto-objects "
   GONOGO=1
- fi 
+ fi
 fi
 
 
 # if =gcc-4.8  -flto
-if [ $GCC_MAJOR_VERSION -eq 4 ];then 
+if [ $GCC_MAJOR_VERSION -eq 4 ];then
  if [ $GCC_MINOR_VERSION -eq 8 ];then
-  LTO_OPTION="-flto "
+  LTO_OPTION="-flto -ffat-lto-objects "
   GONOGO=1
- fi 
+ fi
 fi
 
 if [ $GONOGO -eq 1 ];then
- # Try to use -flto
+ # Try to use -flto with -ffat-lto-objects
  echo "int main(){return 0;}" > test.c
- $CC -march=native -flto -o test test.c &>/dev/null
+ $CC -march=native -flto -ffat-lto-objects -o test test.c &>/dev/null
  if [ $? -eq 0 ];then
   echo -n "$LTO_OPTION"
  fi
