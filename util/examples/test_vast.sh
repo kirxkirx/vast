@@ -32711,10 +32711,48 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
  echo -n "Gaia DR2 clients test: " >> vast_test_report.txt
 
  GAIA_DR2_CLIENTS_TEST_OUTPUT=$(util/examples/test_gaia_dr2_clients.sh 2>&1)
- if [ $? -ne 0 ];then
+ GAIA_TEST_EXIT_CODE=$?
+
+ # Save full output to a log file for artifacts
+ echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" > gaia_dr2_test_output.log
+
+ if [ $GAIA_TEST_EXIT_CODE -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS001"
-  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" | tail -40
+
+  # Print detailed diagnostics
+  echo ""
+  echo "========================================================================"
+  echo "GAIA DR2 CLIENTS TEST FAILED - DIAGNOSTIC OUTPUT"
+  echo "========================================================================"
+  echo "Exit code: $GAIA_TEST_EXIT_CODE"
+  echo "Timestamp: $(date)"
+  echo "System: $(uname -s) $(uname -r) $(uname -m)"
+  echo ""
+  echo "Network connectivity check:"
+  echo "  ESA TAP endpoint (gea.esac.esa.int):"
+  if command -v ping &>/dev/null; then
+    ping -c 2 gea.esac.esa.int 2>&1 | head -5 || echo "    Ping failed or not available"
+  else
+    echo "    Ping command not available"
+  fi
+  echo "  Curl test to ESA TAP:"
+  curl -s --max-time 5 -I "https://gea.esac.esa.int/tap-server/tap/sync" 2>&1 | head -3 || echo "    Curl test failed"
+  echo ""
+  echo "  VizieR endpoint (vizier.cds.unistra.fr):"
+  if command -v ping &>/dev/null; then
+    ping -c 2 vizier.cds.unistra.fr 2>&1 | head -5 || echo "    Ping failed or not available"
+  else
+    echo "    Ping command not available"
+  fi
+  echo ""
+  echo "Test output (last 60 lines):"
+  echo "------------------------------------------------------------------------"
+  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" | tail -60
+  echo "------------------------------------------------------------------------"
+  echo "Full test output saved to: gaia_dr2_test_output.log"
+  echo "========================================================================"
+  echo ""
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
