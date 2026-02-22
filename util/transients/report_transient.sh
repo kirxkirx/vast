@@ -745,7 +745,7 @@ echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&rad
 # Dispaly SNAD ZTF link only if there is a hope to have ZTF data for this declination
 TEST=$(awk -v a="$DEC_MEAN" -v b="-30" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
- echo -n "  <a href=\"https://ztf.snad.space/dr17/search/$RA_MEAN%20$DEC_MEAN/4\" target='_blank'>SNAD ZTF viewer</a>"
+ echo -n "  <a href=\"https://ztf.snad.space/dr23/search/$RA_MEAN%20$DEC_MEAN/4\" target='_blank'>SNAD ZTF viewer</a>"
 fi
 #
 echo -n "
