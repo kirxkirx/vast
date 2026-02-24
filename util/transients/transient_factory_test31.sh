@@ -334,16 +334,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
-  #if [ -z "$DARK_FRAMES_DIR" ];then
-  # #export DARK_FRAMES_DIR=/home/apache/darks
-  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
-  #fi
+  if [ -z "$DARK_FRAMES_DIR" ];then
+   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  fi
   # we don't usually have a luxury of multiple flat field frames to choose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  #if [ -z "$FLAT_FIELD_FILE" ];then
-  # #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
-  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
-  #fi
+  if [ -z "$FLAT_FIELD_FILE" ];then
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-02-21.fit"
+  fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
   #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
