@@ -131,11 +131,20 @@ cd "$DATA_DIR" || exit 1
 echo "Processing calibrations in: $PWD"
 
 #################################
-# Find DARK and FLAT directories
+# Find BIAS, DARK and FLAT directories
 #################################
 
+BIAS_DIR=""
 DARK_DIR=""
 FLAT_DIR=""
+
+# Look for BIAS directory (case-insensitive, singular or plural)
+for dir in BIAS Bias bias Biases biases BIASES; do
+  if [ -d "$dir" ]; then
+    BIAS_DIR="$dir"
+    break
+  fi
+done
 
 # Look for DARK directory (case-insensitive, singular or plural)
 for dir in DARK Dark dark Darks darks DARKS; do
@@ -153,8 +162,8 @@ for dir in FLAT Flat flat Flats flats FLATS; do
   fi
 done
 
-if [ -z "$DARK_DIR" ] && [ -z "$FLAT_DIR" ]; then
-  echo "ERROR: Cannot find DARK or FLAT directories in $PWD"
+if [ -z "$BIAS_DIR" ] && [ -z "$DARK_DIR" ] && [ -z "$FLAT_DIR" ]; then
+  echo "ERROR: Cannot find BIAS, DARK or FLAT directories in $PWD"
   exit 1
 fi
 
@@ -199,6 +208,156 @@ round_number() {
   local places="$2"
   printf "%.${places}f" "$num"
 }
+
+#################################
+# Process BIAS frames
+#################################
+
+if [ -n "$BIAS_DIR" ]; then
+  echo ""
+  echo "======================================"
+  echo "Processing BIAS frames in $BIAS_DIR"
+  echo "======================================"
+
+  cd "$BIAS_DIR" || exit 1
+
+  # Create temporary file for grouping
+  GROUPING_FILE=$(mktemp)
+
+  # Scan all FITS files
+  total_bias=0
+  rejected_bias=0
+  stacked_bias=0
+
+  shopt -s nullglob
+  for file in *.fit *.fits *.fts *.FIT *.FITS *.FTS; do
+    # Check if file exists (glob might not match anything)
+    [ -f "$file" ] || continue
+
+    # Skip files that are actually in subdirectories (via symlinks)
+    if [ -L "$file" ]; then
+      REAL_PATH=$(vastrealpath "$file")
+      REAL_DIR=$(dirname "$REAL_PATH")
+      CURRENT_DIR=$(pwd)
+      if [ "$REAL_DIR" != "$CURRENT_DIR" ]; then
+        continue
+      fi
+    fi
+
+    # Skip if already stacked
+    if is_stacked_frame "$file"; then
+      echo "  Skipping already stacked frame: $file"
+      ((stacked_bias++))
+      continue
+    fi
+
+    # Get header values
+    SET_TEMP=$(get_header_value "$file" "SET-TEMP")
+    CCD_TEMP=$(get_header_value "$file" "CCD-TEMP")
+    XBINNING=$(get_header_value "$file" "XBINNING")
+    YBINNING=$(get_header_value "$file" "YBINNING")
+
+    # Validate we got all values
+    if [ -z "$SET_TEMP" ] || [ -z "$CCD_TEMP" ] || [ -z "$XBINNING" ] || [ -z "$YBINNING" ]; then
+      echo "  WARNING: Missing header values in $file, skipping"
+      ((rejected_bias++))
+      continue
+    fi
+
+    # Check binning consistency
+    if [ "$XBINNING" != "$YBINNING" ]; then
+      echo "  WARNING: XBINNING ($XBINNING) != YBINNING ($YBINNING) in $file, skipping"
+      ((rejected_bias++))
+      continue
+    fi
+
+    # Check temperature stability
+    TEMP_DIFF=$(echo "$SET_TEMP $CCD_TEMP" | awk '{d=$1-$2; if(d<0)d=-d; print d}')
+    TEMP_OK=$(echo "$TEMP_DIFF" | awk '{if($1<=1.0)print "yes"; else print "no"}')
+
+    if [ "$TEMP_OK" != "yes" ]; then
+      echo "  WARNING: Temperature deviation too large (${TEMP_DIFF}°C) in $file, skipping"
+      ((rejected_bias++))
+      continue
+    fi
+
+    # Round values for grouping (bias frames don't need exposure grouping)
+    TEMP_ROUNDED=$(round_number "$SET_TEMP" 0)
+    BIN="$XBINNING"
+
+    # Create group identifier
+    GROUP_ID="${TEMP_ROUNDED}C_${BIN}x${BIN}"
+
+    # Add to grouping file
+    echo "$GROUP_ID|$file" >> "$GROUPING_FILE"
+    ((total_bias++))
+  done
+
+  echo ""
+  echo "Found $total_bias valid bias frames"
+  echo "Rejected $rejected_bias frames (temperature/binning issues)"
+  echo "Skipped $stacked_bias already-stacked frames"
+  echo ""
+
+  # Process each group
+  if [ -s "$GROUPING_FILE" ]; then
+    GROUP_LIST=$(cut -d'|' -f1 "$GROUPING_FILE" | sort -u)
+
+    for group in $GROUP_LIST; do
+      # Get files in this group
+      FILES=$(grep "^${group}|" "$GROUPING_FILE" | cut -d'|' -f2)
+      FILE_COUNT=$(echo "$FILES" | wc -l)
+
+      echo "Group: $group"
+      echo "  Files: $FILE_COUNT"
+
+      if [ "$FILE_COUNT" -lt 3 ]; then
+        echo "  WARNING: Not enough frames ($FILE_COUNT < 3) for group $group, skipping"
+        continue
+      fi
+
+      OUTPUT_NAME="mbias_${group}.fit"
+
+      # Check if output already exists
+      if [ -f "$OUTPUT_NAME" ]; then
+        echo "  Output $OUTPUT_NAME already exists, skipping"
+        continue
+      fi
+
+      echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
+
+      # Handle filenames starting with '-' by prefixing with --
+      FILE_LIST=""
+      for f in $FILES; do
+        if [[ "$f" == -* ]]; then
+          FILE_LIST="$FILE_LIST -- $f"
+        else
+          FILE_LIST="$FILE_LIST $f"
+        fi
+      done
+
+      # Run mk_fast (outputs to median.fit)
+      "$MK_FAST" $FILE_LIST
+
+      if [ $? -eq 0 ]; then
+        # mk_fast creates median.fit, rename it to our expected output name
+        if [ -f "median.fit" ]; then
+          mv median.fit "$OUTPUT_NAME"
+          echo "  SUCCESS: Created $OUTPUT_NAME"
+        else
+          echo "  ERROR: mk_fast succeeded but median.fit not found"
+        fi
+      else
+        echo "  ERROR: Failed to create $OUTPUT_NAME"
+      fi
+      echo ""
+    done
+  fi
+
+  rm -f "$GROUPING_FILE"
+
+  cd ..
+fi
 
 #################################
 # Process DARK frames
@@ -368,17 +527,18 @@ if [ -n "$FLAT_DIR" ]; then
 
   cd "$FLAT_DIR" || exit 1
 
-  if [ -z "$DARK_DIR" ]; then
-    echo "WARNING: No DARK directory found, cannot process flats"
+  if [ -z "$DARK_DIR" ] && [ -z "$BIAS_DIR" ]; then
+    echo "WARNING: No DARK or BIAS directory found, cannot process flats"
   else
-    # First pass: Dark subtraction
+    # First pass: Dark/Bias subtraction
     echo ""
-    echo "Step 1: Dark subtraction"
-    echo "------------------------"
+    echo "Step 1: Dark/Bias subtraction"
+    echo "-----------------------------"
 
     total_flats=0
     subtracted_flats=0
     skipped_flats=0
+    bias_fallback_count=0
 
     for file in *.fit *.fits *.fts *.FIT *.FITS *.FTS; do
       # Check if file exists
@@ -429,54 +589,78 @@ if [ -n "$FLAT_DIR" ]; then
         continue
       fi
 
-      # Round values for matching dark
+      # Round values for matching calibration frames
       EXP_ROUNDED=$(round_number "$EXPOSURE" 1)
       TEMP_ROUNDED=$(round_number "$SET_TEMP" 0)
       BIN="$XBINNING"
 
-      # Find matching dark frame
-      DARK_NAME="../${DARK_DIR}/mdark_${EXP_ROUNDED}sec_${TEMP_ROUNDED}C_${BIN}x${BIN}.fit"
+      # Try to find matching dark frame first
+      CALIB_FRAME=""
+      CALIB_TYPE=""
 
-      if [ ! -f "$DARK_NAME" ]; then
-        echo "  WARNING: No matching dark found for $file (looking for $DARK_NAME)"
+      if [ -n "$DARK_DIR" ]; then
+        DARK_NAME="../${DARK_DIR}/mdark_${EXP_ROUNDED}sec_${TEMP_ROUNDED}C_${BIN}x${BIN}.fit"
+        if [ -f "$DARK_NAME" ]; then
+          CALIB_FRAME="$DARK_NAME"
+          CALIB_TYPE="dark"
+        fi
+      fi
+
+      # If no matching dark, try bias as fallback
+      if [ -z "$CALIB_FRAME" ] && [ -n "$BIAS_DIR" ]; then
+        BIAS_NAME="../${BIAS_DIR}/mbias_${TEMP_ROUNDED}C_${BIN}x${BIN}.fit"
+        if [ -f "$BIAS_NAME" ]; then
+          CALIB_FRAME="$BIAS_NAME"
+          CALIB_TYPE="bias"
+          echo "  WARNING: No matching dark for $file (exposure ${EXP_ROUNDED}sec), using bias instead"
+          ((bias_fallback_count++))
+        fi
+      fi
+
+      # If still no calibration frame found, skip
+      if [ -z "$CALIB_FRAME" ]; then
+        echo "  WARNING: No matching dark or bias found for $file, skipping"
         continue
       fi
 
-      # Output name for dark-subtracted flat
+      # Output name for calibrated flat
       OUTPUT_NAME="d_${file}"
 
       # Skip if already exists
       if [ -f "$OUTPUT_NAME" ]; then
-        echo "  Dark-subtracted file $OUTPUT_NAME already exists, skipping"
+        echo "  Calibrated file $OUTPUT_NAME already exists, skipping"
         ((subtracted_flats++))
         continue
       fi
 
-      echo "  Subtracting dark from $file..."
+      echo "  Subtracting $CALIB_TYPE from $file..."
 
       # Handle filenames starting with '-'
       if [[ "$file" == -* ]]; then
-        "$MS" -- "$file" "$DARK_NAME" "$OUTPUT_NAME"
+        "$MS" -- "$file" "$CALIB_FRAME" "$OUTPUT_NAME"
       else
-        "$MS" "$file" "$DARK_NAME" "$OUTPUT_NAME"
+        "$MS" "$file" "$CALIB_FRAME" "$OUTPUT_NAME"
       fi
 
       if [ $? -eq 0 ]; then
         ((subtracted_flats++))
       else
-        echo "  ERROR: Dark subtraction failed for $file"
+        echo "  ERROR: Calibration subtraction failed for $file"
       fi
     done
 
     echo ""
     echo "Processed $total_flats flat frames"
-    echo "Created/found $subtracted_flats dark-subtracted frames"
+    echo "Created/found $subtracted_flats calibrated frames"
+    if [ $bias_fallback_count -gt 0 ]; then
+      echo "Used bias fallback for $bias_fallback_count frames (no matching darks)"
+    fi
     echo "Skipped $skipped_flats already-stacked frames"
 
-    # Second pass: Group and stack dark-subtracted flats
+    # Second pass: Group and stack calibrated flats
     echo ""
-    echo "Step 2: Stacking dark-subtracted flats"
-    echo "---------------------------------------"
+    echo "Step 2: Stacking calibrated flats"
+    echo "----------------------------------"
 
     GROUPING_FILE=$(mktemp)
 
@@ -582,7 +766,7 @@ if [ -n "$FLAT_DIR" ]; then
         echo ""
       done
     else
-      echo "No dark-subtracted flats found to stack"
+      echo "No calibrated flats found to stack"
     fi
 
     rm -f "$GROUPING_FILE"
