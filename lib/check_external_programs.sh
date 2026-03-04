@@ -162,9 +162,52 @@ for TESTED_PROGRAM in $CC $FC $CXX awk sed bc wc cat cut sort uniq touch head ta
 done
 
 
+# Check for a web browser (not needed in CI environments like GitHub Actions)
+if [ "$GITHUB_ACTIONS" != "true" ];then
+ BROWSER_FOUND=0
+ BROWSER_FOUND_NAME=""
+ # Check the $BROWSER environment variable first
+ if [ -n "$BROWSER" ];then
+  if command -v "$BROWSER" &>/dev/null ;then
+   BROWSER_FOUND=1
+   BROWSER_FOUND_NAME="$BROWSER"
+  fi
+ fi
+ # Check for actual browser binaries (not dispatchers like sensible-browser/xdg-open that may have no real browser behind them, and not curl)
+ if [ $BROWSER_FOUND -eq 0 ];then
+  for BROWSER_TO_TEST in firefox firefox-bin chromium chromium-browser google-chrome-stable google-chrome-unstable google-chrome-beta google-chrome chrome vivaldi-stable vivaldi brave-browser-stable brave-browser microsoft-edge-stable microsoft-edge opera midori epiphany-browser epiphany falkon konqueror torbrowser w3m links lynx ;do
+   if command -v "$BROWSER_TO_TEST" &>/dev/null ;then
+    BROWSER_FOUND=1
+    BROWSER_FOUND_NAME="$BROWSER_TO_TEST"
+    break
+   fi
+  done
+ fi
+ # On macOS, check 'open' and application bundles
+ if [ $BROWSER_FOUND -eq 0 ];then
+  SYSTEM_TYPE=$(uname)
+  if [ "$SYSTEM_TYPE" = "Darwin" ];then
+   if command -v open &>/dev/null ;then
+    BROWSER_FOUND=1
+    BROWSER_FOUND_NAME="open"
+   fi
+  fi
+ fi
+ if [ $BROWSER_FOUND -eq 0 ];then
+  MISSING_PROGRAM=1
+  LIST_OF_MISSING_PROGRAMS="$LIST_OF_MISSING_PROGRAMS  web-browser(firefox/chromium/etc.)"
+  echo -e "Looking for a web browser - \033[01;31mNOT found\033[00m"
+ else
+  echo -e "Looking for a web browser - \033[01;32mFound ($BROWSER_FOUND_NAME)\033[00m"
+ fi
+else
+ echo "Skipping web browser check (running in GitHub Actions CI)"
+fi
+
+
 if [ $MISSING_PROGRAM -eq 1 ] ;then
  echo -e "
-ERROR: some external programs, packages or header files needed for VaST were not found. 
+ERROR: some external programs, packages or header files needed for VaST were not found.
 Some of these programs may be installed, but missing from the the \$PATH=$PATH
 
 \033[01;31mPlease install the following programs before compiling VaST:

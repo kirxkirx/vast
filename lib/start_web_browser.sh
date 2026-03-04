@@ -39,8 +39,30 @@ if [ -z "$WEBBROWSER" ];then
    WEBBROWSER="google-chrome"
   elif command -v chrome &>/dev/null ;then
    WEBBROWSER="chrome"
+  elif command -v vivaldi-stable &>/dev/null ;then
+   WEBBROWSER="vivaldi-stable"
+  elif command -v vivaldi &>/dev/null ;then
+   WEBBROWSER="vivaldi"
+  elif command -v brave-browser-stable &>/dev/null ;then
+   WEBBROWSER="brave-browser-stable"
+  elif command -v brave-browser &>/dev/null ;then
+   WEBBROWSER="brave-browser"
+  elif command -v microsoft-edge-stable &>/dev/null ;then
+   WEBBROWSER="microsoft-edge-stable"
+  elif command -v microsoft-edge &>/dev/null ;then
+   WEBBROWSER="microsoft-edge"
+  elif command -v opera &>/dev/null ;then
+   WEBBROWSER="opera"
   elif command -v midori &>/dev/null ;then
    WEBBROWSER="midori"
+  elif command -v epiphany-browser &>/dev/null ;then
+   WEBBROWSER="epiphany-browser"
+  elif command -v epiphany &>/dev/null ;then
+   WEBBROWSER="epiphany"
+  elif command -v falkon &>/dev/null ;then
+   WEBBROWSER="falkon"
+  elif command -v konqueror &>/dev/null ;then
+   WEBBROWSER="konqueror"
   elif command -v torbrowser &>/dev/null ;then
    WEBBROWSER="torbrowser"
   elif command -v sensible-browser &>/dev/null ;then
