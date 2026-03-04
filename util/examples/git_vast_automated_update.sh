@@ -211,6 +211,10 @@ fi
 
 echo "All tests passed. Proceeding with update."
 
+# Stash any local changes to tracked files (e.g. build artifacts)
+# to prevent 'git pull' from failing with "Your local changes would be overwritten"
+git stash --quiet 2>/dev/null
+
 # Pull the latest version
 echo "Pulling latest version..."
 git pull origin master

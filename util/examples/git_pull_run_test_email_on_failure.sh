@@ -212,12 +212,27 @@ fi
 
 echo "All GitHub tests passed. Proceeding with update and local testing."
 
+# Stash any local changes to tracked files (e.g. build artifacts)
+# to prevent 'git pull' from failing with "Your local changes would be overwritten"
+git stash --quiet 2>/dev/null
+
 # Pull the latest version
 # Don't use --depth 1 here!!!
 # When used on a normally-cloned repository it creates a history mismatch that makes Git think the branches have diverge!
-git pull origin master
+GIT_PULL_OUTPUT=$(git pull origin master 2>&1)
 if [ $? -ne 0 ];then
  echo "ERROR: git pull failed"
+ echo "$GIT_PULL_OUTPUT"
+ HOST=`hostname`
+ HOST="@$HOST"
+ NAME="$USER$HOST"
+ DATETIME=`LANG=C date -u`
+ SCRIPTNAME=`basename $0`
+ MSG="git pull failed while running $SCRIPTNAME on $DATETIME at $PWD
+
+$GIT_PULL_OUTPUT"
+ echo "$MSG" > vast_test_email_message.log
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
  exit 1
 fi
 
