@@ -515,31 +515,21 @@ function check_if_enough_disk_space_for_tests() {
 
 
 function test_internet_connection() {
- # Directory listing disabled
- #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
- curl --max-time 10 --silent --show-error -I http://scan.sai.msu.ru 2>&1 | grep -q 'Content-Type:'
+ curl --connect-timeout 5 --max-time 10 --silent --show-error -I http://tau.kirx.net 2>&1 | grep -q 'Content-Type:'
  if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" 
+  echo "ERROR in test_internet_connection(): cannot connect to tau.kirx.net"
   return 1
  fi
- 
+
  # early exit for the fast test
  if [ "$1" = "fast" ];then
   return 0
  fi
 
- # Directory listing disabled
- #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
- curl --max-time 30 --retry 1 --retry-delay 10 --connect-timeout 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep -q 'Content-Type:'
- if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 
-  return 1
- fi
- 
  # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
  lib/choose_vizier_mirror.sh 2>&1
  if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to VizieR" 
+  echo "ERROR in test_internet_connection(): cannot connect to VizieR"
   return 1
  fi
 
@@ -9532,7 +9522,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##########################################
 
 # Test that the Internet conncation has not failed
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
@@ -26709,7 +26699,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # don't remove ../individual_images_test as the next test will need them
 #remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
@@ -26767,7 +26757,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # don't remove test data as the next test may need them
 #remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
@@ -26949,7 +26939,7 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 # Test that the Internet conncation has not failed
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
@@ -29343,7 +29333,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 # Test that the Internet conncation has not failed
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
