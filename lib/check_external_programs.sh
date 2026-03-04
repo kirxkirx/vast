@@ -241,11 +241,14 @@ for i in out*.dat ;do
  fi
 done
 
+# Remove leftover test artifacts from previous test runs
+if [ -d test_artifacts ];then
+ rm -rf test_artifacts
+fi
+
 # Touch all files to circumvent the clock skew (often found in virtual machines after the stop-resume cycle)
-#  The folowing step may be very slow on network file systems, so we try & to speed thing up
-for VASTFILE in `find .` ;do
- touch $VASTFILE &
-done
-# wait for all touch commands to finish
-wait
+# Exclude .git, test_artifacts, node_modules and other large directories not needed for the build.
+# Use -exec + to batch files into fewer touch invocations instead of spawning one process per file.
+find . -not -path './.git/*' -not -path './test_artifacts/*' -not -path './node_modules/*' -not -path './fastplot__*' -type f -exec touch {} + 2>/dev/null
+find . -not -path './.git/*' -not -path './test_artifacts/*' -not -path './node_modules/*' -not -path './fastplot__*' -type d -exec touch {} + 2>/dev/null
 
