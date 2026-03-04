@@ -166,14 +166,19 @@ fi
 if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == false ]]; then
  # curl is new enough to attempt HTTPS
 
- # Try to get the country code
- COUNTRY_CODE=$(curl $VAST_CURL_PROXY --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
- if [ -z "$COUNTRY_CODE" ];then
-  # Set UN code for UNknown
-  COUNTRY_CODE="UN"
+ # Check if VAST_COUNTRY_CODE is set upstram
+ if [ -z "$VAST_COUNTRY_CODE" ];then
+  # Try to get the country code
+  VAST_COUNTRY_CODE=$(curl $VAST_CURL_PROXY --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+ fi
+ if [ -z "$VAST_COUNTRY_CODE" ];then
+  ## Set UN code for UNknown
+  #VAST_COUNTRY_CODE="UN"
+  # https://ipinfo.io/ may be blocked
+  VAST_COUNTRY_CODE="RU"
  fi
  
- if [ "$COUNTRY_CODE" == "RU" ];then
+ if [ "$VAST_COUNTRY_CODE" == "RU" ];then
   #LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
   LOCAL_SERVER="https://scan.sai.msu.ru/~kirx/vast_catalogs"
   #LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
