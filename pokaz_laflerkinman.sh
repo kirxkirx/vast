@@ -146,8 +146,19 @@ if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  #PERIOD_SEARCH_SERVERS="kirx.net/ticaariel scan.sai.msu.ru vast.sai.msu.ru"
  # remove ariel
  #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
- # add tau.kirx.net
- PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
+ # Determine country code to select server order
+ if [ -z "$VAST_COUNTRY_CODE" ];then
+  if [ -x lib/get_country_code.sh ];then
+   VAST_COUNTRY_CODE=$(lib/get_country_code.sh)
+  fi
+ fi
+ if [ "$VAST_COUNTRY_CODE" = "RU" ];then
+  # Russian users: prefer local servers, keep tau.kirx.net as fallback
+  PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru tau.kirx.net"
+ else
+  # Other users: prefer tau.kirx.net (faster hardware)
+  PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
+ fi
 else
  # PERIOD_SEARCH_SERVER is externally set, but we still want to check if it's rachable
  PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"

@@ -241,7 +241,20 @@ function setup_remote_astrometry {
  echo "Setting up remote astrometry servers..." 1>&2
  
  local HOST_WE_ARE_RUNNING_AT=$(hostname)
- local PLATE_SOLVE_SERVERS="tau.kirx.net scan.sai.msu.ru"
+ # Determine country code to select server order
+ local IDENTIFY_COUNTRY_CODE=""
+ if [ -n "$VAST_COUNTRY_CODE" ];then
+  IDENTIFY_COUNTRY_CODE="$VAST_COUNTRY_CODE"
+ elif [ -x lib/get_country_code.sh ];then
+  IDENTIFY_COUNTRY_CODE=$(lib/get_country_code.sh)
+ fi
+ local PLATE_SOLVE_SERVERS
+ if [ "$IDENTIFY_COUNTRY_CODE" = "RU" ];then
+  # Russian users: prefer local server, keep tau.kirx.net as fallback
+  PLATE_SOLVE_SERVERS="scan.sai.msu.ru tau.kirx.net"
+ else
+  PLATE_SOLVE_SERVERS="tau.kirx.net scan.sai.msu.ru"
+ fi
 
  # Check if we are requested to use a specific plate solve server
  if [ -n "$FORCE_PLATE_SOLVE_SERVER" ];then

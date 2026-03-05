@@ -1070,7 +1070,103 @@ else
  echo "SKIPPED (python3 or PyYAML not available)" >> vast_test_report.txt
 fi
 
-########## remove bad regions file 
+##### Country code detection test #####
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+# Run the test
+echo "Country code detection test "
+echo -n "Country code detection test: " >> vast_test_report.txt
+
+# Test that the script exists and is executable
+if [ ! -x lib/get_country_code.sh ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE001_NOT_EXECUTABLE"
+fi
+
+if [ $TEST_PASSED -eq 1 ];then
+ # Remove any existing cache to test fresh detection
+ if [ -f .vast_country_code ];then
+  cp .vast_country_code .vast_country_code_test_backup
+ fi
+ rm -f .vast_country_code
+
+ # Test that the script produces output
+ COUNTRY_CODE_OUTPUT=$(lib/get_country_code.sh 2>/dev/null)
+ if [ -z "$COUNTRY_CODE_OUTPUT" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE002_EMPTY_OUTPUT"
+ fi
+
+ # Test that the output is a valid 2-letter country code
+ if [ $TEST_PASSED -eq 1 ];then
+  echo "$COUNTRY_CODE_OUTPUT" | grep -qE '^[A-Z][A-Z]$'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE003_INVALID_FORMAT"
+  fi
+ fi
+
+ # Test that the cache file was created
+ if [ $TEST_PASSED -eq 1 ];then
+  if [ ! -s .vast_country_code ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE004_NO_CACHE_FILE"
+  fi
+ fi
+
+ # Test that the cached value matches what was returned
+ if [ $TEST_PASSED -eq 1 ];then
+  CACHED_VALUE=$(cat .vast_country_code | tr -d '[:space:]')
+  if [ "$CACHED_VALUE" != "$COUNTRY_CODE_OUTPUT" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE004a_CACHE_MISMATCH"
+  fi
+ fi
+
+ # Test environment variable override
+ if [ $TEST_PASSED -eq 1 ];then
+  OVERRIDE_OUTPUT=$(VAST_COUNTRY_CODE=XX lib/get_country_code.sh 2>/dev/null)
+  if [ "$OVERRIDE_OUTPUT" != "XX" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE005_ENV_OVERRIDE"
+  fi
+ fi
+
+ # Test that the cache was not polluted by the env override
+ if [ $TEST_PASSED -eq 1 ];then
+  CACHED_VALUE_AFTER_OVERRIDE=$(cat .vast_country_code | tr -d '[:space:]')
+  if [ "$CACHED_VALUE_AFTER_OVERRIDE" = "XX" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE006_CACHE_POLLUTION"
+  fi
+ fi
+
+ # Test that the cached value is still used (second call should use cache)
+ if [ $TEST_PASSED -eq 1 ];then
+  SECOND_OUTPUT=$(lib/get_country_code.sh 2>/dev/null)
+  if [ "$SECOND_OUTPUT" != "$COUNTRY_CODE_OUTPUT" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COUNTRY_CODE007_CACHE_REUSE"
+  fi
+ fi
+
+ # Restore the original cache file if we had one
+ if [ -f .vast_country_code_test_backup ];then
+  mv .vast_country_code_test_backup .vast_country_code
+ fi
+fi
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mCountry code detection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mCountry code detection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+
+########## remove bad regions file
 echo "Flusing bad_region.lst"
 if [ -f bad_region.lst ];then
  mv -v bad_region.lst bad_region.lst_backup

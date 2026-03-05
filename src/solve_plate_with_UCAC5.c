@@ -2085,6 +2085,10 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  FILE *ucac5_server_log;
  int log_idx;
  int sscanf_return_code;
+ FILE *country_code_file;
+ char country_code[8];
+ char country_code_path[VAST_PATH_MAX];
+ int num_ucac5_servers;
 
  char path_to_vast_string[VAST_PATH_MAX];
 #ifdef DEBUGFILES
@@ -2154,21 +2158,42 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  proxy_settings= get_sanitized_curl_proxy();
 
  // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast/tau)...\n" );
 
- // Try all three servers in random order before giving up
+ // Read country code from cache file to determine which servers to use
+ memset( country_code, '\0', sizeof( country_code ) );
+ snprintf( country_code_path, VAST_PATH_MAX, "%s.vast_country_code", path_to_vast_string );
+ country_code_file= fopen( country_code_path, "r" );
+ if ( country_code_file != NULL ) {
+  if ( fgets( country_code, sizeof( country_code ), country_code_file ) != NULL ) {
+   // Remove trailing newline/whitespace
+   country_code[strcspn( country_code, " \t\n\r" )]= '\0';
+  }
+  fclose( country_code_file );
+ }
+
+ // Set up server list based on country code
  ucac5_servers[0]= "scan.sai.msu.ru";
  ucac5_servers[1]= "vast.sai.msu.ru";
  ucac5_servers[2]= "tau.kirx.net";
 
+ if ( strcmp( country_code, "RU" ) == 0 ) {
+  // Russian users: random selection among scan and vast only (skip tau.kirx.net due to DPI blocking)
+  num_ucac5_servers= 2;
+  fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast, country=RU)...\n" );
+ } else {
+  // Other users: random selection among all three servers
+  num_ucac5_servers= 3;
+  fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast/tau)...\n" );
+ }
+
  // Seed the random number generator and pick a random starting server
  srand( time( NULL ) );
- server_order[0]= rand() % 3;
- server_order[1]= ( server_order[0] + 1 ) % 3;
- server_order[2]= ( server_order[0] + 2 ) % 3;
+ server_order[0]= rand() % num_ucac5_servers;
+ server_order[1]= ( server_order[0] + 1 ) % num_ucac5_servers;
+ server_order[2]= ( server_order[0] + 2 ) % num_ucac5_servers;
 
  ucac5_success= 0;
- for ( server_idx= 0; server_idx < 3; server_idx++ ) {
+ for ( server_idx= 0; server_idx < num_ucac5_servers; server_idx++ ) {
   srv= server_order[server_idx];
   if ( server_idx == 0 ) {
    fprintf( stderr, "Trying UCAC5 server: %s\n", ucac5_servers[srv] );
@@ -2194,13 +2219,13 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    }
    break;
   }
-  fprintf( stderr, "UCAC5 server %s FAILED (attempt %d of 3)\n", ucac5_servers[srv], server_idx + 1 );
+  fprintf( stderr, "UCAC5 server %s FAILED (attempt %d of %d)\n", ucac5_servers[srv], server_idx + 1, num_ucac5_servers );
  }
 
  // Write server status summary to a log file (append mode, safe for parallel runs)
  ucac5_server_log= fopen( "ucac5_server_status.log", "a" );
  if ( ucac5_server_log != NULL ) {
-  for ( log_idx= 0; log_idx < 3; log_idx++ ) {
+  for ( log_idx= 0; log_idx < num_ucac5_servers; log_idx++ ) {
    srv= server_order[log_idx];
    if ( log_idx < server_idx ) {
     fprintf( ucac5_server_log, "pid=%d server=%s status=FAILED\n", pid, ucac5_servers[srv] );

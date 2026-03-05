@@ -166,15 +166,12 @@ fi
 if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == false ]]; then
  # curl is new enough to attempt HTTPS
 
- # Check if VAST_COUNTRY_CODE is set upstram
+ # Get the country code using the centralized script with caching
  if [ -z "$VAST_COUNTRY_CODE" ];then
-  # Try to get the country code
-  VAST_COUNTRY_CODE=$(curl $VAST_CURL_PROXY --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+  VAST_COUNTRY_CODE=$("${VASTDIR}lib/get_country_code.sh")
  fi
  if [ -z "$VAST_COUNTRY_CODE" ];then
-  ## Set UN code for UNknown
-  #VAST_COUNTRY_CODE="UN"
-  # https://ipinfo.io/ may be blocked
+  # Fallback in case the script fails
   VAST_COUNTRY_CODE="RU"
  fi
  
