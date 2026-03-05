@@ -2813,12 +2813,14 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    if [ $? -ne 0 ]; then
     echo "Copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
     # Copy WCS-calibrated images back to input directory
-    for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
+    for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_"${CALIBRATION_STATUS_PREFIX}"*."$FITS_FILE_EXT" ; do
      #
-     if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -n "$DARK_FRAMES_DIR" ] && [ -n "$FLAT_FIELD_FILE" ] ;then
-      echo "WARNING: no fully-calibrated images to save!" | tee -a transient_factory_test31.txt
+     if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] ;then
+      if [ -n "$DARK_FRAMES_DIR" ] && [ -n "$FLAT_FIELD_FILE" ] ;then
+       echo "WARNING: no fully-calibrated images to save!" | tee -a transient_factory_test31.txt
+      fi
       break
-     fi 
+     fi
      #
      echo "Saving fully-calibrated image $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
      if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ] ;then
