@@ -163,7 +163,7 @@ done
 
 
 # Check for a web browser (not needed in CI environments like GitHub Actions)
-if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ] && [ "$CI" != "true" ];then
  BROWSER_FOUND=0
  BROWSER_FOUND_NAME=""
  # Check the $BROWSER environment variable first
@@ -201,7 +201,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
   echo -e "Looking for a web browser - \033[01;32mFound ($BROWSER_FOUND_NAME)\033[00m"
  fi
 else
- echo "Skipping web browser check (running in GitHub Actions CI)"
+ echo "Skipping web browser check (running in CI)"
 fi
 
 

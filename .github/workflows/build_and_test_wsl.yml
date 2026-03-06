@@ -56,6 +56,11 @@ jobs:
       - name: Build VaST
         run: |
           cd ~/vast
+          # GITHUB_ACTIONS is set automatically on the Windows runner host,
+          # but wsl-bash does not inherit Windows-side environment variables.
+          # Export it explicitly so lib/check_external_programs.sh skips the
+          # web browser check that is not needed in CI.
+          export GITHUB_ACTIONS=true
           make
 
       - name: Syntax-check the test script
