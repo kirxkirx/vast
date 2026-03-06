@@ -183,6 +183,15 @@ if [ "$GITHUB_ACTIONS" != "true" ] && [ "$CI" != "true" ];then
    fi
   done
  fi
+ # On WSL, explorer.exe can open URLs in the default Windows browser
+ if [ $BROWSER_FOUND -eq 0 ];then
+  if grep -qi microsoft /proc/version 2>/dev/null ;then
+   if command -v explorer.exe &>/dev/null ;then
+    BROWSER_FOUND=1
+    BROWSER_FOUND_NAME="explorer.exe (WSL)"
+   fi
+  fi
+ fi
  # On macOS, check 'open' and application bundles
  if [ $BROWSER_FOUND -eq 0 ];then
   SYSTEM_TYPE=$(uname)

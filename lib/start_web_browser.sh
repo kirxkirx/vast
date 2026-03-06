@@ -21,7 +21,13 @@ if [ -z "$WEBBROWSER" ];then
  if [ ! -z "$BROWSER" ];then
   WEBBROWSER="$BROWSER"
  else
-  if command -v firefox &>/dev/null ;then
+  # Under WSL, use explorer.exe to open URLs in the default Windows browser
+  if grep -qi microsoft /proc/version 2>/dev/null ;then
+   if command -v explorer.exe &>/dev/null ;then
+    WEBBROWSER="explorer.exe"
+   fi
+  fi
+  if [ "$WEBBROWSER" = "none" ] && command -v firefox &>/dev/null ;then
    WEBBROWSER="firefox"
   elif command -v firefox-bin &>/dev/null ;then
    WEBBROWSER="firefox-bin"
