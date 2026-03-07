@@ -8,6 +8,7 @@ on:
 jobs:
   analyze:
     name: Analyze
+    if: github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     strategy:

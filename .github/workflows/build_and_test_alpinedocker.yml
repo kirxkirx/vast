@@ -7,6 +7,7 @@ on:
 
 jobs:
   build_and_test_alpine_docker:
+    if: github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -61,11 +62,14 @@ jobs:
           docker run --rm \
             -e TEST_VAST_CURL_PROXY \
             -e GITHUB_ACTIONS \
+            -e GITHUB_REPOSITORY \
             -v "$GITHUB_WORKSPACE:/out" \
             -w /opt/vast \
             vast-alpine:ci \
             bash -lc '
-              echo "1" > ../THIS_IS_HPCC
+              if [ "$GITHUB_REPOSITORY" = "kirxkirx/vast" ]; then
+                echo "1" > ../THIS_IS_HPCC
+              fi
               mkdir -p test_artifacts /out/test_artifacts
               util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log /out/test_artifacts/test_vast_full_output.log
               TEST_EXIT_CODE=${PIPESTATUS[0]}

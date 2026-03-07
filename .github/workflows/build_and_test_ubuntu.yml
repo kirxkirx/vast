@@ -90,9 +90,11 @@ jobs:
           fi
       - name: Prepare for the test
         run: |
-          echo "1" > ../THIS_IS_HPCC
+          if [ "$GITHUB_REPOSITORY" = "kirxkirx/vast" ]; then
+            echo "1" > ../THIS_IS_HPCC
+          fi
           mkdir -p test_artifacts
-        if: env.SKIP != 'true'
+        if: env.SKIP != 'true' && (github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch')
       - name: Test VaST
         #env:
         #  TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
@@ -100,15 +102,15 @@ jobs:
           util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
           exit ${PIPESTATUS[0]}
         timeout-minutes: 300
-        if: env.SKIP != 'true'
+        if: env.SKIP != 'true' && (github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch')
       - name: Collect additional test artifacts
         run: |
           cp vast_test_incremental_list_of_failed_test_codes.txt test_artifacts/ 2>/dev/null || true
-        if: always() && env.SKIP != 'true'
+        if: always() && env.SKIP != 'true' && (github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch')
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         with:
           name: test-artifacts
           path: test_artifacts/
           retention-days: 7
-        if: always() && env.SKIP != 'true'
+        if: always() && env.SKIP != 'true' && (github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch')
