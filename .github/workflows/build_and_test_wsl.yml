@@ -70,9 +70,7 @@ jobs:
       - name: Prepare for the test
         run: |
           cd ~/vast
-          # GITHUB_REPOSITORY is not inherited by wsl-bash, export it explicitly
-          export GITHUB_REPOSITORY="$GITHUB_REPOSITORY"
-          if [ "$GITHUB_REPOSITORY" = "kirxkirx/vast" ]; then
+          if [ "${{ github.repository }}" = "kirxkirx/vast" ]; then
             echo "1" > ../THIS_IS_HPCC
           fi
           mkdir -p test_artifacts
