@@ -55,7 +55,7 @@ LIST_OF_PLANETS="Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon"
 echo "$MPC_CODE" | grep -q '500@-234'
 if [ $? -eq 0 ];then
  PLANETS_SH_LOCAL_OR_REMOTE="remote"
- LIST_OF_PLANETS="$LIST_OF_PLANETS Earth Ceres Vesta Pallas Iris Hebe Juno Melpomene Eunomia Flora Bamberga Ganymed Nausikaa Massalia"
+ LIST_OF_PLANETS="$LIST_OF_PLANETS Earth Ceres Vesta Pallas Iris Hebe Juno Melpomene Eunomia Flora Bamberga Ganymed Nausikaa Massalia Julia"
 fi
 
 # Try local skyfield-based computation first (unless explicitly set to "remote")
@@ -96,7 +96,6 @@ if [[ "$MPC_CODE" != *@* ]]; then
  MPC_CODE="${MPC_CODE}@399"
 fi
 
-#for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;do
 for PLANET_NAME in $LIST_OF_PLANETS ;do
  # Match the planet name to its PLANET_ID
  case "$PLANET_NAME" in
@@ -126,6 +125,8 @@ for PLANET_NAME in $LIST_OF_PLANETS ;do
 #  "Metis") PLANET_ID="Metis" ;;
   "Nausikaa") PLANET_ID="192" ;;
   "Massalia") PLANET_ID="Massalia" ;;
+# 89 Julia
+  "Julia") PLANET_ID="Julia" ;;
   *) echo "Invalid planet name" ; exit 1 ;;
  esac
  # As far as I can tell, JD is in UT time system
