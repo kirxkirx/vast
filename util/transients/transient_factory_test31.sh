@@ -364,7 +364,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
-  #STARMATCH_RADIUS_PIX=4 # testing new values
+  STARMATCH_RADIUS_PIX=4 # testing new values
   # Let's try to reduce from 50 to 25
   # Nope, looks like we can avoid many mismatches with a larger edge ident
   FRAME_EDGE_OFFSET_PIX=100
