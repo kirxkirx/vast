@@ -49,7 +49,8 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
  echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="ED80__Black"
 fi
-if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
+#if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
  echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TTUQ1b1x1"
 fi
