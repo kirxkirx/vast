@@ -173,6 +173,7 @@ static int compare_star_on_mag_to_sort_arrCatStar( const void *a1, const void *a
 int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCatStar, long M ) {
  FILE *calibfile;
  int N_mantch= 0;
+ int N_good_match= 0;
  long i, j;
  // long max_M=0; // for debug
  double distance;
@@ -241,7 +242,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
   //  fprintf(stderr,"max_M=%ld\n",max_M);
  }
  // So, how many stars we have matched?
- // And wirite the output file BTW...
+ // And write the output file BTW...
  calibfile= fopen( "calib.txt", "w" );
  if ( NULL == calibfile ) {
   fprintf( stderr, "ERROR! Cannot open calib.txt for writing!\n" );
@@ -249,17 +250,16 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  }
  for ( i= 0; i < N; i++ ) {
   if ( arrStar[i].matched_with_catalog == 1 ) {
-   // fprintf(stderr,"%s %lf %lf %d  %lf\n",arrStar[i].catnumber,arrStar[i].ALPHA_catalog,arrStar[i].DELTA_catalog,arrStar[i].good_star,arrStar[i].distance_from_catalog_position);
-   // fprintf(calibfile,"%.5lf %.5lf %.5lf\n", arrStar[i].MAG_APER, arrStar[i].V, arrStar[i].MAGERR_APER);
    if ( arrStar[i].good_star == 1 ) {
-    // fprintf(stderr,"good star!\n");
     fprintf( calibfile, "%.4lf %.4lf %.4lf\n", arrStar[i].MAG_APER, arrStar[i].V, 0.01 ); // write it out for the magnitude calibration with lib/fit_zeropoint
+    N_good_match++;
    }
    N_mantch++;
   }
  }
  fclose( calibfile );
  fprintf( stderr, "Relation between the catalog and instrumental magnitudes is written to calib.txt\n" );
+ fprintf( stderr, "Stars used for magnitude calibration (good matches): %d out of %d total matches.\n", N_good_match, N_mantch );
  return N_mantch;
 }
 
@@ -312,6 +312,9 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
   fclose( tychofile );
  }
  ( *M )= i;
+ fprintf( stderr, "Tycho-2 catalog search boundaries: RA %.4f to %.4f deg, Dec %.4f to %.4f deg\n",
+          image_boundaries_radec[0], image_boundaries_radec[1], image_boundaries_radec[2], image_boundaries_radec[3] );
+ fprintf( stderr, "Loaded %ld Tycho-2 stars within the image boundaries (VT and BT non-zero).\n", i );
  return 0;
 }
 
@@ -387,6 +390,9 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  image_boundaries_radec[1]= gsl_stats_max( RA_array, 1, i );
  image_boundaries_radec[2]= gsl_stats_min( DEC_array, 1, i );
  image_boundaries_radec[3]= gsl_stats_max( DEC_array, 1, i );
+ fprintf( stderr, "Read %d stars from the SExtractor catalog %s\n", i, catalog_name );
+ fprintf( stderr, "Detected star coordinate range: RA %.4f to %.4f deg, Dec %+.4f to %+.4f deg\n",
+          image_boundaries_radec[0], image_boundaries_radec[1], image_boundaries_radec[2], image_boundaries_radec[3] );
  free( RA_array );
  free( DEC_array );
  return 0;
