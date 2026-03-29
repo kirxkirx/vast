@@ -278,6 +278,9 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # This is NOT where the camera is actually located!
+  # V36 is the nearest observatory that has an MPC code almost 200 miles away.
+  export MPC_CODE=V36
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -334,6 +337,9 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # This is NOT where the camera is actually located!
+  # V36 is the nearest observatory that has an MPC code almost 200 miles away.
+  export MPC_CODE=V36
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -492,7 +498,8 @@ function is_this_test_run_based_on_input_img_path {
  fi
  
  # -i (ignore case)
- echo "$path_to_check" | grep -q -i 'test'
+ # Check for 'test' or known test dataset names like 'NMW_ATLAS_Mira_in_Ser1'
+ echo "$path_to_check" | grep -q -i -e 'test' -e 'NMW_ATLAS_Mira_in_Ser1'
  if [ $? -eq 0 ]; then
   # Pattern found - this IS a test run
   return 0
@@ -556,16 +563,26 @@ function check_free_space() {
      return 0
     fi
 
-    # Minimum required space in KB (600MB = 600 * 1024 KB)
-    local required_space_kb_hardlimit=614400
+    # Hard limit for minimum required space in KB (5 GB = 5 * 1024 * 1024 KB)
+    local required_space_kb_hardlimit=5242880
 
-    # soft limit for minimum required space in KB (2 GB = 2 * 1024 * 1024 KB)
-    local required_space_kb_softlimit=2097152
+    # Soft limit for minimum required space in KB (100 GB = 100 * 1024 * 1024 KB)
+    local required_space_kb_softlimit=104857600
     # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB is set
     if [ -n "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" ];then
      if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
       required_space_kb_softlimit="$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB"
      fi
+    fi
+    # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB is set
+    if [ -n "$WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB" ];then
+     if [[ "$WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB" -gt 0 ]; then
+      required_space_kb_hardlimit="$WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB"
+     fi
+    fi
+    # Ensure softlimit >= hardlimit
+    if [ "$required_space_kb_softlimit" -lt "$required_space_kb_hardlimit" ]; then
+     required_space_kb_softlimit="$required_space_kb_hardlimit"
     fi
     
     if [ -z "$required_space_kb_softlimit" ] ;then
@@ -2905,12 +2922,16 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
 #if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
  echo "We are allowed to update the exclusion list at $HOST host" | tee -a transient_factory_test31.txt
  IS_THIS_TEST_RUN="NO"
- # if we are not in the test directory
+ # Determine if this is a test run based on the input image paths only.
+ # Do not include $PWD in the check: the VaST installation directory
+ # (e.g. /home/kirx/vast_test/vast) may contain 'test' in its path,
+ # which would cause production runs from that directory to be
+ # misidentified as test runs.
  #echo "$PWD" "$@" | grep -q -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- is_this_test_run_based_on_input_img_path "$PWD $string_command_line_argumants"
+ is_this_test_run_based_on_input_img_path "$string_command_line_argumants"
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
-  echo "The names $PWD $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
+  echo "The names $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
  fi
  echo "$1" | grep -q -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
  if [ $? -eq 0 ] ;then
