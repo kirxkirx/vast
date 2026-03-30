@@ -1284,7 +1284,7 @@ if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
 fi
 
 # Make sure there are no pleantes/comets/transients files
-for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt tns_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -2139,7 +2139,17 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
     # the file was modified less than 10 min ago, or it isn't there at all or 'find' command didn't work
     { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp -v tocp_transients_list.txt ../tocp_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../tocp_transients_list.txt tocp_transients_list.txt >> transient_factory_test31.txt 2>&1 ; } &
    fi
-   #   
+   #
+   # Download the TNS transients list (only if TNS credentials are configured)
+   if [ -n "$TNS_ID" ] && [ -n "$TNS_NAME" ];then
+    if [ -n "$(find ../tns_transients_list.txt -mmin -30 2>/dev/null)" ]; then
+     echo "Re-using ../tns_transients_list.txt" | tee -a transient_factory_test31.txt
+     cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1
+    else
+     { $TIMEOUTCOMMAND lib/update_tns_transients_list.sh && cp -v tns_transients_list.txt ../tns_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1 ; } &
+    fi
+   fi
+   #
   fi
   
   echo "Plate-solving the images" | tee -a transient_factory_test31.txt
@@ -3116,6 +3126,12 @@ echo "############################################################
 Truncated list of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" | tee -a transient_factory_test31.txt
 cat tocp_transients_list.txt | tail -n20 | tee -a transient_factory_test31.txt
 ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
+if [ -s tns_transients_list.txt ];then
+ echo "############################################################
+Truncated list of TNS transients from https://www.wis-tns.org/ :" | tee -a transient_factory_test31.txt
+ cat tns_transients_list.txt | tail -n20 | tee -a transient_factory_test31.txt
+ ls -lh tns_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
+fi
 #
 
 # Record total script runtime
@@ -3177,7 +3193,7 @@ echo "</pre>
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt tns_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi

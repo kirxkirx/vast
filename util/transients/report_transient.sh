@@ -502,6 +502,22 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
 fi
 #
 #
+# Check if the transient is listed in the Transient Name Server
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
+ EXCLUSION_LIST_FILE="tns_transients_list.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
+  if [ $? -eq 0 ];then
+   if [ -z "$THIS_IS_VAST_TEST" ];then
+    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+   fi
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+  fi
+ fi
+fi
+#
+#
 # Check if the transient is a spacecraft
 # The difference with the never_exclude list is the search radius
 if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
