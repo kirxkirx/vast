@@ -122,6 +122,16 @@ int main( int argc, char *argv[] ) {
  double image_mean, dark_mean;
  int is_bias;
 
+ char telescop_image[FLEN_VALUE];
+ char telescop_dark[FLEN_VALUE];
+ char camera_image[FLEN_VALUE];
+ char camera_dark[FLEN_VALUE];
+ char cameraid_image[FLEN_VALUE];
+ char cameraid_dark[FLEN_VALUE];
+ int have_telescop_image, have_telescop_dark;
+ int have_camera_image, have_camera_dark;
+ int have_cameraid_image, have_cameraid_dark;
+
  force_processing= 0;
  skip_temp_checks= 0;
  fpixel= 1;
@@ -129,6 +139,18 @@ int main( int argc, char *argv[] ) {
  anynul= 0;
  nullval= 0;
  is_bias= 0;
+ have_telescop_image= 0;
+ have_telescop_dark= 0;
+ have_camera_image= 0;
+ have_camera_dark= 0;
+ have_cameraid_image= 0;
+ have_cameraid_dark= 0;
+ memset( telescop_image, 0, FLEN_VALUE );
+ memset( telescop_dark, 0, FLEN_VALUE );
+ memset( camera_image, 0, FLEN_VALUE );
+ memset( camera_dark, 0, FLEN_VALUE );
+ memset( cameraid_image, 0, FLEN_VALUE );
+ memset( cameraid_dark, 0, FLEN_VALUE );
 
  // Check if executable name is ms_notempchecks
  prog_name= basename( argv[0] );
@@ -190,6 +212,22 @@ int main( int argc, char *argv[] ) {
   ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
   status= 0;
  }
+ // Read TELESCOP and CAMERA keywords from the input image
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop_image, NULL, &status );
+ if ( status == 0 ) {
+  have_telescop_image= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERA", camera_image, NULL, &status );
+ if ( status == 0 ) {
+  have_camera_image= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_image, NULL, &status );
+ if ( status == 0 ) {
+  have_cameraid_image= 1;
+ }
+ status= 0;
  // Check for possible mismatch between CCD-TEMP and SET-TEMP
  if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, input_file );
@@ -361,6 +399,57 @@ int main( int argc, char *argv[] ) {
    free( result_image_array );
    fits_close_file( fptr, &status );
    exit( EXIT_FAILURE );
+  }
+ }
+ // Read TELESCOP and CAMERA keywords from the dark frame and compare with the input image
+ if ( !skip_temp_checks ) {
+  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_dark, NULL, &status );
+  if ( status == 0 ) {
+   have_telescop_dark= 1;
+  }
+  status= 0;
+  fits_read_key( fptr, TSTRING, "CAMERA", camera_dark, NULL, &status );
+  if ( status == 0 ) {
+   have_camera_dark= 1;
+  }
+  status= 0;
+  // Compare TELESCOP between image and dark - only if both have the keyword
+  if ( have_telescop_image && have_telescop_dark ) {
+   if ( strcmp( telescop_image, telescop_dark ) != 0 ) {
+    fprintf( stderr, "ERROR: TELESCOP mismatch between the light (%s; %s) and dark (%s; %s) images!\n", telescop_image, basename( input_file ), telescop_dark, basename( dark_file ) );
+    free( image_array );
+    free( dark_array );
+    free( result_image_array );
+    fits_close_file( fptr, &status );
+    exit( EXIT_FAILURE );
+   }
+  }
+  // Compare CAMERA between image and dark - only if both have the keyword
+  if ( have_camera_image && have_camera_dark ) {
+   if ( strcmp( camera_image, camera_dark ) != 0 ) {
+    fprintf( stderr, "ERROR: CAMERA mismatch between the light (%s; %s) and dark (%s; %s) images!\n", camera_image, basename( input_file ), camera_dark, basename( dark_file ) );
+    free( image_array );
+    free( dark_array );
+    free( result_image_array );
+    fits_close_file( fptr, &status );
+    exit( EXIT_FAILURE );
+   }
+  }
+  // Compare CAMERAID between image and dark - only if both have the keyword
+  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_dark, NULL, &status );
+  if ( status == 0 ) {
+   have_cameraid_dark= 1;
+  }
+  status= 0;
+  if ( have_cameraid_image && have_cameraid_dark ) {
+   if ( strcmp( cameraid_image, cameraid_dark ) != 0 ) {
+    fprintf( stderr, "ERROR: CAMERAID mismatch between the light (%s; %s) and dark (%s; %s) images!\n", cameraid_image, basename( input_file ), cameraid_dark, basename( dark_file ) );
+    free( image_array );
+    free( dark_array );
+    free( result_image_array );
+    fits_close_file( fptr, &status );
+    exit( EXIT_FAILURE );
+   }
   }
  }
  //

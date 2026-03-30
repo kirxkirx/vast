@@ -121,6 +121,29 @@ int main( int argc, char *argv[] ) {
 
  double bzero= 32768.0;
 
+ char telescop_image[FLEN_VALUE];
+ char telescop_flat[FLEN_VALUE];
+ char camera_image[FLEN_VALUE];
+ char camera_flat[FLEN_VALUE];
+ char cameraid_image[FLEN_VALUE];
+ char cameraid_flat[FLEN_VALUE];
+ int have_telescop_image, have_telescop_flat;
+ int have_camera_image, have_camera_flat;
+ int have_cameraid_image, have_cameraid_flat;
+
+ have_telescop_image= 0;
+ have_telescop_flat= 0;
+ have_camera_image= 0;
+ have_camera_flat= 0;
+ have_cameraid_image= 0;
+ have_cameraid_flat= 0;
+ memset( telescop_image, 0, FLEN_VALUE );
+ memset( telescop_flat, 0, FLEN_VALUE );
+ memset( camera_image, 0, FLEN_VALUE );
+ memset( camera_flat, 0, FLEN_VALUE );
+ memset( cameraid_image, 0, FLEN_VALUE );
+ memset( cameraid_flat, 0, FLEN_VALUE );
+
  if ( argc != 4 ) {
   fprintf( stderr, "Wrong number of arguments... :(\n  Usage: %s image.fit flat.fit result.fit\n", argv[0] );
   return 1;
@@ -171,6 +194,22 @@ int main( int argc, char *argv[] ) {
    exit( EXIT_FAILURE ); // Exit the program
   }
  }
+ // Read TELESCOP and CAMERA keywords from the input image
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop_image, NULL, &status );
+ if ( status == 0 ) {
+  have_telescop_image= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERA", camera_image, NULL, &status );
+ if ( status == 0 ) {
+  have_camera_image= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_image, NULL, &status );
+ if ( status == 0 ) {
+  have_cameraid_image= 1;
+ }
+ status= 0;
  fits_get_img_type( fptr, &bitpix2, &status );
 
  // allocate memory
@@ -210,6 +249,43 @@ int main( int argc, char *argv[] ) {
  if ( testX != naxes[0] || testY != naxes[1] ) {
   fprintf( stderr, "Flat field and image must be the same size!\n" );
   exit( EXIT_FAILURE );
+ }
+ // Read TELESCOP and CAMERA keywords from the flat field and compare with the image
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop_flat, NULL, &status );
+ if ( status == 0 ) {
+  have_telescop_flat= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERA", camera_flat, NULL, &status );
+ if ( status == 0 ) {
+  have_camera_flat= 1;
+ }
+ status= 0;
+ if ( have_telescop_image && have_telescop_flat ) {
+  if ( strcmp( telescop_image, telescop_flat ) != 0 ) {
+   fprintf( stderr, "ERROR: TELESCOP mismatch between the image (%s; %s) and flat (%s; %s)!\n", telescop_image, argv[1], telescop_flat, argv[2] );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ if ( have_camera_image && have_camera_flat ) {
+  if ( strcmp( camera_image, camera_flat ) != 0 ) {
+   fprintf( stderr, "ERROR: CAMERA mismatch between the image (%s; %s) and flat (%s; %s)!\n", camera_image, argv[1], camera_flat, argv[2] );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_flat, NULL, &status );
+ if ( status == 0 ) {
+  have_cameraid_flat= 1;
+ }
+ status= 0;
+ if ( have_cameraid_image && have_cameraid_flat ) {
+  if ( strcmp( cameraid_image, cameraid_flat ) != 0 ) {
+   fprintf( stderr, "ERROR: CAMERAID mismatch between the image (%s; %s) and flat (%s; %s)!\n", cameraid_image, argv[1], cameraid_flat, argv[2] );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
  }
  fits_get_img_type( fptr, &bitpix2, &status );
  fprintf( stderr, "Reading flat %s %ld %ld  %d bitpix\n", argv[2], testX, testY, bitpix2 );

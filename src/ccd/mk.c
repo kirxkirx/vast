@@ -213,6 +213,15 @@ int main( int argc, char *argv[] ) {
  long center_box_count;
  long cx, cy, x0, y0, x1, y1, bx, by;
 
+ char telescop_ref[FLEN_VALUE];
+ char telescop_cur[FLEN_VALUE];
+ char camera_ref[FLEN_VALUE];
+ char camera_cur[FLEN_VALUE];
+ char cameraid_ref[FLEN_VALUE];
+ char cameraid_cur[FLEN_VALUE];
+ int have_telescop_ref, have_camera_ref, have_cameraid_ref;
+ int have_telescop_cur, have_camera_cur, have_cameraid_cur;
+
  skip_temp_checks= 0;
  fpixel= 1;
  status= 0;
@@ -221,6 +230,12 @@ int main( int argc, char *argv[] ) {
  ref_index= 1.0;
  cur_index= 1.0;
  loaded_file_counter= 0;
+ have_telescop_ref= 0;
+ have_camera_ref= 0;
+ have_cameraid_ref= 0;
+ memset( telescop_ref, 0, FLEN_VALUE );
+ memset( camera_ref, 0, FLEN_VALUE );
+ memset( cameraid_ref, 0, FLEN_VALUE );
 
  // Check if executable name is mk_notempchecks
  prog_name= basename( argv[0] );
@@ -283,6 +298,22 @@ int main( int argc, char *argv[] ) {
    exit( EXIT_FAILURE );
   }
  }
+ // Read TELESCOP and CAMERA keywords from the reference image
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop_ref, NULL, &status );
+ if ( status == 0 ) {
+  have_telescop_ref= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERA", camera_ref, NULL, &status );
+ if ( status == 0 ) {
+  have_camera_ref= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_ref, NULL, &status );
+ if ( status == 0 ) {
+  have_cameraid_ref= 1;
+ }
+ status= 0;
  //
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
  // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
@@ -373,6 +404,51 @@ int main( int argc, char *argv[] ) {
     fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
     fits_close_file( fptr, &status );
     exit( EXIT_FAILURE );
+   }
+  }
+  // Compare TELESCOP and CAMERA keywords with the reference image
+  if ( !skip_temp_checks ) {
+   have_telescop_cur= 0;
+   have_camera_cur= 0;
+   memset( telescop_cur, 0, FLEN_VALUE );
+   memset( camera_cur, 0, FLEN_VALUE );
+   fits_read_key( fptr, TSTRING, "TELESCOP", telescop_cur, NULL, &status );
+   if ( status == 0 ) {
+    have_telescop_cur= 1;
+   }
+   status= 0;
+   fits_read_key( fptr, TSTRING, "CAMERA", camera_cur, NULL, &status );
+   if ( status == 0 ) {
+    have_camera_cur= 1;
+   }
+   status= 0;
+   if ( have_telescop_ref && have_telescop_cur ) {
+    if ( strcmp( telescop_ref, telescop_cur ) != 0 ) {
+     fprintf( stderr, "ERROR: TELESCOP mismatch between %s (%s) and %s (%s)!\n", argv[ref_file_index], telescop_ref, argv[file_counter], telescop_cur );
+     fits_close_file( fptr, &status );
+     exit( EXIT_FAILURE );
+    }
+   }
+   if ( have_camera_ref && have_camera_cur ) {
+    if ( strcmp( camera_ref, camera_cur ) != 0 ) {
+     fprintf( stderr, "ERROR: CAMERA mismatch between %s (%s) and %s (%s)!\n", argv[ref_file_index], camera_ref, argv[file_counter], camera_cur );
+     fits_close_file( fptr, &status );
+     exit( EXIT_FAILURE );
+    }
+   }
+   have_cameraid_cur= 0;
+   memset( cameraid_cur, 0, FLEN_VALUE );
+   fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_cur, NULL, &status );
+   if ( status == 0 ) {
+    have_cameraid_cur= 1;
+   }
+   status= 0;
+   if ( have_cameraid_ref && have_cameraid_cur ) {
+    if ( strcmp( cameraid_ref, cameraid_cur ) != 0 ) {
+     fprintf( stderr, "ERROR: CAMERAID mismatch between %s (%s) and %s (%s)!\n", argv[ref_file_index], cameraid_ref, argv[file_counter], cameraid_cur );
+     fits_close_file( fptr, &status );
+     exit( EXIT_FAILURE );
+    }
    }
   }
   //
