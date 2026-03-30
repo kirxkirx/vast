@@ -754,8 +754,7 @@ if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
 fi
 
 
-#echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
-echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>
+echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
 <a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.u-strasbg.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
 # Dispaly SNAD ZTF link only if there is a hope to have ZTF data for this declination
@@ -816,22 +815,6 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type='hidden' name='filter[]' value='3'>
 <input type='hidden' name='order' value='9'>
 <input class='formbutton' type='Submit' value='Search VSX online'>
-</form>
-<form style='display: inline;' NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\">
-<input type=\"hidden\" name=\"RA\"  size=\"12\" maxlength=\"20\" value=\"$RA_MEAN\" /><input type=\"hidden\" name=\"Dec\"  size=\"12\" maxlength=\"20\" value=\"$DEC_MEAN\" />
-<input type=\"hidden\" name=\"Rad\"  size=\"5\" maxlength=\"10\" value=\"0.1\" />
-<input type=\"hidden\" name=\"IMG\" value=\"dss\" />
-<input type=\"hidden\" name=\"IMG\" value=\"nun\" checked=\"checked\" />
-<input type=\"hidden\" name=\"IMG\" value=\"sdss\" />
-<input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" />
-<input type=\"hidden\" name=\"DB\" value=\"orphancat\" />
-<input type=\"submit\" name=\".submit\" value=\"Catalina photometry\" />
-<input type=\"hidden\" name=\"OUT\" value=\"web\" />
-<input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" />
-<input type=\"hidden\" name=\"OUT\" value=\"vot\" />
-<input type=\"hidden\" name=\"SHORT\" value=\"short\" checked=\"checked\" />
-<input type=\"hidden\" name=\"SHORT\" value=\"long\" />
-<input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" />
 </form>
 <form style='display: inline;' NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
 <input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_MEAN_HMS\">

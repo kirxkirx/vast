@@ -3128,7 +3128,7 @@ cat tocp_transients_list.txt | tail -n20 | tee -a transient_factory_test31.txt
 ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 if [ -s tns_transients_list.txt ];then
  echo "############################################################
-Truncated list of TNS transients from https://www.wis-tns.org/ :" | tee -a transient_factory_test31.txt
+Truncated list of recent TNS transients from https://www.wis-tns.org/ :" | tee -a transient_factory_test31.txt
  cat tns_transients_list.txt | tail -n20 | tee -a transient_factory_test31.txt
  ls -lh tns_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 fi
