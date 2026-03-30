@@ -3564,6 +3564,170 @@ $GREP_RESULT"
   fi
   rm -f median.fit
  fi
+ # Test TELESCOP/CAMERA/CAMERAID keyword consistency checks in CCD tools
+ # The tools should reject images with mismatched keywords but accept
+ # images where only one has the keyword or neither has it.
+ echo "Testing CCD tool TELESCOP/CAMERA/CAMERAID keyword consistency checks"
+ #
+ # -- mk: matching keywords should succeed --
+ cp one.fit one_camA.fit
+ cp two.fit two_camA.fit
+ lib/bin/sethead one_camA.fit TELESCOP="TestScope" CAMERA="CamA" CAMERAID="serial001"
+ lib/bin/sethead two_camA.fit TELESCOP="TestScope" CAMERA="CamA" CAMERAID="serial001"
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_keyword_match"
+ fi
+ rm -f median.fit
+ #
+ # -- mk: mismatched TELESCOP should fail --
+ lib/bin/sethead two_camA.fit TELESCOP="OtherScope"
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_telescop_mismatch"
+ fi
+ rm -f median.fit
+ lib/bin/sethead two_camA.fit TELESCOP="TestScope"
+ #
+ # -- mk: mismatched CAMERA should fail --
+ lib/bin/sethead two_camA.fit CAMERA="CamB"
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_camera_mismatch"
+ fi
+ rm -f median.fit
+ lib/bin/sethead two_camA.fit CAMERA="CamA"
+ #
+ # -- mk: mismatched CAMERAID should fail --
+ lib/bin/sethead two_camA.fit CAMERAID="serial999"
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_cameraid_mismatch"
+ fi
+ rm -f median.fit
+ lib/bin/sethead two_camA.fit CAMERAID="serial001"
+ #
+ # -- mk: one image has keyword, other does not -- should succeed --
+ lib/bin/delhead two_camA.fit TELESCOP CAMERA CAMERAID
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_keyword_onemissing"
+ fi
+ rm -f median.fit
+ #
+ # -- mk: neither image has keywords -- should succeed --
+ lib/bin/delhead one_camA.fit TELESCOP CAMERA CAMERAID
+ util/ccd/mk one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_keyword_bothmissing"
+ fi
+ rm -f median.fit
+ #
+ # -- mk_notempchecks: mismatched keywords should be ignored --
+ lib/bin/sethead one_camA.fit TELESCOP="ScopeA" CAMERA="CamA" CAMERAID="serial001"
+ lib/bin/sethead two_camA.fit TELESCOP="ScopeB" CAMERA="CamB" CAMERAID="serial999"
+ util/ccd/mk_notempchecks one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_notempchecks_bypass"
+ fi
+ rm -f median.fit
+ #
+ # -- mk_fast: mismatched TELESCOP should fail --
+ util/ccd/mk_fast one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_telescop_mismatch"
+ fi
+ rm -f median.fit
+ #
+ # -- mk_fast: matching keywords should succeed --
+ lib/bin/sethead two_camA.fit TELESCOP="ScopeA" CAMERA="CamA" CAMERAID="serial001"
+ util/ccd/mk_fast one_camA.fit two_camA.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_keyword_match"
+ fi
+ rm -f median.fit
+ #
+ # -- ms: matching keywords should succeed (subtract one from two) --
+ util/ccd/ms two_camA.fit one_camA.fit ms_result.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ms_keyword_match"
+ fi
+ rm -f ms_result.fit
+ #
+ # -- ms: mismatched TELESCOP should fail --
+ lib/bin/sethead one_camA.fit TELESCOP="OtherScope"
+ util/ccd/ms two_camA.fit one_camA.fit ms_result.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ms_telescop_mismatch"
+ fi
+ rm -f ms_result.fit
+ #
+ # -- ms: mismatched CAMERAID should fail --
+ lib/bin/sethead one_camA.fit TELESCOP="ScopeA" CAMERAID="serial_other"
+ util/ccd/ms two_camA.fit one_camA.fit ms_result.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ms_cameraid_mismatch"
+ fi
+ rm -f ms_result.fit
+ #
+ # -- ms_notempchecks: mismatched keywords should be ignored --
+ util/ccd/ms_notempchecks two_camA.fit one_camA.fit ms_result.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ms_notempchecks_bypass"
+ fi
+ rm -f ms_result.fit
+ #
+ # -- ms: one image has keywords, other does not -- should succeed --
+ lib/bin/delhead one_camA.fit TELESCOP CAMERA CAMERAID
+ util/ccd/ms two_camA.fit one_camA.fit ms_result.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ms_keyword_onemissing"
+ fi
+ rm -f ms_result.fit
+ #
+ # -- md: matching keywords should succeed (divide two by one_camA that has no keywords -- fine) --
+ lib/bin/sethead one_camA.fit TELESCOP="ScopeA" CAMERA="CamA" CAMERAID="serial001"
+ util/ccd/md two_camA.fit one_camA.fit md_result.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_md_keyword_match"
+ fi
+ rm -f md_result.fit
+ #
+ # -- md: mismatched TELESCOP should fail --
+ lib/bin/sethead one_camA.fit TELESCOP="OtherScope"
+ util/ccd/md two_camA.fit one_camA.fit md_result.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_md_telescop_mismatch"
+ fi
+ rm -f md_result.fit
+ #
+ # -- md: mismatched CAMERA should fail --
+ lib/bin/sethead one_camA.fit TELESCOP="ScopeA" CAMERA="CamB"
+ util/ccd/md two_camA.fit one_camA.fit md_result.fit > /dev/null 2>&1
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_md_camera_mismatch"
+ fi
+ rm -f md_result.fit
+ #
+ rm -f one_camA.fit two_camA.fit ms_result.fit md_result.fit median.fit
+
  for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ;do
   if [ -f "$TEST_FILE_TO_REMOVE" ];then
    rm -f "$TEST_FILE_TO_REMOVE"
@@ -3576,10 +3740,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo -e "\n\033[01;34mSmall CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo -e "\n\033[01;34mSmall CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
