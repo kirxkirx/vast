@@ -1851,6 +1851,50 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION010"
 fi
 
+# Test TNS transient list download (only if TNS credentials are configured)
+if [ -n "$TNS_ID" ] && [ -n "$TNS_NAME" ];then
+ echo "TNS credentials found (TNS_ID=$TNS_ID TNS_NAME=$TNS_NAME), testing TNS transient list download"
+ rm -f tns_transients_list.txt
+ lib/update_tns_transients_list.sh
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_DOWNLOAD"
+ fi
+ if [ ! -s tns_transients_list.txt ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_EMPTY"
+ else
+  # Check that the file has a reasonable number of entries (at least 10)
+  TNS_LINE_COUNT=$(wc -l < tns_transients_list.txt)
+  if [ $TNS_LINE_COUNT -lt 10 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_TOO_FEW_${TNS_LINE_COUNT}"
+  fi
+  # Check format: first line should have valid RA Dec (HH:MM:SS.ss +DD:MM:SS.s)
+  FIRST_RA=$(head -1 tns_transients_list.txt | awk '{print $1}')
+  FIRST_DEC=$(head -1 tns_transients_list.txt | awk '{print $2}')
+  if ! lib/hms2deg "$FIRST_RA" "$FIRST_DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_FORMAT"
+  fi
+  # Check that no entry has RA=00:00:00.00 (bogus coordinate)
+  grep -q '00:00:00.00' tns_transients_list.txt
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_BOGUS_COORDS"
+  fi
+  # Test position matching with lib/put_two_sources_in_one_field
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$FIRST_RA" "$FIRST_DEC" tns_transients_list.txt 15 2>/dev/null)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_TNS_SELFMATCH"
+  fi
+ fi
+ rm -f tns_transients_list.txt
+else
+ echo "TNS credentials not set (TNS_ID, TNS_NAME) - skipping TNS test"
+fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
@@ -1858,12 +1902,12 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-fi 
+fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
