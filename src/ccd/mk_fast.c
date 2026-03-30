@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h> // for strcasecmp()
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h> // for unlink()
@@ -200,6 +201,42 @@ void check_and_remove_duplicate_keywords( const char *filename ) {
  }
 }
 
+// Check if a FITS keyword value looks like a real identifier
+// rather than a placeholder like "Unknown Telescope", "___", etc.
+// Returns 1 if the value is meaningful, 0 if it should be ignored.
+static int is_meaningful_keyword_value( const char *value ) {
+ int i;
+ int len;
+ int has_alnum;
+ if ( value == NULL ) {
+  return 0;
+ }
+ len= strlen( value );
+ if ( len < 2 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "Unknown Telescope" ) == 0 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "Unknown" ) == 0 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "None" ) == 0 ) {
+  return 0;
+ }
+ has_alnum= 0;
+ for ( i= 0; i < len; i++ ) {
+  if ( value[i] != '_' && value[i] != '-' && value[i] != ' ' && value[i] != '.' ) {
+   has_alnum= 1;
+   break;
+  }
+ }
+ if ( !has_alnum ) {
+  return 0;
+ }
+ return 1;
+}
+
 void handle_error( const char *message, int status ) {
  fprintf( stderr, "ERROR: %s\n", message );
  fits_report_error( stderr, status );
@@ -328,17 +365,17 @@ int main( int argc, char *argv[] ) {
  }
  // Read TELESCOP and CAMERA keywords from the reference image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_ref, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( telescop_ref ) ) {
   have_telescop_ref= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERA", camera_ref, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( camera_ref ) ) {
   have_camera_ref= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_ref, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( cameraid_ref ) ) {
   have_cameraid_ref= 1;
  }
  status= 0;
@@ -447,12 +484,12 @@ int main( int argc, char *argv[] ) {
    memset( telescop_cur, 0, FLEN_VALUE );
    memset( camera_cur, 0, FLEN_VALUE );
    fits_read_key( fptr, TSTRING, "TELESCOP", telescop_cur, NULL, &status );
-   if ( status == 0 ) {
+   if ( status == 0 && is_meaningful_keyword_value( telescop_cur ) ) {
     have_telescop_cur= 1;
    }
    status= 0;
    fits_read_key( fptr, TSTRING, "CAMERA", camera_cur, NULL, &status );
-   if ( status == 0 ) {
+   if ( status == 0 && is_meaningful_keyword_value( camera_cur ) ) {
     have_camera_cur= 1;
    }
    status= 0;
@@ -473,7 +510,7 @@ int main( int argc, char *argv[] ) {
    have_cameraid_cur= 0;
    memset( cameraid_cur, 0, FLEN_VALUE );
    fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_cur, NULL, &status );
-   if ( status == 0 ) {
+   if ( status == 0 && is_meaningful_keyword_value( cameraid_cur ) ) {
     have_cameraid_cur= 1;
    }
    status= 0;

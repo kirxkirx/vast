@@ -9274,7 +9274,16 @@ $GREP_RESULT"
   fi
   ################################################################################
   ### Test the median image stacker
-  util/ccd/mk ../only_few_stars/*
+  # mk should fail because ../only_few_stars/ contains images with
+  # different TELESCOP values ("AZT-8, 70-cm" vs "AZT-8, 70-cm Crimean Reflector")
+  util/ccd/mk ../only_few_stars/* > /dev/null 2>&1
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS_IMAGESTACKER_SHOULD_FAIL_TELESCOP"
+  fi
+  rm -f median.fit
+  # mk_notempchecks should succeed (keyword checks disabled)
+  util/ccd/mk_notempchecks ../only_few_stars/*
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS_IMAGESTACKER001"

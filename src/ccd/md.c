@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h> // for strcasecmp()
 #include <stdlib.h>
 #include <math.h>
 // #include <time.h> // time profiling
@@ -12,6 +13,42 @@
 
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
 #define OVERSCAN_BINSIZE 8
+
+// Check if a FITS keyword value looks like a real identifier
+// rather than a placeholder like "Unknown Telescope", "___", etc.
+// Returns 1 if the value is meaningful, 0 if it should be ignored.
+static int is_meaningful_keyword_value( const char *value ) {
+ int i;
+ int len;
+ int has_alnum;
+ if ( value == NULL ) {
+  return 0;
+ }
+ len= strlen( value );
+ if ( len < 2 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "Unknown Telescope" ) == 0 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "Unknown" ) == 0 ) {
+  return 0;
+ }
+ if ( strcasecmp( value, "None" ) == 0 ) {
+  return 0;
+ }
+ has_alnum= 0;
+ for ( i= 0; i < len; i++ ) {
+  if ( value[i] != '_' && value[i] != '-' && value[i] != ' ' && value[i] != '.' ) {
+   has_alnum= 1;
+   break;
+  }
+ }
+ if ( !has_alnum ) {
+  return 0;
+ }
+ return 1;
+}
 
 // This function will check if a record indicates the image has already been calibrated
 int check_history_keywords( char *record ) {
@@ -196,17 +233,17 @@ int main( int argc, char *argv[] ) {
  }
  // Read TELESCOP and CAMERA keywords from the input image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_image, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( telescop_image ) ) {
   have_telescop_image= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERA", camera_image, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( camera_image ) ) {
   have_camera_image= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_image, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( cameraid_image ) ) {
   have_cameraid_image= 1;
  }
  status= 0;
@@ -252,12 +289,12 @@ int main( int argc, char *argv[] ) {
  }
  // Read TELESCOP and CAMERA keywords from the flat field and compare with the image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_flat, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( telescop_flat ) ) {
   have_telescop_flat= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERA", camera_flat, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( camera_flat ) ) {
   have_camera_flat= 1;
  }
  status= 0;
@@ -276,7 +313,7 @@ int main( int argc, char *argv[] ) {
   }
  }
  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_flat, NULL, &status );
- if ( status == 0 ) {
+ if ( status == 0 && is_meaningful_keyword_value( cameraid_flat ) ) {
   have_cameraid_flat= 1;
  }
  status= 0;
