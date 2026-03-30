@@ -96,8 +96,10 @@ jobs:
           mkdir -p test_artifacts
         if: env.SKIP != 'true' && (github.repository == 'kirxkirx/vast' || github.event_name == 'workflow_dispatch')
       - name: Test VaST
-        #env:
-        #  TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
+        env:
+          #TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
+          TNS_ID: ${{ secrets.TNS_ID }}
+          TNS_NAME: ${{ secrets.TNS_NAME }}
         run: |
           util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
           exit ${PIPESTATUS[0]}
