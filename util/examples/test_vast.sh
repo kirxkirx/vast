@@ -11237,6 +11237,17 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_V"
   fi
+  # Check the number of Tycho-2 matched stars
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11715,6 +11726,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11948,6 +11969,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -12307,6 +12338,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -12569,6 +12610,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -12943,6 +12994,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -13447,6 +13508,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13776,6 +13847,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -14148,6 +14229,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -14583,6 +14674,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -14845,6 +14946,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15105,6 +15216,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -15424,6 +15545,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -15808,6 +15939,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -16060,6 +16201,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -16249,6 +16400,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -16508,6 +16669,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -16803,6 +16974,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -17086,6 +17267,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -17568,6 +17759,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 100 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -17983,6 +18184,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -18432,6 +18643,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -18900,6 +19121,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -19288,6 +19519,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 500 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -19570,6 +19811,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -20586,6 +20837,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -21125,6 +21386,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
@@ -21678,6 +21949,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 10 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -22062,6 +22343,16 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_V"
   fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_MATCH_NOT_FOUND"
+  fi
   grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -22394,6 +22685,16 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_TYCHO2_V"
+  fi
+  if grep -q 'Matched with Tycho-2' transient_report/index.html ;then
+   TYCHO2_MATCH_COUNT=$(grep 'Matched with Tycho-2' transient_report/index.html | head -1 | awk '{print $4}')
+   if [ $TYCHO2_MATCH_COUNT -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_TYCHO2_MATCH_COUNT_${TYCHO2_MATCH_COUNT}"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_TYCHO2_MATCH_NOT_FOUND"
   fi
   grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
