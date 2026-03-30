@@ -3289,8 +3289,9 @@ int main( int argc, char **argv ) {
      cpgsch( 1.0 );              // Set normal font size
      cpgscr( 1, 1.0, 1.0, 1.0 ); //
     } else {
-     // note, this is not used when generating finder charts
-     cpgmtxt( "T", 1.0, 0.5, 0.5, stderr_output );
+     // Use the shorter finder_chart_timestring_output for transient search thumbnails
+     // to avoid the label stretching outside of the plot
+     cpgmtxt( "T", 1.0, 0.5, 0.5, finder_chart_timestring_output );
     }
    }
    // Done with labels
