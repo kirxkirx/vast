@@ -14,7 +14,7 @@ function validate_index_html() {
     patterns=(
         "javascript:toggleElement"
         "<script>printCandidateNameWithAbsLink"
-        '<button class="floating-btn"'
+        'class="floating-btn"'
         "<pre class='folding-pre'>"
         "function printCandidateNameWithAbsLink"
     )
