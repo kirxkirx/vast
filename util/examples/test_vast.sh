@@ -17855,9 +17855,6 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### NMW-STL find Neptune test #####
-### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
-
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_Neptune_test ];then
  cd .. || exit 1
@@ -18277,11 +18274,6 @@ if [ $? -ne 0 ];then
  #exit 1
  fail_early "Internet connection error"
 fi
-
-### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
-
-
 
 ##### NMW-STL find Nova Vul 2024 test #####
 # Download the test dataset if needed
