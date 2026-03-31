@@ -1133,7 +1133,8 @@ done
 string_command_line_argumants="$*"
 
 # Write the HTML report header
-echo "<HTML>
+echo "<!DOCTYPE html>
+<HTML>
 
 <HEAD>
 
