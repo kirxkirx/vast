@@ -1139,38 +1139,126 @@ echo "<HTML>
 
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
 
+<script type='text/javascript'>
+(function() {
+    var savedTheme;
+
+    savedTheme = localStorage.getItem('pageTheme');
+
+    if (savedTheme === 'dark-theme') {
+        document.write(\"<style>body{background-color:#121212;color:#d0d0d0;}</style>\");
+    } else {
+        document.write(\"<style>body{background-color:#ffffff;color:#000000;}</style>\");
+    }
+})();
+</script>
+
 <style>
  body {
        font-family: monospace;
        font-size: 12px;
-       min-width: 1650px;  /* Enforce a minimum width */
+       min-width: 1650px;
+       margin: 8px;
  }
+
+ body.light-theme {
+       background-color: #ffffff;
+       color: #000000;
+ }
+
+ body.light-theme a {
+       color: #0000ee;
+ }
+
+ body.light-theme a:visited {
+       color: #551a8b;
+ }
+
+ body.dark-theme {
+       background-color: #121212;
+       color: #d0d0d0;
+ }
+
+ body.dark-theme a {
+       color: #7aa2f7;
+ }
+
+ body.dark-theme a:visited {
+       color: #5c7fa3;
+ }
+
+ body.dark-theme b,
+ body.dark-theme strong,
+ body.dark-theme h1,
+ body.dark-theme h2,
+ body.dark-theme h3 {
+       color: #ffffff;
+       font-weight: 600;
+ }
+
  .inverted {
        filter: invert(100%);
  }
+
  .rotated {
        transform: rotate(180deg);
  }
- /* Floating button styling */
+
  .floating-btn {
-       position: fixed;          /* Fixed position on the screen */
-       top: 5vh;                 /* 5% of the viewport height from the top */
-       left: calc(max(420px, 85vw)); /* Position at 85vw but no less than 420px */
-       background-color: #007bff; /* Button background color */
-       color: white;             /* Text color */
-       border: none;             /* Remove default border */
-       border-radius: 5px;       /* Rounded corners */
-       padding: 10px 20px;       /* Button size */
-       font-size: 16px;          /* Font size */
-       cursor: pointer;          /* Pointer cursor on hover */
-       z-index: 1000;            /* Ensure it's on top of other elements */
-       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for emphasis */
+       position: fixed;
+       top: 5vh;
+       background-color: #007bff;
+       color: white;
+       border: none;
+       border-radius: 5px;
+       padding: 10px 20px;
+       font-size: 16px;
+       cursor: pointer;
+       z-index: 1000;
+       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+ }
+
+ /* Only override buttons in dark theme */
+ body.dark-theme input[type=\"submit\"],
+ body.dark-theme input[type=\"button\"] {
+    background-color: #2a2a2a;
+    color: #d0d0d0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: monospace;
+    font-size: 12px;
+    cursor: pointer;
+ }
+
+ /* Hover in dark theme */
+ body.dark-theme input[type=\"submit\"]:hover,
+ body.dark-theme input[type=\"button\"]:hover {
+    background-color: #3a3a3a;
  }
 
  .floating-btn:hover {
-       background-color: #0056b3; /* Darker blue on hover */
+       background-color: #0056b3;
  }
 
+ #invert-btn {
+       left: calc(max(420px, 85vw));
+       top: 5vh;
+ }
+
+ #theme-btn {
+       left: calc(max(420px, 85vw));
+       top: calc(5vh + 60px);
+ }
+
+ body.dark-theme .floating-btn {
+       background-color: #2d6cdf;
+       color: #ffffff;
+ }
+
+ body.dark-theme .floating-btn:hover {
+       background-color: #1f56b5;
+ }
 </style>
 
 <script type='text/javascript'>
@@ -1183,46 +1271,77 @@ function toggleElement(id)
     }
 }
 
-function printCandidateNameWithAbsLink(transientname) {
+function printCandidateNameWithAbsLink(transientname)
+{
+    var currentLocation;
+    var n;
+    var transientLink;
+    var targetURL;
+    var outputString;
 
-    var currentLocation = window.location.href;
-    var n = currentLocation.indexOf('#');
+    currentLocation = window.location.href;
+    n = currentLocation.indexOf('#');
     currentLocation = currentLocation.substring(0, n != -1 ? n : currentLocation.length);
-    var transientLink = \"#\";
+    transientLink = \"#\";
     transientLink = transientLink.concat(transientname);
-    var targetURL = currentLocation.concat(transientLink);
+    targetURL = currentLocation.concat(transientLink);
 
-    var outputString = \"<h3><a href='\";
+    outputString = \"<h3><a href='\";
     outputString = outputString.concat(targetURL);
     outputString = outputString.concat(\"'>\");
     outputString = outputString.concat(transientname);
     outputString = outputString.concat(\"</a></h3>\");
 
-    document.write(outputString); 
+    document.write(outputString);
 }
 
-// Functionality to toggle inversion for all images
-function invertAllImages() {
+function invertAllImages()
+{
     const images = document.querySelectorAll('img');
     images.forEach(img => {
         img.classList.toggle('inverted');
     });
 }
 
-// Functionality to rotate an individual image
-function rotateImage(event) {
-    event.preventDefault(); // Prevent the default context menu
+function rotateImage(event)
+{
+    event.preventDefault();
     this.classList.toggle('rotated');
 }
 
-// Add event listeners to images after the page loads
+function toggleTheme()
+{
+    const body = document.body;
+    const themeButton = document.getElementById('theme-btn');
+
+    if (body.classList.contains('dark-theme')) {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        themeButton.textContent = 'Dark theme';
+        localStorage.setItem('pageTheme', 'light-theme');
+    } else {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        themeButton.textContent = 'Light theme';
+        localStorage.setItem('pageTheme', 'dark-theme');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('pageTheme');
+    const themeButton = document.getElementById('theme-btn');
+
+    if (savedTheme === 'dark-theme') {
+        document.body.classList.add('dark-theme');
+        themeButton.textContent = 'Light theme';
+    } else {
+        document.body.classList.add('light-theme');
+        themeButton.textContent = 'Dark theme';
+    }
+
     const images = document.querySelectorAll('img');
     images.forEach(img => {
-        // Rotate the specific image on click
         img.addEventListener('click', rotateImage);
-
-        // Invert all images on right-click
         img.addEventListener('contextmenu', invertAllImages);
     });
 });
@@ -1231,7 +1350,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </HEAD>
 
 <BODY>
-<button class=\"floating-btn\" onclick=\"invertAllImages()\">Invert</button>
+<button id=\"invert-btn\" class=\"floating-btn\" onclick=\"invertAllImages()\">Invert</button>
+<button id=\"theme-btn\" class=\"floating-btn\" onclick=\"toggleTheme()\">Dark theme</button>
 
 <h2>NMW transient search results</h2>
 This analysis is done by the script  <code>$0 $string_command_line_argumants</code><br><br>

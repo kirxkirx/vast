@@ -2561,8 +2561,11 @@ int main( int argc, char **argv ) {
  }
  cpgask( 0 ); // turn OFF this silly " Type <RETURN> for next page:" request
 
- // if( finder_chart_mode==0 ){
- cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
+ if ( finder_chart_mode == 0 ) {
+  cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
+ } else {
+  cpgscr( 0, 0.070588, 0.070588, 0.070588 ); /* set dark grey background for finder chart thumbnails */
+ }
  cpgpage();
  if ( finder_chart_mode == 0 || fits2png_fullframe == 1 ) {
   // Trying to circumvent giza bug that does not implement cpgpap( 0.0, 1.0 / axis_ratio );
@@ -3273,7 +3276,7 @@ int main( int argc, char **argv ) {
     cpgscr( 1, 0.0, 0.0, 0.0 );
     cpgscr( 0, 1.0, 1.0, 1.0 );
     cpggray( float_array, (int)naxes[0], (int)naxes[1], drawX1, drawX2, drawY1, drawY2, min_val, max_val, tr );
-    cpgscr( 0, 0.0, 0.0, 0.0 );
+    cpgscr( 0, 0.070588, 0.070588, 0.070588 ); // restore dark grey background for the frame area
     cpgscr( 1, 1.0, 1.0, 1.0 );
     //    cpgclos();
     //    return 0;
