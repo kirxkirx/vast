@@ -737,6 +737,7 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag; //,catalog_mag_err;
  double catalog_ra_original, catalog_dec_original;
  double cos_delta;
+ double ra_diff_rematch;
  int N_stars_matched_with_astrometric_catalog= 0;
 
  double epoch, pmRA, e_pmRA, pmDE, e_pmDE;
@@ -796,7 +797,12 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
     continue;
    }
    if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
-    if ( fabs( stars[i].ra_deg_measured - measured_ra ) * cos_delta < catalog_search_parameters->search_radius_deg ) {
+    // Handle RA wrapping near the 0/360 boundary
+    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
+    if ( ra_diff_rematch > 180.0 ) {
+     ra_diff_rematch= 360.0 - ra_diff_rematch;
+    }
+    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
      if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
       continue;
      }
@@ -1276,7 +1282,10 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
 
  double search_ra_min_deg, search_ra_max_deg; //, search_ra_maxmin_deg, search_ra_mean_deg;
  double search_dec_min_deg, search_dec_max_deg, search_dec_maxmin_deg, search_dec_mean_deg;
+ int ra_wraps; // 1 if the field straddles RA=0/360 boundary
+ double ra_gap_start, ra_gap_end; // boundaries of the gap region when RA wraps
  int detected_star_counter;
+ unsigned int zone_start, zone_end;
 
  // based on https://stackoverflow.com/questions/17598572/read-and-write-to-binary-files-in-c
  // and http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt
@@ -1329,15 +1338,55 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  // search_ra_mean_deg=(search_ra_max_deg+search_ra_min_deg)/2.0;
  search_dec_maxmin_deg= search_dec_max_deg - search_dec_min_deg;
  search_dec_mean_deg= ( search_dec_max_deg + search_dec_min_deg ) / 2.0;
+ // Detect RA wrapping: if the RA range is > 180 degrees, the field straddles the RA=0/360 boundary
+ ra_wraps= 0;
+ ra_gap_start= 0.0;
+ ra_gap_end= 0.0;
+ if ( search_ra_max_deg - search_ra_min_deg > 180.0 ) {
+  ra_wraps= 1;
+  // Compute the gap boundaries: the gap is the RA range NOT covered by the field
+  // ra_gap_start = max RA among stars with RA < 180 (upper edge of the low-RA group)
+  // ra_gap_end = min RA among stars with RA >= 180 (lower edge of the high-RA group)
+  ra_gap_start= 0.0;
+  ra_gap_end= 360.0;
+  for ( detected_star_counter= 0; detected_star_counter < N; detected_star_counter++ ) {
+   if ( stars[detected_star_counter].ra_deg_measured < 180.0 ) {
+    if ( stars[detected_star_counter].ra_deg_measured > ra_gap_start ) {
+     ra_gap_start= stars[detected_star_counter].ra_deg_measured;
+    }
+   } else {
+    if ( stars[detected_star_counter].ra_deg_measured < ra_gap_end ) {
+     ra_gap_end= stars[detected_star_counter].ra_deg_measured;
+    }
+   }
+  }
+  fprintf( stderr, "RA wraps around 0/360 boundary: field RA %.4f through 0 to %.4f, gap %.4f to %.4f\n", ra_gap_end, ra_gap_start, ra_gap_start, ra_gap_end );
+ }
  //
  faintest_mag= catalog_search_parameters->faintest_mag;
  brightest_mag= catalog_search_parameters->brightest_mag;
 
  fprintf( stderr, "Reading UCAC5 zone files...\n" );
 
+ // Select only the relevant zone files based on declination
+ // Each zone covers 0.2 degrees: zone 1 = Dec -90.0 to -89.8, zone 900 = Dec +89.8 to +90.0
+ zone_start= (unsigned int)( ( search_dec_min_deg + 90.0 ) / 0.2 ) + 1;
+ zone_end= (unsigned int)( ( search_dec_max_deg + 90.0 ) / 0.2 ) + 1;
+ // Add padding for safety
+ if ( zone_start > 1 ) {
+  zone_start--;
+ }
+ zone_end++;
+ if ( zone_start < 1 ) {
+  zone_start= 1;
+ }
+ if ( zone_end > 900 ) {
+  zone_end= 900;
+ }
+ fprintf( stderr, "Searching UCAC5 zones %u to %u (Dec %.1f to %.1f)\n", zone_start, zone_end, search_dec_min_deg, search_dec_max_deg );
+
  // Read each zone file
- for ( zone_counter= 1; zone_counter < 900 + 1; zone_counter++ ) {
-  // for( zone_counter=1; zone_counter<2; zone_counter++ ) {
+ for ( zone_counter= zone_start; zone_counter <= zone_end; zone_counter++ ) {
 
   sprintf( zonefilename, "lib/catalogs/ucac5/z%03d", zone_counter );
 
@@ -1449,11 +1498,18 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
     continue;
    } // continue to the next star
    //
-   if ( ucac_ra_deg < search_ra_min_deg ) {
-    continue;
-   }
-   if ( ucac_ra_deg > search_ra_max_deg ) {
-    continue;
+   if ( ra_wraps ) {
+    // Field straddles RA=0/360: reject stars in the gap (between ra_gap_start and ra_gap_end)
+    if ( ucac_ra_deg > ra_gap_start && ucac_ra_deg < ra_gap_end ) {
+     continue;
+    }
+   } else {
+    if ( ucac_ra_deg < search_ra_min_deg ) {
+     continue;
+    }
+    if ( ucac_ra_deg > search_ra_max_deg ) {
+     continue;
+    }
    }
    if ( ucac_dec_deg < search_dec_min_deg ) {
     continue;
@@ -2064,6 +2120,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  int N_stars_matched_with_astrometric_catalog= 0;
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
  double cos_delta;
+ double ra_diff_rematch;
  char string[1024];
  // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char base_command[BASE_COMMAND_LENGTH];
@@ -2304,7 +2361,12 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
     continue;
    }
    if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
-    if ( fabs( stars[i].ra_deg_measured - measured_ra ) * cos_delta < catalog_search_parameters->search_radius_deg ) {
+    // Handle RA wrapping near the 0/360 boundary
+    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
+    if ( ra_diff_rematch > 180.0 ) {
+     ra_diff_rematch= 360.0 - ra_diff_rematch;
+    }
+    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
      if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
       continue;
      }
@@ -2375,6 +2437,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  int N_stars_matched_with_astrometric_catalog= 0;
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
  double cos_delta;
+ double ra_diff_rematch;
  char string[1024];
  // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char base_command[BASE_COMMAND_LENGTH];
@@ -2583,7 +2646,12 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
     continue;
    }
    if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
-    if ( fabs( stars[i].ra_deg_measured - measured_ra ) * cos_delta < catalog_search_parameters->search_radius_deg ) {
+    // Handle RA wrapping near the 0/360 boundary
+    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
+    if ( ra_diff_rematch > 180.0 ) {
+     ra_diff_rematch= 360.0 - ra_diff_rematch;
+    }
+    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
      if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
       continue;
      }
