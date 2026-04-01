@@ -172,7 +172,8 @@
 #define MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION 5 // discard the above if there are less than the specified number of stars affected by the problem
 
 #define MAX_MATCH_TRIALS 5                              // discard image if it was still not matched after MAX_MATCH_TRIALS attempts 
-#define MIN_FRACTION_OF_MATCHED_STARS 0.41              // discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched 
+#define MIN_FRACTION_OF_MATCHED_STARS 0.20              // let's try to allow matching frames with only small overlap - usefult for reporting large NMW camera offsets as offsets rather than generic "vast processing faield" error
+//#define MIN_FRACTION_OF_MATCHED_STARS 0.41              // discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched 
                                                         // (should always be <0.5 !!!) discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched 
 #define MIN_FRACTION_OF_MATCHED_STARS_STOP_ATTEMPTS 0.1 // Do not attempt to match images if less than MIN_FRACTION_OF_MATCHED_STARS_STOP_ATTEMPTS were matched after a few iterations 
                                                         // because something is evidently wrong with that image. */
