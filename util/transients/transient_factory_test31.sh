@@ -3159,7 +3159,12 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     else
      EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD
     fi
-    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $EFFECTIVE_MAX_CANDIDATES ] && [ "$FIELD" != "Sco6" ] ;then
+    # Skip the candidate limit for crowded Galactic Center region fields
+    IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD="no"
+    case "$FIELD" in
+     Sco6|Oph-08-Q1b1x1|Oph-08-Q2b1x1|Sco-04-Q1b1x1|Sco-04-Q2b1x1|Sgr-04-Q1b1x1|Sgr-04-Q2b1x1|242) IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD="yes" ;;
+    esac
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $EFFECTIVE_MAX_CANDIDATES ] && [ "$IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD" != "yes" ] ;then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels, $NUMBER_OF_UNIDENTIFIED_CANDIDATES new), not updating the exclusion list!" | tee -a transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
