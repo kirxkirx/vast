@@ -3379,11 +3379,28 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  }
 
  // Estimate accuracy
+ {
+ int n_matched_entering= 0;
+ for ( j= 0; j < N; j++ ) {
+  if ( stars[j].matched_with_astrometric_catalog == 1 ) {
+   n_matched_entering++;
+  }
+ }
  for ( i= 0, j= 0; j < N; j++ ) {
   if ( stars[j].estimated_local_correction_accuracy != 0.0 ) {
    z1[i]= stars[j].estimated_local_correction_accuracy;
    i++;
   }
+ }
+ fprintf( stderr, "Accuracy estimation: %d matched stars entering, %d with non-zero local correction accuracy\n", n_matched_entering, i );
+ }
+ if ( i == 0 ) {
+  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small!\nNo stars have non-zero estimated_local_correction_accuracy.\n" );
+  free( x );
+  free( y );
+  free( z1 );
+  free( z2 );
+  return 1;
  }
 #if USE_GSL_MEDIAN
  // O(n log n) sort-based median
