@@ -2402,7 +2402,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" 2>&1 | tee -a transient_factory_test31.txt
    break
   fi
-  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.4f", $5}')
   if [ -z "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" ];then
    echo "ERROR: cannot determine DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" | tee -a transient_factory_test31.txt
    break
@@ -2439,7 +2439,7 @@ Soft limit: $POINTING_ACCURACY_LIMIT_DEG_SOFT deg.  Hard limit: $POINTING_ACCURA
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
-  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.4f", $5}')
   echo "###################################
 # Check the image center offset between the reference and the second second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
