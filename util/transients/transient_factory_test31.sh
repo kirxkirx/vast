@@ -91,6 +91,9 @@ export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 # If there are too many candidate transients in the field - something is wrong
 # and we probably don't want to clog the output with many false candidates.
 MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
+# Higher limit when most candidates are already identified (known variable stars etc.)
+# This allows fields with many known objects to still update the exclusion list.
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=80
 
 # Default values
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=800
@@ -3149,9 +3152,15 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
     ### ===> FIELD NAME HARDCODED HERE <===
-    # drop the limit no the number of candidates for the all-important Galactic Center field
-    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $MAX_NUMBER_OF_CANDIDATES_PER_FIELD ] && [ "$FIELD" != "Sco6" ] ;then
-     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" | tee -a transient_factory_test31.txt
+    # drop the limit on the number of candidates for the all-important Galactic Center field
+    # Use a higher limit if most candidates are already identified (few new ones)
+    if [ "$NUMBER_OF_UNIDENTIFIED_CANDIDATES" -le 5 ];then
+     EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN
+    else
+     EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD
+    fi
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $EFFECTIVE_MAX_CANDIDATES ] && [ "$FIELD" != "Sco6" ] ;then
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels, $NUMBER_OF_UNIDENTIFIED_CANDIDATES new), not updating the exclusion list!" | tee -a transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
    fi
