@@ -93,7 +93,7 @@ export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 # Higher limit when most candidates are already identified (known variable stars etc.)
 # This allows fields with many known objects to still update the exclusion list.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=80
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=100
 
 # Default values
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=800
@@ -3154,7 +3154,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     ### ===> FIELD NAME HARDCODED HERE <===
     # drop the limit on the number of candidates for the all-important Galactic Center field
     # Use a higher limit if most candidates are already identified (few new ones)
-    if [ "$NUMBER_OF_UNIDENTIFIED_CANDIDATES" -le 5 ];then
+    if [ "$NUMBER_OF_UNIDENTIFIED_CANDIDATES" -le 9 ];then
      EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN
     else
      EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD
