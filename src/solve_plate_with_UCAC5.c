@@ -140,6 +140,18 @@ struct detected_star {
  double observing_epoch_jd;
 };
 
+// Compute RA difference normalized to [-180, +180] to handle the 0/360 boundary
+static inline double ra_diff_normalized( double ra1_deg, double ra2_deg ) {
+ double diff= ra1_deg - ra2_deg;
+ if ( diff > 180.0 ) {
+  diff-= 360.0;
+ }
+ if ( diff < -180.0 ) {
+  diff+= 360.0;
+ }
+ return diff;
+}
+
 static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg, double RA2_deg, double DEC2_deg ) {
  double distance;
  double deg2rad_conversion= M_PI / 180.0;
@@ -537,10 +549,10 @@ void write_astrometric_residuals_vector_field( char *fits_image_filename, struct
    fprintf( f, "%11.7lf %+10.7lf %+10.7lf %+10.7lf  %11.7lf  %+10.7f %+10.7lf  %9.4lf %9.4lf \n",
             stars[i].corrected_ra_local,
             stars[i].corrected_dec_local,
-            stars[i].corrected_ra_local - stars[i].catalog_ra,
+            ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ),
             stars[i].corrected_dec_local - stars[i].catalog_dec,
-            3600 * sqrt( ( stars[i].corrected_ra_local - stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) * ( stars[i].corrected_ra_local - stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) + ( stars[i].corrected_dec_local - stars[i].catalog_dec ) * ( stars[i].corrected_dec_local - stars[i].catalog_dec ) ),
-            3600 * ( stars[i].corrected_ra_local - stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ),
+            3600 * sqrt( ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) * ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) + ( stars[i].corrected_dec_local - stars[i].catalog_dec ) * ( stars[i].corrected_dec_local - stars[i].catalog_dec ) ),
+            3600 * ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ),
             3600 * ( stars[i].corrected_dec_local - stars[i].catalog_dec ),
             stars[i].x_pix,
             stars[i].y_pix );
@@ -809,7 +821,7 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= catalog_ra - measured_ra;
+     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -1560,7 +1572,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
       catalog_dec= catalog_dec + pmDE / 3600000 * dt;
       //
       stars[detected_star_counter].matched_with_astrometric_catalog= 1;
-      stars[detected_star_counter].d_ra= catalog_ra - measured_ra;
+      stars[detected_star_counter].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
       stars[detected_star_counter].d_dec= catalog_dec - measured_dec;
       stars[detected_star_counter].catalog_ra= catalog_ra;
       stars[detected_star_counter].catalog_dec= catalog_dec;
@@ -2377,7 +2389,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= catalog_ra - measured_ra;
+     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -2662,7 +2674,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= catalog_ra - measured_ra;
+     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -3153,7 +3165,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
    x[N_good]= stars[i].mag;
    y[N_good]= 0.1; // fake error, same for all stars since we want an unweighted fit
-   z1[N_good]= stars[i].catalog_ra - stars[i].corrected_ra_planefit;
+   z1[N_good]= ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_planefit );
    z2[N_good]= stars[i].catalog_dec - stars[i].corrected_dec_planefit;
    N_good++;
   }
@@ -3247,7 +3259,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
     if ( distance < current_search_radius ) {
      if ( distance == 0.0 )
       continue; //
-     z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+     z1_local[N_good]= ra_diff_normalized( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
      z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
      N_good++;
      if ( N_good > 501 )
@@ -3783,13 +3795,13 @@ int main( int argc, char **argv ) {
             stars[i].x_pix, stars[i].y_pix,                                                                                                                                    // 3 4
             stars[i].d_ra * 3600, stars[i].d_dec * 3600,                                                                                                                       // 5 6
             stars[i].local_correction_ra * 3600, stars[i].local_correction_dec * 3600,                                                                                         // 7 8
-            ( stars[i].catalog_ra - stars[i].corrected_ra_local ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_local ) * 3600,                                      // 9 10
-            ( stars[i].catalog_ra - stars[i].ra_deg_measured_orig ) * 3600, ( stars[i].catalog_dec - stars[i].dec_deg_measured_orig ) * 3600,                                  // 11 12
-            ( stars[i].catalog_ra - stars[i].corrected_ra_planefit ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_planefit ) * 3600,                                // 13 14
+            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_local ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_local ) * 3600,                      // 9 10
+            ra_diff_normalized( stars[i].catalog_ra, stars[i].ra_deg_measured_orig ) * 3600, ( stars[i].catalog_dec - stars[i].dec_deg_measured_orig ) * 3600,                  // 11 12
+            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_planefit ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_planefit ) * 3600,                // 13 14
             stars[i].catalog_ra, stars[i].catalog_dec,                                                                                                                         // 15 16
             stars[i].computed_d_ra * 3600, stars[i].computed_d_dec * 3600,                                                                                                     // 17
             stars[i].mag,
-            ( stars[i].catalog_ra - stars[i].corrected_mag_ra ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_mag_dec ) * 3600 );
+            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_mag_ra ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_mag_dec ) * 3600 );
  }
  fclose( solve_plate_debug );
 #endif
