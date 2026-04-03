@@ -1,4 +1,10 @@
 XX XXX 2026: vast-1.0rc89
+	* VaST is confirmed to work on Windows Subsystem for Linux (WSL2) with Ubuntu Linux distribution.
+	The key trick is to install VaST in the WSL virtual disk (like in the user's home directory), 
+	not in the Windows partition visible to WSL usually under /mnt. Disk access to Windows partition in WSL 
+	is dramatically slower compared to WSL virtual disk access. This is critical to VaST that creates thousands 
+	of files (like a lightcurve file for every detected star). Overall, WSL2 appears to be a more convenient way of 
+	using VaST in Windows compared to installing VaST in a VirtualBox running Linux.
 	* 'util/ccd/lacosmic' implements L.A.Cosmic single-image cosmic ray rejection algorithm of 
 	van Dokkum (2001, PASP, 113, 1420) https://ui.adsabs.harvard.edu/abs/2001PASP..113.1420V/abstract
 	* The FITS image viewer './pgfv' now has a new image stretch option "zscale" that can be activated
@@ -43,6 +49,7 @@ XX XXX 2026: vast-1.0rc89
 	matching the field of view of a user-supplied plate-solved FITS image and opens both in DS9 for visual
 	comparison (blinking with WCS-locked frames). Supports g, r, i, z, y filters (default: r).
 	Uses the CDS HiPS2FITS service. Usage: util/compare_platesolved_image_to_panstarrs_in_ds9.sh wcs_image.fits [filter]
+	The script was inspired by this ATel: https://www.astronomerstelegram.org/?read=17698
 	* Prefer tau.kirx.net as the period search server (activated by pressing 'P' keyboard key in lightcurve viewer window).
 	* Include 'util/fpack' CFITSIO FITS image compression utility.
 	* The star identification script 'util/identify.sh' can now understand if a star is specified by its number,
@@ -52,6 +59,7 @@ XX XXX 2026: vast-1.0rc89
 	util/identify.sh 12345
 	* Use Quickselect algorithm instead of full sorting for computing median value of an array.
 	That provides a major speedup in computations... in most cases.
+	* Fixed UCAC5 matching issue near R.A.=0.0
 16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
 	(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 
