@@ -1,4 +1,4 @@
-XX XXX 2026: vast-1.0rc89
+03 Apr 2026: vast-1.0rc89
 	* VaST is confirmed to work on Windows Subsystem for Linux (WSL2) with Ubuntu Linux distribution.
 	The key trick is to install VaST in the WSL virtual disk (like in the user's home directory), 
 	not in the Windows partition visible to WSL usually under /mnt. Disk access to Windows partition in WSL 
@@ -60,6 +60,10 @@ XX XXX 2026: vast-1.0rc89
 	* Use Quickselect algorithm instead of full sorting for computing median value of an array.
 	That provides a major speedup in computations... in most cases.
 	* Fixed UCAC5 matching issue near R.A.=0.0
+	* Dark mode is available in transient search results pages produced by 'util/transients/transient_factory_test31.sh'
+	Example usage:
+	REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ util/transients/transient_factory_test31.sh ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images/
+	The resulting HTML page with candidates will be written as transient_report/index.html
 16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
 	(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 
