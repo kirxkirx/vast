@@ -88,7 +88,7 @@ main: vast.o vast statistics stetson_test lib/create_data
 
 statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat util/imstat_vast lib/test_median_mad
 
-etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/shutterless_bad_regions_hack lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time lib/ConstellationBoundaries lib/is_fits_image_blank
+etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/shutterless_bad_regions_hack lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time lib/ConstellationBoundaries lib/is_fits_image_blank util/forced_photometry
 
 old: formater_out_wfk 
 
@@ -365,6 +365,10 @@ lib/catalogs/check_catalogs_offline: $(SRC_PATH)catalogs/check_catalogs_offline.
 util/get_image_date: get_image_date.o gettime.o kourovka_sbg_date.o
 	$(CC) $(OPTFLAGS) -o util/get_image_date get_image_date.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 	cd util/ ; ln -sf get_image_date fix_image_date ; cd -
+forced_photometry.o: $(SRC_PATH)forced_photometry.c
+	$(CC) $(OPTFLAGS) -c -o forced_photometry.o $(SRC_PATH)forced_photometry.c
+util/forced_photometry: forced_photometry.o exclude_region.o quickselect.o
+	$(CC) $(OPTFLAGS) -o util/forced_photometry forced_photometry.o exclude_region.o quickselect.o $(CFITSIO_LIB) -lm
 lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
@@ -568,7 +572,8 @@ util/ccd/lacosmic: $(SRC_PATH)ccd/lacosmic.c
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
-	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
+	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls
+	rm -f util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic util/ccd/mk_notempchecks util/ccd/ms_notempchecks util/ccd/imgbin2x2.py
 	rm -f lib/libcfitsio.a lib/libz.a
 	rm -f util/fitscopy util/funpack util/fpack src/cfitsio/fitscopy src/fitsio.h src/longnam.h
 	rm -f lib/fitsverify

@@ -33541,6 +33541,233 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 
+######### Forced photometry test
+# Test forced photometry on a plate-solved NMW telephoto lens image
+# comparing C (and optionally Python/photutils) forced photometry results
+# against SExtractor calibrated magnitudes for 100 randomly selected stars.
+
+if [ ! -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.bz2" && bunzip2 wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.bz2
+ cd "$WORKDIR" || exit 1
+fi
+
+if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "Forced photometry test "
+ echo -n "Forced photometry test: " >> vast_test_report.txt
+
+ FORCEDPHOT_FITSFILE="../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits"
+ FORCEDPHOT_FILTER="V"
+ FORCEDPHOT_TARGET_RA="19:32:43.67"
+ FORCEDPHOT_TARGET_DEC="-22:39:30.7"
+
+ # Set up SExtractor configuration for telephoto lens
+ cp default.sex.telephoto_lens_vSTL default.sex
+
+ # Run full forced photometry pipeline on target
+ FORCEDPHOT_OUTPUT=$(util/forced_photometry.sh "$FORCEDPHOT_FITSFILE" "$FORCEDPHOT_TARGET_RA" "$FORCEDPHOT_TARGET_DEC" "$FORCEDPHOT_FILTER" 2>/dev/null)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT001"
+ fi
+
+ # Check that C result is present and is a detection
+ FORCEDPHOT_C_LINE=$(echo "$FORCEDPHOT_OUTPUT" | grep -A1 "C implementation" | tail -1)
+ if [ -z "$FORCEDPHOT_C_LINE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT002_NO_C_OUTPUT"
+ else
+  echo "$FORCEDPHOT_C_LINE" | grep -q "detection"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT003_C_NOT_DETECTION"
+  fi
+  # Check that the target magnitude is in a reasonable range (13-16 mag)
+  FORCEDPHOT_C_MAG=$(echo "$FORCEDPHOT_C_LINE" | awk '{print $2}')
+  TEST=$(echo "$FORCEDPHOT_C_MAG" | awk '{if ( $1 > 13.0 && $1 < 16.0 ) print 1; else print 0}')
+  if [ "$TEST" != "1" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT004_C_MAG_RANGE_${FORCEDPHOT_C_MAG}"
+  fi
+ fi
+
+ # Check Python result if python3 + photutils are available
+ command -v python3 &>/dev/null
+ if [ $? -eq 0 ];then
+  python3 -c "from photutils.aperture import CircularAperture; from photutils.background import SExtractorBackground; from astropy.io import fits; from astropy.stats import SigmaClip" 2>/dev/null
+  if [ $? -eq 0 ];then
+   FORCEDPHOT_PY_LINE=$(echo "$FORCEDPHOT_OUTPUT" | grep -A1 "Python implementation" | tail -1)
+   if [ -z "$FORCEDPHOT_PY_LINE" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT005_NO_PY_OUTPUT"
+   else
+    echo "$FORCEDPHOT_PY_LINE" | grep -q "detection"
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT006_PY_NOT_DETECTION"
+    fi
+    # Check C vs Python agreement within 0.01 mag
+    FORCEDPHOT_PY_MAG=$(echo "$FORCEDPHOT_PY_LINE" | awk '{print $2}')
+    if [ -n "$FORCEDPHOT_C_MAG" ] && [ -n "$FORCEDPHOT_PY_MAG" ];then
+     FORCEDPHOT_CPYDIFF=$(echo "$FORCEDPHOT_C_MAG $FORCEDPHOT_PY_MAG" | awk '{d=$1-$2; if(d<0)d=-d; printf "%.4f", d}')
+     TEST=$(echo "$FORCEDPHOT_CPYDIFF" | awk '{if ( $1 < 0.01 ) print 1; else print 0}')
+     if [ "$TEST" != "1" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT007_CPY_DISAGREE_${FORCEDPHOT_CPYDIFF}"
+     fi
+    fi
+   fi
+  fi # photutils available
+ fi # python3 available
+
+ ########################################################
+ # Compare forced photometry vs SExtractor for 100 stars
+ ########################################################
+ # The forced_photometry.sh run above produced calibration files and SExtractor catalog
+ WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.cat"
+ if [ -s "$WCS_CATALOG" ] && [ -s "calib.txt_param" ];then
+  FORCEDPHOT_CALIB_P0=$(awk '{print $5}' calib.txt_param)
+  FORCEDPHOT_CALIB_P1=$(awk '{print $4}' calib.txt_param)
+  FORCEDPHOT_CALIB_P2=$(awk '{print $3}' calib.txt_param)
+  FORCEDPHOT_APERTURE=$(lib/sextract_single_image_noninteractive "$FORCEDPHOT_FITSFILE" 2>/dev/null)
+  FORCEDPHOT_EDGE_MARGIN=$(echo "$FORCEDPHOT_APERTURE" | awk '{printf "%.0f", 10.0 * $1 / 2.0 + 2}')
+
+  # Select 100 good unflagged stars, sorted deterministically by catalog number
+  awk -v margin="$FORCEDPHOT_EDGE_MARGIN" -v nx="9576" -v ny="6388" \
+      '{if ($10==0 && $9>0 && $9<0.1 && $8>-15 && $8<-5 && $4>margin && $4<nx-margin && $5>margin && $5<ny-margin) print}' \
+      "$WCS_CATALOG" | sort -k1,1n | head -n 100 > forcedphot_test_stars.tmp
+
+  FORCEDPHOT_NSEL=$(wc -l < forcedphot_test_stars.tmp)
+  if [ "$FORCEDPHOT_NSEL" -lt 50 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT008_TOO_FEW_STARS_${FORCEDPHOT_NSEL}"
+  fi
+
+  FORCEDPHOT_N_GOOD=0
+  FORCEDPHOT_SUM_C=0
+  FORCEDPHOT_SUM_C2=0
+  FORCEDPHOT_N_GOOD_PY=0
+  FORCEDPHOT_SUM_PY=0
+  FORCEDPHOT_SUM_PY2=0
+  # Check if Python forced photometry is available
+  FORCEDPHOT_HAVE_PYTHON=0
+  command -v python3 &>/dev/null && python3 -c "from photutils.aperture import CircularAperture; from photutils.background import SExtractorBackground; from astropy.io import fits; from astropy.stats import SigmaClip" 2>/dev/null && FORCEDPHOT_HAVE_PYTHON=1
+
+  while read -r FORCEDPHOT_LINE ; do
+   FORCEDPHOT_RA_DEG=$(echo "$FORCEDPHOT_LINE" | awk '{print $2}')
+   FORCEDPHOT_DEC_DEG=$(echo "$FORCEDPHOT_LINE" | awk '{print $3}')
+   FORCEDPHOT_INST_MAG=$(echo "$FORCEDPHOT_LINE" | awk '{print $8}')
+   FORCEDPHOT_SEX_CAL=$(echo "$FORCEDPHOT_INST_MAG $FORCEDPHOT_CALIB_P2 $FORCEDPHOT_CALIB_P1 $FORCEDPHOT_CALIB_P0" | awk '{printf "%.4f", $2*$1*$1 + $3*$1 + $4}')
+
+   FORCEDPHOT_RADEC=$(lib/deg2hms $FORCEDPHOT_RA_DEG $FORCEDPHOT_DEC_DEG)
+   FORCEDPHOT_RA_H=$(echo "$FORCEDPHOT_RADEC" | awk '{print $1}')
+   FORCEDPHOT_DEC_D=$(echo "$FORCEDPHOT_RADEC" | awk '{print $2}')
+
+   FORCEDPHOT_S2X=$(lib/bin/sky2xy "$FORCEDPHOT_FITSFILE" $FORCEDPHOT_RA_H $FORCEDPHOT_DEC_D 2>/dev/null)
+   echo "$FORCEDPHOT_S2X" | grep -q -e "off image" -e "offscale" && continue
+   FORCEDPHOT_PX=$(echo "$FORCEDPHOT_S2X" | awk '{print $5}')
+   FORCEDPHOT_PY=$(echo "$FORCEDPHOT_S2X" | awk '{print $6}')
+
+   # C forced photometry
+   FORCEDPHOT_C_OUT=$(util/forced_photometry "$FORCEDPHOT_FITSFILE" $FORCEDPHOT_PX $FORCEDPHOT_PY $FORCEDPHOT_APERTURE 2>/dev/null)
+   FORCEDPHOT_C_STARMAG=$(echo "$FORCEDPHOT_C_OUT" | awk '{print $1}')
+   FORCEDPHOT_C_STARST=$(echo "$FORCEDPHOT_C_OUT" | awk '{print $3}')
+
+   if [ "$FORCEDPHOT_C_STARST" = "detection" ];then
+    FORCEDPHOT_DMAG=$(echo "$FORCEDPHOT_SEX_CAL $FORCEDPHOT_C_STARMAG" | awk '{printf "%.6f", $2 - $1}')
+    FORCEDPHOT_N_GOOD=$((FORCEDPHOT_N_GOOD + 1))
+    FORCEDPHOT_SUM_C=$(echo "$FORCEDPHOT_SUM_C $FORCEDPHOT_DMAG" | awk '{printf "%.6f", $1 + $2}')
+    FORCEDPHOT_SUM_C2=$(echo "$FORCEDPHOT_SUM_C2 $FORCEDPHOT_DMAG" | awk '{printf "%.6f", $1 + $2*$2}')
+   fi
+
+   # Python forced photometry (if available)
+   if [ "$FORCEDPHOT_HAVE_PYTHON" -eq 1 ];then
+    FORCEDPHOT_PY_OUT=$(util/forced_photometry.py "$FORCEDPHOT_FITSFILE" $FORCEDPHOT_PX $FORCEDPHOT_PY $FORCEDPHOT_APERTURE 2>/dev/null)
+    FORCEDPHOT_PY_STARMAG=$(echo "$FORCEDPHOT_PY_OUT" | awk '{print $1}')
+    FORCEDPHOT_PY_STARST=$(echo "$FORCEDPHOT_PY_OUT" | awk '{print $3}')
+    if [ "$FORCEDPHOT_PY_STARST" = "detection" ];then
+     FORCEDPHOT_DMAG_PY=$(echo "$FORCEDPHOT_SEX_CAL $FORCEDPHOT_PY_STARMAG" | awk '{printf "%.6f", $2 - $1}')
+     FORCEDPHOT_N_GOOD_PY=$((FORCEDPHOT_N_GOOD_PY + 1))
+     FORCEDPHOT_SUM_PY=$(echo "$FORCEDPHOT_SUM_PY $FORCEDPHOT_DMAG_PY" | awk '{printf "%.6f", $1 + $2}')
+     FORCEDPHOT_SUM_PY2=$(echo "$FORCEDPHOT_SUM_PY2 $FORCEDPHOT_DMAG_PY" | awk '{printf "%.6f", $1 + $2*$2}')
+    fi
+   fi
+  done < forcedphot_test_stars.tmp
+  rm -f forcedphot_test_stars.tmp
+
+  # Check that we got enough successful measurements
+  if [ "$FORCEDPHOT_N_GOOD" -lt 50 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT009_TOO_FEW_DETECTIONS_${FORCEDPHOT_N_GOOD}"
+  fi
+
+  # Check C mean offset is within 0.1 mag of SExtractor
+  if [ "$FORCEDPHOT_N_GOOD" -gt 0 ];then
+   FORCEDPHOT_MEAN_C=$(echo "$FORCEDPHOT_SUM_C $FORCEDPHOT_N_GOOD" | awk '{printf "%.4f", $1/$2}')
+   FORCEDPHOT_RMS_C=$(echo "$FORCEDPHOT_SUM_C2 $FORCEDPHOT_SUM_C $FORCEDPHOT_N_GOOD" | awk '{printf "%.4f", sqrt($1/$3 - ($2/$3)^2)}')
+   FORCEDPHOT_ABS_MEAN_C=$(echo "$FORCEDPHOT_MEAN_C" | awk '{if($1<0)$1=-$1; printf "%.4f", $1}')
+   echo "Forced photometry C vs SExtractor: N=$FORCEDPHOT_N_GOOD mean=$FORCEDPHOT_MEAN_C RMS=$FORCEDPHOT_RMS_C" >&2
+   TEST=$(echo "$FORCEDPHOT_ABS_MEAN_C" | awk '{if ( $1 < 0.02 ) print 1; else print 0}')
+   if [ "$TEST" != "1" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT010_C_MEAN_OFFSET_${FORCEDPHOT_MEAN_C}"
+   fi
+   # Check RMS is within 0.1 mag
+   TEST=$(echo "$FORCEDPHOT_RMS_C" | awk '{if ( $1 < 0.1 ) print 1; else print 0}')
+   if [ "$TEST" != "1" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT011_C_RMS_${FORCEDPHOT_RMS_C}"
+   fi
+  fi
+
+  # Check Python results if available
+  if [ "$FORCEDPHOT_HAVE_PYTHON" -eq 1 ] && [ "$FORCEDPHOT_N_GOOD_PY" -gt 0 ];then
+   FORCEDPHOT_MEAN_PY=$(echo "$FORCEDPHOT_SUM_PY $FORCEDPHOT_N_GOOD_PY" | awk '{printf "%.4f", $1/$2}')
+   FORCEDPHOT_RMS_PY=$(echo "$FORCEDPHOT_SUM_PY2 $FORCEDPHOT_SUM_PY $FORCEDPHOT_N_GOOD_PY" | awk '{printf "%.4f", sqrt($1/$3 - ($2/$3)^2)}')
+   echo "Forced photometry Py vs SExtractor: N=$FORCEDPHOT_N_GOOD_PY mean=$FORCEDPHOT_MEAN_PY RMS=$FORCEDPHOT_RMS_PY" >&2
+   # Check C vs Python mean offset difference < 0.01
+   if [ -n "$FORCEDPHOT_MEAN_C" ];then
+    FORCEDPHOT_CPY_DIFF=$(echo "$FORCEDPHOT_MEAN_C $FORCEDPHOT_MEAN_PY" | awk '{d=$1-$2; if(d<0)d=-d; printf "%.4f", d}')
+    TEST=$(echo "$FORCEDPHOT_CPY_DIFF" | awk '{if ( $1 < 0.01 ) print 1; else print 0}')
+    if [ "$TEST" != "1" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT012_CPY_DISAGREE_${FORCEDPHOT_CPY_DIFF}"
+    fi
+   fi
+  fi
+
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT013_NO_CATALOG_OR_CALIB"
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mForced photometry test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mForced photometry test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT_TEST_NOT_PERFORMED"
+fi
+
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+
+
 #########################################
 # Remove test data for the next run if we are out of disk space
 #########################################
@@ -33660,6 +33887,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LIBPNG_DISABLED/}"
  # this test is not performed if there is no 'find' command
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_VAST_SHELLSCRIPTS_SEDminusIfound/}"
+ # forced photometry test requires a specific test image
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOT_TEST_NOT_PERFORMED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"

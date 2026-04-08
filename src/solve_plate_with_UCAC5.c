@@ -3404,7 +3404,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    i++;
   }
  }
- fprintf( stderr, "WARNING: Accuracy estimation diagnostic: %d matched stars entering correct_measured_positions(), %d with non-zero local correction accuracy\n", n_matched_entering, i );
+ fprintf( stderr, "Accuracy estimation diagnostic: %d matched stars entering correct_measured_positions(), %d with non-zero local correction accuracy\n", n_matched_entering, i );
  if ( i == 0 ) {
   fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small! No stars (out of %d matched) have non-zero estimated_local_correction_accuracy.\n", n_matched_entering );
   free( x );
