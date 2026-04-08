@@ -488,7 +488,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # if the final check passed well
  #if [ $? -eq 0 ];then
 
-  cat transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
+  sed "s|__FASTPLOT_TRANSIENT_NAME__|${TRANSIENT_NAME}|g" transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
 
   #echo "</pre>" >> transient_report/index.tmp
   

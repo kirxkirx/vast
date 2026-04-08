@@ -823,6 +823,7 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input id=\"h5\" name=\"n\" type=\"hidden\" required value=\"0\">
 <input type=\"submit\" value='NMW images'>
 </form>
+<input type='button' value='Fastplot' onclick=\"var u=window.location.href.split('#')[0]+'#__FASTPLOT_TRANSIENT_NAME__';window.open(window.location.origin+'/cgi-bin/unmw/fastplot.py?candidate_url='+encodeURIComponent(u),'_blank');\">
 "
 
 # Show the ASAS-3 button only for sources with declination below +28
