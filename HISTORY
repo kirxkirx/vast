@@ -1,3 +1,16 @@
+XX XXX XXXX: vast-1.0rc90
+	* Forced photometry script: util/forced_photometry.sh performs aperture photometry
+	at a specified sky position (RA, Dec) on a single FITS image, even if no source was
+	detected there by SExtractor. It reports a calibrated magnitude or a 3-sigma upper limit.
+	The script automatically runs SExtractor, plate-solves the image, calibrates magnitudes
+	using UCAC5/APASS, converts the input coordinates to pixel position, and measures the flux
+	in a circular aperture with exact pixel-circle overlap weighting. Background is estimated
+	using the SExtractor-style mode estimator (2.5*median - 1.5*mean) in an annulus around
+	the source. Both C and Python (photutils-based) implementations of the aperture measurement
+	are provided and run in parallel, for the purpose of cross-checking their results
+	against each other.
+	Usage: util/forced_photometry.sh image.fits HH:MM:SS.ss +DD:MM:SS.s FILTER
+	* Added the missing util/ccd/stack_calibration_frames.sh script, that was ommited from the previous release tarball by mistake.
 03 Apr 2026: vast-1.0rc89
 	* VaST is confirmed to work on Windows Subsystem for Linux (WSL2) with Ubuntu Linux distribution.
 	The key trick is to install VaST in the WSL virtual disk (like in the user's home directory), 
