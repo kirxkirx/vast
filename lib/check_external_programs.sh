@@ -203,9 +203,7 @@ if [ "$GITHUB_ACTIONS" != "true" ] && [ "$CI" != "true" ];then
   fi
  fi
  if [ $BROWSER_FOUND -eq 0 ];then
-  MISSING_PROGRAM=1
-  LIST_OF_MISSING_PROGRAMS="$LIST_OF_MISSING_PROGRAMS  web-browser(firefox/chromium/etc.)"
-  echo -e "Looking for a web browser - \033[01;31mNOT found\033[00m"
+  echo -e "Looking for a web browser - \033[01;33mNOT found (optional - needed only at runtime to display transient search results)\033[00m"
  else
   echo -e "Looking for a web browser - \033[01;32mFound ($BROWSER_FOUND_NAME)\033[00m"
  fi
