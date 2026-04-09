@@ -488,7 +488,17 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # if the final check passed well
  #if [ $? -eq 0 ];then
 
-  sed "s|__FASTPLOT_TRANSIENT_NAME__|${TRANSIENT_NAME}|g" transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
+  # Validate TRANSIENT_NAME before substituting into onclick handler to prevent
+  # JavaScript injection from malicious FITS filenames (e.g. uploaded outside
+  # the web interface which validates filenames). Only allow safe characters.
+  if echo "$TRANSIENT_NAME" | grep -qE '^[a-zA-Z0-9_.-]+$' && ! echo "$TRANSIENT_NAME" | grep -q '\.\.'; then
+   sed "s|__FASTPLOT_TRANSIENT_NAME__|${TRANSIENT_NAME}|g" transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
+  else
+   echo "WARNING: TRANSIENT_NAME '$TRANSIENT_NAME' contains unsafe characters, skipping fastplot button substitution"
+   # Fall back to cat - button will have the raw placeholder and won't work,
+   # but the rest of the report is unaffected
+   cat transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
+  fi
 
   #echo "</pre>" >> transient_report/index.tmp
   
