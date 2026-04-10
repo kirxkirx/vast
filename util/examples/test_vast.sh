@@ -12917,16 +12917,17 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110"
   fi
-  grep -q "2023 01 17.9208  2459962.4208  10\...  08:26:..\... -30:06:" transient_report/index.html
+  # Allow magnitude to vary between SExtractor versions (2.19.5 vs 2.25.2)
+  grep -q "2023 01 17.920.  2459962.420.  1.\...  08:26:0.\... -30:06:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a"
-   GREP_RESULT=`grep "2023 01 17.9208  2459962.4208  10\...  08:26:..\... -30:06:" transient_report/index.html`
+   GREP_RESULT=`grep "08:26:0.\... -30:06:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWLARGEOFFSET0110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2023 01 17.9208  2459962.4208  10\...  08:26:..\... -30:06:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2023 01 17.920.  2459962.420.  1.\...  08:26:0.\... -30:06:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 08:26:04.24 -30:06:41.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*8.4 ) print 1 ;else print 0 }'`
