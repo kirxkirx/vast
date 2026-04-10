@@ -25907,8 +25907,8 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "T33 test " 
- echo -n "T33 test: " >> vast_test_report.txt 
+ echo "T33 test "
+ echo -n "T33 test: " >> vast_test_report.txt
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
  if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
