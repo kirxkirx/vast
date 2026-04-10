@@ -897,6 +897,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  int status_before_EXPSTART_EXPEND_test;
  struct tm structureTIME2;
 
+ // Variables for the improved JD computation that splits days and fractional day
+ long days_since_unix_epoch;
+ int remaining_seconds_of_day;
+ double fractional_day;
+
  memset( formed_str_DATEOBS, 0, FLEN_CARD );
  memset( formed_str_EXPTIME, 0, FLEN_CARD );
  //
@@ -1867,7 +1872,23 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   ( *JD )= (double)unix_time / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
   */
 
-  ( *JD )= exposure / ( 2.0 * 86400.0 ) + (double)unix_time / 86400.0 + double_fractional_seconds_only / 86400.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
+  // The old formula performed three separate divisions and then summed four terms,
+  // each introducing a floating-point rounding error of up to 0.5 ULP. When the exact
+  // result falls very close to a rounding boundary at the 8th decimal place of JD
+  // (e.g. the 9th digit is exactly 5), these accumulated errors can nudge the value
+  // across the boundary, producing a 1-in-the-last-digit difference compared to
+  // higher-precision implementations like astropy (which uses two-part JD internally).
+  // The improved formula below splits the unix timestamp into whole days and remaining
+  // seconds, so that (days_since_unix_epoch + 2440587.5) is computed exactly
+  // (both operands are exactly representable in double), and the fractional day is
+  // computed with a single division, reducing the number of rounding operations.
+  /*
+  ( *JD )= exposure / ( 2.0 * 86400.0 ) + (double)unix_time / 86400.0 + double_fractional_seconds_only / 86400.0 + 2440587.5 + apply_JD_correction_in_days;
+  */
+  days_since_unix_epoch= (long)unix_time / 86400;
+  remaining_seconds_of_day= (int)( (long)unix_time % 86400 );
+  fractional_day= ( (double)remaining_seconds_of_day + double_fractional_seconds_only + exposure / 2.0 ) / 86400.0;
+  ( *JD )= (double)days_since_unix_epoch + 2440587.5 + fractional_day + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
 
   if ( overridingJD_from_input_image_list != 0.0 ) {
    // Override the computed JD!
