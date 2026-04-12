@@ -27339,7 +27339,10 @@ if [ -d ../individual_images_test ];then
    IMAGE=`basename $IMAGE`
    FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS01_$IMAGE"
   fi
-  util/listhead test.fits | awk -F'=' '{print $1}' | grep -q -e 'WCSAXES' -e 'CRPIX' -e 'CRVAL' -e 'CTYPE' -e 'CUNIT' -e 'CDELT' -e 'CROTA' -e 'CD[1-2]_[1-2]' -e 'PC[1-2]_[1-2]' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
+  # Use cut -c1-8 to extract only the FITS keyword field (the first 8 chars of each card)
+  # rather than awk -F'=' which returned the whole line for COMMENT/HISTORY cards (no '='),
+  # causing false positives when astrometry.net leaves 'COMMENT Original key: "CTYPE1"' cards.
+  util/listhead test.fits | cut -c1-8 | grep -q -e 'WCSAXES' -e 'CRPIX' -e 'CRVAL' -e 'CTYPE' -e 'CUNIT' -e 'CDELT' -e 'CROTA' -e 'CD[1-2]_[1-2]' -e 'PC[1-2]_[1-2]' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    IMAGE=`basename $IMAGE`
