@@ -304,8 +304,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
   unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
 # production value
-  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
-  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+#  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
+#  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+# test values
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=4000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=8000
   #export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.5"
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
@@ -360,8 +363,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
   unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
 # production value
-  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
-  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+#  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
+#  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+# test values
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=4000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=8000
   #export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.5"
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
@@ -2355,7 +2361,11 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$REFERENCE_EPOCH__FIRST_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
     WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
-  FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS")
+  FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" 2>&1)
+  echo "###################################
+# fov_of_wcs_calibrated_image.sh output for $WCS_IMAGE_NAME_FOR_CHECKS (1st reference image)
+$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS
+###################################" | tee -a transient_factory_test31.txt
   #IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
   IMAGE_FOV_ARCMIN=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
 
@@ -2397,12 +2407,15 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$SECOND_EPOCH__FIRST_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
-  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
+  FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" 2>&1)
+  echo "###################################
+# fov_of_wcs_calibrated_image.sh output for $WCS_IMAGE_NAME_FOR_CHECKS (1st new image)
+$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__FIRST_IMAGE
+###################################" | tee -a transient_factory_test31.txt
+  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__FIRST_IMAGE" | grep 'Image center:' | awk '{print $3" "$4}')
   if [ -z "$IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" ];then
    echo "ERROR in $0: cannot determine IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
-   echo "The command line was: util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'" | tee -a transient_factory_test31.txt
-   echo "The command util/fov_of_wcs_calibrated_image.sh output:" | tee -a transient_factory_test31.txt
-   util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" 2>&1 | tee -a transient_factory_test31.txt
+   echo "The command line was: util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3\" \"$4}'" | tee -a transient_factory_test31.txt
    break
   fi
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.4f", $5}')
@@ -2441,7 +2454,12 @@ Soft limit: $POINTING_ACCURACY_LIMIT_DEG_SOFT deg.  Hard limit: $POINTING_ACCURA
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$SECOND_EPOCH__SECOND_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
-  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
+  FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" 2>&1)
+  echo "###################################
+# fov_of_wcs_calibrated_image.sh output for $WCS_IMAGE_NAME_FOR_CHECKS (2nd new image)
+$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__SECOND_IMAGE
+###################################" | tee -a transient_factory_test31.txt
+  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS_SECOND_EPOCH__SECOND_IMAGE" | grep 'Image center:' | awk '{print $3" "$4}')
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.4f", $5}')
   echo "###################################
 # Check the image center offset between the reference and the second second-epoch image (pointing accuracy)
