@@ -175,41 +175,60 @@ fi
 echo "New version available: $REMOTE_COMMIT"
 echo "Checking GitHub Actions status for this commit..."
 
-# Check combined status using GitHub's status API (much simpler!)
-# This endpoint returns a simple "state" field: "success", "pending", "failure", or "error"
-STATUS_URL="https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/commits/${REMOTE_COMMIT}/status"
+# Check GitHub Actions status using the Check Runs API.
+# The legacy /commits/{sha}/status endpoint is only populated by third-party
+# CI services (Travis, CircleCI, ...) that POST commit statuses; GitHub Actions
+# itself reports only via the Checks API, so on a GitHub-Actions-only repo the
+# legacy endpoint returns an empty list with the default state "pending" and
+# the script would never proceed.
+CHECK_RUNS_URL="https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/commits/${REMOTE_COMMIT}/check-runs?per_page=100"
 
 if command_exists curl; then
- STATUS_RESPONSE=$(curl --silent --show-error --fail "$STATUS_URL" 2>/dev/null)
+ STATUS_RESPONSE=$(curl --silent --show-error --fail "$CHECK_RUNS_URL" 2>/dev/null)
 elif command_exists wget; then
- STATUS_RESPONSE=$(wget -q -O - "$STATUS_URL" 2>/dev/null)
+ STATUS_RESPONSE=$(wget -q -O - "$CHECK_RUNS_URL" 2>/dev/null)
 fi
 
 if [ $? -ne 0 ] || [ -z "$STATUS_RESPONSE" ];then
- echo "ERROR: failed to fetch commit status from GitHub API" >&2
+ echo "ERROR: failed to fetch check-runs from GitHub API" >&2
  exit $EXIT_ERROR
 fi
 
-# Extract the state field - look for "state": "success" or similar
-# This is much simpler than parsing the full workflow runs API
-STATE=$(echo "$STATUS_RESPONSE" | grep -o '"state"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"state"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | head -n 1)
-
-echo "Commit status: $STATE"
-
-# Check if state is success
-if [ "$STATE" != "success" ];then
- if [ "$STATE" = "pending" ];then
-  echo "Tests are still running for commit $REMOTE_COMMIT"
-  echo "Will try again later"
-  exit $EXIT_ERROR
- else
-  echo "ERROR: tests did not pass for commit $REMOTE_COMMIT (state: $STATE)" >&2
-  echo "Will not update to this version" >&2
-  exit $EXIT_ERROR
- fi
+# Total number of check runs reported for this commit
+TOTAL_COUNT=$(echo "$STATUS_RESPONSE" | grep -o '"total_count"[[:space:]]*:[[:space:]]*[0-9]*' | head -n 1 | grep -o '[0-9]*$')
+if [ -z "$TOTAL_COUNT" ];then
+ TOTAL_COUNT=0
 fi
 
-echo "All tests passed. Proceeding with update."
+if [ "$TOTAL_COUNT" -eq 0 ];then
+ echo "No GitHub Actions check runs reported yet for commit $REMOTE_COMMIT"
+ echo "Tests have probably not been scheduled yet. Will try again later"
+ exit $EXIT_ERROR
+fi
+
+# Extract all check-run statuses (queued / in_progress / completed)
+STATUSES=$(echo "$STATUS_RESPONSE" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"status"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
+# Extract all check-run conclusions (success / failure / cancelled / timed_out / action_required / skipped / neutral / stale)
+CONCLUSIONS=$(echo "$STATUS_RESPONSE" | grep -o '"conclusion"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"conclusion"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
+
+# Are all check runs completed?
+N_NOT_COMPLETED=$(echo "$STATUSES" | grep -v '^completed$' | grep -v '^$' | wc -l)
+if [ "$N_NOT_COMPLETED" -gt 0 ];then
+ echo "$N_NOT_COMPLETED of $TOTAL_COUNT GitHub Actions check runs are still running for commit $REMOTE_COMMIT"
+ echo "Will try again later"
+ exit $EXIT_ERROR
+fi
+
+# All check runs are completed; verify every conclusion is acceptable
+N_BAD=$(echo "$CONCLUSIONS" | grep -v -E '^(success|skipped|neutral)$' | grep -v '^$' | wc -l)
+if [ "$N_BAD" -gt 0 ];then
+ BAD_LIST=$(echo "$CONCLUSIONS" | grep -v -E '^(success|skipped|neutral)$' | sort -u | tr '\n' ' ')
+ echo "ERROR: $N_BAD of $TOTAL_COUNT GitHub Actions check runs failed for commit $REMOTE_COMMIT (conclusions: $BAD_LIST)" >&2
+ echo "Will not update to this version" >&2
+ exit $EXIT_ERROR
+fi
+
+echo "All $TOTAL_COUNT GitHub Actions check runs passed. Proceeding with update."
 
 # Stash any local changes to tracked files (e.g. build artifacts)
 # to prevent 'git pull' from failing with "Your local changes would be overwritten"
