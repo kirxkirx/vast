@@ -17,7 +17,7 @@
 #define MAX_DARK_BIAS_COUNT 7000
 #define MIN_FLAT_FIELD_COUNT 17000
 #define MAX_FLAT_FIELD_COUNT 50000
-#define MAX_CENTER_MEDIAN 60000
+#define MAX_CENTER_MEDIAN 55000
 #define CENTER_BOX_SIZE 64
 
 // Toggle median implementation:
