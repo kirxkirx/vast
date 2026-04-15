@@ -326,18 +326,17 @@ if [ -n "$BIAS_DIR" ]; then
 
       echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
 
-      # Handle filenames starting with '-' by prefixing with --
-      FILE_LIST=""
-      for f in $FILES; do
-        if [[ "$f" == -* ]]; then
-          FILE_LIST="$FILE_LIST -- $f"
-        else
-          FILE_LIST="$FILE_LIST $f"
-        fi
-      done
+      # Prefix each filename with './' so leading '-' in filenames is not
+      # taken for an option by mk_fast (which doesn't use getopt). Using a
+      # bash array also protects against filenames containing whitespace.
+      FILE_ARGS=()
+      while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        FILE_ARGS+=("./$f")
+      done <<< "$FILES"
 
       # Run mk_fast (outputs to median.fit)
-      "$MK_FAST" $FILE_LIST
+      "$MK_FAST" "${FILE_ARGS[@]}"
 
       if [ $? -eq 0 ]; then
         # mk_fast creates median.fit, rename it to our expected output name
@@ -482,18 +481,17 @@ if [ -n "$DARK_DIR" ]; then
 
       echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
 
-      # Handle filenames starting with '-' by prefixing with --
-      FILE_LIST=""
-      for f in $FILES; do
-        if [[ "$f" == -* ]]; then
-          FILE_LIST="$FILE_LIST -- $f"
-        else
-          FILE_LIST="$FILE_LIST $f"
-        fi
-      done
+      # Prefix each filename with './' so leading '-' in filenames is not
+      # taken for an option by mk_fast (which doesn't use getopt). Using a
+      # bash array also protects against filenames containing whitespace.
+      FILE_ARGS=()
+      while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        FILE_ARGS+=("./$f")
+      done <<< "$FILES"
 
       # Run mk_fast (outputs to median.fit)
-      "$MK_FAST" $FILE_LIST
+      "$MK_FAST" "${FILE_ARGS[@]}"
 
       if [ $? -eq 0 ]; then
         # mk_fast creates median.fit, rename it to our expected output name
@@ -635,12 +633,11 @@ if [ -n "$FLAT_DIR" ]; then
 
       echo "  Subtracting $CALIB_TYPE from $file..."
 
-      # Handle filenames starting with '-'
-      if [[ "$file" == -* ]]; then
-        "$MS" -- "$file" "$CALIB_FRAME" "$OUTPUT_NAME"
-      else
-        "$MS" "$file" "$CALIB_FRAME" "$OUTPUT_NAME"
-      fi
+      # Prefix the input flat with './' so leading '-' in the filename is
+      # not taken for an option by ms (which doesn't use getopt). The
+      # calibration frame path already starts with '../' and the output
+      # name is generated as 'd_*' so neither of those needs the prefix.
+      "$MS" "./$file" "$CALIB_FRAME" "$OUTPUT_NAME"
 
       if [ $? -eq 0 ]; then
         ((subtracted_flats++))
@@ -739,18 +736,17 @@ if [ -n "$FLAT_DIR" ]; then
 
         echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
 
-        # Handle filenames starting with '-' by prefixing with --
-        FILE_LIST=""
-        for f in $FILES; do
-          if [[ "$f" == -* ]]; then
-            FILE_LIST="$FILE_LIST -- $f"
-          else
-            FILE_LIST="$FILE_LIST $f"
-          fi
-        done
+        # Prefix each filename with './' so leading '-' in filenames is not
+        # taken for an option by mk_fast (which doesn't use getopt). Using a
+        # bash array also protects against filenames containing whitespace.
+        FILE_ARGS=()
+        while IFS= read -r f; do
+          [ -z "$f" ] && continue
+          FILE_ARGS+=("./$f")
+        done <<< "$FILES"
 
         # Run mk_fast (outputs to median.fit)
-        "$MK_FAST" $FILE_LIST
+        "$MK_FAST" "${FILE_ARGS[@]}"
 
         if [ $? -eq 0 ]; then
           # mk_fast creates median.fit, rename it to our expected output name
