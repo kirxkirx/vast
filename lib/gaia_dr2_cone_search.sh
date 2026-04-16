@@ -20,7 +20,7 @@ MAG_FAINT=99.0
 RA_DEG=""
 DEC_DEG=""
 SORT_BY="phot_g_mean_mag"
-TIMEOUT_SEC=30
+TIMEOUT_SEC=90
 
 # Function to convert HMS to degrees
 hms_to_deg() {
