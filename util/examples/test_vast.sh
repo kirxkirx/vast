@@ -693,7 +693,7 @@ if [ $? -ne 0 ];then
 fi
 
 # Check the external programs needed to run the tests
-for TESTED_PROGRAM in awk sed bc wc cat cut sort touch head tail grep basename ping curl wget ;do
+for TESTED_PROGRAM in awk sed bc wc cat cut sort touch head tail grep basename ping curl ;do
  echo -n "Looking for $TESTED_PROGRAM - "
  if ! command -v $TESTED_PROGRAM &>/dev/null ;then
   echo -e "\033[01;31mNOT found\033[00m"

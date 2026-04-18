@@ -77,7 +77,7 @@ jobs:
       run: sudo port upgrade outdated
       if: env.SKIP != 'true'
     - name: Install dependencies via MacPorts
-      run: sudo port install gcc13 wget xorg-libX11 libpng ghostscript shellcheck
+      run: sudo port install gcc13 xorg-libX11 libpng ghostscript shellcheck
       if: env.SKIP != 'true'
     - name: make VaST (MacPorts)
       run: make

@@ -16,6 +16,44 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+function download_tycho2_from_scan {
+ # Download Tycho-2 files (ReadMe, *.gz, robots.txt) from scan.sai.msu.ru.
+ # Try curl first (parse the HTML directory listing); fall back to wget.
+ local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
+ local listing
+ local item
+ if command -v curl >/dev/null 2>&1 ;then
+  listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
+  if [ -n "$listing" ];then
+   for item in $listing ;do
+    case "$item" in
+     */) continue ;;
+     ReadMe|*.gz|robots.txt)
+      echo "Downloading: $item" >&2
+      curl $VAST_CURL_PROXY --silent --show-error --max-time 600 \
+           --continue-at - --retry 5 --retry-delay 2 \
+           -o "$item" "${url}${item}"
+      if [ $? -ne 0 ];then
+       echo "curl failed on $item" >&2
+       break
+      fi
+      ;;
+    esac
+   done
+   if [ -s tyc2.dat.19.gz ];then
+    return 0
+   fi
+  fi
+  echo "curl-based download incomplete, falling back to wget" >&2
+ fi
+ if command -v wget >/dev/null 2>&1 ;then
+  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "$url"
+  return $?
+ fi
+ echo "ERROR: neither curl nor wget is available to download Tycho-2" >&2
+ return 1
+}
+
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=$(readlink -f "$1" 2>/dev/null)
@@ -82,7 +120,7 @@ if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
    done
    #
    #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
-   wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
+   download_tycho2_from_scan
    echo "Download complete. Unpacking..."
    for i in tyc2.dat.*gz ;do
     # handle a very special case: `basename $i .gz` is a broken symlink
@@ -114,7 +152,7 @@ else
   done
   #
   #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
+  download_tycho2_from_scan
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    # handle a very special case: `basename $i .gz` is a broken symlink

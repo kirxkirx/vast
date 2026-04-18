@@ -360,7 +360,8 @@ int download_hla_image_if_this_is_it_and_modify_imagename( char *fits_image_name
   fits_image_name[FILENAME_LENGTH - 1]= '\0'; // just in case
   return 0;
  }
- sprintf( system_command, "LANG=C wget -c -O %s 'http://hla.stsci.edu/cgi-bin/fitscut.cgi?red=%s&RA=%.6f&Dec=%.6f&Size=64&Format=fits&ApplyOmega=true'\n", output_fits_image_name, fits_image_name, markX, markY );
+ //sprintf( system_command, "LANG=C wget -c -O %s 'http://hla.stsci.edu/cgi-bin/fitscut.cgi?red=%s&RA=%.6f&Dec=%.6f&Size=64&Format=fits&ApplyOmega=true'\n", output_fits_image_name, fits_image_name, markX, markY );
+ sprintf( system_command, "LANG=C curl -L --fail -C - -o %s 'http://hla.stsci.edu/cgi-bin/fitscut.cgi?red=%s&RA=%.6f&Dec=%.6f&Size=64&Format=fits&ApplyOmega=true'\n", output_fits_image_name, fits_image_name, markX, markY );
  fprintf( stderr, "Downloading a cutout from HLA image %s\n%s\n", fits_image_name, system_command );
  if ( 0 == system( system_command ) ) {
   fprintf( stderr, "Success! =)\n" );
