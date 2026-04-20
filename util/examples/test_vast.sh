@@ -34061,6 +34061,10 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR)
  # and frequently fails due to network timeouts unrelated to VaST code
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS001/}"
+ # vizquery test uses an automatic retry on a missing '#END#' marker; the
+ # retry-marker code survives into FAILED_TEST_CODES even when the retry
+ # succeeds (external VizieR flakiness, not a VaST-side failure).
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_RETRY/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
