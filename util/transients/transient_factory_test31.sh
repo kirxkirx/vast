@@ -2990,14 +2990,26 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    is_this_test_run_based_on_input_img_path "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING"
    if [ $? -ne 0 ]; then
     echo "Copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
-    # Copy WCS-calibrated images back to input directory
-    for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_"${CALIBRATION_STATUS_PREFIX}"*."$FITS_FILE_EXT" ; do
+    # Copy the WCS-calibrated NEW images back to the input directory.
+    # Iterate the two known new-image paths instead of globbing
+    # wcs_${CALIBRATION_STATUS_PREFIX}*.${FITS_FILE_EXT}: when the prefix is
+    # empty (e.g. the upload contains only raw frames) the glob also matches
+    # the plate-solved reference images (wcs_<field>_<ref_date>_...fits) sitting
+    # in the current working directory and copies them into the input dir,
+    # bloating it with reference-image copies.
+    for NEW_IMAGE_PATH in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ; do
+     if [ -z "$NEW_IMAGE_PATH" ];then
+      continue
+     fi
+     WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="wcs_$(basename "$NEW_IMAGE_PATH")"
+     WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="${WCS_CALIBRATED_IMAGE_FOR_ARCHIVE/wcs_wcs_/wcs_}"
+     WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="${WCS_CALIBRATED_IMAGE_FOR_ARCHIVE/.fz/}"
      #
      if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] ;then
       if [ -n "$DARK_FRAMES_DIR" ] && [ -n "$FLAT_FIELD_FILE" ] ;then
-       echo "WARNING: no fully-calibrated images to save!" | tee -a transient_factory_test31.txt
+       echo "WARNING: no fully-calibrated image to save: $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
       fi
-      break
+      continue
      fi
      #
      echo "Saving fully-calibrated image $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt

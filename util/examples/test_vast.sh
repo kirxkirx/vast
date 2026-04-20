@@ -125,6 +125,86 @@ ___________________
  exit 1
 }
 
+# Check that util/transients/transient_factory_test31.sh did not leak wcs_*.fits
+# (or wcs_*.fits.fz) copies into its input directory.
+# Arguments:
+#   $1  input directory that was passed to transient_factory_test31.sh
+#   $2  newline-separated list of wcs_*.fits[.fz] basenames captured in
+#       that directory BEFORE the pipeline ran (may be empty)
+# Behaviour:
+#   - files that were already in the baseline are ignored (caller may or may
+#     not care about them; this function only looks at new arrivals)
+#   - if the input dir path matches is_this_test_run_based_on_input_img_path()
+#     (case-insensitive 'test' or 'NMW_ATLAS_Mira_in_Ser1'), the copy-back step
+#     in the transient factory is skipped, so any new wcs_ file is a leak
+#   - otherwise, new wcs_ files matching a reference-image basename (taken from
+#     vast_image_details.log column 17, excluding entries inside the input dir)
+#     are the leak we care about
+# Returns 0 if clean, 1 if a leak was detected.  Prints leaked filenames to stderr.
+function check_transient_factory_wcs_leak_in_input_dir() {
+ local input_dir="$1"
+ local before_list="$2"
+ local after_list new_files f ref_path ref_basename ref_wcs leaked=""
+ local input_dir_abs
+
+ if [ -z "$input_dir" ] || [ ! -d "$input_dir" ];then
+  return 0
+ fi
+
+ after_list=$(cd "$input_dir" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ new_files=$(comm -13 <(printf '%s\n' "$before_list" | sort -u) <(printf '%s\n' "$after_list" | sort -u) | grep -v '^$')
+
+ if [ -z "$new_files" ];then
+  return 0
+ fi
+
+ # Path check mirrors is_this_test_run_based_on_input_img_path() in
+ # util/transients/transient_factory_test31.sh.
+ if echo "$input_dir" | grep -q -i -e 'test' -e 'NMW_ATLAS_Mira_in_Ser1' ;then
+  # Test path: copy-back is skipped, so ANY new wcs_ file is a leak.
+  echo "ERROR: unexpected wcs_ files appeared in test-path input dir $input_dir:" >&2
+  echo "$new_files" >&2
+  return 1
+ fi
+
+ # Non-test path: new wcs_ files are expected for the new images, but any new
+ # wcs_ file whose basename matches a REFERENCE-image basename is the leak.
+ if [ ! -s vast_image_details.log ];then
+  # No log to identify references; leave the benign new-image wcs_ files alone.
+  return 0
+ fi
+
+ input_dir_abs=$(readlink -f "$input_dir" 2>/dev/null)
+
+ while read -r ref_path; do
+  [ -z "$ref_path" ] && continue
+  # Skip entries that live inside the input dir (these are the new images).
+  case "$ref_path" in
+   "$input_dir"/*) continue ;;
+  esac
+  if [ -n "$input_dir_abs" ];then
+   case "$ref_path" in
+    "$input_dir_abs"/*) continue ;;
+   esac
+  fi
+  ref_basename=$(basename "$ref_path")
+  ref_wcs="wcs_${ref_basename/.fz/}"
+  ref_wcs="${ref_wcs/wcs_wcs_/wcs_}"
+  for f in $new_files; do
+   if [ "$f" = "$ref_wcs" ] || [ "$f" = "$ref_wcs.fz" ];then
+    leaked="$leaked $f"
+   fi
+  done
+ done < <(awk '{print $17}' vast_image_details.log | sort -u)
+
+ if [ -n "$leaked" ];then
+  echo "ERROR: reference-image wcs_ leak into $input_dir:$leaked" >&2
+  return 1
+ fi
+
+ return 0
+}
+
 # A more portable realpath wrapper
 function vastrealpath() {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -11397,11 +11477,18 @@ if [ -d ../NMW_Saturn_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Saturn_test/1referenceepoch/ util/transients/transient_factory_test31.sh ../NMW_Saturn_test/2ndepoch
+ SATURN2_INPUT_DIR=../NMW_Saturn_test/2ndepoch
+ SATURN2_WCS_BASELINE=$(cd "$SATURN2_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW_Saturn_test/1referenceepoch/ util/transients/transient_factory_test31.sh "$SATURN2_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2000_EXIT_CODE"
   fail_early
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$SATURN2_INPUT_DIR" "$SATURN2_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_REF_WCS_LEAK"
  fi
  if [ -f transient_report/index.html ];then
   # The copy of the log file should be in the HTML report
@@ -13658,10 +13745,17 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ NMWNSGR20N4_INPUT_DIR=../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images
+ NMWNSGR20N4_WCS_BASELINE=$(cd "$NMWNSGR20N4_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWNSGR20N4_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$NMWNSGR20N4_INPUT_DIR" "$NMWNSGR20N4_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_NOVASGR20N4_REF_WCS_LEAK"
  fi
  # Test for the specific error message
  grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
@@ -17917,10 +18011,17 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
   cp -v ../NMW-STL__find_Neptune_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__find_Neptune_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__find_Neptune_test/second_epoch_images
+ NMWSTLFINDNEPTUNE_INPUT_DIR=../NMW-STL__find_Neptune_test/second_epoch_images
+ NMWSTLFINDNEPTUNE_WCS_BASELINE=$(cd "$NMWSTLFINDNEPTUNE_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-STL__find_Neptune_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWSTLFINDNEPTUNE_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE000_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$NMWSTLFINDNEPTUNE_INPUT_DIR" "$NMWSTLFINDNEPTUNE_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_REF_WCS_LEAK"
  fi
  #
  if [ -f astorb.dat_backup ];then
@@ -18338,10 +18439,17 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
   cp -v ../NMW-STL__find_NovaVul24_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__find_NovaVul24_test/second_epoch_images
+ NMWSTLFINDNVUL24_INPUT_DIR=../NMW-STL__find_NovaVul24_test/second_epoch_images
+ NMWSTLFINDNVUL24_WCS_BASELINE=$(cd "$NMWSTLFINDNVUL24_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWSTLFINDNVUL24_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24000_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$NMWSTLFINDNVUL24_INPUT_DIR" "$NMWSTLFINDNVUL24_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_REF_WCS_LEAK"
  fi
  #
  if [ -f astorb.dat_backup ];then
@@ -21846,10 +21954,17 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
  fi
  #################################################################
  # Test the production NMW script
- REFERENCE_IMAGES=../TICA_TESS__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh ../TICA_TESS__find_NovaVul24_test/second_epoch_images
+ TICATESSFINDNVUL24_INPUT_DIR=../TICA_TESS__find_NovaVul24_test/second_epoch_images
+ TICATESSFINDNVUL24_WCS_BASELINE=$(cd "$TICATESSFINDNVUL24_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../TICA_TESS__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh "$TICATESSFINDNVUL24_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24000_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$TICATESSFINDNVUL24_INPUT_DIR" "$TICATESSFINDNVUL24_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_REF_WCS_LEAK"
  fi
  #
  if [ -f astorb.dat_backup ];then
