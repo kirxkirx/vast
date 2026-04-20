@@ -95,16 +95,38 @@ fi
 #################################
 # Parse command-line arguments
 #################################
+LIST_MODE=0
+TARGET_RA=""
+TARGET_DEC=""
+SKY_LISTFILE=""
+
 if [ -z "$4" ];then
- echo "Usage: $0 image.fits HH:MM:SS.ss +DD:MM:SS.s FILTER" >&2
+ echo "Usage:" >&2
+ echo "  $0 image.fits HH:MM:SS.ss +DD:MM:SS.s FILTER" >&2
+ echo "  $0 image.fits --list sky_listfile FILTER" >&2
  echo "  FILTER is one of: B V R Rc I Ic r i g" >&2
+ echo "  sky_listfile: one position per line 'RA Dec [label]' (sexagesimal or decimal deg)" >&2
  exit 1
 fi
 
 FITSFILE="$1"
-TARGET_RA="$2"
-TARGET_DEC="$3"
-FILTER="$4"
+if [ "$2" = "--list" ];then
+ LIST_MODE=1
+ SKY_LISTFILE="$3"
+ FILTER="$4"
+ if [ ! -f "$SKY_LISTFILE" ];then
+  echo "ERROR: list file $SKY_LISTFILE does not exist" >&2
+  exit 1
+ fi
+ if [ ! -s "$SKY_LISTFILE" ];then
+  echo "ERROR: list file $SKY_LISTFILE is empty" >&2
+  exit 1
+ fi
+else
+ TARGET_RA="$2"
+ TARGET_DEC="$3"
+ FILTER="$4"
+fi
 
 #################################
 # Validate VaST tools exist
@@ -152,7 +174,11 @@ case "$FILTER" in
   ;;
 esac
 
-echo "Forced photometry: image=$FITSFILE RA=$TARGET_RA Dec=$TARGET_DEC filter=$FILTER" >&2
+if [ $LIST_MODE -eq 1 ];then
+ echo "Forced photometry (list mode): image=$FITSFILE list=$SKY_LISTFILE filter=$FILTER" >&2
+else
+ echo "Forced photometry: image=$FITSFILE RA=$TARGET_RA Dec=$TARGET_DEC filter=$FILTER" >&2
+fi
 
 #################################
 # Step 1: Run SExtractor to get aperture
@@ -201,26 +227,80 @@ fi
 # Step 4: Convert RA/Dec to pixel coordinates
 #################################
 echo "Step 4: Converting RA/Dec to pixel coordinates..." >&2
-SKY2XY_OUTPUT=$("$VAST_PATH"lib/bin/sky2xy "$FITSFILE" $TARGET_RA $TARGET_DEC 2>&1)
-if [ $? -ne 0 ];then
- echo "ERROR: sky2xy failed" >&2
- echo "  Output: $SKY2XY_OUTPUT" >&2
- exit 1
+
+# Temporary files used in list mode (also cleaned in single mode; trap is harmless).
+FORCEDPHOT_PIXLIST=$(mktemp 2>/dev/null || echo "forcedphot_pixlist_$$.tmp")
+FORCEDPHOT_SKYMAP=$(mktemp 2>/dev/null || echo "forcedphot_skymap_$$.tmp")
+FORCEDPHOT_C_TMP=$(mktemp 2>/dev/null || echo "forcedphot_ctmp_$$.tmp")
+FORCEDPHOT_PY_TMP=$(mktemp 2>/dev/null || echo "forcedphot_pytmp_$$.tmp")
+# shellcheck disable=SC2064
+trap "rm -f '$FORCEDPHOT_PIXLIST' '$FORCEDPHOT_SKYMAP' '$FORCEDPHOT_C_TMP' '$FORCEDPHOT_PY_TMP'" EXIT
+
+if [ $LIST_MODE -eq 0 ];then
+ SKY2XY_OUTPUT=$("$VAST_PATH"lib/bin/sky2xy "$FITSFILE" $TARGET_RA $TARGET_DEC 2>&1)
+ if [ $? -ne 0 ];then
+  echo "ERROR: sky2xy failed" >&2
+  echo "  Output: $SKY2XY_OUTPUT" >&2
+  exit 1
+ fi
+ if echo "$SKY2XY_OUTPUT" | grep -q -e "off image" -e "offscale" ;then
+  echo "ERROR: target coordinates are off the image" >&2
+  echo "  sky2xy output: $SKY2XY_OUTPUT" >&2
+  exit 1
+ fi
+ PIXEL_X=$(echo "$SKY2XY_OUTPUT" | awk '{print $5}')
+ PIXEL_Y=$(echo "$SKY2XY_OUTPUT" | awk '{print $6}')
+ if [ -z "$PIXEL_X" ] || [ -z "$PIXEL_Y" ];then
+  echo "ERROR: could not parse pixel coordinates from sky2xy output" >&2
+  echo "  sky2xy output: $SKY2XY_OUTPUT" >&2
+  exit 1
+ fi
+ echo "  Pixel position: $PIXEL_X $PIXEL_Y" >&2
+else
+ # List mode: read sky_listfile line by line, call sky2xy once per position,
+ # build a pixel list for forced_photometry --list and a sky map for final join.
+ : > "$FORCEDPHOT_PIXLIST"
+ : > "$FORCEDPHOT_SKYMAP"
+ FORCEDPHOT_LINE_IDX=0
+ FORCEDPHOT_N_VALID=0
+ while IFS= read -r FORCEDPHOT_LINE || [ -n "$FORCEDPHOT_LINE" ]; do
+  FORCEDPHOT_LINE_IDX=$((FORCEDPHOT_LINE_IDX + 1))
+  FORCEDPHOT_STRIPPED=$(echo "$FORCEDPHOT_LINE" | sed 's/^[[:space:]]*//')
+  case "$FORCEDPHOT_STRIPPED" in
+   ''|'#'*|'%'*) continue ;;
+  esac
+  FORCEDPHOT_RA=$(echo "$FORCEDPHOT_STRIPPED" | awk '{print $1}')
+  FORCEDPHOT_DEC=$(echo "$FORCEDPHOT_STRIPPED" | awk '{print $2}')
+  FORCEDPHOT_LABEL=$(echo "$FORCEDPHOT_STRIPPED" | awk -v idx="$FORCEDPHOT_LINE_IDX" '{if (NF >= 3) print $3; else print idx}')
+  if [ -z "$FORCEDPHOT_RA" ] || [ -z "$FORCEDPHOT_DEC" ];then
+   echo "WARNING: list line $FORCEDPHOT_LINE_IDX: cannot parse RA Dec: $FORCEDPHOT_LINE" >&2
+   continue
+  fi
+  FORCEDPHOT_S2X=$("$VAST_PATH"lib/bin/sky2xy "$FITSFILE" "$FORCEDPHOT_RA" "$FORCEDPHOT_DEC" 2>&1)
+  if [ $? -ne 0 ];then
+   echo "WARNING: list line $FORCEDPHOT_LINE_IDX: sky2xy failed for $FORCEDPHOT_RA $FORCEDPHOT_DEC" >&2
+   continue
+  fi
+  if echo "$FORCEDPHOT_S2X" | grep -q -e "off image" -e "offscale" ;then
+   echo "WARNING: list line $FORCEDPHOT_LINE_IDX: $FORCEDPHOT_RA $FORCEDPHOT_DEC is off the image" >&2
+   continue
+  fi
+  FORCEDPHOT_PX=$(echo "$FORCEDPHOT_S2X" | awk '{print $5}')
+  FORCEDPHOT_PY=$(echo "$FORCEDPHOT_S2X" | awk '{print $6}')
+  if [ -z "$FORCEDPHOT_PX" ] || [ -z "$FORCEDPHOT_PY" ];then
+   echo "WARNING: list line $FORCEDPHOT_LINE_IDX: could not parse pixel coords" >&2
+   continue
+  fi
+  echo "$FORCEDPHOT_PX $FORCEDPHOT_PY $FORCEDPHOT_LABEL" >> "$FORCEDPHOT_PIXLIST"
+  echo "$FORCEDPHOT_LABEL $FORCEDPHOT_RA $FORCEDPHOT_DEC $FORCEDPHOT_PX $FORCEDPHOT_PY" >> "$FORCEDPHOT_SKYMAP"
+  FORCEDPHOT_N_VALID=$((FORCEDPHOT_N_VALID + 1))
+ done < "$SKY_LISTFILE"
+ if [ "$FORCEDPHOT_N_VALID" -eq 0 ];then
+  echo "ERROR: no valid positions in list file $SKY_LISTFILE" >&2
+  exit 1
+ fi
+ echo "  Converted $FORCEDPHOT_N_VALID positions to pixel coordinates" >&2
 fi
-# Check for off-image or offscale
-if echo "$SKY2XY_OUTPUT" | grep -q -e "off image" -e "offscale" ;then
- echo "ERROR: target coordinates are off the image" >&2
- echo "  sky2xy output: $SKY2XY_OUTPUT" >&2
- exit 1
-fi
-PIXEL_X=$(echo "$SKY2XY_OUTPUT" | awk '{print $5}')
-PIXEL_Y=$(echo "$SKY2XY_OUTPUT" | awk '{print $6}')
-if [ -z "$PIXEL_X" ] || [ -z "$PIXEL_Y" ];then
- echo "ERROR: could not parse pixel coordinates from sky2xy output" >&2
- echo "  sky2xy output: $SKY2XY_OUTPUT" >&2
- exit 1
-fi
-echo "  Pixel position: $PIXEL_X $PIXEL_Y" >&2
 
 #################################
 # Step 5: Extract JD
@@ -238,16 +318,23 @@ echo "  JD: $JD" >&2
 #################################
 echo "Step 6: Running C forced photometry..." >&2
 C_START=$(date +%s%N)
-C_RESULT=$("$VAST_PATH"util/forced_photometry "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
-C_EXIT=$?
+if [ $LIST_MODE -eq 0 ];then
+ C_RESULT=$("$VAST_PATH"util/forced_photometry "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
+ C_EXIT=$?
+else
+ "$VAST_PATH"util/forced_photometry "$FITSFILE" --list "$FORCEDPHOT_PIXLIST" $APERTURE > "$FORCEDPHOT_C_TMP" 2>/dev/null
+ C_EXIT=$?
+fi
 C_END=$(date +%s%N)
 C_TIME=$(echo "$C_START $C_END" | awk '{printf "%.3f", ($2-$1)/1000000000.0}')
 echo "  C execution time: ${C_TIME}s" >&2
 if [ $C_EXIT -ne 0 ];then
  echo "WARNING: C forced photometry exited with code $C_EXIT" >&2
- C_RESULT="99.0000 99.0000 fail"
+ if [ $LIST_MODE -eq 0 ];then
+  C_RESULT="99.0000 99.0000 fail"
+ fi
 fi
-if [ -z "$C_RESULT" ];then
+if [ $LIST_MODE -eq 0 ] && [ -z "$C_RESULT" ];then
  echo "WARNING: empty result from C forced photometry" >&2
  C_RESULT="99.0000 99.0000 fail"
 fi
@@ -257,16 +344,23 @@ fi
 #################################
 echo "Step 7: Running Python forced photometry..." >&2
 PY_START=$(date +%s%N)
-PY_RESULT=$("$VAST_PATH"util/forced_photometry.py "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
-PY_EXIT=$?
+if [ $LIST_MODE -eq 0 ];then
+ PY_RESULT=$("$VAST_PATH"util/forced_photometry.py "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
+ PY_EXIT=$?
+else
+ "$VAST_PATH"util/forced_photometry.py "$FITSFILE" --list "$FORCEDPHOT_PIXLIST" $APERTURE > "$FORCEDPHOT_PY_TMP" 2>/dev/null
+ PY_EXIT=$?
+fi
 PY_END=$(date +%s%N)
 PY_TIME=$(echo "$PY_START $PY_END" | awk '{printf "%.3f", ($2-$1)/1000000000.0}')
 echo "  Python execution time: ${PY_TIME}s" >&2
 if [ $PY_EXIT -ne 0 ];then
  echo "WARNING: Python forced photometry exited with code $PY_EXIT" >&2
- PY_RESULT="99.0000 99.0000 fail"
+ if [ $LIST_MODE -eq 0 ];then
+  PY_RESULT="99.0000 99.0000 fail"
+ fi
 fi
-if [ -z "$PY_RESULT" ];then
+if [ $LIST_MODE -eq 0 ] && [ -z "$PY_RESULT" ];then
  echo "WARNING: empty result from Python forced photometry" >&2
  PY_RESULT="99.0000 99.0000 fail"
 fi
@@ -276,7 +370,21 @@ fi
 #################################
 BASENAME_FITSFILE=$(basename "$FITSFILE")
 
-echo "# C implementation:"
-echo "$JD  $C_RESULT  $BASENAME_FITSFILE"
-echo "# Python implementation:"
-echo "$JD  $PY_RESULT  $BASENAME_FITSFILE"
+if [ $LIST_MODE -eq 0 ];then
+ echo "# C implementation:"
+ echo "$JD  $C_RESULT  $BASENAME_FITSFILE"
+ echo "# Python implementation:"
+ echo "$JD  $PY_RESULT  $BASENAME_FITSFILE"
+else
+ # Join tool output (label cx cy mag err st) with sky map (label RA Dec px py)
+ # to produce: JD label RA Dec px py mag err st basename.
+ # The two files are in matching order by construction.
+ echo "# C implementation:"
+ paste -d' ' "$FORCEDPHOT_SKYMAP" "$FORCEDPHOT_C_TMP" | \
+  awk -v jd="$JD" -v fn="$BASENAME_FITSFILE" \
+      'NF >= 10 {printf "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s\n", jd, $1, $2, $3, $4, $5, $9, $10, $11, fn}'
+ echo "# Python implementation:"
+ paste -d' ' "$FORCEDPHOT_SKYMAP" "$FORCEDPHOT_PY_TMP" | \
+  awk -v jd="$JD" -v fn="$BASENAME_FITSFILE" \
+      'NF >= 10 {printf "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s\n", jd, $1, $2, $3, $4, $5, $9, $10, $11, fn}'
+fi

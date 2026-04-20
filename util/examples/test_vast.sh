@@ -33771,6 +33771,49 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT_TEST_NOT_PERFORMED"
 fi
 
+######### Forced photometry --list (batch) mode test
+# Batch-mode forced photometry verification.  Delegates to the standalone
+# runner, which checks that batch output equals single-position output per
+# star (bit-identical), batch agrees with SExtractor-calibrated magnitudes
+# within the same thresholds as the test above, and that forced_photometry.sh
+# --list runs end-to-end.  Uses the same telephoto-lens test image.
+
+if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "Forced photometry --list mode test "
+ echo -n "Forced photometry --list mode test: " >> vast_test_report.txt
+
+ FORCEDPHOTLIST_OUTPUT=$(util/examples/test_forced_photometry_list.sh 2>&1)
+ FORCEDPHOTLIST_EXIT=$?
+ if [ $FORCEDPHOTLIST_EXIT -ne 0 ];then
+  TEST_PASSED=0
+  # Surface the standalone runner's log for debugging
+  echo "$FORCEDPHOTLIST_OUTPUT" >&2
+  # Propagate its specific failure codes so outer reporting stays useful
+  FORCEDPHOTLIST_CODES=$(echo "$FORCEDPHOTLIST_OUTPUT" | awk '/^Failure codes:/ {sub(/^Failure codes:/, ""); print; exit}')
+  if [ -n "$FORCEDPHOTLIST_CODES" ];then
+   FAILED_TEST_CODES="${FAILED_TEST_CODES}${FORCEDPHOTLIST_CODES}"
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOTLIST000_FAIL"
+  fi
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mForced photometry --list mode test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mForced photometry --list mode test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOTLIST_TEST_NOT_PERFORMED"
+fi
+
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -33898,6 +33941,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_VAST_SHELLSCRIPTS_SEDminusIfound/}"
  # forced photometry test requires a specific test image
  FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOT_TEST_NOT_PERFORMED/}"
+ # forced photometry --list mode test uses the same specific test image
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOTLIST_TEST_NOT_PERFORMED/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR)
  # and frequently fails due to network timeouts unrelated to VaST code
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS001/}"
