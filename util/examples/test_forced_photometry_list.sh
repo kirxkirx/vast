@@ -116,6 +116,24 @@ if [ $? -ne 0 ] || [ ! -s fp_batch_c.txt ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES FPLIST003_BATCH_C_FAIL"
 fi
 
+# Step 4b: smoke-check the --calib <path> option.  We copy the current
+# calib.txt_param to an alternate path, delete the original, and verify the
+# C tool produces identical output when pointed at the alternate.  This
+# protects the fallback behaviour on the original path and the explicit
+# behaviour on the new option.
+cp calib.txt_param calib.txt_param_alt
+util/forced_photometry "$FP_FITSFILE" --list fp_pix_list.txt "$FP_APERTURE" --calib calib.txt_param_alt \
+    > fp_batch_c_altcalib.txt 2>fp_batch_c_altcalib.err
+if [ $? -ne 0 ] || [ ! -s fp_batch_c_altcalib.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FPLIST003b_ALTCALIB_FAIL"
+fi
+if ! cmp -s fp_batch_c.txt fp_batch_c_altcalib.txt ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FPLIST003c_ALTCALIB_MISMATCH"
+fi
+rm -f calib.txt_param_alt fp_batch_c_altcalib.txt fp_batch_c_altcalib.err
+
 # Step 5: run batch Python (if available)
 FP_HAVE_PY=0
 if command -v python3 &>/dev/null; then

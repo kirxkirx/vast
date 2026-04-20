@@ -69,6 +69,19 @@ fi
 # if set to NO '===> POINTING ACCURACY LIMITS HARDCODED HERE <===' will be ignored.
 CHECK_POINTING_ACCURACY="YES"
 
+# Gate for the forced-photometry reference-image filter (see
+# .claude/forced_photometry_reference_filter_design.md).
+# When set to "yes", transient_factory_test31.sh performs an extra
+# per-reference-image photometric calibration after the main lightcurve
+# calibration plot has been archived, and report_transient.sh then measures
+# aperture photometry at each candidate's RA/Dec on both reference images.
+# Candidates whose two-new-epoch mean magnitude is less than FLARE_MAG (0.9)
+# brighter than the weighted-average forced reference magnitude are rejected.
+# Keep the default "no" so existing behaviour is unchanged unless the feature
+# is explicitly enabled.
+: "${FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER:=no}"
+export FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER
+
 # Limits on the size of stars in pixels
 # (star size is implied by the size of the automatically chosen aperture that is listed for each image in vast_image_details.log)
 # Images with very large or very small stars must have some problem.
@@ -2670,6 +2683,79 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     echo "<br>Magnitude calibration plot:<br><img src=\"$CALIB_PNG_NAME\"><br>" >> transient_factory_test31.txt
    fi
   fi
+  # -------- Forced-photometry-on-reference-images filter: per-ref calibration --------
+  # See .claude/forced_photometry_reference_filter_design.md.  Gated by
+  # FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER=yes.  Must run AFTER the
+  # lightcurve calib.png was archived just above, so the archived plot in
+  # transient_report/ belongs to the lightcurve calibration and is not later
+  # replaced by a per-ref one.  CWD calib.txt / calib.txt_param / calib.png
+  # are all free to be clobbered below.
+  if [ "$FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER" = "yes" ];then
+   FORCED_PHOT_ARCHIVED_PNG="transient_report/calib_${FIELD}_$(basename "$SEXTRACTOR_CONFIG_FILE").png"
+   if [ ! -f "$FORCED_PHOT_ARCHIVED_PNG" ];then
+    echo "Forced-photometry filter: lightcurve calib.png was not archived at $FORCED_PHOT_ARCHIVED_PNG; skipping per-reference-image calibration" | tee -a transient_factory_test31.txt
+   else
+    case "$PHOTOMETRIC_CALIBRATION" in
+     "APASS_B")  FORCED_PHOT_REF_BAND="B" ;;
+     "APASS_V")  FORCED_PHOT_REF_BAND="V" ;;
+     "APASS_g")  FORCED_PHOT_REF_BAND="g" ;;
+     "APASS_r")  FORCED_PHOT_REF_BAND="r" ;;
+     "APASS_i")  FORCED_PHOT_REF_BAND="i" ;;
+     "APASS_R")  FORCED_PHOT_REF_BAND="R" ;;
+     "APASS_I")  FORCED_PHOT_REF_BAND="I" ;;
+     "TYCHO2_V") FORCED_PHOT_REF_BAND="V" ;;
+     *)          FORCED_PHOT_REF_BAND="" ;;
+    esac
+    if [ -z "$FORCED_PHOT_REF_BAND" ];then
+     echo "Forced-photometry filter: cannot map PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION to a band; skipping per-reference-image calibration" | tee -a transient_factory_test31.txt
+    else
+     echo "Preparing per-reference-image forced-photometry calibration (band=$FORCED_PHOT_REF_BAND)" | tee -a transient_factory_test31.txt
+     for FORCED_PHOT_REF_IMAGE_PATH in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ;do
+      if [ -z "$FORCED_PHOT_REF_IMAGE_PATH" ];then
+       continue
+      fi
+      FORCED_PHOT_REF_BASENAME=$(basename "$FORCED_PHOT_REF_IMAGE_PATH")
+      FORCED_PHOT_WCS_REF="wcs_$FORCED_PHOT_REF_BASENAME"
+      FORCED_PHOT_WCS_REF="${FORCED_PHOT_WCS_REF/wcs_wcs_/wcs_}"
+      FORCED_PHOT_WCS_REF="${FORCED_PHOT_WCS_REF/.fz/}"
+      FORCED_PHOT_CALIB_OUT="calib.txt_param_ref_${FORCED_PHOT_WCS_REF}"
+      rm -f "${FORCED_PHOT_CALIB_OUT}" "${FORCED_PHOT_CALIB_OUT}.aperture" "${FORCED_PHOT_CALIB_OUT}.FAIL"
+      if [ ! -s "$FORCED_PHOT_WCS_REF" ];then
+       echo "Forced-photometry filter: plate-solved reference image $FORCED_PHOT_WCS_REF is missing; marking FAIL" | tee -a transient_factory_test31.txt
+       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+       continue
+      fi
+      util/calibrate_single_image.sh "$FORCED_PHOT_WCS_REF" "$FORCED_PHOT_REF_BAND" >> transient_factory_test31.txt 2>&1
+      if [ $? -ne 0 ] || [ ! -s calib.txt ];then
+       echo "Forced-photometry filter: util/calibrate_single_image.sh failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+       continue
+      fi
+      lib/fit_zeropoint > /dev/null 2>&1
+      if [ $? -ne 0 ] || [ ! -s calib.txt_param ];then
+       echo "Forced-photometry filter: lib/fit_zeropoint failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+       continue
+      fi
+      mv calib.txt_param "$FORCED_PHOT_CALIB_OUT"
+      if [ -s "${FORCED_PHOT_WCS_REF}.cat.aperture" ];then
+       awk 'NR==1 {print $1; exit}' "${FORCED_PHOT_WCS_REF}.cat.aperture" > "${FORCED_PHOT_CALIB_OUT}.aperture"
+      else
+       lib/sextract_single_image_noninteractive "$FORCED_PHOT_WCS_REF" 2>/dev/null > "${FORCED_PHOT_CALIB_OUT}.aperture"
+      fi
+      if [ ! -s "${FORCED_PHOT_CALIB_OUT}.aperture" ];then
+       echo "Forced-photometry filter: cannot determine aperture for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+       rm -f "$FORCED_PHOT_CALIB_OUT" "${FORCED_PHOT_CALIB_OUT}.aperture"
+       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+       continue
+      fi
+      echo "Forced-photometry filter: calibrated $FORCED_PHOT_WCS_REF -> $FORCED_PHOT_CALIB_OUT (aperture=$(cat "${FORCED_PHOT_CALIB_OUT}.aperture"))" | tee -a transient_factory_test31.txt
+     done
+     export REFERENCE_EPOCH__FIRST_IMAGE REFERENCE_EPOCH__SECOND_IMAGE
+    fi
+   fi
+  fi
+  # -------- End forced-photometry-on-reference-images filter: per-ref calibration --------
   echo "____ End of magnitude calibration ____" | tee -a transient_factory_test31.txt
   record_timing "    MAGNITUDE_CALIBRATION" "$MAGCAL_START_UNIXSEC"
   MAGCAL_SANITY_CHECK_START_UNIXSEC=$(date +%s)

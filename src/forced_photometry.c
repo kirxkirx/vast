@@ -178,26 +178,31 @@ static double read_satur_level_from_default_sex( void ) {
  return satur_level;
 }
 
-// Read calibration parameters from calib.txt_param.
+// Read calibration parameters from a calib.txt_param-style file.
+// If calib_path is NULL, defaults to "calib.txt_param" in the current directory.
 // Format: fit_function p3 p2 p1 p0
 // Returns 0 on success, 1 on failure.
-static int read_calib_param( double *p3, double *p2, double *p1, double *p0 ) {
+static int read_calib_param( const char *calib_path,
+                             double *p3, double *p2, double *p1, double *p0 ) {
  FILE *f;
  double fit_fn;
+ const char *path;
 
- f= fopen( "calib.txt_param", "r" );
+ path= ( calib_path != NULL ) ? calib_path : "calib.txt_param";
+
+ f= fopen( path, "r" );
  if ( f == NULL ) {
-  fprintf( stderr, "ERROR: cannot open calib.txt_param\n" );
+  fprintf( stderr, "ERROR: cannot open %s\n", path );
   return 1;
  }
  if ( 5 != fscanf( f, "%lf %lf %lf %lf %lf", &fit_fn, p3, p2, p1, p0 ) ) {
-  fprintf( stderr, "ERROR: cannot parse calib.txt_param\n" );
+  fprintf( stderr, "ERROR: cannot parse %s\n", path );
   fclose( f );
   return 1;
  }
  fclose( f );
- fprintf( stderr, "Calibration (fit_function=%.0f): cal_mag = %.6f * x^2 + %.6f * x + %.6f\n",
-          fit_fn, *p2, *p1, *p0 );
+ fprintf( stderr, "Calibration (from %s, fit_function=%.0f): cal_mag = %.6f * x^2 + %.6f * x + %.6f\n",
+          path, fit_fn, *p2, *p1, *p0 );
  return 0;
 }
 
@@ -590,17 +595,30 @@ int main( int argc, char **argv ) {
  int nfields;
  char *p;
 
+ // Optional calibration-file path (NULL = default "calib.txt_param")
+ const char *calib_filename;
+
  // ------------------------------------------------------------------
  // Parse arguments
  // ------------------------------------------------------------------
- if ( argc != 5 ) {
+ if ( argc != 5 && argc != 7 ) {
   fprintf( stderr, "Usage:\n" );
-  fprintf( stderr, "  %s image.fits center_x center_y aperture_diameter\n", argv[0] );
-  fprintf( stderr, "  %s image.fits --list listfile aperture_diameter\n", argv[0] );
+  fprintf( stderr, "  %s image.fits center_x center_y aperture_diameter [--calib PATH]\n", argv[0] );
+  fprintf( stderr, "  %s image.fits --list listfile aperture_diameter [--calib PATH]\n", argv[0] );
   fprintf( stderr, "  center_x, center_y: 1-based pixel coordinates (from sky2xy)\n" );
   fprintf( stderr, "  aperture_diameter: in pixels\n" );
   fprintf( stderr, "  listfile: one line per position \"center_x center_y [label]\"\n" );
+  fprintf( stderr, "  --calib PATH: read calibration parameters from PATH instead of calib.txt_param\n" );
   return 1;
+ }
+
+ calib_filename= NULL;
+ if ( argc == 7 ) {
+  if ( 0 != strcmp( argv[5], "--calib" ) ) {
+   fprintf( stderr, "ERROR: extra trailing argument must be '--calib PATH' (got '%s %s')\n", argv[5], argv[6] );
+   return 1;
+  }
+  calib_filename= argv[6];
  }
 
  strncpy( fitsfilename, argv[1], FILENAME_LENGTH - 1 );
@@ -711,7 +729,7 @@ int main( int argc, char **argv ) {
  // ------------------------------------------------------------------
  // Read magnitude calibration up front (shared across all positions)
  // ------------------------------------------------------------------
- if ( 0 != read_calib_param( &calib_p3, &calib_p2, &calib_p1, &calib_p0 ) ) {
+ if ( 0 != read_calib_param( calib_filename, &calib_p3, &calib_p2, &calib_p1, &calib_p0 ) ) {
   fprintf( stderr, "ERROR: magnitude calibration failed\n" );
   if ( list_mode == 0 ) {
    fprintf( stdout, "99.0000 99.0000 calib_fail\n" );
