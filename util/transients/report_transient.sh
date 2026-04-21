@@ -340,13 +340,7 @@ if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT"
  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=11
 fi
 if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" ];then
- # Set the catalog-match tolerance to 1.5 x the second-epoch-distance hard limit.
- # The Gaia cone-search radius was historically equal to the second-epoch
- # detection-pair hard limit, which is only tight enough for well-measured
- # sources.  In dense fields, Gaia/APASS matches beyond that radius were
- # routinely missed.  Widening to 1.5 x brings in the ~12-16" offset cluster
- # that the forced-photometry filter would otherwise have to catch.
- MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(awk -v h="$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" 'BEGIN {printf "%.2f", 1.5 * h}')
+ MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT
 fi
 #
 # Drop the coordinates consistencey test for super-bright objects (that will have large astrometic errors)

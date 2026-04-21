@@ -2695,21 +2695,27 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    if [ ! -f "$FORCED_PHOT_ARCHIVED_PNG" ];then
     echo "Forced-photometry filter: lightcurve calib.png was not archived at $FORCED_PHOT_ARCHIVED_PNG; skipping per-reference-image calibration" | tee -a transient_factory_test31.txt
    else
+    # Pick per-reference-image calibration method.  For TYCHO2_V fields the
+    # lightcurve uses the LOCAL Tycho-2 catalog; re-using Tycho-2 here keeps
+    # the per-ref calibration consistent with the lightcurve calibration AND
+    # avoids an expensive VizieR UCAC5/APASS round trip (which is the main
+    # source of the forced-photometry-filter runtime overhead).
+    FORCED_PHOT_REF_BAND=""
+    FORCED_PHOT_REF_CALIB_METHOD=""
     case "$PHOTOMETRIC_CALIBRATION" in
-     "APASS_B")  FORCED_PHOT_REF_BAND="B" ;;
-     "APASS_V")  FORCED_PHOT_REF_BAND="V" ;;
-     "APASS_g")  FORCED_PHOT_REF_BAND="g" ;;
-     "APASS_r")  FORCED_PHOT_REF_BAND="r" ;;
-     "APASS_i")  FORCED_PHOT_REF_BAND="i" ;;
-     "APASS_R")  FORCED_PHOT_REF_BAND="R" ;;
-     "APASS_I")  FORCED_PHOT_REF_BAND="I" ;;
-     "TYCHO2_V") FORCED_PHOT_REF_BAND="V" ;;
-     *)          FORCED_PHOT_REF_BAND="" ;;
+     "APASS_B")  FORCED_PHOT_REF_BAND="B" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_V")  FORCED_PHOT_REF_BAND="V" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_g")  FORCED_PHOT_REF_BAND="g" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_r")  FORCED_PHOT_REF_BAND="r" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_i")  FORCED_PHOT_REF_BAND="i" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_R")  FORCED_PHOT_REF_BAND="R" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "APASS_I")  FORCED_PHOT_REF_BAND="I" ; FORCED_PHOT_REF_CALIB_METHOD="apass" ;;
+     "TYCHO2_V") FORCED_PHOT_REF_BAND="V" ; FORCED_PHOT_REF_CALIB_METHOD="tycho2" ;;
     esac
-    if [ -z "$FORCED_PHOT_REF_BAND" ];then
-     echo "Forced-photometry filter: cannot map PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION to a band; skipping per-reference-image calibration" | tee -a transient_factory_test31.txt
+    if [ -z "$FORCED_PHOT_REF_CALIB_METHOD" ];then
+     echo "Forced-photometry filter: cannot map PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION to a calibration method; skipping per-reference-image calibration" | tee -a transient_factory_test31.txt
     else
-     echo "Preparing per-reference-image forced-photometry calibration (band=$FORCED_PHOT_REF_BAND)" | tee -a transient_factory_test31.txt
+     echo "Preparing per-reference-image forced-photometry calibration (method=$FORCED_PHOT_REF_CALIB_METHOD band=$FORCED_PHOT_REF_BAND)" | tee -a transient_factory_test31.txt
      for FORCED_PHOT_REF_IMAGE_PATH in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ;do
       if [ -z "$FORCED_PHOT_REF_IMAGE_PATH" ];then
        continue
@@ -2725,17 +2731,30 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
        touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
        continue
       fi
-      util/calibrate_single_image.sh "$FORCED_PHOT_WCS_REF" "$FORCED_PHOT_REF_BAND" >> transient_factory_test31.txt 2>&1
-      if [ $? -ne 0 ] || [ ! -s calib.txt ];then
-       echo "Forced-photometry filter: util/calibrate_single_image.sh failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
-       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
-       continue
-      fi
-      lib/fit_zeropoint > /dev/null 2>&1
-      if [ $? -ne 0 ] || [ ! -s calib.txt_param ];then
-       echo "Forced-photometry filter: lib/fit_zeropoint failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
-       touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
-       continue
+      if [ "$FORCED_PHOT_REF_CALIB_METHOD" = "tycho2" ];then
+       # util/calibrate_single_image_with_tycho2.sh runs read_tycho2 + fit_zeropoint
+       # internally; on success calib.txt_param is written in CWD.
+       util/calibrate_single_image_with_tycho2.sh "$FORCED_PHOT_WCS_REF" >> transient_factory_test31.txt 2>&1
+       if [ $? -ne 0 ] || [ ! -s calib.txt_param ];then
+        echo "Forced-photometry filter: util/calibrate_single_image_with_tycho2.sh failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+        touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+        continue
+       fi
+      else
+       # APASS / UCAC5 path: calibrate_single_image.sh writes calib.txt, then
+       # fit_zeropoint converts it to calib.txt_param.
+       util/calibrate_single_image.sh "$FORCED_PHOT_WCS_REF" "$FORCED_PHOT_REF_BAND" >> transient_factory_test31.txt 2>&1
+       if [ $? -ne 0 ] || [ ! -s calib.txt ];then
+        echo "Forced-photometry filter: util/calibrate_single_image.sh failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+        touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+        continue
+       fi
+       lib/fit_zeropoint > /dev/null 2>&1
+       if [ $? -ne 0 ] || [ ! -s calib.txt_param ];then
+        echo "Forced-photometry filter: lib/fit_zeropoint failed for $FORCED_PHOT_WCS_REF; marking FAIL" | tee -a transient_factory_test31.txt
+        touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
+        continue
+       fi
       fi
       mv calib.txt_param "$FORCED_PHOT_CALIB_OUT"
       if [ -s "${FORCED_PHOT_WCS_REF}.cat.aperture" ];then

@@ -58,6 +58,10 @@ if [ ! -d "$FP_TEST_DATA_DIR" ];then
 fi
 
 util/clean_data.sh
+# Wipe any stale per-reference-image forced-photometry calibration leftovers
+# from earlier sessions.  These are not removed by util/clean_data.sh and
+# would poison the mtime-ordering assertion further below.
+rm -f calib.txt_param_ref_wcs_*
 if [ -f bad_region.lst_default ];then
  cp -v bad_region.lst_default bad_region.lst
 fi
