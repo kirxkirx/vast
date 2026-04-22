@@ -92,12 +92,21 @@ fi
 # Determine the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# mk_fast and ms should be in the same directory as this script
+# mk_fast, mk_fast_noscaling and ms should be in the same directory as this script.
+# mk_fast rescales each frame to the first frame's median before median-combining
+# (appropriate for flats).  mk_fast_noscaling skips that rescaling and is used
+# for bias/dark stacks, where rescaling to a reference median is incorrect.
 MK_FAST="${SCRIPT_DIR}/mk_fast"
+MK_FAST_NOSCALING="${SCRIPT_DIR}/mk_fast_noscaling"
 MS="${SCRIPT_DIR}/ms"
 
 if [ ! -x "$MK_FAST" ];then
   echo "ERROR: Cannot find mk_fast tool at $MK_FAST"
+  exit 1
+fi
+
+if [ ! -x "$MK_FAST_NOSCALING" ];then
+  echo "ERROR: Cannot find mk_fast_noscaling tool at $MK_FAST_NOSCALING"
   exit 1
 fi
 
@@ -327,24 +336,24 @@ if [ -n "$BIAS_DIR" ]; then
       echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
 
       # Prefix each filename with './' so leading '-' in filenames is not
-      # taken for an option by mk_fast (which doesn't use getopt). Using a
-      # bash array also protects against filenames containing whitespace.
+      # taken for an option by mk_fast_noscaling (which doesn't use getopt).
+      # Using a bash array also protects against filenames containing whitespace.
       FILE_ARGS=()
       while IFS= read -r f; do
         [ -z "$f" ] && continue
         FILE_ARGS+=("./$f")
       done <<< "$FILES"
 
-      # Run mk_fast (outputs to median.fit)
-      "$MK_FAST" "${FILE_ARGS[@]}"
+      # Bias stacking: no per-frame rescaling (use mk_fast_noscaling, not mk_fast)
+      "$MK_FAST_NOSCALING" "${FILE_ARGS[@]}"
 
       if [ $? -eq 0 ]; then
-        # mk_fast creates median.fit, rename it to our expected output name
+        # mk_fast_noscaling creates median.fit, rename it to our expected output name
         if [ -f "median.fit" ]; then
           mv median.fit "$OUTPUT_NAME"
           echo "  SUCCESS: Created $OUTPUT_NAME"
         else
-          echo "  ERROR: mk_fast succeeded but median.fit not found"
+          echo "  ERROR: mk_fast_noscaling succeeded but median.fit not found"
         fi
       else
         echo "  ERROR: Failed to create $OUTPUT_NAME"
@@ -482,24 +491,24 @@ if [ -n "$DARK_DIR" ]; then
       echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
 
       # Prefix each filename with './' so leading '-' in filenames is not
-      # taken for an option by mk_fast (which doesn't use getopt). Using a
-      # bash array also protects against filenames containing whitespace.
+      # taken for an option by mk_fast_noscaling (which doesn't use getopt).
+      # Using a bash array also protects against filenames containing whitespace.
       FILE_ARGS=()
       while IFS= read -r f; do
         [ -z "$f" ] && continue
         FILE_ARGS+=("./$f")
       done <<< "$FILES"
 
-      # Run mk_fast (outputs to median.fit)
-      "$MK_FAST" "${FILE_ARGS[@]}"
+      # Dark stacking: no per-frame rescaling (use mk_fast_noscaling, not mk_fast)
+      "$MK_FAST_NOSCALING" "${FILE_ARGS[@]}"
 
       if [ $? -eq 0 ]; then
-        # mk_fast creates median.fit, rename it to our expected output name
+        # mk_fast_noscaling creates median.fit, rename it to our expected output name
         if [ -f "median.fit" ]; then
           mv median.fit "$OUTPUT_NAME"
           echo "  SUCCESS: Created $OUTPUT_NAME"
         else
-          echo "  ERROR: mk_fast succeeded but median.fit not found"
+          echo "  ERROR: mk_fast_noscaling succeeded but median.fit not found"
         fi
       else
         echo "  ERROR: Failed to create $OUTPUT_NAME"

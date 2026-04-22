@@ -219,6 +219,7 @@ void handle_error( const char *message, int status ) {
 
 int main( int argc, char *argv[] ) {
  int skip_temp_checks;
+ int skip_scaling;
  char *prog_name;
  fitsfile *fptr;
  long fpixel;
@@ -262,6 +263,7 @@ int main( int argc, char *argv[] ) {
  int have_telescop_cur, have_camera_cur, have_cameraid_cur;
 
  skip_temp_checks= 0;
+ skip_scaling= 0;
  fpixel= 1;
  status= 0;
  anynul= 0;
@@ -276,11 +278,15 @@ int main( int argc, char *argv[] ) {
  memset( camera_ref, 0, FLEN_VALUE );
  memset( cameraid_ref, 0, FLEN_VALUE );
 
- // Check if executable name is mk_notempchecks
+ // Check if executable name is mk_notempchecks or mk_noscaling
  prog_name= basename( argv[0] );
  if ( strcmp( prog_name, "mk_notempchecks" ) == 0 ) {
   skip_temp_checks= 1;
   fprintf( stderr, "Temperature checks are DISABLED (running as mk_notempchecks)\n" );
+ }
+ if ( strcmp( prog_name, "mk_noscaling" ) == 0 ) {
+  skip_scaling= 1;
+  fprintf( stderr, "Scaling before median combining is DISABLED (running as mk_noscaling)\n" );
  }
 
  fprintf( stderr, "Median combiner v2.4\n\n" );
@@ -528,27 +534,29 @@ int main( int argc, char *argv[] ) {
 
  good_file_counter= 0;
  for ( file_counter= 0; file_counter < loaded_file_counter; file_counter++ ) {
-  for ( i= 0; i < img_size; i++ ) {
-   yy[i]= image_array[file_counter][i];
-  }
+  if ( !skip_scaling ) {
+   for ( i= 0; i < img_size; i++ ) {
+    yy[i]= image_array[file_counter][i];
+   }
 #if USE_GSL_MEDIAN
-  gsl_sort( yy, 1, img_size );
-  cur_index= gsl_stats_median_from_sorted_data( yy, 1, img_size );
+   gsl_sort( yy, 1, img_size );
+   cur_index= gsl_stats_median_from_sorted_data( yy, 1, img_size );
 #else
-  cur_index= median_of_n( yy, (int)img_size );
+   cur_index= median_of_n( yy, (int)img_size );
 #endif
-  fprintf( stderr, "cur_index=%lf\n", cur_index );
+   fprintf( stderr, "cur_index=%lf\n", cur_index );
 
-  // Reject obviously bad images from the flat-field stack
-  // (but how do we know it's a flat stack?)
-  // assume if the value is below MAX_DARK_BIAS_COUNT counts it's a dark/bias staks and not flat
-  if ( MAX_DARK_BIAS_COUNT < cur_index && cur_index < MIN_FLAT_FIELD_COUNT ) {
-   fprintf( stderr, "REJECT (too faint for a flat field)\n" );
-   continue; // continue here so good_file_counter does not increase
-  }
-  if ( cur_index > MAX_FLAT_FIELD_COUNT ) {
-   fprintf( stderr, "REJECT (too bright)\n" );
-   continue; // continue here so good_file_counter does not increase
+   // Reject obviously bad images from the flat-field stack
+   // (but how do we know it's a flat stack?)
+   // assume if the value is below MAX_DARK_BIAS_COUNT counts it's a dark/bias staks and not flat
+   if ( MAX_DARK_BIAS_COUNT < cur_index && cur_index < MIN_FLAT_FIELD_COUNT ) {
+    fprintf( stderr, "REJECT (too faint for a flat field)\n" );
+    continue; // continue here so good_file_counter does not increase
+   }
+   if ( cur_index > MAX_FLAT_FIELD_COUNT ) {
+    fprintf( stderr, "REJECT (too bright)\n" );
+    continue; // continue here so good_file_counter does not increase
+   }
   }
 
   // Check median of center box for high vignetting:
@@ -582,13 +590,20 @@ int main( int argc, char *argv[] ) {
    }
   }
 
-  if ( good_file_counter == 0 ) {
-   ref_index= cur_index;
-   fprintf( stderr, "ref_index=%lf\n", ref_index );
-  }
-
-  for ( ii= 0; ii < img_size; ii++ ) {
-   image_array[good_file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
+  if ( skip_scaling ) {
+   if ( good_file_counter != file_counter ) {
+    for ( ii= 0; ii < img_size; ii++ ) {
+     image_array[good_file_counter][ii]= image_array[file_counter][ii];
+    }
+   }
+  } else {
+   if ( good_file_counter == 0 ) {
+    ref_index= cur_index;
+    fprintf( stderr, "ref_index=%lf\n", ref_index );
+   }
+   for ( ii= 0; ii < img_size; ii++ ) {
+    image_array[good_file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
+   }
   }
   good_file_counter++;
  }

@@ -3688,6 +3688,96 @@ $GREP_RESULT"
   fi
   rm -f median.fit
  fi
+ # -- mk_noscaling / mk_fast_noscaling: symlink-dispatched variants that skip
+ #    the per-frame scaling (useful for combining bias/dark frames).  Three
+ #    fixtures with distinct medians 100/110/120 give different expected
+ #    outputs: the scaled variant normalizes everything to the first frame
+ #    (MEDIAN=100), the noscaling variant returns the middle value (MEDIAN=110).
+ for TEST_FILE_TO_REMOVE in hundred.fit hundredten.fit hundredtwenty.fit median.fit ;do
+  if [ -f "$TEST_FILE_TO_REMOVE" ];then
+   rm -f "$TEST_FILE_TO_REMOVE"
+  fi
+ done
+ util/imarith nul.fit 100.0 add hundred.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_hundred"
+ fi
+ util/imarith nul.fit 110.0 add hundredten.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_hundredten"
+ fi
+ util/imarith nul.fit 120.0 add hundredtwenty.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_hundredtwenty"
+ fi
+ # mk on 100/110/120: output should be scaled to first image's median (100)
+ util/ccd/mk hundred.fit hundredten.fit hundredtwenty.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_100110120_exit"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_100110120_nofile"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=   100.0000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_100110120_median"
+  fi
+  rm -f median.fit
+ fi
+ # mk_noscaling on the same 100/110/120: output should be the unscaled middle value (110)
+ util/ccd/mk_noscaling hundred.fit hundredten.fit hundredtwenty.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_noscaling_exit"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_noscaling_nofile"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=   110.0000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_noscaling_median"
+  fi
+  rm -f median.fit
+ fi
+ # mk_fast on 100/110/120: output should be scaled to first image's median (100)
+ util/ccd/mk_fast hundred.fit hundredten.fit hundredtwenty.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_100110120_exit"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_100110120_nofile"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=   100.0000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_100110120_median"
+  fi
+  rm -f median.fit
+ fi
+ # mk_fast_noscaling on the same 100/110/120: should also return the unscaled middle value (110)
+ util/ccd/mk_fast_noscaling hundred.fit hundredten.fit hundredtwenty.fit > /dev/null 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_noscaling_exit"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_noscaling_nofile"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=   110.0000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_noscaling_median"
+  fi
+  rm -f median.fit
+ fi
+ rm -f hundred.fit hundredten.fit hundredtwenty.fit
  # Test TELESCOP/CAMERA/CAMERAID keyword consistency checks in CCD tools
  # The tools should reject images with mismatched keywords but accept
  # images where only one has the keyword or neither has it.
