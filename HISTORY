@@ -1,4 +1,11 @@
 XX XXX XXXX: vast-1.0rc90
+	* Zero-point-only magnitude calibration against catalogs ('lib/fit_zeropoint',
+	used by util/calibrate_single_image_with_tycho2.sh and the per-reference-image
+	forced-photometry filter) now uses the unweighted median of (catmag - insmag)
+	when at least 11 calibration stars match, and the weighted arithmetic mean
+	(the previous behaviour) for smaller samples. The median is more robust to
+	catalog mis-matches on fields with poor astrometry; typical magnitudes shift
+	by less than 0.05 mag.
 	* Forced photometry script: util/forced_photometry.sh performs aperture photometry
 	at a specified sky position (RA, Dec) on a single FITS image, even if no source was
 	detected there by SExtractor. It reports a calibrated magnitude or a 3-sigma upper limit.

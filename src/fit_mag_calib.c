@@ -5,6 +5,8 @@
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_statistics.h>
 
 #include <libgen.h> // for basename()
 
@@ -28,6 +30,7 @@ int main( int argc, char **argv ) {
  double *catmag;
  float *fcatmag;
  double *w;
+ double *zp_sorted;
  double cov00, cov01, cov11, sumsqres;
  int n_stars= 0;
  int j, k;
@@ -119,6 +122,11 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for w(fit_mag_calib.c)\n" );
   exit( EXIT_FAILURE );
  };
+ zp_sorted= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( double ) );
+ if ( zp_sorted == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for zp_sorted(fit_mag_calib.c)\n" );
+  exit( EXIT_FAILURE );
+ };
  computed_x= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( computed_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for computed_x(fit_mag_calib.c)\n" );
@@ -172,6 +180,7 @@ int main( int argc, char **argv ) {
   free( catmag );
   free( fcatmag );
   free( w );
+  free( zp_sorted );
   free( computed_x );
   free( computed_y );
   return 1;
@@ -211,6 +220,7 @@ int main( int argc, char **argv ) {
   free( catmag );
   free( fcatmag );
   free( w );
+  free( zp_sorted );
   free( computed_x );
   free( computed_y );
   return 1;
@@ -236,6 +246,7 @@ int main( int argc, char **argv ) {
   free( catmag );
   free( fcatmag );
   free( w );
+  free( zp_sorted );
   free( insmagerr );
   free( finsmag );
   free( insmag );
@@ -268,12 +279,28 @@ int main( int argc, char **argv ) {
   fit_function= 3;
   A= 0.0;
   B= 1.0;
-  sum1= sum2= 0.0;
-  for ( j= 0; j < n_stars; j++ ) {
-   sum1+= w[j] * ( catmag[j] - insmag[j] );
-   sum2+= w[j];
+  // Hybrid ZP-only estimator:
+  //  - For n_stars < 11: weighted arithmetic mean of per-star (catmag - insmag).
+  //    Small-N samples have few outliers yet; the weighted mean uses the
+  //    photometric error information and gives a better result than the median.
+  //  - For n_stars >= 11: unweighted median of per-star (catmag - insmag).
+  //    Robust against outliers (e.g. mismatched Tycho-2 entries) that start
+  //    to dominate the tail once the sample is large enough for the median
+  //    to be well-defined.
+  if ( n_stars < 11 ) {
+   sum1= sum2= 0.0;
+   for ( j= 0; j < n_stars; j++ ) {
+    sum1+= w[j] * ( catmag[j] - insmag[j] );
+    sum2+= w[j];
+   }
+   C= sum1 / sum2;
+  } else {
+   for ( j= 0; j < n_stars; j++ ) {
+    zp_sorted[j]= catmag[j] - insmag[j];
+   }
+   gsl_sort( zp_sorted, 1, n_stars );
+   C= gsl_stats_median_from_sorted_data( zp_sorted, 1, n_stars );
   }
-  C= sum1 / sum2;
   poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
   poly_coeff[0]= C;
   poly_coeff[1]= B;
@@ -487,6 +514,7 @@ int main( int argc, char **argv ) {
      free( catmag );
      free( fcatmag );
      free( w );
+     free( zp_sorted );
      free( insmagerr );
      free( finsmag );
      free( insmag );
@@ -517,12 +545,22 @@ int main( int argc, char **argv ) {
     //
     if ( fit_function == 3 ) {
      B= 1.0;
-     sum1= sum2= 0.0;
-     for ( j= 0; j < n_stars; j++ ) {
-      sum1+= w[j] * ( catmag[j] - insmag[j] );
-      sum2+= w[j];
+     // Hybrid: weighted mean for n<11, unweighted median for n>=11.
+     // (See the same block in the fit_zeropoint branch above for rationale.)
+     if ( n_stars < 11 ) {
+      sum1= sum2= 0.0;
+      for ( j= 0; j < n_stars; j++ ) {
+       sum1+= w[j] * ( catmag[j] - insmag[j] );
+       sum2+= w[j];
+      }
+      C= sum1 / sum2;
+     } else {
+      for ( j= 0; j < n_stars; j++ ) {
+       zp_sorted[j]= catmag[j] - insmag[j];
+      }
+      gsl_sort( zp_sorted, 1, n_stars );
+      C= gsl_stats_median_from_sorted_data( zp_sorted, 1, n_stars );
      }
-     C= sum1 / sum2;
      poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
      poly_coeff[0]= C;
      poly_coeff[1]= B;
@@ -751,6 +789,7 @@ int main( int argc, char **argv ) {
  free( catmag );
  free( fcatmag );
  free( w );
+ free( zp_sorted );
  free( insmagerr );
  free( finsmag );
  free( insmag );
