@@ -598,11 +598,28 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # online_id VizieR query that would have been spent on a doomed candidate.
  # Guarded by SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT (same as Gaia/APASS)
  # so never_exclude_list candidates are exempt.  Gated by
- # FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER=yes AND a 2-or-3-point
- # lightcurve.  Measures aperture photometry at (RA_MEAN_HMS, DEC_MEAN_HMS)
+ # FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER=yes AND a 2-to-4-point
+ # lightcurve:
+ #   2 points = new-epoch-only source (classic transient candidate),
+ #   3 points = 1 reference detection + 2 new (one-ref-match brightening),
+ #   4 points = 2 reference detections + 2 new (brightening of an already
+ #              catalogued star; including this case guards against star
+ #              misidentifications where a ref-epoch detection gets matched
+ #              to a different nearby star on the new images by mistake -
+ #              forced photometry at (RA_MEAN_HMS, DEC_MEAN_HMS) on the ref
+ #              images should recover the TRUE ref-epoch brightness at the
+ #              candidate's position and therefore correctly reject the
+ #              mis-match if it does not actually brighten).
+ # Measures aperture photometry at (RA_MEAN_HMS, DEC_MEAN_HMS)
  # on both reference images, combines the per-ref detections with an
  # inverse-variance weighted average, and rejects unless
  #     FORCED_REF_MAG - NEW_MEAN_MAG > FLARE_MAG (0.9).
+ # Additionally, if any reference image reports "edge" status (sky2xy places
+ # the candidate position off the image, or the aperture/annulus extends
+ # past the image boundary), the candidate is rejected unconditionally: the
+ # forced-phot cross-check cannot be performed and an off-image position is
+ # usually a symptom of a plate-solve / dither edge that produced a spurious
+ # SExtractor detection in the first place.
  # All filter-status output goes to stderr so it lands in
  # transient_factory_test31.txt but does NOT clutter the HTML candidate
  # entry (which is produced later, only for survivors).
@@ -612,7 +629,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  FORCED_PHOT_HTML_BUFFER=""
  if [ "$FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER" = "yes" ];then
   FORCED_PHOT_NUM_LC=$(wc -l < "$LIGHTCURVEFILE")
-  if [ "$FORCED_PHOT_NUM_LC" -eq 2 ] || [ "$FORCED_PHOT_NUM_LC" -eq 3 ];then
+  if [ "$FORCED_PHOT_NUM_LC" -ge 2 ] && [ "$FORCED_PHOT_NUM_LC" -le 4 ];then
    # NEW_MEAN_MAG = inverse-variance weighted average of the two newest
    # lightcurve points (new-epoch).  For a 2-point lightcurve both points
    # are new-epoch; for a 3-point lightcurve we drop the earliest JD (ref).
@@ -639,6 +656,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    ' "$LIGHTCURVEFILE")
    if [ -n "$FORCED_PHOT_NEW_MEAN_MAG" ];then
     FORCED_PHOT_DET_LIST=""
+    FORCED_PHOT_HAD_EDGE=0
     for FORCED_PHOT_REF_IMAGE_PATH in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ;do
      if [ -z "$FORCED_PHOT_REF_IMAGE_PATH" ];then
       continue
@@ -660,6 +678,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge"
       echo "$FORCED_PHOT_LINE" >&2
       FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
+      FORCED_PHOT_HAD_EDGE=1
       continue
      fi
      FORCED_PHOT_PX=$(echo "$FORCED_PHOT_SKY2XY" | awk '{print $5}')
@@ -668,6 +687,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge"
       echo "$FORCED_PHOT_LINE" >&2
       FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
+      FORCED_PHOT_HAD_EDGE=1
       continue
      fi
      FORCED_PHOT_RESULT=$(util/forced_photometry "$FORCED_PHOT_WCS_REF" "$FORCED_PHOT_PX" "$FORCED_PHOT_PY" "$FORCED_PHOT_APER" --calib "$FORCED_PHOT_CALIB" 2>/dev/null)
@@ -685,6 +705,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS"
      echo "$FORCED_PHOT_LINE" >&2
      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
+     if [ "$FORCED_PHOT_RESULT_STATUS" = "edge" ];then
+      # The util/forced_photometry binary itself can report "edge" when the
+      # aperture or background annulus extends past the image boundary even
+      # though sky2xy placed the center on the image.  Treat that the same
+      # as an sky2xy edge: remember it and reject after the loop.
+      FORCED_PHOT_HAD_EDGE=1
+     fi
      if [ "$FORCED_PHOT_RESULT_STATUS" = "detection" ];then
       FORCED_PHOT_USE_ERR="$FORCED_PHOT_RESULT_ERR"
       if ! awk -v e="$FORCED_PHOT_USE_ERR" 'BEGIN {exit !(e > 0.0 && e < 99.0)}' ;then
@@ -693,6 +720,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       FORCED_PHOT_DET_LIST="$FORCED_PHOT_DET_LIST $FORCED_PHOT_RESULT_MAG $FORCED_PHOT_USE_ERR"
      fi
     done
+    if [ "$FORCED_PHOT_HAD_EDGE" = "1" ];then
+     echo "Forced photometry filter REJECTED candidate at $RA_MEAN_HMS $DEC_MEAN_HMS: at least one reference image reported edge (off-image or aperture/annulus past image boundary); cannot perform the forced-photometry cross-check" >&2
+     clean_tmp_files
+     exit 1
+    fi
     if [ -n "$FORCED_PHOT_DET_LIST" ];then
      FORCED_PHOT_COMBINED=$(echo "$FORCED_PHOT_DET_LIST" | awk '
        { for (i=1; i<=NF; i+=2) { m=$i; e=$(i+1); w=1.0/(e*e); sum_mw += m*w; sum_w += w; n++; } }
