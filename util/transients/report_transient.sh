@@ -606,6 +606,10 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # All filter-status output goes to stderr so it lands in
  # transient_factory_test31.txt but does NOT clutter the HTML candidate
  # entry (which is produced later, only for survivors).
+ # Buffer for up to 3 diagnostic lines (2 per-ref + 1 weighted average) to be
+ # emitted inside this candidate's HTML <pre> block after the online_id line
+ # for survivors; filter-decision lines (REJECTED/KEPT) stay on stderr only.
+ FORCED_PHOT_HTML_BUFFER=""
  if [ "$FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER" = "yes" ];then
   FORCED_PHOT_NUM_LC=$(wc -l < "$LIGHTCURVEFILE")
   if [ "$FORCED_PHOT_NUM_LC" -eq 2 ] || [ "$FORCED_PHOT_NUM_LC" -eq 3 ];then
@@ -645,24 +649,32 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      FORCED_PHOT_WCS_REF="${FORCED_PHOT_WCS_REF/.fz/}"
      FORCED_PHOT_CALIB="calib.txt_param_ref_${FORCED_PHOT_WCS_REF}"
      if [ -f "${FORCED_PHOT_CALIB}.FAIL" ] || [ ! -s "$FORCED_PHOT_CALIB" ] || [ ! -s "${FORCED_PHOT_CALIB}.aperture" ] || [ ! -s "$FORCED_PHOT_WCS_REF" ];then
-      echo "Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  calib_fail" >&2
+      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  calib_fail"
+      echo "$FORCED_PHOT_LINE" >&2
+      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
       continue
      fi
      FORCED_PHOT_APER=$(cat "${FORCED_PHOT_CALIB}.aperture")
      FORCED_PHOT_SKY2XY=$(lib/bin/sky2xy "$FORCED_PHOT_WCS_REF" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>&1)
      if echo "$FORCED_PHOT_SKY2XY" | grep -q -e "off image" -e "offscale" ;then
-      echo "Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge" >&2
+      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge"
+      echo "$FORCED_PHOT_LINE" >&2
+      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
       continue
      fi
      FORCED_PHOT_PX=$(echo "$FORCED_PHOT_SKY2XY" | awk '{print $5}')
      FORCED_PHOT_PY=$(echo "$FORCED_PHOT_SKY2XY" | awk '{print $6}')
      if [ -z "$FORCED_PHOT_PX" ] || [ -z "$FORCED_PHOT_PY" ];then
-      echo "Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge" >&2
+      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  edge"
+      echo "$FORCED_PHOT_LINE" >&2
+      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
       continue
      fi
      FORCED_PHOT_RESULT=$(util/forced_photometry "$FORCED_PHOT_WCS_REF" "$FORCED_PHOT_PX" "$FORCED_PHOT_PY" "$FORCED_PHOT_APER" --calib "$FORCED_PHOT_CALIB" 2>/dev/null)
      if [ -z "$FORCED_PHOT_RESULT" ];then
-      echo "Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  tool_fail" >&2
+      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  99.00 +/- 99.00  tool_fail"
+      echo "$FORCED_PHOT_LINE" >&2
+      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
       continue
      fi
      FORCED_PHOT_RESULT_MAG=$(echo "$FORCED_PHOT_RESULT" | awk '{print $1}')
@@ -670,7 +682,9 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      FORCED_PHOT_RESULT_STATUS=$(echo "$FORCED_PHOT_RESULT" | awk '{print $3}')
      # Round only for display; internal math below keeps the full precision
      FORCED_PHOT_RESULT_DISPLAY=$(awk -v m="$FORCED_PHOT_RESULT_MAG" -v e="$FORCED_PHOT_RESULT_ERR" 'BEGIN {printf "%.2f +/- %.2f", m, e}')
-     echo "Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS" >&2
+     FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS"
+     echo "$FORCED_PHOT_LINE" >&2
+     FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
      if [ "$FORCED_PHOT_RESULT_STATUS" = "detection" ];then
       FORCED_PHOT_USE_ERR="$FORCED_PHOT_RESULT_ERR"
       if ! awk -v e="$FORCED_PHOT_USE_ERR" 'BEGIN {exit !(e > 0.0 && e < 99.0)}' ;then
@@ -688,7 +702,9 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       FORCED_PHOT_REF_MAG=$(echo "$FORCED_PHOT_COMBINED" | awk '{print $1}')
       FORCED_PHOT_REF_ERR=$(echo "$FORCED_PHOT_COMBINED" | awk '{print $2}')
       FORCED_PHOT_REF_DISPLAY=$(awk -v m="$FORCED_PHOT_REF_MAG" -v e="$FORCED_PHOT_REF_ERR" 'BEGIN {printf "%.2f +/- %.2f", m, e}')
-      echo "Forced photometry reference-image weighted average:  $FORCED_PHOT_REF_DISPLAY" >&2
+      FORCED_PHOT_LINE="Forced photometry reference-image weighted average:  $FORCED_PHOT_REF_DISPLAY"
+      echo "$FORCED_PHOT_LINE" >&2
+      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
       FORCED_PHOT_DELTA=$(awk -v r="$FORCED_PHOT_REF_MAG" -v n="$FORCED_PHOT_NEW_MEAN_MAG" 'BEGIN {printf "%.2f", r - n}')
       FORCED_PHOT_KEEP=$(awk -v r="$FORCED_PHOT_REF_MAG" -v n="$FORCED_PHOT_NEW_MEAN_MAG" 'BEGIN {print ((r - n) > 0.9) ? 1 : 0}')
       if [ "$FORCED_PHOT_KEEP" != "1" ];then
@@ -853,6 +869,14 @@ if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_A
   util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') no_online_vsx 2>&1 | grep '|' | tail -n1
   #
  fi
+fi
+
+# Emit the buffered forced-photometry diagnostic lines (per-ref measurements +
+# weighted-average) inside this candidate's <pre> block right after the online
+# identification line.  Only populated when the candidate survived the filter;
+# rejected candidates have already exited above.
+if [ -n "$FORCED_PHOT_HTML_BUFFER" ];then
+ printf '%s' "$FORCED_PHOT_HTML_BUFFER"
 fi
 
 # Is the Online MPChecker search radius is not set - use the default one

@@ -2684,7 +2684,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   if [ -f calib.png ];then
    CALIB_PNG_NAME="calib_${FIELD}_$(basename "$SEXTRACTOR_CONFIG_FILE").png"
    if cp calib.png transient_report/"$CALIB_PNG_NAME" ;then
-    echo "<br>Magnitude calibration plot:<br><img src=\"$CALIB_PNG_NAME\"><br>" >> transient_factory_test31.txt
+    echo "<br><b>Lightcurve magnitude calibration plot:</b><br><img src=\"$CALIB_PNG_NAME\"><br>" >> transient_factory_test31.txt
    fi
   fi
   # -------- Forced-photometry-on-reference-images filter: per-ref calibration --------
@@ -2730,6 +2730,9 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
       FORCED_PHOT_WCS_REF="${FORCED_PHOT_WCS_REF/.fz/}"
       FORCED_PHOT_CALIB_OUT="calib.txt_param_ref_${FORCED_PHOT_WCS_REF}"
       rm -f "${FORCED_PHOT_CALIB_OUT}" "${FORCED_PHOT_CALIB_OUT}.aperture" "${FORCED_PHOT_CALIB_OUT}.FAIL"
+      # Remove any stale calib.png from the previous calibration so the one we
+      # archive below is guaranteed to correspond to this reference image.
+      rm -f calib.png
       if [ ! -s "$FORCED_PHOT_WCS_REF" ];then
        echo "Forced-photometry filter: plate-solved reference image $FORCED_PHOT_WCS_REF is missing; marking FAIL" | tee -a transient_factory_test31.txt
        touch "${FORCED_PHOT_CALIB_OUT}.FAIL"
@@ -2761,6 +2764,16 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
        fi
       fi
       mv calib.txt_param "$FORCED_PHOT_CALIB_OUT"
+      # Archive the per-reference-image calibration plot produced by
+      # lib/fit_zeropoint, clearly labeled so that the lightcurve calibration
+      # plot (archived earlier as calib_<FIELD>_<CONFIG>.png) is not confused
+      # with the single-image forced-photometry calibration plots.
+      if [ -f calib.png ];then
+       PER_REF_PNG_NAME="calib_ref_${FORCED_PHOT_WCS_REF%.fits}.png"
+       if cp calib.png transient_report/"$PER_REF_PNG_NAME" ;then
+        echo "<br><b>Single-image forced-photometry magnitude calibration plot for $FORCED_PHOT_WCS_REF:</b><br><img src=\"$PER_REF_PNG_NAME\"><br>" >> transient_factory_test31.txt
+       fi
+      fi
       if [ -s "${FORCED_PHOT_WCS_REF}.cat.aperture" ];then
        awk 'NR==1 {print $1; exit}' "${FORCED_PHOT_WCS_REF}.cat.aperture" > "${FORCED_PHOT_CALIB_OUT}.aperture"
       else

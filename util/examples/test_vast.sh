@@ -542,7 +542,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -14149,7 +14149,251 @@ if [ $? -ne 0 ];then
  #exit 1
  fail_early "Internet connection error"
 fi
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
+##### NMW-TexasTech Aur-02-Q2b1x1 variable-stars recovery test #####
+# Partly-cloudy night Aur-02 field.  Five known variables (AA Aur, ST Aur,
+# WZ Aur, LO Aur, NSVS 4490482) are always expected to show up as candidates
+# in this field.  Catalog positions are taken from VSX; measured positions
+# are extracted from the "Mean magnitude and position on the discovery
+# images" plain-text line in each candidate's block and required to fall
+# within 12" (~2 NMW-TexasTech pixels) of the VSX entry.
+# Runs on GitHub Actions too (no GITHUB_ACTIONS gating).
+# Download the test dataset if needed
+if [ ! -d ../NMW-TexasTech__Aur-02-Q2b1x1 ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2" && tar -xvjf NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2 && rm -f NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../NMW-TexasTech__Aur-02-Q2b1x1 ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Aur-02-Q2b1x1 variables test "
+ echo -n "NMW-TexasTech Aur-02-Q2b1x1 variables test: " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ AUR02_INPUT_DIR=../NMW-TexasTech__Aur-02-Q2b1x1/second_epoch_images
+ AUR02_WCS_BASELINE=$(cd "$AUR02_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-TexasTech__Aur-02-Q2b1x1/reference_images/ util/transients/transient_factory_test31.sh "$AUR02_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$AUR02_INPUT_DIR" "$AUR02_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_REF_WCS_LEAK"
+ fi
+ # Test for the specific error message
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message
+  grep -q 'ERROR: distance between reference and second-epoch image centers' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_ERROR_MESSAGE_IN_index_html"
+  fi
+  # Processing sanity
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02001"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02002"
+  fi
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_TYCHO2_V"
+  fi
+
+  # AA Aur  (VSX: 06:41:12.94 +44:09:59.4).  The measured Dec straddles the
+  # 09'/10' arcmin boundary, so the Dec arcmin pattern is left loose.
+  grep -q "2026 04 23.1944  2461153.6944  .*06:41:..\... +44:..:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_AAAUR_NOT_FOUND"
+   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*06:41:..\... +44:..:..\.." transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUR02_AAAUR_NOT_FOUND ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*06:41:..\... +44:..:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:41:12.94 +44:09:59.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  # NMW-TexasTech scale is 5.87"/pix; 12" = ~2 pix tolerance
+  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_AAAUR_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_AAAUR_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # ST Aur  (VSX: 06:14:58.70 +46:47:47.0)
+  grep -q "2026 04 23.1944  2461153.6944  .*06:14:..\... +46:47:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_STAUR_NOT_FOUND"
+   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*06:14:..\... +46:47:..\.." transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUR02_STAUR_NOT_FOUND ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*06:14:..\... +46:47:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:14:58.70 +46:47:47.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_STAUR_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_STAUR_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # WZ Aur  (VSX: 05:45:43.73 +43:37:26.0)
+  grep -q "2026 04 23.1944  2461153.6944  .*05:45:..\... +43:37:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_WZAUR_NOT_FOUND"
+   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*05:45:..\... +43:37:..\.." transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUR02_WZAUR_NOT_FOUND ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*05:45:..\... +43:37:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:45:43.73 +43:37:26.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_WZAUR_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_WZAUR_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # LO Aur  (VSX: 05:57:23.93 +48:22:41.8)
+  grep -q "2026 04 23.1944  2461153.6944  .*05:57:..\... +48:22:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_LOAUR_NOT_FOUND"
+   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*05:57:..\... +48:22:..\.." transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUR02_LOAUR_NOT_FOUND ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*05:57:..\... +48:22:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:57:23.93 +48:22:41.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_LOAUR_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_LOAUR_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # NSVS 4490482  (VSX: 05:59:44.17 +47:37:01.3)
+  grep -q "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_NOT_FOUND"
+   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUR02_NSVS4490482_NOT_FOUND ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:59:44.17 +47:37:01.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NO_index_html"
+ fi
+ # Restore the backup exclusion list if we moved it
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Aur-02-Q2b1x1 variables test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Aur-02-Q2b1x1 variables test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
 
 
 ##### Nova Sgr 2024 N1 test #####
