@@ -11,6 +11,10 @@ jobs:
     steps:
     - name: Manual checkout
       run: |
+        # CentOS 7 is EOL; vault.centos.org DNS may return an unreachable IPv6
+        # address inside the GitHub Actions runner, so force yum to resolve
+        # and fetch over IPv4.
+        echo "ip_resolve=4" >> /etc/yum.conf
         yum install -y git
         git config --global --add safe.directory /__w/vast/vast
         git clone https://github.com/${{ github.repository }} .

@@ -35,7 +35,14 @@ jobs:
         # When using rsync, you can define copyback: false to not copy files back from the VM in to the host.
         copyback: false
         prepare: |
-          pkg install -y bash gcc gmake libX11 curl pgplot
+          # Retry pkg install to work around transient vmactions/freebsd-vm pkg
+          # signature-fingerprint truncation (repo claims "up to date" but
+          # cannot be opened).  pkg update -f forces a fresh metadata fetch.
+          for attempt in 1 2 3 ; do
+            pkg update -f && pkg install -y bash gcc gmake libX11 curl pgplot && break
+            echo "pkg install attempt $attempt failed, retrying..."
+            sleep 10
+          done
 
         run: |
           make
