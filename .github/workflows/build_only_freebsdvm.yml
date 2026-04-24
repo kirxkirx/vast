@@ -38,11 +38,22 @@ jobs:
           # Retry pkg install to work around transient vmactions/freebsd-vm pkg
           # signature-fingerprint truncation (repo claims "up to date" but
           # cannot be opened).  pkg update -f forces a fresh metadata fetch.
+          # Verify gmake is present at the end -- if the loop exhausts all
+          # attempts without success, the final `sleep` would otherwise leave
+          # prepare exit 0 with nothing installed.
+          installed=0
           for attempt in 1 2 3 ; do
-            pkg update -f && pkg install -y bash gcc gmake libX11 curl pgplot && break
+            if pkg update -f && pkg install -y bash gcc gmake libX11 curl pgplot ; then
+              installed=1
+              break
+            fi
             echo "pkg install attempt $attempt failed, retrying..."
             sleep 10
           done
+          if [ "$installed" = 0 ] || ! command -v gmake >/dev/null ; then
+            echo "ERROR: pkg install failed after retries, or gmake is missing"
+            exit 1
+          fi
 
         run: |
           make
