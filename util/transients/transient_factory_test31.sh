@@ -49,7 +49,6 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
  echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="ED80__Black"
 fi
-#if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
 if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
  echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TTUQ1b1x1"
@@ -315,7 +314,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-21.fit"
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-26.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-08.fit"
+   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-08.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-22_multinight.fit"
   fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -375,7 +375,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   if [ -z "$FLAT_FIELD_FILE" ];then
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-02-21.fit"
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-03-20.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-08_multinight.fit"
+   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-08_multinight.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-22_multinight.fit"
   fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
