@@ -20,7 +20,8 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-ZLIB_SOURCE=$VAST_DIR/src/zlib-1.3.1
+#ZLIB_SOURCE=$VAST_DIR/src/zlib-1.3.1
+ZLIB_SOURCE=$VAST_DIR/src/zlib-1.3.2
 
 echo " "
 echo -e "Starting script \033[01;32m$0 $1\033[00m"

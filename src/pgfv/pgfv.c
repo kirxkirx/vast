@@ -948,8 +948,12 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  for ( i= 0; i < npix; i++ ) {
   loop_x= normx[i];
   loop_z= sample[i];
-  sumxsqr+= loop_x * loop_x;
-  sumxz+= loop_z * loop_x;
+  // Cast first operand to double so the multiplication is computed at double
+  // precision (matches the type of the running sums, avoids the CodeQL
+  // cpp/integer-multiplication-cast-to-long warning, and keeps a few extra
+  // bits of accuracy in the accumulator).
+  sumxsqr+= (double)loop_x * loop_x;
+  sumxz+= (double)loop_z * loop_x;
   sumz+= loop_z;
  }
 
@@ -979,7 +983,9 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
     pv= flat[i];
     ng++;
     sum_sigma+= pv;
-    sumsq_sigma+= pv * pv;
+    // Cast to double so pv*pv is computed at double precision (see comment
+    // at the initial-pass accumulator above).
+    sumsq_sigma+= (double)pv * pv;
    }
   }
   if ( ng > 1 ) {
@@ -1012,8 +1018,10 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
         // Already processed or current pixel - mark as bad and subtract
         xd= normx[j];
         zd= sample[j];
-        sumxsqr-= xd * xd;
-        sumxz-= zd * xd;
+        // Cast to double so the multiplication matches the precision of the
+        // running sums (mirrors the accumulator above; same CodeQL warning).
+        sumxsqr-= (double)xd * xd;
+        sumxz-= (double)zd * xd;
         sumx-= xd;
         sumz-= zd;
         badpix[j]= ZSCALE_BAD_PIXEL;
