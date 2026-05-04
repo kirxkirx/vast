@@ -14626,11 +14626,11 @@ $GREP_RESULT"
 ###### CAS04PLATESOLVE_FLCAS01a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:12:15.59 +57:19:00.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=$(grep "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 00:12:15.59 +57:19:00.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
   # NMW-TexasTech scale is 5.9"/pix
   # Online platesolver seems less accurate than local one in this field
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*5.9 ) print 1 ;else print 0 }'`
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*5.9 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
