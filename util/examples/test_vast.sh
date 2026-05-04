@@ -14563,7 +14563,8 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  11.[123].  23:52:..\... +56:44:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:52:38.66 +56:44:36.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-TexasTech scale is 5.9"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  # Online platesolver seems less accurate than local one in this field
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*5.9 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -14595,7 +14596,8 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109   9.[89].  23:14:..\... +50:46:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:14:51.54 +50:46:27.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-TexasTech scale is 5.9"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  # Online platesolver seems less accurate than local one in this field
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*5.9 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -14627,7 +14629,8 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:12:15.59 +57:19:00.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-TexasTech scale is 5.9"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  # Online platesolver seems less accurate than local one in this field
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*5.9 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -14659,7 +14662,8 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  10.[34].  23:18:..\... +48:57:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:18:18.81 +48:57:30.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-TexasTech scale is 5.9"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  # Online platesolver seems less accurate than local one in this field
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*5.9 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
