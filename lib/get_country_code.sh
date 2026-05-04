@@ -198,6 +198,31 @@ check_timezone_for_russia() {
 VASTDIR=$(get_vast_path_ends_with_slash_from_this_script_name "$0")
 CACHE_FILE="${VASTDIR}.vast_country_code"
 
+# Legacy BOINC nodes (Scientific Linux 5/6 compute hosts running as the
+# 'boincadm' account) typically can't reach the IP-geolocation web services
+# used below -- their old curl/OpenSSL stacks fail TLS handshakes against
+# modern endpoints, every probe times out, and the script ends up taking
+# its slow last-resort path before defaulting to RU anyway.  Short-circuit
+# to RU directly when running as that account so update_offline_catalogs.sh
+# (and any other caller) gets the right routing without the wait.  We
+# refresh the cache too, so any future call within CACHE_MAX_AGE_SEC stays
+# consistent without repeating the lookup.
+CURRENT_USER=$(id -un 2>/dev/null || whoami 2>/dev/null)
+if [ "$CURRENT_USER" = "boincadm" ];then
+ # Write the result to cache atomically (same pattern as the bottom of the
+ # script).  Failure to write is non-fatal -- we still print RU to stdout.
+ TMP_CACHE_FILE="${CACHE_FILE}.tmp_$$_${RANDOM}"
+ if echo "RU" > "$TMP_CACHE_FILE" 2>/dev/null ;then
+  if ! mv -f "$TMP_CACHE_FILE" "$CACHE_FILE" 2>/dev/null ;then
+   rm -f "$TMP_CACHE_FILE" 2>/dev/null
+  fi
+ else
+  rm -f "$TMP_CACHE_FILE" 2>/dev/null
+ fi
+ echo "RU"
+ exit 0
+fi
+
 # Check if the cache file exists and is fresh enough
 if [ -s "$CACHE_FILE" ];then
  CURRENT_DATE_UNIXSEC=$(date +%s)
