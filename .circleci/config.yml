@@ -14,7 +14,21 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: "sudo apt-get update --allow-releaseinfo-change && sudo apt-get install -f && sudo apt-get install gfortran ghostscript bc && make"
+      - run:
+          name: install build deps and build
+          # apt-get update is allowed to fail with a warning -- Ubuntu mirrors
+          # have been intermittently unreachable, and the CircleCI machine
+          # image ships with usable /var/lib/apt/lists, so the install steps
+          # below still resolve against cached metadata.  The remaining steps
+          # (install --fix-broken, install gfortran/ghostscript/bc, make) are
+          # required to succeed; CircleCI's default 'set -e' aborts the job
+          # on any non-zero exit from those.
+          command: |
+            sudo apt-get update --allow-releaseinfo-change \
+              || echo "WARNING: apt-get update did not refresh; using cached package lists."
+            sudo apt-get install --fix-broken -y
+            sudo apt-get install -y gfortran ghostscript bc
+            make
   build_ubuntu2204:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
@@ -24,7 +38,16 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: "sudo apt-get update --allow-releaseinfo-change && sudo apt-get install -f && sudo apt-get install gfortran ghostscript bc && make"
+      - run:
+          name: install build deps and build
+          # See note in build_ubuntu2404 above.  apt-get update is the only
+          # tolerated failure; the install/build steps must succeed.
+          command: |
+            sudo apt-get update --allow-releaseinfo-change \
+              || echo "WARNING: apt-get update did not refresh; using cached package lists."
+            sudo apt-get install --fix-broken -y
+            sudo apt-get install -y gfortran ghostscript bc
+            make
   build_ubuntu2004:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
@@ -35,7 +58,16 @@ jobs:
     steps:
       - checkout
       - run: "sudo rm -f /etc/apt/sources.list.d/google*.list"
-      - run: "sudo apt-get update --allow-releaseinfo-change && sudo apt-get install -f && sudo apt-get install gfortran ghostscript bc && make"
+      - run:
+          name: install build deps and build
+          # See note in build_ubuntu2404 above.  apt-get update is the only
+          # tolerated failure; the install/build steps must succeed.
+          command: |
+            sudo apt-get update --allow-releaseinfo-change \
+              || echo "WARNING: apt-get update did not refresh; using cached package lists."
+            sudo apt-get install --fix-broken -y
+            sudo apt-get install -y gfortran ghostscript bc
+            make
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
