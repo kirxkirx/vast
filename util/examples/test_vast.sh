@@ -800,6 +800,17 @@ FAILED_TEST_CODES=""
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
 VAST_BUILD_NUMBER=`cat .cc.build`
+
+##### Disk-space hard limit for the transient pipeline when invoked under tests #####
+# transient_factory_test31.sh's check_free_space() defaults are tuned for
+# production NMW servers (5 GB) and would abort the pipeline mid-test on
+# smaller test boxes.  Lower the abort threshold here so it stays in step
+# with check_if_enough_disk_space_for_tests() below, which cancels the
+# whole test run at < 2 GB free.  Production runs of transient_factory_test31.sh
+# started directly (not via test_vast.sh) are unaffected -- they don't see
+# this env var and keep the original 5 GB default.
+export WARN_ON_LOW_DISK_SPACE_HARDLIMIT_KB=2097152   # 2 GB = 2 * 1024 * 1024 KB
+
 STARTTIME_UNIXSEC=$(date +%s)
 # BSD date will not understand `date -d @$STARTTIME_UNIXSEC`
 #STARTTIME_HUMAN_RADABLE=`date -d @$STARTTIME_UNIXSEC`
