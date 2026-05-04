@@ -542,7 +542,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -14391,6 +14391,312 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
+##### NMW-TexasTech Cas-04 plate-solve failure test #####
+# Two new-epoch images of the Cas-04-Q1b1x1 field with no useful WCS in the
+# input headers.  Older builds of util/wcs_image_calibration.sh produced a
+# TAN-only WCS with off-center CRPIX (no SIP polynomial fit) for these images
+# - the WCS was accurate near one corner of the frame and degraded badly
+# toward the opposite corner (RMS ~145" / MAX ~350" relative to the reference
+# WCS), which broke the forced-photometry filter and catalog identification
+# downstream.  This test asserts that the patched pipeline now produces a
+# proper TAN-SIP WCS on both new-epoch frames.
+# Runs everywhere (no GITHUB_ACTIONS gating).
+# (Specific variable-star recovery checks for this field will be added later.)
+# Download the test dataset if needed
+if [ ! -d ../NMW-TexasTech__Cas-04_platesolve_failure_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2" && tar -xvjf NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2 && rm -f NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../NMW-TexasTech__Cas-04_platesolve_failure_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Cas-04 plate-solve failure test "
+ echo -n "NMW-TexasTech Cas-04 plate-solve failure test: " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ CAS04_INPUT_DIR=../NMW-TexasTech__Cas-04_platesolve_failure_test/second_epoch_images
+ CAS04_WCS_BASELINE=$(cd "$CAS04_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-TexasTech__Cas-04_platesolve_failure_test/reference_images/ util/transients/transient_factory_test31.sh "$CAS04_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$CAS04_INPUT_DIR" "$CAS04_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_REF_WCS_LEAK"
+ fi
+ # Test for the specific error message
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message
+  grep -q 'ERROR: distance between reference and second-epoch image centers' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_ERROR_MESSAGE_IN_index_html"
+  fi
+  # Processing sanity: 4 images (2 reference + 2 new-epoch)
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE001"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE002"
+  fi
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_TYCHO2_V"
+  fi
+
+  # ----------------------------------------------------------------------
+  # Plate-solver output check.
+  # The new-epoch frames must end up with a TAN-SIP WCS.  The bug under
+  # test was that wcs_image_calibration.sh fell back to a TAN-only WCS
+  # with CRPIX shoved off image center, which made the residual against
+  # the reference WCS reach ~350" at the far corner and broke forced
+  # photometry / catalog identification downstream.  The second-epoch
+  # frames in this test dataset are already dark/flat-corrected (the
+  # FITS HISTORY contains 'Dark frame subtraction'), so the pipeline
+  # skips the calibration step and the plate-solver writes the WCS to
+  # wcs_<original_basename>.fits in the working directory (i.e. without
+  # an extra fd_ in the name, since the fd_ prefix was dropped from the
+  # input filenames to match the Eri-03 layout).  We check, for each
+  # such wcs_*.fits:
+  #   (a) CTYPE is "RA---TAN-SIP" / "DEC--TAN-SIP" (SIP enabled);
+  #   (b) SIP polynomial order keys A_ORDER, B_ORDER, AP_ORDER, BP_ORDER
+  #       exist with order >= 2.
+  CAS04_WCS_FOUND=0
+  for CAS04_WCS_FITS in wcs_Cas-04-Q1b1x1_2026-05-03_*.fits ;do
+   if [ ! -s "$CAS04_WCS_FITS" ];then
+    continue
+   fi
+   CAS04_WCS_FOUND=$((CAS04_WCS_FOUND+1))
+   CAS04_WCS_TAG=$(basename "$CAS04_WCS_FITS" .fits | sed 's/[^A-Za-z0-9_]/_/g')
+   CAS04_CTYPE1=$(util/listhead "$CAS04_WCS_FITS" | awk -F"'" '/^CTYPE1 /{print $2; exit}' | awk '{print $1}')
+   CAS04_CTYPE2=$(util/listhead "$CAS04_WCS_FITS" | awk -F"'" '/^CTYPE2 /{print $2; exit}' | awk '{print $1}')
+   if [ "$CAS04_CTYPE1" != "RA---TAN-SIP" ] || [ "$CAS04_CTYPE2" != "DEC--TAN-SIP" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_NO_SIP_${CAS04_WCS_TAG}"
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04PLATESOLVE_NO_SIP_${CAS04_WCS_TAG} ######
+CTYPE1='$CAS04_CTYPE1' CTYPE2='$CAS04_CTYPE2' (expected RA---TAN-SIP / DEC--TAN-SIP)"
+   fi
+   for CAS04_SIP_KEY in A_ORDER B_ORDER AP_ORDER BP_ORDER ;do
+    # FITS pads keyword names to 8 chars and may omit the space before "=" for 8-char names
+    # (e.g. "A_ORDER =  3" but "AP_ORDER=  3"), so split on "=" / "/" / whitespace runs.
+    CAS04_SIP_ORDER=$(util/listhead "$CAS04_WCS_FITS" | awk -F'[= /]+' -v K="$CAS04_SIP_KEY" '$1==K{print $2; exit}')
+    if [ -z "$CAS04_SIP_ORDER" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_MISSING_${CAS04_SIP_KEY}_${CAS04_WCS_TAG}"
+    else
+     re='^[0-9]+$'
+     if ! [[ $CAS04_SIP_ORDER =~ $re ]] ;then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_${CAS04_SIP_KEY}_NOT_INT_${CAS04_WCS_TAG}"
+     elif [ "$CAS04_SIP_ORDER" -lt 2 ] ;then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_${CAS04_SIP_KEY}_LT2_${CAS04_WCS_TAG}_${CAS04_SIP_ORDER}"
+     fi
+    fi
+   done
+  done
+  # Both new-epoch frames must have produced a wcs_*.fits.
+  if [ "$CAS04_WCS_FOUND" -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_WCS_COUNT_${CAS04_WCS_FOUND}"
+  fi
+  # ----------------------------------------------------------------------
+
+
+  # DH Cas
+  grep -q "DH Cas" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_DHCAS01"
+  fi
+  grep -q "2026 05 03.4109  2461163.9109  11.[123].  23:52:..\... +56:44:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_DHCAS01a"
+   GREP_RESULT=`grep "2026 05 03.4109  2461163.9109  11.[123].  23:52:..\... +56:44:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04PLATESOLVE_DHCAS01a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  11.[123].  23:52:..\... +56:44:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:52:38.66 +56:44:36.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-TexasTech scale is 5.9"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_DHCAS01a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_DHCAS01a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # CL And
+  grep -q "CL And" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_CLAND01"
+  fi
+  grep -q "2026 05 03.4109  2461163.9109   9.[89].  23:14:..\... +50:46:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_CLAND01a"
+   GREP_RESULT=`grep "2026 05 03.4109  2461163.9109   9.[89].  23:14:..\... +50:46:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04PLATESOLVE_CLAND01a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109   9.[89].  23:14:..\... +50:46:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:14:51.54 +50:46:27.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-TexasTech scale is 5.9"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_CLAND01a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_CLAND01a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # FL Cas
+  grep -q "FL Cas" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_FLCAS01"
+  fi
+  grep -q "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_FLCAS01a"
+   GREP_RESULT=`grep "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04PLATESOLVE_FLCAS01a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  12.4.  00:12:..\... +57:1[89]:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:12:15.59 +57:19:00.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-TexasTech scale is 5.9"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_FLCAS01a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_FLCAS01a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # AI And
+  grep -q "AI And" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_AIAND01"
+  fi
+  grep -q "2026 05 03.4109  2461163.9109  10.[34].  23:18:..\... +48:57:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_AIAND01a"
+   GREP_RESULT=`grep "2026 05 03.4109  2461163.9109  10.[34].  23:18:..\... +48:57:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04PLATESOLVE_AIAND01a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2026 05 03.4109  2461163.9109  10.[34].  23:18:..\... +48:57:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:18:18.81 +48:57:30.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-TexasTech scale is 5.9"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5.9 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_AIAND01a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_AIAND01a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  
+  # not listing a few smaller-amplitude brighenings of known miras
+
+
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_NO_index_html"
+ fi
+ # Restore the backup exclusion list if we moved it
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-04 plate-solve failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-04 plate-solve failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt

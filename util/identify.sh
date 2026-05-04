@@ -787,19 +787,32 @@ fi
     # --uniformize <int> select sources uniformly using roughly this many boxes (0=disable; default 10)
     # as the quality of the solution degrades for wide-field images when this feature is enabled.
     # Test case: ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-51-4_003.fts
-    # '--quad-size-max 0.25' seems to be useful for wide-field distorted images
+    # '--quad-size-max <fraction>' restricts solve-field to quads spanning at most this fraction of image size.
+    # For wide-field distorted images this can keep the matching quad inside a less-distorted region.
+    # Earlier we used 0.25 here, but for ~16 deg fields with sparse index files (e.g. NMW-TexasTech QHY600M)
+    # 0.25 forced all matched stars into a single corner of the frame: too few/clustered points for the
+    # tweak step to fit a SIP polynomial, so solve-field silently fell back to a TAN-only WCS with
+    # CRPIX placed at the matched-quad centroid (off image center, despite --crpix-center). The resulting
+    # WCS was accurate near that corner and degraded badly toward the opposite corner (RMS ~145" across
+    # the field, MAX ~350"). 0.5 is loose enough to allow well-distributed matches and recover SIP, while
+    # still excluding very large quads that the original 0.25 was meant to avoid.
     QUAD_SIZE_MAX_OPTION=""
     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
     if [ $TEST -eq 1 ];then
      #QUAD_SIZE_MAX_OPTION="--quad-size-max 0.25"
-     QUAD_SIZE_MAX_OPTION="--quad-size-max 0.25 --uniformize 0"
+     QUAD_SIZE_MAX_OPTION="--quad-size-max 0.5 --uniformize 0"
     fi
     #RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center --uniformize 0 $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
-    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    # Can't use --tweak-order 3 as tweaks are unreliable for wide-field images when using starlists rather than images - see below.
-    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER  #--tweak-order 3
+    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER
+    #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER
+    # --tweak-order 3 lets solve-field fit a 3rd-order SIP polynomial during this starlist solve.
+    # Historically this was deemed "unreliable" with starlists, but that was observed together with the
+    # too-restrictive --quad-size-max 0.25 above (which caused the fit to be derived from clustered
+    # corner stars). With --quad-size-max 0.5 the matches are well-distributed and order-3 SIP fits
+    # cleanly, matching what the reference-image pipeline produces and bringing per-pixel residuals
+    # against the reference WCS down to ~25-30".
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order 3
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
