@@ -3086,11 +3086,16 @@ int main( int argc, char **argv ) {
    /* Zoom in or out */
    if ( curC == 'z' || curC == 'Z' ) {
     if ( finder_chart_mode == 1 ) {
-     drawX1= markX - finder_char_pix_around_the_target;
-     drawX2= markX + finder_char_pix_around_the_target;
-     drawY1= markY - finder_char_pix_around_the_target;
-     drawY2= markY + finder_char_pix_around_the_target;
-     curC= 'R';
+     // fits2png_fullframe == 1 means we explicitly want the whole image, so
+     // skip the crop-around-marker step and let the curC=='Z' -> curC='D'
+     // path below restore the full-frame draw bounds.
+     if ( fits2png_fullframe == 0 ) {
+      drawX1= markX - finder_char_pix_around_the_target;
+      drawX2= markX + finder_char_pix_around_the_target;
+      drawY1= markY - finder_char_pix_around_the_target;
+      drawY2= markY + finder_char_pix_around_the_target;
+      curC= 'R';
+     }
     } else {
      cpgsci( 5 );
      cpgband( 2, 0, curX, curY, &curX2, &curY2, &curC );
@@ -3309,10 +3314,20 @@ int main( int argc, char **argv ) {
    // Done with labels
 
    /// Put a mark
-   if ( mark_trigger == 1 && use_labels == 1 ) {
+   if ( mark_trigger == 1 && ( use_labels == 1 || finder_chart_mode == 1 ) ) {
     cpgsci( 2 );
     fprintf( stderr, "Putting marker 001: %.3f %.3f\n", markX, markY );
+    // In finder-chart and fits2png modes the canvas is small (typically 128 px
+    // wide), so make the '+' marker visibly larger before drawing.
+    if ( finder_chart_mode == 1 ) {
+     cpgsch( 3.0 );
+     cpgslw( 4 );
+    }
     cpgpt1( markX, markY, 2 );
+    if ( finder_chart_mode == 1 ) {
+     cpgsch( 1.0 );
+     cpgslw( 1 );
+    }
     cpgsci( 1 );
     ///// New code to enable aperture to be ploted on the finding chart
     if ( APER > 0.0 ) {
