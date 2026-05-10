@@ -141,7 +141,7 @@ struct detected_star {
 };
 
 // Compute RA difference normalized to [-180, +180] to handle the 0/360 boundary
-static inline double ra_diff_normalized( double ra1_deg, double ra2_deg ) {
+static inline double ra_diff_normalized_for_wraparound( double ra1_deg, double ra2_deg ) {
  double diff= ra1_deg - ra2_deg;
  if ( diff > 180.0 ) {
   diff-= 360.0;
@@ -549,10 +549,10 @@ void write_astrometric_residuals_vector_field( char *fits_image_filename, struct
    fprintf( f, "%11.7lf %+10.7lf %+10.7lf %+10.7lf  %11.7lf  %+10.7f %+10.7lf  %9.4lf %9.4lf \n",
             stars[i].corrected_ra_local,
             stars[i].corrected_dec_local,
-            ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ),
+            ra_diff_normalized_for_wraparound( stars[i].corrected_ra_local, stars[i].catalog_ra ),
             stars[i].corrected_dec_local - stars[i].catalog_dec,
-            3600 * sqrt( ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) * ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) + ( stars[i].corrected_dec_local - stars[i].catalog_dec ) * ( stars[i].corrected_dec_local - stars[i].catalog_dec ) ),
-            3600 * ra_diff_normalized( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ),
+            3600 * sqrt( ra_diff_normalized_for_wraparound( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) * ra_diff_normalized_for_wraparound( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ) + ( stars[i].corrected_dec_local - stars[i].catalog_dec ) * ( stars[i].corrected_dec_local - stars[i].catalog_dec ) ),
+            3600 * ra_diff_normalized_for_wraparound( stars[i].corrected_ra_local, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 ),
             3600 * ( stars[i].corrected_dec_local - stars[i].catalog_dec ),
             stars[i].x_pix,
             stars[i].y_pix );
@@ -561,6 +561,176 @@ void write_astrometric_residuals_vector_field( char *fits_image_filename, struct
  fclose( f );
  fprintf( stderr, "The astrometric residuals vector field is written to %s\n", wcs_catalog_filename );
  return;
+}
+
+// Pre-local-correction astrometric residual diagnostic.
+//
+// The local-correction step in correct_measured_positions() applies a
+// per-star delta computed from the average offset of nearby UCAC5-matched
+// stars. By design it suppresses residuals where matches are dense, which
+// can hide a poor underlying WCS solution. Here we report residuals at the
+// pre-local-correction stage (corrected_mag_ra/_dec vs catalog_ra/_dec):
+// these reflect the WCS quality as delivered by the solver, with global
+// plane-fit and magnitude-dependent corrections applied but no per-star
+// fudging.
+//
+// The statistic of interest is sigma estimated from the MAD of the
+// residuals: 1.4826 * median(|x - median(x)|), which is robust to wrong
+// matches up to a 50% contamination rate. We report:
+//   N matched
+//   sigma_overall (RA*cos(Dec) and Dec MAD-sigmas combined in quadrature, in arcsec)
+//   sigma per quadrant (split by image x_pix vs NAXIS1/2, y_pix vs NAXIS2/2)
+//   N per quadrant
+//   ratio of worst-quadrant sigma to overall sigma (spatial-inhomogeneity proxy)
+//
+// Output is a single greppable stderr line tagged "WCS_QUALITY_DIAG:" so
+// downstream scripts can extract values per image with grep + awk.
+void print_wcs_quality_diagnostic( char *fits_image_filename, struct detected_star *stars, int N ) {
+ double *resid_ra_arcsec_all;
+ double *resid_dec_arcsec_all;
+ double *resid_ra_arcsec_q[4];
+ double *resid_dec_arcsec_q[4];
+ int n_q[4];
+ int n_all;
+ int q;
+ int i;
+ double JD;
+ int timesys;
+ double X_im_size;
+ double Y_im_size;
+ double img_cx;
+ double img_cy;
+ double cosdec;
+ double sigma_ra_arcsec;
+ double sigma_dec_arcsec;
+ double sigma_overall;
+ double sigma_q[4];
+ double max_q_sigma;
+ double worst_to_overall_ratio;
+ char *image_basename_for_diag;
+ int alloc_failed;
+
+ // Initialize sentinels
+ for ( q= 0; q < 4; q++ ) {
+  n_q[q]= 0;
+  sigma_q[q]= -1.0;
+  resid_ra_arcsec_q[q]= NULL;
+  resid_dec_arcsec_q[q]= NULL;
+ }
+ n_all= 0;
+ sigma_overall= -1.0;
+ max_q_sigma= 0.0;
+ worst_to_overall_ratio= -1.0;
+ resid_ra_arcsec_all= NULL;
+ resid_dec_arcsec_all= NULL;
+
+ image_basename_for_diag= basename( fits_image_filename );
+
+ // Get image dimensions from FITS header (handles compressed files).
+ timesys= 0;
+ X_im_size= 0.0;
+ Y_im_size= 0.0;
+ if ( 0 != gettime( fits_image_filename, &JD, &timesys, 0, &X_im_size, &Y_im_size, NULL, NULL, 0, 0, NULL ) ) {
+  fprintf( stderr, "WCS_QUALITY_DIAG: could not determine image size for %s -- skipping diagnostic\n", image_basename_for_diag );
+  return;
+ }
+ if ( X_im_size <= 0.0 || Y_im_size <= 0.0 ) {
+  fprintf( stderr, "WCS_QUALITY_DIAG: invalid image size for %s (%.0fx%.0f) -- skipping diagnostic\n", image_basename_for_diag, X_im_size, Y_im_size );
+  return;
+ }
+ img_cx= X_im_size / 2.0;
+ img_cy= Y_im_size / 2.0;
+
+ // Allocate residual arrays, sized for the worst case (all stars matched).
+ alloc_failed= 0;
+ if ( N > 0 ) {
+  resid_ra_arcsec_all=  (double *)malloc( (size_t)N * sizeof( double ) );
+  resid_dec_arcsec_all= (double *)malloc( (size_t)N * sizeof( double ) );
+  if ( resid_ra_arcsec_all == NULL || resid_dec_arcsec_all == NULL ) {
+   alloc_failed= 1;
+  } else {
+   for ( q= 0; q < 4; q++ ) {
+    resid_ra_arcsec_q[q]=  (double *)malloc( (size_t)N * sizeof( double ) );
+    resid_dec_arcsec_q[q]= (double *)malloc( (size_t)N * sizeof( double ) );
+    if ( resid_ra_arcsec_q[q] == NULL || resid_dec_arcsec_q[q] == NULL ) {
+     alloc_failed= 1;
+    }
+   }
+  }
+ }
+ if ( alloc_failed == 1 ) {
+  fprintf( stderr, "WCS_QUALITY_DIAG: malloc failed for N=%d -- skipping diagnostic\n", N );
+  if ( resid_ra_arcsec_all != NULL )  free( resid_ra_arcsec_all );
+  if ( resid_dec_arcsec_all != NULL ) free( resid_dec_arcsec_all );
+  for ( q= 0; q < 4; q++ ) {
+   if ( resid_ra_arcsec_q[q] != NULL )  free( resid_ra_arcsec_q[q] );
+   if ( resid_dec_arcsec_q[q] != NULL ) free( resid_dec_arcsec_q[q] );
+  }
+  return;
+ }
+
+ // Fill residual arrays from matched stars (post-planefit, post-mag-correction,
+ // pre-local-correction). MAD will absorb wrong-match contamination up to ~50%.
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog != 1 ) {
+   continue;
+  }
+  cosdec= cos( stars[i].catalog_dec * M_PI / 180.0 );
+  resid_ra_arcsec_all[n_all]= 3600.0 * cosdec *
+   ra_diff_normalized_for_wraparound( stars[i].corrected_mag_ra, stars[i].catalog_ra );
+  resid_dec_arcsec_all[n_all]= 3600.0 * ( stars[i].corrected_mag_dec - stars[i].catalog_dec );
+  // Quadrant assignment by geometric image centre:
+  //   q1 = lower-left, q2 = lower-right, q3 = upper-left, q4 = upper-right.
+  if ( stars[i].x_pix < img_cx ) {
+   q= ( stars[i].y_pix < img_cy ) ? 0 : 2;
+  } else {
+   q= ( stars[i].y_pix < img_cy ) ? 1 : 3;
+  }
+  resid_ra_arcsec_q[q][n_q[q]]=  resid_ra_arcsec_all[n_all];
+  resid_dec_arcsec_q[q][n_q[q]]= resid_dec_arcsec_all[n_all];
+  n_q[q]++;
+  n_all++;
+ }
+
+ // Need a minimum sample for MAD to be meaningful.
+ if ( n_all >= 5 ) {
+  sigma_ra_arcsec=  esimate_sigma_from_MAD_of_unsorted_data( resid_ra_arcsec_all,  (long)n_all );
+  sigma_dec_arcsec= esimate_sigma_from_MAD_of_unsorted_data( resid_dec_arcsec_all, (long)n_all );
+  sigma_overall= sqrt( sigma_ra_arcsec * sigma_ra_arcsec + sigma_dec_arcsec * sigma_dec_arcsec );
+
+  for ( q= 0; q < 4; q++ ) {
+   if ( n_q[q] >= 5 ) {
+    sigma_ra_arcsec=  esimate_sigma_from_MAD_of_unsorted_data( resid_ra_arcsec_q[q],  (long)n_q[q] );
+    sigma_dec_arcsec= esimate_sigma_from_MAD_of_unsorted_data( resid_dec_arcsec_q[q], (long)n_q[q] );
+    sigma_q[q]= sqrt( sigma_ra_arcsec * sigma_ra_arcsec + sigma_dec_arcsec * sigma_dec_arcsec );
+    if ( sigma_q[q] > max_q_sigma ) {
+     max_q_sigma= sigma_q[q];
+    }
+   }
+  }
+  if ( sigma_overall > 0.0 && max_q_sigma > 0.0 ) {
+   worst_to_overall_ratio= max_q_sigma / sigma_overall;
+  }
+ }
+
+ // Emit a single greppable line with all the values. NaN sentinels for fields
+ // we could not compute (too few stars overall or in a particular quadrant).
+ fprintf( stderr, "WCS_QUALITY_DIAG: file=%s N_match=%d sigma_overall_arcsec=", image_basename_for_diag, n_all );
+ if ( sigma_overall >= 0.0 ) fprintf( stderr, "%.3f", sigma_overall ); else fprintf( stderr, "NaN" );
+ for ( q= 0; q < 4; q++ ) {
+  fprintf( stderr, " sigma_q%d_arcsec=", q + 1 );
+  if ( sigma_q[q] >= 0.0 ) fprintf( stderr, "%.3f", sigma_q[q] ); else fprintf( stderr, "NaN" );
+ }
+ fprintf( stderr, " n_q1=%d n_q2=%d n_q3=%d n_q4=%d worst_quadrant_to_overall_ratio=", n_q[0], n_q[1], n_q[2], n_q[3] );
+ if ( worst_to_overall_ratio >= 0.0 ) fprintf( stderr, "%.3f\n", worst_to_overall_ratio );
+ else fprintf( stderr, "NaN\n" );
+
+ free( resid_ra_arcsec_all );
+ free( resid_dec_arcsec_all );
+ for ( q= 0; q < 4; q++ ) {
+  free( resid_ra_arcsec_q[q] );
+  free( resid_dec_arcsec_q[q] );
+ }
 }
 
 int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, int *number_of_stars_in_wcs_catalog ) {
@@ -821,7 +991,7 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
+     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -1572,7 +1742,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
       catalog_dec= catalog_dec + pmDE / 3600000 * dt;
       //
       stars[detected_star_counter].matched_with_astrometric_catalog= 1;
-      stars[detected_star_counter].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
+      stars[detected_star_counter].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
       stars[detected_star_counter].d_dec= catalog_dec - measured_dec;
       stars[detected_star_counter].catalog_ra= catalog_ra;
       stars[detected_star_counter].catalog_dec= catalog_dec;
@@ -2389,7 +2559,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
+     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -2674,7 +2844,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
 
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= ra_diff_normalized( catalog_ra, measured_ra );
+     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
      stars[i].d_dec= catalog_dec - measured_dec;
      stars[i].catalog_ra= catalog_ra;
      stars[i].catalog_dec= catalog_dec;
@@ -3165,7 +3335,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
    x[N_good]= stars[i].mag;
    y[N_good]= 0.1; // fake error, same for all stars since we want an unweighted fit
-   z1[N_good]= ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_planefit );
+   z1[N_good]= ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].corrected_ra_planefit );
    z2[N_good]= stars[i].catalog_dec - stars[i].corrected_dec_planefit;
    N_good++;
   }
@@ -3259,7 +3429,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
     if ( distance < current_search_radius ) {
      if ( distance == 0.0 )
       continue; //
-     z1_local[N_good]= ra_diff_normalized( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
+     z1_local[N_good]= ra_diff_normalized_for_wraparound( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
      z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
      N_good++;
      if ( N_good > 501 )
@@ -3785,6 +3955,12 @@ int main( int argc, char **argv ) {
 
  } // for(solution_iteration=2;solution_iteration<=MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH;solution_iteration++){
 
+ // Pre-local-correction astrometric residual diagnostic. Emits a single
+ // "WCS_QUALITY_DIAG: ..." stderr line so downstream pipeline scripts can
+ // grep this image's residual statistics and compare against other images
+ // (e.g. reference vs new in transient_factory_test31.sh).
+ print_wcs_quality_diagnostic( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
+
 #ifdef DEBUGFILES
  // Inspect the output
  // Note that the content of solve_plate_debug.txt corresponds to the LAST iteration
@@ -3795,13 +3971,13 @@ int main( int argc, char **argv ) {
             stars[i].x_pix, stars[i].y_pix,                                                                                                                                    // 3 4
             stars[i].d_ra * 3600, stars[i].d_dec * 3600,                                                                                                                       // 5 6
             stars[i].local_correction_ra * 3600, stars[i].local_correction_dec * 3600,                                                                                         // 7 8
-            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_local ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_local ) * 3600,                      // 9 10
-            ra_diff_normalized( stars[i].catalog_ra, stars[i].ra_deg_measured_orig ) * 3600, ( stars[i].catalog_dec - stars[i].dec_deg_measured_orig ) * 3600,                  // 11 12
-            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_ra_planefit ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_planefit ) * 3600,                // 13 14
+            ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].corrected_ra_local ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_local ) * 3600,                      // 9 10
+            ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].ra_deg_measured_orig ) * 3600, ( stars[i].catalog_dec - stars[i].dec_deg_measured_orig ) * 3600,                  // 11 12
+            ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].corrected_ra_planefit ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_dec_planefit ) * 3600,                // 13 14
             stars[i].catalog_ra, stars[i].catalog_dec,                                                                                                                         // 15 16
             stars[i].computed_d_ra * 3600, stars[i].computed_d_dec * 3600,                                                                                                     // 17
             stars[i].mag,
-            ra_diff_normalized( stars[i].catalog_ra, stars[i].corrected_mag_ra ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_mag_dec ) * 3600 );
+            ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].corrected_mag_ra ) * 3600, ( stars[i].catalog_dec - stars[i].corrected_mag_dec ) * 3600 );
  }
  fclose( solve_plate_debug );
 #endif
