@@ -3289,6 +3289,9 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
    export REPORT_MAX_THREADS=10
+   # FIELD is set above as a for-loop variable; export it so make_report_in_HTML.sh
+   # (invoked as a child process) can render it inside the "field processing log" link.
+   export FIELD
    HTML_REPORT_START_UNIXSEC=$(date +%s)
    # stderr is intentionally captured in the log file along with stdout
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
