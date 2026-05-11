@@ -239,7 +239,7 @@ More information about VaST may be found at http://scan.sai.msu.ru/vast/
 # copy raw images
 echo "Saving raw images from $RAW_SECOND_EPOCH_IMG_DIR to $OUTPUT_DIR/raw_new_FITS"
 check_directory_exists "$RAW_SECOND_EPOCH_IMG_DIR"
-RAW_FILES_TO_PLATESOLVE=$(ls "$RAW_SECOND_EPOCH_IMG_DIR" | grep -v '^fd_')
+RAW_FILES_TO_PLATESOLVE=$(ls "$RAW_SECOND_EPOCH_IMG_DIR" | grep -v -e '^fd_' -e '^wcs_')
 N_RAW_FILES=$(echo "$RAW_FILES_TO_PLATESOLVE" | wc -l)
 if [ $N_RAW_FILES -gt 1 ];then
  mkdir "$OUTPUT_DIR"/raw_new_FITS
@@ -264,9 +264,23 @@ process_image() {
  WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
  WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
  WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
- util/wcs_image_calibration.sh "$INPUTFILE"
+ # If the input directory already contains a pre-solved version of this
+ # image (e.g. wcs_fd_<base>.fits sitting next to fd_<base>.fits from a
+ # previous pipeline run), feed that to util/wcs_image_calibration.sh
+ # instead. wcs_image_calibration.sh recognises the WCS header and short-
+ # circuits the slow Astrometry.net solve. If the pre-solved file is not
+ # present, behaviour is unchanged.
+ local INPUTFILE_DIR
+ INPUTFILE_DIR=$(dirname "$INPUTFILE")
+ local PRESOLVED_INPUTFILE="$INPUTFILE_DIR/$WCS_INPUTFILE"
+ local CALIBRATION_INPUT="$INPUTFILE"
+ if [ -f "$PRESOLVED_INPUTFILE" ]; then
+  echo "Found pre-solved image $PRESOLVED_INPUTFILE -- passing it to util/wcs_image_calibration.sh (fast path)"
+  CALIBRATION_INPUT="$PRESOLVED_INPUTFILE"
+ fi
+ util/wcs_image_calibration.sh "$CALIBRATION_INPUT"
  if [ $? -ne 0 ];then
-  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
+  echo "ERROR running util/wcs_image_calibration.sh $CALIBRATION_INPUT"
   exit 1
  fi
  check_file_exists "$WCS_INPUTFILE"
@@ -338,14 +352,22 @@ echo "###############################
 The files are saved to: $OUTPUT_DIR
 ###############################"
 
-if [ -f "$OUTPUT_DIR".tar.bz2 ];then
- rm -f "$OUTPUT_DIR".tar.bz2
+ARCHIVE_NAME="$OUTPUT_DIR".tar.gz
+# Remove any stale archives from older runs (bzip2 leftover from before
+# this script switched compressors, and any leftover .tar.gz of the same
+# name).
+rm -f "$OUTPUT_DIR".tar.bz2 "$ARCHIVE_NAME"
+# Prefer pigz (parallel gzip) when available; fall back to plain gzip.
+# Both produce a standard .tar.gz that gunzip/tar -xzf can read.
+if command -v pigz &>/dev/null ;then
+ tar -cf - "$OUTPUT_DIR" | pigz > "$ARCHIVE_NAME"
+else
+ tar -czf "$ARCHIVE_NAME" "$OUTPUT_DIR"
 fi
-tar -cjf "$OUTPUT_DIR".tar.bz2 "$OUTPUT_DIR"
 
-ls -lhdt "$OUTPUT_DIR" "$OUTPUT_DIR".tar.bz2
+ls -lhdt "$OUTPUT_DIR" "$ARCHIVE_NAME"
 echo "###############################
-Full path to the archive file: 
-$PWD/"$OUTPUT_DIR".tar.bz2
+Full path to the archive file:
+$PWD/$ARCHIVE_NAME
 ###############################"
 
