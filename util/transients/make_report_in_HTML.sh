@@ -511,7 +511,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     CONSTELLATION="Con"
    fi
 
-   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Full images</a> (clouds? trees? ice on chip?)" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Full images</a> (clouds? trees? ice on chip?) &nbsp; <a class='field-processing-log-link' href='./'>$FIELD field processing log</a>" >> transient_report/index.tmp
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
     DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$REFERENCE_IMAGE")
     DIRNAME_2ND_EPOCH_IMAGES=$(basename "$DIRNAME_2ND_EPOCH_IMAGES")
