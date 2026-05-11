@@ -827,14 +827,13 @@ function compute_md5_of_file {
  fi
 }
 
-# Build the canonical wcs_<basename> form that util/solve_plate_with_UCAC5 sees,
-# matching the construction used at the existing per-image WCS check below.
-function wcs_basename_for_diag {
- local b
- b="wcs_$(basename "$1")"
- b="${b/wcs_wcs_/wcs_}"
- b="${b/.fz/}"
- echo "$b"
+# Bare basename of an input image as printed by util/solve_plate_with_UCAC5
+# in its "WCS_QUALITY_DIAG: file=..." line. The script invokes the solver
+# with the original (un-prefixed) image path (see the parallel solver loop
+# below), so the DIAG file= field is just basename("$i"). No wcs_ prefix
+# and no .fz stripping -- whatever path went in is what the DIAG line shows.
+function image_basename_for_wcs_quality_diag {
+ basename "$1"
 }
 
 # Extract one numeric field from the most recent WCS_QUALITY_DIAG line for the
@@ -2372,13 +2371,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    # # do it serial
    # util/wcs_image_calibration.sh "$i"
    #else
-    # do it parallel.
-    # Capture stdout+stderr of the calibration through tee so that the
-    # WCS_QUALITY_DIAG: lines printed by util/solve_plate_with_UCAC5 end up
-    # in transient_factory_test31.txt (where the comparison block below
-    # looks them up). The tee preserves the parent's stdout so existing
-    # outer-log visibility is unchanged.
-    ( util/wcs_image_calibration.sh "$i" 2>&1 | tee -a transient_factory_test31.txt ) &
+    # do it parallel
+    util/wcs_image_calibration.sh "$i" &
     calibrationPIDs+=($!)  # Append PID of the background process to the array
    #fi
   done
@@ -2566,52 +2560,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    fi
   fi
 
-
-  ###################################
-  # Pre-local-correction WCS quality comparison.
-  # util/solve_plate_with_UCAC5 prints a "WCS_QUALITY_DIAG: file=... ..." line
-  # per image to stderr (captured to transient_factory_test31.txt by the
-  # tee on the background calibration loop above). We compare each new
-  # image's overall MAD-derived sigma and worst-quadrant-to-overall-sigma
-  # ratio against the average of the two reference images. A worsening of
-  # more than WCS_QUALITY_RATIO_THRESHOLD-fold raises a WARNING that the
-  # _summary page picks up via the existing log-grepping machinery (same
-  # path the pointing-accuracy WARNINGs above use).
-  ###################################
-  WCS_QUALITY_RATIO_THRESHOLD=2.0
-
-  REF1_DIAG_NAME=$(wcs_basename_for_diag "$REFERENCE_EPOCH__FIRST_IMAGE")
-  REF2_DIAG_NAME=$(wcs_basename_for_diag "$REFERENCE_EPOCH__SECOND_IMAGE")
-  NEW1_DIAG_NAME=$(wcs_basename_for_diag "$SECOND_EPOCH__FIRST_IMAGE")
-  NEW2_DIAG_NAME=$(wcs_basename_for_diag "$SECOND_EPOCH__SECOND_IMAGE")
-
-  REF1_SIGMA=$(extract_wcs_quality_field "$REF1_DIAG_NAME" "sigma_overall_arcsec")
-  REF2_SIGMA=$(extract_wcs_quality_field "$REF2_DIAG_NAME" "sigma_overall_arcsec")
-  NEW1_SIGMA=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "sigma_overall_arcsec")
-  NEW2_SIGMA=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "sigma_overall_arcsec")
-
-  REF1_RATIO=$(extract_wcs_quality_field "$REF1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
-  REF2_RATIO=$(extract_wcs_quality_field "$REF2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
-  NEW1_RATIO=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
-  NEW2_RATIO=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
-
-  REF_SIGMA_AVG=$(average_two_numbers "$REF1_SIGMA" "$REF2_SIGMA")
-  REF_RATIO_AVG=$(average_two_numbers "$REF1_RATIO" "$REF2_RATIO")
-
-  echo "###################################
-# Pre-local-correction WCS quality summary (see WCS_QUALITY_DIAG lines above)
-ref1=$REF1_DIAG_NAME sigma_overall=${REF1_SIGMA:-N/A} worst_q_ratio=${REF1_RATIO:-N/A}
-ref2=$REF2_DIAG_NAME sigma_overall=${REF2_SIGMA:-N/A} worst_q_ratio=${REF2_RATIO:-N/A}
-new1=$NEW1_DIAG_NAME sigma_overall=${NEW1_SIGMA:-N/A} worst_q_ratio=${NEW1_RATIO:-N/A}
-new2=$NEW2_DIAG_NAME sigma_overall=${NEW2_SIGMA:-N/A} worst_q_ratio=${NEW2_RATIO:-N/A}
-reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_AVG:-N/A}
-warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
-###################################" | tee -a transient_factory_test31.txt
-
-  warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
-  warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
-  warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
-  warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
 
   # Check if shift is applied to secondepoch images
   if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
@@ -3213,6 +3161,67 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
+
+   ###################################
+   # Pre-local-correction WCS quality comparison.
+   # By this point the parallel util/solve_plate_with_UCAC5 invocations above
+   # have completed and their stdout+stderr (containing one
+   # "WCS_QUALITY_DIAG: file=... ..." line per image) have been cat'd into
+   # transient_factory_test31.txt by the (6) loop just above. Compare each
+   # new image's overall MAD-derived sigma and worst-quadrant-to-overall-
+   # sigma ratio against the average of the two reference images. A
+   # worsening of more than WCS_QUALITY_RATIO_THRESHOLD-fold raises a
+   # WARNING that the _summary page picks up via the existing log-grepping
+   # machinery (same path the pointing-accuracy WARNINGs use).
+   #
+   # Only run on the brightstar (= first) SExtractor pass. The WCS solution
+   # itself does not change between passes, but the matched-star sample fed
+   # to util/solve_plate_with_UCAC5 does (each pass uses a different
+   # SExtractor catalogue), so the MAD-based sigmas come out very close
+   # but not exactly equal. The differences are well below the 2x warn
+   # threshold, so re-running the comparison would just duplicate the same
+   # conclusion at the cost of 8 awk passes over the steadily-growing
+   # transient_factory_test31.txt log per pass. Skip them.
+   ###################################
+   if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ]; then
+    WCS_QUALITY_RATIO_THRESHOLD=2.0
+
+    REF1_DIAG_NAME=$(image_basename_for_wcs_quality_diag "$REFERENCE_EPOCH__FIRST_IMAGE")
+    REF2_DIAG_NAME=$(image_basename_for_wcs_quality_diag "$REFERENCE_EPOCH__SECOND_IMAGE")
+    NEW1_DIAG_NAME=$(image_basename_for_wcs_quality_diag "$SECOND_EPOCH__FIRST_IMAGE")
+    NEW2_DIAG_NAME=$(image_basename_for_wcs_quality_diag "$SECOND_EPOCH__SECOND_IMAGE")
+
+    REF1_SIGMA=$(extract_wcs_quality_field "$REF1_DIAG_NAME" "sigma_overall_arcsec")
+    REF2_SIGMA=$(extract_wcs_quality_field "$REF2_DIAG_NAME" "sigma_overall_arcsec")
+    NEW1_SIGMA=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "sigma_overall_arcsec")
+    NEW2_SIGMA=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "sigma_overall_arcsec")
+
+    REF1_RATIO=$(extract_wcs_quality_field "$REF1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+    REF2_RATIO=$(extract_wcs_quality_field "$REF2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+    NEW1_RATIO=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+    NEW2_RATIO=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+
+    REF_SIGMA_AVG=$(average_two_numbers "$REF1_SIGMA" "$REF2_SIGMA")
+    REF_RATIO_AVG=$(average_two_numbers "$REF1_RATIO" "$REF2_RATIO")
+
+    echo "###################################
+# Pre-local-correction WCS quality summary (see WCS_QUALITY_DIAG lines above)
+ref1=$REF1_DIAG_NAME sigma_overall=${REF1_SIGMA:-N/A} worst_q_ratio=${REF1_RATIO:-N/A}
+ref2=$REF2_DIAG_NAME sigma_overall=${REF2_SIGMA:-N/A} worst_q_ratio=${REF2_RATIO:-N/A}
+new1=$NEW1_DIAG_NAME sigma_overall=${NEW1_SIGMA:-N/A} worst_q_ratio=${NEW1_RATIO:-N/A}
+new2=$NEW2_DIAG_NAME sigma_overall=${NEW2_SIGMA:-N/A} worst_q_ratio=${NEW2_RATIO:-N/A}
+reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_AVG:-N/A}
+warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
+###################################" | tee -a transient_factory_test31.txt
+
+    warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
+    warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
+    warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
+    warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
+   else
+    echo "Skipping WCS quality comparison: not the first SExtractor pass ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt
+   fi
+
    record_timing "    WAIT_FOR_UCAC5" "$WAIT_FOR_UCAC5_START_UNIXSEC"
    #
    WCS_IMAGE_ARCHIVING_START_UNIXSEC=$(date +%s)
