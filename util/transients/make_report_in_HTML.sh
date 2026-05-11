@@ -511,6 +511,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     CONSTELLATION="Con"
    fi
 
+   # The "field processing log" link below points to './' so that on the standalone
+   # per-field page it harmlessly reloads the same page. When unmw's combine_reports.sh
+   # assembles the per-field blocks into the combined candidates page, it rewrites the
+   # href to the field's results directory (matching on class='field-processing-log-link').
+   # This lets the reader of the combined page jump straight to the originating field log.
    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Full images</a> (clouds? trees? ice on chip?) &nbsp; <a class='field-processing-log-link' href='./'>$FIELD field processing log</a>" >> transient_report/index.tmp
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
     DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$REFERENCE_IMAGE")
