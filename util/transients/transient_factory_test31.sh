@@ -3218,6 +3218,40 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
     warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
+
+    # Diagnostic plot per image: (x_pix, y_pix) of all UCAC5-matched stars.
+    # Reads the same .cat.astrometric_residuals files that fed the sigma
+    # statistics above. A radial fall-off, a one-sided gap, or a clear
+    # diagonal cut signals an unmodeled spatial distortion the SIP fit
+    # could not absorb (e.g., differential atmospheric refraction at high
+    # airmass). One PNG per image, embedded in the HTML processing log
+    # next to the WCS quality summary just printed.
+    if [ -x lib/plot_astrometric_residuals_xy ];then
+     echo "<br><b>Distribution of catalog-matched stars across the image:</b><br>" >> transient_factory_test31.txt
+     for WCS_RES_IMG_FOR_PLOT in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ; do
+      if [ -z "$WCS_RES_IMG_FOR_PLOT" ];then
+       continue
+      fi
+      # The residuals file written by util/solve_plate_with_UCAC5 lives in
+      # cwd as wcs_<basename without .fz>.cat.astrometric_residuals. Build
+      # the matching wcs_-prefixed image path to hand to the plotter.
+      WCS_MATCH_PLOT_INPUT="wcs_$(basename "$WCS_RES_IMG_FOR_PLOT")"
+      WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/wcs_wcs_/wcs_}"
+      WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/.fz/}"
+      if [ ! -s "${WCS_MATCH_PLOT_INPUT}.cat.astrometric_residuals" ];then
+       echo "WCS-match plot: no residuals file for ${WCS_MATCH_PLOT_INPUT} -- skipping" | tee -a transient_factory_test31.txt
+       continue
+      fi
+      lib/plot_astrometric_residuals_xy "$WCS_MATCH_PLOT_INPUT" >> transient_factory_test31.txt 2>&1
+      # The plotter strips .fts/.fits/.fit before appending the suffix.
+      WCS_MATCH_PLOT_PNG=$(echo "$WCS_MATCH_PLOT_INPUT" | sed -e 's/\.fts$//' -e 's/\.fits$//' -e 's/\.fit$//')_astrometric_residuals.png
+      if [ -f "$WCS_MATCH_PLOT_PNG" ];then
+       if cp "$WCS_MATCH_PLOT_PNG" "transient_report/$WCS_MATCH_PLOT_PNG" ;then
+        echo "<img src=\"$WCS_MATCH_PLOT_PNG\"><br>" >> transient_factory_test31.txt
+       fi
+      fi
+     done
+    fi
    else
     echo "Skipping WCS quality comparison: not the first SExtractor pass ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt
    fi

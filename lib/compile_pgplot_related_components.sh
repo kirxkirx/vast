@@ -183,7 +183,7 @@ echo "Compiler flags: " $(cat optflags_for_scripts.tmp)
 ## -g -Wall -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 
 
 # Make sure old versions of the files are gone
-for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_zeropoint lib/fit_photocurve ;do
+for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_zeropoint lib/fit_photocurve lib/plot_astrometric_residuals_xy ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -206,11 +206,17 @@ done
 "$CC" $(cat optflags_for_scripts.tmp) -o lib/fit_mag_calib fit_mag_calib.o setenv_local_pgplot.o wpolyfit.o photocurve.o $PGPLOT_LIBS -lm $GSL_LIB -Wall -Wextra
 cd lib/ ; ln -s fit_mag_calib fit_linear ; ln -s fit_mag_calib fit_robust_linear ; ln -s fit_mag_calib fit_zeropoint ; ln -s fit_mag_calib fit_photocurve ; ln -s ../pgfv select_comparison_stars ; cd ..
 
+# Diagnostic plot of catalog-matched star (x_pix, y_pix) distribution.
+# Driven by util/transients/transient_factory_test31.sh to render per-image
+# WCS-match-distribution PNGs into the HTML processing log.
+"$CC" $(cat optflags_for_scripts.tmp) -c -o plot_astrometric_residuals_xy.o src/plot_astrometric_residuals_xy.c
+"$CC" $(cat optflags_for_scripts.tmp) -o lib/plot_astrometric_residuals_xy plot_astrometric_residuals_xy.o setenv_local_pgplot.o $PGPLOT_LIBS $CFITSIO_LIB -lm -Wall -Wextra
+
 # Test if executable files were actually created?
 COMPILATION_ERROR=0
 echo -n "Checking compiled files:   "
 #for TEST_FILE in lib/pgplot/libpgplot.a lib/pgplot/libcpgplot.a lib/pgplot/grfont.dat lc find_candidates pgfv lib/fit_mag_calib ;do
-for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_photocurve ;do
+for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_photocurve lib/plot_astrometric_residuals_xy ;do
  echo -n "$TEST_FILE - "
  if [ ! -f $TEST_FILE ];then
   COMPILATION_ERROR=1
