@@ -882,6 +882,120 @@ function warn_if_wcs_quality_worse_than_reference {
  fi
 }
 
+###################################
+# WCS-quality retry helper.
+#
+# When the initial solve_plate_with_UCAC5 run on a new image yields a
+# pre-local-correction sigma or worst-quadrant-to-overall ratio more than
+# WCS_QUALITY_RATIO_THRESHOLD x the reference-image average, this function
+# re-runs the plate-solve for that one new image with VAST_TWEAK_ORDER=2.
+# The default order 3 is fine for fields with real distortion but
+# over-fits on fields whose underlying optics has very little distortion
+# (e.g., wide-field DSLR lenses); the lower order collapses the SIP fit
+# back to near-zero and recovers a uniform residual coverage. The retry
+# keeps the new WCS only if its sigma*ratio scalar improves on the
+# original; otherwise the order-3 WCS is restored from a per-image backup.
+# Reference images are not retried.
+#
+# Args: 1=image path  2=human label  3=current_sigma  4=current_ratio
+#       5=ref_sigma_avg  6=ref_ratio_avg  7=threshold
+#       8=UCAC5_PLATESOLVE_ITERATIONS to pass to solve_plate_with_UCAC5
+###################################
+function retry_wcs_with_lower_tweak_order {
+ local image_path="$1"
+ local image_label="$2"
+ local current_sigma="$3"
+ local current_ratio="$4"
+ local ref_sigma_avg="$5"
+ local ref_ratio_avg="$6"
+ local threshold="$7"
+ local plate_solve_iterations="$8"
+
+ local diag_basename
+ diag_basename=$(image_basename_for_wcs_quality_diag "$image_path")
+
+ # Decide whether to retry. Either metric exceeding the threshold triggers.
+ local trigger
+ trigger=$(awk -v s="$current_sigma" -v r="$current_ratio" \
+               -v rs="$ref_sigma_avg" -v rr="$ref_ratio_avg" \
+               -v t="$threshold" '
+   BEGIN {
+    bad_sigma= (s != "" && rs != "" && rs+0 > 0 && (s+0)/(rs+0) > t+0)
+    bad_ratio= (r != "" && rr != "" && rr+0 > 0 && (r+0)/(rr+0) > t+0)
+    print (bad_sigma || bad_ratio) ? 1 : 0
+   }')
+ if [ "$trigger" != 1 ]; then
+  return 0
+ fi
+
+ echo "WCS_QUALITY_RETRY: $image_label ($diag_basename) flagged: sigma=${current_sigma:-N/A} (ref avg ${ref_sigma_avg:-N/A}), ratio=${current_ratio:-N/A} (ref avg ${ref_ratio_avg:-N/A}), threshold=${threshold}x. Retrying with --tweak-order 2." | tee -a transient_factory_test31.txt
+
+ local wcs_basename
+ wcs_basename="wcs_$(basename "$image_path")"
+ wcs_basename="${wcs_basename/wcs_wcs_/wcs_}"
+ wcs_basename="${wcs_basename/.fz/}"
+
+ # Per-image backup directory. mktemp -d is portable; if it is somehow
+ # unavailable, fall back to a deterministic name.
+ local backup_dir
+ backup_dir=$(mktemp -d "wcs_quality_retry_backup_${diag_basename}.XXXXXX" 2>/dev/null || echo "wcs_quality_retry_backup_${diag_basename}_$$")
+ mkdir -p "$backup_dir"
+
+ local f
+ for f in "$wcs_basename" "$wcs_basename".cat "$wcs_basename".cat.ucac5 "$wcs_basename".cat.ds9.reg "$wcs_basename".cat.astrometric_residuals ; do
+  if [ -f "$f" ]; then
+   cp -p "$f" "$backup_dir/" 2>/dev/null
+   rm -f "$f"
+  fi
+ done
+
+ echo "Running with VAST_TWEAK_ORDER=2: util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $plate_solve_iterations $image_path" | tee -a transient_factory_test31.txt
+ VAST_TWEAK_ORDER=2 util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations "$plate_solve_iterations" "$image_path" >> transient_factory_test31.txt 2>&1
+
+ # Re-extract the WCS_QUALITY_DIAG values: extract_wcs_quality_field returns
+ # the LAST matching line in the log, which is the one we just appended.
+ local new_sigma new_ratio
+ new_sigma=$(extract_wcs_quality_field "$diag_basename" "sigma_overall_arcsec")
+ new_ratio=$(extract_wcs_quality_field "$diag_basename" "worst_quadrant_to_overall_ratio")
+
+ # Scalar score: sigma * ratio. Lower is better. If either side is missing
+ # we keep the order-3 result so we never make things worse via a parse
+ # failure.
+ # Note: avoid awk variable name `or` -- it collides with gawk's builtin.
+ local keep_retry
+ keep_retry=$(awk -v ns="$new_sigma" -v nr="$new_ratio" \
+                  -v cur_s="$current_sigma" -v cur_r="$current_ratio" '
+   BEGIN {
+    if (ns == "" || nr == "" || cur_s == "" || cur_r == "") { print 0; exit }
+    new_score= (ns+0) * (nr+0)
+    old_score= (cur_s+0) * (cur_r+0)
+    print (new_score < old_score) ? 1 : 0
+   }')
+
+ if [ "$keep_retry" = 1 ]; then
+  echo "WCS_QUALITY_RETRY: --tweak-order 2 improved $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma}, ratio ${current_ratio}->${new_ratio}; keeping retry result" | tee -a transient_factory_test31.txt
+  # The brightstar pass cached the order-3 WCS to local_wcs_cache/ BEFORE
+  # this retry ran (see "Saving ... to local_wcs_cache/" upstream). The next
+  # SExtractor pass repopulates wcs_<image>.fts in cwd as a symlink into
+  # that cache, which would silently overwrite our retried order-2 WCS with
+  # the cached order-3 one. Refresh the cache copy here so the symlink
+  # points to the order-2 result instead.
+  if [ -d local_wcs_cache ] && [ -f "$wcs_basename" ]; then
+   cp -p "$wcs_basename" local_wcs_cache/ 2>/dev/null
+   echo "WCS_QUALITY_RETRY: updated local_wcs_cache/$wcs_basename with order-2 result" | tee -a transient_factory_test31.txt
+  fi
+  rm -rf "$backup_dir"
+ else
+  echo "WCS_QUALITY_RETRY: --tweak-order 2 did NOT improve $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma:-N/A}, ratio ${current_ratio}->${new_ratio:-N/A}; reverting to order 3" | tee -a transient_factory_test31.txt
+  for f in "$wcs_basename" "$wcs_basename".cat "$wcs_basename".cat.ucac5 "$wcs_basename".cat.ds9.reg "$wcs_basename".cat.astrometric_residuals ; do
+   if [ -f "$backup_dir/$(basename "$f")" ]; then
+    cp -p "$backup_dir/$(basename "$f")" "$f"
+   fi
+  done
+  rm -rf "$backup_dir"
+ fi
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -3213,6 +3327,20 @@ new2=$NEW2_DIAG_NAME sigma_overall=${NEW2_SIGMA:-N/A} worst_q_ratio=${NEW2_RATIO
 reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_AVG:-N/A}
 warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 ###################################" | tee -a transient_factory_test31.txt
+
+    # If either new image's sigma or worst_quadrant_to_overall_ratio exceeds
+    # the threshold relative to the reference average, retry that image's
+    # plate solve with VAST_TWEAK_ORDER=2. Reference images are not retried.
+    # The helper keeps the retry only if its sigma*ratio scalar improves.
+    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__FIRST_IMAGE"  "1st new image" "$NEW1_SIGMA" "$NEW1_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS"
+    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__SECOND_IMAGE" "2nd new image" "$NEW2_SIGMA" "$NEW2_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS"
+
+    # Re-extract metrics after possible retries so the warnings below
+    # reflect the FINAL post-retry quality, not the pre-retry state.
+    NEW1_SIGMA=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "sigma_overall_arcsec")
+    NEW2_SIGMA=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "sigma_overall_arcsec")
+    NEW1_RATIO=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+    NEW2_RATIO=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
 
     warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"

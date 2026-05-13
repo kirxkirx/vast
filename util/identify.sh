@@ -15,6 +15,13 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# SIP polynomial order used by solve-field's tweak step. Default 3.
+# Callers (e.g., transient_factory_test31.sh's WCS-quality retry block)
+# may override this via the environment to fall back to a lower order
+# when a higher-order fit produces poor residuals.
+VAST_TWEAK_ORDER="${VAST_TWEAK_ORDER:-3}"
+export VAST_TWEAK_ORDER
+
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -812,7 +819,7 @@ fi
     # corner stars). With --quad-size-max 0.5 the matches are well-distributed and order-3 SIP fits
     # cleanly, matching what the reference-image pipeline produces and bringing per-pixel residuals
     # against the reference WCS down to ~25-30".
-    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order 3
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order "$VAST_TWEAK_ORDER"
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
@@ -892,7 +899,17 @@ fi
       AN_NEW_FITS_WITH_UPDATED_WCS="$AN_WCS_BASE".new
       AN_WCSONLY_FILE="$AN_WCS_BASE".wcs
       AN_AXY_FILE="$AN_WCS_BASE".axy
-      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order 3
+      # Legacy "fresh solve" form. solve-field auto-verifies because
+      # wcs_"$BASENAME_FITSFILE" already carries iter 2's WCS, but the
+      # auto-verify behaviour is implicit and the command is also free to
+      # fall back to a quad-match search if anything trips the verify step.
+      # Kept commented out so the previous behaviour is recoverable.
+      #echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order 3
+      # Explicit --verify form, in line with Dustin Lang's recommendation
+      # quoted above: use iter 2's WCS file as the starting point, skip the
+      # quad-match step entirely, verify against all index files, and
+      # re-tweak SIP using stars matched to the best-verifying index.
+      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --verify out$$.wcs --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order "$VAST_TWEAK_ORDER"
       if [ $? -eq 0 ];then
        # if there is an output file - replace the original with it
        if [ -s "$AN_NEW_FITS_WITH_UPDATED_WCS" ];then
