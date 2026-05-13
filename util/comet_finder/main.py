@@ -345,7 +345,11 @@ def filter(comets, date: Time, min_mag: float, lat: float, long: float):
                 comets.drop(idx, axis=0, inplace=True)
 
         except Exception as e:
-            echo(f"-> Error processing object {row.designation}: {e}")
+            # Surface per-row errors even when running with --quiet so a
+            # silently-empty filtered_comets.csv (every row threw) is not
+            # mistaken for a successful "no bright comets" result by the
+            # caller. Same rationale as in calc_ra_dec() below.
+            echo(f"-> Error processing object {row.designation}: {e}", force_output=True)
 
     return comets
 
@@ -382,7 +386,12 @@ def calc_ra_dec(filtered_comets, date: Time, lat: float, long: float):
             })
 
         except Exception as e:
-            echo(f"-> Error processing object {row.designation}: {e}")
+            # Surface per-row errors even when running with --quiet so that
+            # a silently-empty result set (every row threw, exit code 0)
+            # leaves a traceable trail in stderr -- otherwise the caller
+            # cannot distinguish a real "no bright comets" outcome from a
+            # broken-data / library-incompatibility failure.
+            echo(f"-> Error processing object {row.designation}: {e}", force_output=True)
 
     return results
 
