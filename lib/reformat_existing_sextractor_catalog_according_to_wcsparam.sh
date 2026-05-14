@@ -128,10 +128,27 @@ Checking if the filename extension and FITS header look reasonable..."
 
 done
 
-echo $(basename $WCS_IMAGE_NAME) | grep -q '\.fz$' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
-if [ $? -eq 0 ];then
- echo "ERROR in $0 : $WCS_IMAGE_NAME image is compressed! (It's not supposed to be!)" 1>&2
- exit 1
+# Bail out (with a soft message) if the WCS-solved image content is a
+# compressed FITS but the filename does not carry a .fz suffix -- xy2sky
+# downstream cannot read such a file. The caller (util/identify.sh) treats
+# the non-zero exit as a soft failure and falls back to a fresh SExtractor
+# run, so we deliberately do NOT use the string "ERROR" here: that text
+# would otherwise be embedded into transient_report/index.html and trip
+# the FZ_NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html test. Same spirit as
+# commit 43f3bdc0 which downgraded the sibling ERROR in this file.
+#
+# The previous form was
+#   <fz-check> || <internal-compression-check>
+#   if [ $? -eq 0 ]; then <ERROR>; fi
+# i.e. "ERROR if EITHER ends-in-fz OR internally-compressed", which would
+# wrongly trip on a legitimate wcs_*.fts.fz path. Rewritten as the
+# intended conjunction: "WARNING only if no fz suffix AND internally
+# compressed".
+if ! echo "$(basename "$WCS_IMAGE_NAME")" | grep -q '\.fz$' ; then
+ if file "$FITSFILE" | grep 'FITS image' | grep -q 'compress' ; then
+  echo "WARNING from $0 : $WCS_IMAGE_NAME image is compressed without a .fz suffix -- falling back to a fresh SExtractor run." 1>&2
+  exit 1
+ fi
 fi
 
 
