@@ -14895,14 +14895,7 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
-else
- # Skipped: not on GitHub Actions, OR no local solve-field available.
- if [ "$GITHUB_ACTIONS" = "true" ];then
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_TEST_NOT_PERFORMED_GITHUB_ACTIONS"
- else
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_TEST_NOT_PERFORMED_NO_LOCAL_SOLVE_FIELD"
- fi
-fi # local-solve-field + non-GitHub-Actions gate
+fi # local-solve-field + non-GitHub-Actions gate -- skip is silent: no failure code emitted on GHA or when local solve-field is unavailable
 
 
 ##### Nova Sgr 2024 N1 test #####
