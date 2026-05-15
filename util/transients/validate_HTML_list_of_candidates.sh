@@ -161,7 +161,7 @@ if [ $? -ne 0 ]; then
 Note that errors like
 ERROR: Missing javascript:toggleElement in /tmp/index.html.
 ERROR: Missing <script>printCandidateNameWithAbsLink in /tmp/index.html.
-may appear when no coandidates are listed in the HTML file while they are expected to be there.
+may appear when no candidates are listed in the HTML file while they are expected to be there.
 "
     overall_result=1
 else

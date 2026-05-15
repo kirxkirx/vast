@@ -255,7 +255,10 @@ function setup_remote_astrometry {
  elif [ -x lib/get_country_code.sh ];then
   IDENTIFY_COUNTRY_CODE=$(lib/get_country_code.sh)
  fi
- local PLATE_SOLVE_SERVERS
+ # NOT local: the main-body retry loop (see "retry with another plate-solve
+ # server" below) reads PLATE_SOLVE_SERVERS after this function returns to fall
+ # back to the next server. Declaring it local here left that list empty, so a
+ # transient failure on the first server aborted plate solving instead of retrying.
  if [ "$IDENTIFY_COUNTRY_CODE" = "RU" ];then
   # Russian users: prefer local server, keep tau.kirx.net as fallback
   PLATE_SOLVE_SERVERS="scan.sai.msu.ru tau.kirx.net"

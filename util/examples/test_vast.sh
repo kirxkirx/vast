@@ -14729,6 +14729,182 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### NMW Cyg5 astrometry problem mira identification test #####
+# Two-epoch NMW images of the Cyg5 field carrying three Mira-class variables
+# (AM Cyg, AT Cyg, DU Cyg, all in VSX with Type M).  The dataset has two
+# parallel sets of new-epoch images:
+#   second_epoch_images/    -- carry CORRUPTED embedded WCS (Astrometry.net
+#                              HISTORY card present, so wcs_image_calibration.sh
+#                              currently trusts the bad WCS without re-solving)
+#   second_epoch_images_fd/ -- carry NO embedded WCS, forcing a full local
+#                              plate-solve via solve-field
+# Goal of the test: with the no-WCS input, the pipeline must re-solve cleanly
+# enough for the three miras to be detected as candidates and identified as
+# known variables in transient_report/index.html.  The corrupted-WCS run is
+# done as well but its results are only LOGGED (not gating TEST_PASSED) --
+# that path exposes a separate trust-the-bad-WCS issue in
+# wcs_image_calibration.sh that needs its own fix.
+#
+# Skipped on GitHub Actions (heavy local plate-solving) AND skipped when no
+# local solve-field binary is available (the remote plate-solve path is
+# expected to mis-fit on this field and bury the miras among spurious
+# unidentified candidates -- exactly the failure mode this test guards
+# against once local solving is back in place).
+#
+# Mirror util/identify.sh:209-222: prepend the standard Astrometry.net
+# install bin directories to PATH before checking for solve-field, so the
+# binary is found on systems where it lives in /usr/local/astrometry/bin
+# or /usr/share/astrometry/bin without being in the user's default PATH.
+if [ -d /usr/local/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/local/astrometry/bin' ;then
+ export PATH="$PATH:/usr/local/astrometry/bin"
+fi
+if [ -d /usr/share/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/share/astrometry/bin' ;then
+ export PATH="$PATH:/usr/share/astrometry/bin"
+fi
+if [ "$GITHUB_ACTIONS" != "true" ] && command -v solve-field &>/dev/null && [ -x "$(command -v solve-field)" ];then
+
+# Download the test dataset if needed
+if [ ! -d ../NMW_Cyg5_astrometry_problem_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Cyg5_astrometry_problem_test.tar.bz2" && tar -xvjf NMW_Cyg5_astrometry_problem_test.tar.bz2 && rm -f NMW_Cyg5_astrometry_problem_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../NMW_Cyg5_astrometry_problem_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "NMW Cyg5 astrometry problem mira identification test "
+ echo -n "NMW Cyg5 astrometry problem mira identification test: " >> vast_test_report.txt
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ # Run twice: corrupted-WCS input (informational), then no-WCS input (gating).
+ # Order matters only for human readability of the log -- each iteration runs
+ # util/clean_data.sh first, so they don't share state.
+ for CYG5_INPUT_DIR in ../NMW_Cyg5_astrometry_problem_test/second_epoch_images ../NMW_Cyg5_astrometry_problem_test/second_epoch_images_fd ;do
+  CYG5_INPUT_LABEL=$(basename "$CYG5_INPUT_DIR")
+  # The "_fd" subdirectory is the no-embedded-WCS variant and gates the test.
+  if [ "$CYG5_INPUT_LABEL" = "second_epoch_images_fd" ];then
+   CYG5_GATING="strict"
+  else
+   CYG5_GATING="informational"
+  fi
+  util/clean_data.sh
+  if [ -f transient_report/index.html ];then
+   rm -f transient_report/index.html
+  fi
+  CYG5_WCS_BASELINE=$(cd "$CYG5_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+  REFERENCE_IMAGES=../NMW_Cyg5_astrometry_problem_test/reference_images/ util/transients/transient_factory_test31.sh "$CYG5_INPUT_DIR"
+  CYG5_RUN_EXIT_CODE=$?
+  if [ $CYG5_RUN_EXIT_CODE -ne 0 ];then
+   if [ "$CYG5_GATING" = "strict" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_EXIT_CODE"
+   else
+    echo "INFO (informational): NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_EXIT_CODE=$CYG5_RUN_EXIT_CODE"
+   fi
+  fi
+  check_transient_factory_wcs_leak_in_input_dir "$CYG5_INPUT_DIR" "$CYG5_WCS_BASELINE"
+  if [ $? -ne 0 ];then
+   if [ "$CYG5_GATING" = "strict" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_REF_WCS_LEAK"
+   else
+    echo "INFO (informational): NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_REF_WCS_LEAK"
+   fi
+  fi
+  if [ -f transient_report/index.html ];then
+   # Each Mira variable should show up by name in the report (matched
+   # against VSX as Type M; -F is fixed-string to avoid spaces being
+   # treated as regex separators).
+   for MIRA_NAME in 'AM Cyg' 'AT Cyg' 'DU Cyg' ;do
+    if ! grep -q -F "$MIRA_NAME" transient_report/index.html ;then
+     MIRA_TAG=$(echo "$MIRA_NAME" | tr ' ' '_')
+     if [ "$CYG5_GATING" = "strict" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_NO_${MIRA_TAG}"
+     else
+      echo "INFO (informational): NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_NO_${MIRA_TAG}"
+     fi
+    fi
+   done
+   # And the report should be free of generic ERROR messages
+   grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
+   if [ $? -eq 0 ];then
+    if [ "$CYG5_GATING" = "strict" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_ERROR_MESSAGE_IN_index_html"
+    else
+     echo "INFO (informational): NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_ERROR_MESSAGE_IN_index_html"
+    fi
+   fi
+   # On the CORRUPTED-WCS run we EXPECT the WCS-quality WARNING about an
+   # inaccurate plate solution to fire (sigma_overall_arcsec / worst-quadrant
+   # ratio of the new images vs the reference average exceeds the 2x
+   # threshold checked by warn_if_wcs_quality_worse_than_reference in
+   # transient_factory_test31.sh -- text emitted: "plate solution may be of
+   # low accuracy"). If that warning is silently absent, the warning
+   # machinery has regressed and we want to know -- this check is strict
+   # for this sub-run (separate from CYG5_GATING which controls the mira
+   # checks).
+   if [ "$CYG5_INPUT_LABEL" = "second_epoch_images" ];then
+    if ! grep -q 'plate solution may be of low accuracy' transient_report/index.html ;then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_NO_WCS_QUALITY_WARNING"
+    fi
+   fi
+  else
+   if [ "$CYG5_GATING" = "strict" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_NO_index_html"
+   else
+    echo "INFO (informational): NMW_CYG5_ASTROMETRY_${CYG5_INPUT_LABEL}_NO_index_html"
+   fi
+  fi
+ done
+ # Restore the backup exclusion list
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW Cyg5 astrometry problem mira identification test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW Cyg5 astrometry problem mira identification test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+else
+ # Skipped: not on GitHub Actions, OR no local solve-field available.
+ if [ "$GITHUB_ACTIONS" = "true" ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_TEST_NOT_PERFORMED_GITHUB_ACTIONS"
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMW_CYG5_ASTROMETRY_TEST_NOT_PERFORMED_NO_LOCAL_SOLVE_FIELD"
+ fi
+fi # local-solve-field + non-GitHub-Actions gate
+
+
 ##### Nova Sgr 2024 N1 test #####
 ### Disable this test for GitHub Actions
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
