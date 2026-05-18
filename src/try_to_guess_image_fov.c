@@ -393,7 +393,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  env_var_good= 0;
 
  if ( NULL != getenv( "TELESCOP" ) ) {
-  strncpy( telescop, getenv( "TELESCOP" ), FLEN_VALUE );
+  snprintf( telescop, FLEN_VALUE, "%s", getenv( "TELESCOP" ) );
   telescop[FLEN_VALUE - 1]= '\0';
   if ( strlen( telescop ) > 1 ) {
    env_var_good= 1;
@@ -712,26 +712,26 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
   fprintf( stderr, "ERROR: No_of_wcs_keys < 5 \n" );
   exit( EXIT_FAILURE );
  }
- wcs_key= malloc( No_of_wcs_keys * sizeof( char * ) );
+ wcs_key= calloc( (size_t)No_of_wcs_keys, sizeof( char * ) );
  if ( wcs_key == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key(try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  }
 
- wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
+ wcs_key[0]= (char *)malloc( FLEN_CARD );
  if ( wcs_key[0] == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  }
- memset( wcs_key[0], 0, FLEN_CARD * sizeof( char ) );
+ memset( wcs_key[0], 0, FLEN_CARD );
 
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
-  wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) );
+  wcs_key[i]= (char *)malloc( FLEN_CARD );
   if ( wcs_key[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[i](try_to_guess_image_fov)\n" );
    exit( EXIT_FAILURE );
   }
-  memset( wcs_key[i], 0, FLEN_CARD * sizeof( char ) );
+  memset( wcs_key[i], 0, FLEN_CARD );
   fits_read_record( fptr, i, wcs_key[i], &status );
  }
  fits_close_file( fptr, &status );
@@ -804,7 +804,7 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- strncpy( fitsfile_name, argv[1], FILENAME_LENGTH );
+ snprintf( fitsfile_name, FILENAME_LENGTH, "%s", argv[1] );
  fitsfile_name[FILENAME_LENGTH - 1]= '\0';
  if ( 0 != fitsfile_read_check( fitsfile_name ) ) {
   fprintf( stderr, "ERROR: %s is not a readbale FITS image!\n", fitsfile_name );
@@ -871,17 +871,17 @@ int main( int argc, char **argv ) {
  if ( NULL != image_details_logfile ) {
   if ( 10 == fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
    if ( 0 != strncmp( fitsfile_name, full_path_to_fits_image, FILENAME_LENGTH ) ) {
-    strncpy( name_of_fits_image, basename( full_path_to_fits_image ), FILENAME_LENGTH );
-    fitsfile_name[FILENAME_LENGTH - 1]= '\0';
+    snprintf( name_of_fits_image, FILENAME_LENGTH, "%s", basename( full_path_to_fits_image ) );
+    name_of_fits_image[FILENAME_LENGTH - 1]= '\0';
     if ( strlen( name_of_fits_image ) < 5 ) {
      fprintf( stderr, "ERROR: too short image name: %s\n", name_of_fits_image );
      return 1;
     }
     if ( name_of_fits_image[0] == 'w' && name_of_fits_image[1] == 'c' && name_of_fits_image[2] == 's' && name_of_fits_image[3] == '_' )
-     sprintf( name_of_wcs_solved_reference_image, "%s", name_of_fits_image );
+     snprintf( name_of_wcs_solved_reference_image, MAX_LOG_STR_LENGTH, "%s", name_of_fits_image );
     else
-     sprintf( name_of_wcs_solved_reference_image, "wcs_%s", name_of_fits_image );
-    name_of_wcs_solved_reference_image[FILENAME_LENGTH - 1]= '\0';
+     snprintf( name_of_wcs_solved_reference_image, MAX_LOG_STR_LENGTH, "wcs_%s", name_of_fits_image );
+    name_of_wcs_solved_reference_image[MAX_LOG_STR_LENGTH - 1]= '\0';
     if ( 0 == fitsfile_read_check( name_of_wcs_solved_reference_image ) ) {
      fseek( image_details_logfile, 0, SEEK_SET );
      while ( 0 < fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s\n", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
