@@ -1317,6 +1317,78 @@ void load_markers_for_autocandidate_variables( float *markX_known_variable, floa
  return;
 }
 
+// Explain to the user why the lightcurve file out%05d.dat is missing for the
+// star they just clicked. Reads vast_source_detection_rejection_statistics.log
+// and matches the lightcurve filename to one of the deletion criteria applied
+// in vast.c when writing out the lightcurves. Always prints to stderr.
+void explain_missing_lightcurve( int star_number ) {
+ FILE *stats_file;
+ char expected_filename[OUTFILENAME_LENGTH];
+ char line[2048];
+ char file_field[OUTFILENAME_LENGTH];
+ int n_detected;
+ int n_rejected;
+ double fraction;
+ int found_row;
+
+ snprintf( expected_filename, OUTFILENAME_LENGTH, "out%05d.dat", star_number );
+
+ fprintf( stderr, "\n\x1B[01;33m--- Why is there no lightcurve for this star? ---\x1B[33;00m\n" );
+ fprintf( stderr, "The expected lightcurve file %s does not exist.\n", expected_filename );
+
+ stats_file= fopen( "vast_source_detection_rejection_statistics.log", "r" );
+ if ( stats_file == NULL ) {
+  fprintf( stderr, "Cannot open vast_source_detection_rejection_statistics.log -- no further diagnostic info available.\n" );
+  fprintf( stderr, "\x1B[01;33m----------------------------------------------------\x1B[33;00m\n\n" );
+  return;
+ }
+
+ found_row= 0;
+ while ( NULL != fgets( line, sizeof( line ), stats_file ) ) {
+  if ( 4 == sscanf( line, "%127s %d %d %lf", file_field, &n_detected, &n_rejected, &fraction ) ) {
+   if ( 0 == strcmp( file_field, expected_filename ) ) {
+    found_row= 1;
+    break;
+   }
+  }
+ }
+ fclose( stats_file );
+
+ if ( found_row == 0 ) {
+  fprintf( stderr, "No entry for %s in vast_source_detection_rejection_statistics.log.\n", expected_filename );
+  fprintf( stderr, "Possible reasons:\n" );
+  fprintf( stderr, "  (1) The source had a SExtractor flag > 7 on the reference image and was rejected before VaST started tracking it.\n" );
+  fprintf( stderr, "  (2) The vast_source_detection_rejection_statistics.log file is from a different VaST run than the SExtractor catalog you are viewing.\n" );
+  fprintf( stderr, "\x1B[01;33m----------------------------------------------------\x1B[33;00m\n\n" );
+  return;
+ }
+
+ fprintf( stderr, "vast_source_detection_rejection_statistics.log says: %s detected on %d images, %d measurements rejected, fraction kept = %.3f\n",
+          expected_filename, n_detected, n_rejected, fraction );
+
+ if ( n_detected < HARD_MIN_NUMBER_OF_POINTS ) {
+  fprintf( stderr, "Reason for deletion: the source was matched on only %d image(s), and at least HARD_MIN_NUMBER_OF_POINTS = %d are required.\n",
+           n_detected, HARD_MIN_NUMBER_OF_POINTS );
+  fprintf( stderr, "This usually means the star is a transient seen on only a few frames, or that position matching failed across the rest of the series.\n" );
+ } else if ( fraction < MIN_FRACTION_OF_GOOD_MEASUREMENTS && n_rejected > MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS ) {
+  fprintf( stderr, "Reason for deletion: only %.1f%% of the measurements passed the per-image quality cuts (threshold MIN_FRACTION_OF_GOOD_MEASUREMENTS = %.1f%%, and %d rejections exceed MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS = %d).\n",
+           fraction * 100.0, MIN_FRACTION_OF_GOOD_MEASUREMENTS * 100.0, n_rejected, MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS );
+  fprintf( stderr, "The two per-image cuts that can reject a measurement are:\n" );
+  fprintf( stderr, "  (a) SExtractor flag > maxsextractorflag (default MAX_SEXTRACTOR_FLAG = %d, controlled by --maxsextractorflag).\n", MAX_SEXTRACTOR_FLAG );
+  fprintf( stderr, "  (b) Source size larger than the photometric aperture (the magnitude-size filter).\n" );
+ } else {
+  fprintf( stderr, "Reason for deletion is unclear from the rejection statistics row -- the file may have been removed by something other than VaST.\n" );
+ }
+
+ fprintf( stderr, "\nTo recover this lightcurve, re-run VaST with one of (most permissive last):\n" );
+ fprintf( stderr, "  ./vast --maxsextractorflag 2 ...                       # accept blended detections\n" );
+ fprintf( stderr, "  ./vast --maxsextractorflag 3 ...                       # also accept saturated detections\n" );
+ fprintf( stderr, "  ./vast --maxsextractorflag 3 --nomagsizefilter ...     # also disable the magnitude-size filter\n" );
+ fprintf( stderr, "Replace ... with the same image list you used originally.\n" );
+ fprintf( stderr, "Run util/clean_data.sh between runs.\n" );
+ fprintf( stderr, "\x1B[01;33m----------------------------------------------------\x1B[33;00m\n\n" );
+}
+
 int main( int argc, char **argv ) {
 
  // For FITS file reading
@@ -3061,17 +3133,27 @@ int main( int argc, char **argv ) {
          fprintf( stderr, "ERROR running  %s\n", system_command );
         }
         fprintf( stdout, " \n" );
-        // Generate the lightcurve viewer command
-        sprintf( system_command, "./lc out%05d.dat", sextractor_catalog__star_number[marker_counter] );
-        // fork before system() so the parent process is not blocked
-        if ( 0 == fork() ) {
-         nanosleep( &requested_time, &remaining );
-         if ( 0 != system( system_command ) ) {
-          fprintf( stderr, "ERROR running  %s\n", system_command );
-         }
-         exit( EXIT_SUCCESS );
+        // Generate the lightcurve viewer command, but first check that the
+        // lightcurve file actually exists on disk. If it does not, explain to
+        // the user why it is missing and what to do about it, and do NOT start
+        // ./lc (which would only print a useless "cannot open file" error).
+        sprintf( system_command, "out%05d.dat", sextractor_catalog__star_number[marker_counter] );
+        if ( 0 == is_file( system_command ) ) {
+         explain_missing_lightcurve( sextractor_catalog__star_number[marker_counter] );
+         fprintf( stderr, "The lightcurve plotter ./lc will NOT be started because %s does not exist.\n", system_command );
+         fprintf( stderr, "See the diagnostic above for the reason and how to recover this lightcurve.\n" );
         } else {
-         waitpid( -1, &status, WNOHANG );
+         sprintf( system_command, "./lc out%05d.dat", sextractor_catalog__star_number[marker_counter] );
+         // fork before system() so the parent process is not blocked
+         if ( 0 == fork() ) {
+          nanosleep( &requested_time, &remaining );
+          if ( 0 != system( system_command ) ) {
+           fprintf( stderr, "ERROR running  %s\n", system_command );
+          }
+          exit( EXIT_SUCCESS );
+         } else {
+          waitpid( -1, &status, WNOHANG );
+         }
         }
        }
       }
