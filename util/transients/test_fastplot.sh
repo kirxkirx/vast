@@ -103,7 +103,7 @@ if [ $FASTPLOT_EXIT_CODE -ne 0 ];then
  exit $TEST_FAILED
 fi
 
-# Find the output directory (use -d to only match directories, not tar.bz2 archives)
+# Find the output directory (use -d to only match directories, not tar.gz archives)
 OUTPUT_DIR=$(ls -dt -d fastplot__*__*/ 2>/dev/null | head -n1)
 # Remove trailing slash
 OUTPUT_DIR="${OUTPUT_DIR%/}"
@@ -119,7 +119,7 @@ echo "Found output directory: $OUTPUT_DIR"
 for SUBDIR in reference_platesolved_FITS new_platesolved_FITS resampled_FITS finder_charts_PNG animation_GIF ;do
  if [ ! -d "$OUTPUT_DIR/$SUBDIR" ];then
   echo "ERROR: Expected subdirectory $OUTPUT_DIR/$SUBDIR does not exist"
-  rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+  rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
   exit $TEST_FAILED
  fi
 done
@@ -128,7 +128,7 @@ done
 for REQUIRED_FILE in ds9.reg readme.txt ;do
  if [ ! -f "$OUTPUT_DIR/$REQUIRED_FILE" ];then
   echo "ERROR: $OUTPUT_DIR/$REQUIRED_FILE does not exist"
-  rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+  rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
   exit $TEST_FAILED
  fi
 done
@@ -137,7 +137,7 @@ done
 PNG_COUNT=$(ls "$OUTPUT_DIR/finder_charts_PNG"/*.png 2>/dev/null | wc -l)
 if [ "$PNG_COUNT" -lt 1 ];then
  echo "ERROR: No PNG files found in finder_charts_PNG"
- rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+ rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
  exit $TEST_FAILED
 fi
 echo "OK: Found $PNG_COUNT PNG files"
@@ -146,14 +146,14 @@ echo "OK: Found $PNG_COUNT PNG files"
 GIF_COUNT=$(ls "$OUTPUT_DIR/animation_GIF"/*.gif 2>/dev/null | wc -l)
 if [ "$GIF_COUNT" -lt 1 ];then
  echo "ERROR: No GIF files found in animation_GIF"
- rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+ rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
  exit $TEST_FAILED
 fi
 echo "OK: Found $GIF_COUNT GIF files"
 
 # Check for archive
-if [ ! -f "$OUTPUT_DIR.tar.bz2" ];then
- echo "ERROR: Archive $OUTPUT_DIR.tar.bz2 does not exist"
+if [ ! -f "$OUTPUT_DIR.tar.gz" ];then
+ echo "ERROR: Archive $OUTPUT_DIR.tar.gz does not exist"
  rm -rf "$OUTPUT_DIR"
  exit $TEST_FAILED
 fi
@@ -162,13 +162,13 @@ echo "OK: Archive exists"
 # Check compressed FITS handling - filenames should not have _fz_ in them
 if ls "$OUTPUT_DIR/finder_charts_PNG" | grep -q '_fz_' ;then
  echo "ERROR: Found '_fz_' in finder chart filenames"
- rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+ rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
  exit $TEST_FAILED
 fi
 
 if ls "$OUTPUT_DIR/animation_GIF" | grep -q '_fz_' ;then
  echo "ERROR: Found '_fz_' in animation GIF filenames"
- rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+ rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
  exit $TEST_FAILED
 fi
 
@@ -177,7 +177,7 @@ echo "TEST PASSED: fastplot.sh works correctly"
 
 # Cleanup
 echo "Cleaning up..."
-rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.bz2"
+rm -rf "$OUTPUT_DIR" "$OUTPUT_DIR.tar.gz"
 echo "Done."
 
 exit $TEST_PASSED
