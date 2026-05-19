@@ -516,7 +516,7 @@ def print_results_to_stdout(results):
 
 def echo(text, force_output=False):
     if load.verbose or force_output:
-        print(text)
+        print(text, file=sys.stderr)
 
 
 def parse_args():
