@@ -167,17 +167,17 @@ if [ -n "$CAMERA_SETTINGS" ];then
   FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
   # Calibration data
-  if [ -z "$DARK_FRAMES_DIR" ];then
-   #export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
-   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+   #export DARK_FRAMES_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/darks
+   export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
-  if [ -z "$FLAT_FIELD_FILE" ];then
-   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
-   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
-   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jun_full_moon.fit
-   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jul17_flatbox.fit
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2025sep.fit"
+  if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+   #export FLAT_FIELD_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
+   #export FLAT_FIELD_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
+   #export FLAT_FIELD_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jun_full_moon.fit
+   #export FLAT_FIELD_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jul17_flatbox.fit
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
+   export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2025sep.fit"
   fi
  fi
  #
@@ -192,20 +192,22 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   # The input images will be calibrated
-  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # DARK_FRAMES_DIR_OR_FILE may point to a directory of dark frames or to a single dark frame file;
+  # if it is a directory,
   # the script will try to find the most appropriate one based on temperature and time
-  if [ -z "$DARK_FRAMES_DIR" ];then
-   #export DARK_FRAMES_DIR=/home/apache/darks
-   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+   #export DARK_FRAMES_DIR_OR_FILE=/home/apache/darks
+   export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   # we don't usually have a luxury of multiple flat field frames to choose from
-  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  if [ -z "$FLAT_FIELD_FILE" ];then
-   #export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
-   #export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2024_febmar_full_moon.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2023-07-14.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2025sep.fit"
+  # FLAT_FIELD_DIR_OR_FILE may point to one specific flat field file, or to a directory of flats;
+  # if it is a directory, the best match (same dimensions/FILTER/CAMERA/CAMERAID/TELESCOP, closest in time) is picked
+  if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+   #export FLAT_FIELD_DIR_OR_FILE=/home/apache/flats/mff_2023-07-14.fit
+   #export FLAT_FIELD_DIR_OR_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2024_febmar_full_moon.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2023-07-14.fit"
+   export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2025sep.fit"
   fi
   #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -277,12 +279,12 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   export MPC_CODE=C32
   # Calibration data
-  if [ -z "$DARK_FRAMES_DIR" ];then
-   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+   export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   # no flats without a shutter
-  #if [ -z "$FLAT_FIELD_FILE" ];then
-  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
+  #if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+  # export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
   #fi
  fi
  #
@@ -301,23 +303,25 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
   export MPC_CODE=V36
   # The input images will be calibrated
-  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # DARK_FRAMES_DIR_OR_FILE may point to a directory of dark frames or to a single dark frame file;
+  # if it is a directory,
   # the script will try to find the most appropriate one based on temperature and time
-  if [ -z "$DARK_FRAMES_DIR" ];then
-   #export DARK_FRAMES_DIR=/home/apache/darks
-   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+   #export DARK_FRAMES_DIR_OR_FILE=/home/apache/darks
+   export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   # we don't usually have a luxury of multiple flat field frames to choose from
-  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  if [ -z "$FLAT_FIELD_FILE" ];then
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-21.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-26.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-08.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-22_multinight.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-05-11.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-05-12.fit"
+  # FLAT_FIELD_DIR_OR_FILE may point to one specific flat field file, or to a directory of flats;
+  # if it is a directory, the best match (same dimensions/FILTER/CAMERA/CAMERAID/TELESCOP, closest in time) is picked
+  if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-21.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-02-26.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-08.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-04-22_multinight.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-05-11.fit"
+   export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-05-12.fit"
   fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -367,19 +371,21 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
   export MPC_CODE=V36
   # The input images will be calibrated
-  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # DARK_FRAMES_DIR_OR_FILE may point to a directory of dark frames or to a single dark frame file;
+  # if it is a directory,
   # the script will try to find the most appropriate one based on temperature and time
-  if [ -z "$DARK_FRAMES_DIR" ];then
-   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+   export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   # we don't usually have a luxury of multiple flat field frames to choose from
-  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  if [ -z "$FLAT_FIELD_FILE" ];then
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-02-21.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-03-20.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-08_multinight.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-22_multinight.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-05-11.fit"
+  # FLAT_FIELD_DIR_OR_FILE may point to one specific flat field file, or to a directory of flats;
+  # if it is a directory, the best match (same dimensions/FILTER/CAMERA/CAMERAID/TELESCOP, closest in time) is picked
+  if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-02-21.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-03-20.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-08_multinight.fit"
+   #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-04-22_multinight.fit"
+   export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ2b1x1_2026-05-11.fit"
   fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -432,17 +438,19 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   #MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   # The input images will be calibrated
-  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # DARK_FRAMES_DIR_OR_FILE may point to a directory of dark frames or to a single dark frame file;
+  # if it is a directory,
   # the script will try to find the most appropriate one based on temperature and time
-  #if [ -z "$DARK_FRAMES_DIR" ];then
-  # #export DARK_FRAMES_DIR=/home/apache/darks
-  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  #if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+  # #export DARK_FRAMES_DIR_OR_FILE=/home/apache/darks
+  # export DARK_FRAMES_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   #fi
   # we don't usually have a luxury of multiple flat field frames to choose from
-  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  #if [ -z "$FLAT_FIELD_FILE" ];then
-  # #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
-  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
+  # FLAT_FIELD_DIR_OR_FILE may point to one specific flat field file, or to a directory of flats;
+  # if it is a directory, the best match (same dimensions/FILTER/CAMERA/CAMERAID/TELESCOP, closest in time) is picked
+  #if [ -z "$FLAT_FIELD_DIR_OR_FILE" ];then
+  # #export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
+  # export FLAT_FIELD_DIR_OR_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
   #fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -648,12 +656,14 @@ function try_to_calibrate_the_input_frame {
  # so all other output should go to stderr!
 
  # check if we have calibration data at all
- if [ -z "$DARK_FRAMES_DIR" ];then
-  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR is not set - not attempting to dark-subtract the input frames" 1>&2
+ if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
+  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR_OR_FILE is not set - not attempting to dark-subtract the input frames" 1>&2
   return 1
  fi
- if [ ! -d "$DARK_FRAMES_DIR" ];then
-  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR=$DARK_FRAMES_DIR is not not a directory" 1>&2
+ # DARK_FRAMES_DIR_OR_FILE may point to a directory of dark frames (the best
+ # matching one will be selected) or to a single dark frame file to use directly
+ if [ ! -d "$DARK_FRAMES_DIR_OR_FILE" ] && [ ! -f "$DARK_FRAMES_DIR_OR_FILE" ];then
+  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR_OR_FILE=$DARK_FRAMES_DIR_OR_FILE is neither a directory nor a file" 1>&2
   return 1
  fi
 
@@ -706,11 +716,16 @@ function try_to_calibrate_the_input_frame {
  # Print the temperature keywords SET-TEMP and CCD-TEMP
  util/listhead "$INPUT_FRAME_PATH" | grep -e 'TEMP' -e 'EXPTIME' 1>&2
  
- # find the best dark
- DARK_FRAME=$(util/find_best_dark.sh "$INPUT_FRAME_PATH")
- if [ $? -ne 0 ];then
-  echo "try_to_calibrate_the_input_frame(): cannot find a good dark frame by running util/find_best_dark.sh $INPUT_FRAME_PATH" 1>&2
-  return 1
+ # find the best dark: use the specified file directly, or search the directory
+ if [ -f "$DARK_FRAMES_DIR_OR_FILE" ];then
+  echo "try_to_calibrate_the_input_frame(): using the specified dark frame file $DARK_FRAMES_DIR_OR_FILE" 1>&2
+  DARK_FRAME="$DARK_FRAMES_DIR_OR_FILE"
+ else
+  DARK_FRAME=$(DARK_FRAMES_DIR="$DARK_FRAMES_DIR_OR_FILE" util/find_best_dark.sh "$INPUT_FRAME_PATH")
+  if [ $? -ne 0 ];then
+   echo "try_to_calibrate_the_input_frame(): cannot find a good dark frame by running util/find_best_dark.sh $INPUT_FRAME_PATH" 1>&2
+   return 1
+  fi
  fi
  if [ ! -f "$DARK_FRAME" ];then
   echo "try_to_calibrate_the_input_frame(): dark frame file does not exist: DARK_FRAME=$DARK_FRAME" 1>&2
@@ -744,16 +759,33 @@ function try_to_calibrate_the_input_frame {
  OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_DARK_SUBTRACTED_FRAME_PATH"
  
  # now attempt flat fielding
- if [ -n "$FLAT_FIELD_FILE" ];then
-  if [ -s "$FLAT_FIELD_FILE" ];then
+ if [ -n "$FLAT_FIELD_DIR_OR_FILE" ];then
+  # Resolve the flat field: use the specified file directly, or pick the best
+  # matching flat (same dimensions/FILTER/CAMERA/CAMERAID/TELESCOP, closest in
+  # time) from the specified directory
+  FLAT_FIELD_FILE_TO_USE=""
+  if [ -f "$FLAT_FIELD_DIR_OR_FILE" ];then
+   FLAT_FIELD_FILE_TO_USE="$FLAT_FIELD_DIR_OR_FILE"
+  elif [ -d "$FLAT_FIELD_DIR_OR_FILE" ];then
+   FLAT_FIELD_FILE_TO_USE=$(FLAT_FIELDS_DIR="$FLAT_FIELD_DIR_OR_FILE" util/find_best_flat.sh "$INPUT_FRAME_PATH")
+   if [ $? -ne 0 ];then
+    echo "try_to_calibrate_the_input_frame(): cannot find a matching flat field in $FLAT_FIELD_DIR_OR_FILE by running util/find_best_flat.sh - proceeding with dark-only correction" 1>&2
+    FLAT_FIELD_FILE_TO_USE=""
+   else
+    echo "try_to_calibrate_the_input_frame(): selected flat field $FLAT_FIELD_FILE_TO_USE from directory $FLAT_FIELD_DIR_OR_FILE" 1>&2
+   fi
+  else
+   echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_DIR_OR_FILE=$FLAT_FIELD_DIR_OR_FILE is neither a file nor a directory" 1>&2
+  fi
+  if [ -n "$FLAT_FIELD_FILE_TO_USE" ] && [ -s "$FLAT_FIELD_FILE_TO_USE" ];then
    # clean-up if this is not the first run
    if [ -f "$OUTPUT_FLATFIELDED_FRAME_PATH" ];then
     rm -f "$OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
    fi
    # divide the dark-subtracted frame by the flat field
-   util/ccd/md "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" "$FLAT_FIELD_FILE" "$OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+   util/ccd/md "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" "$FLAT_FIELD_FILE_TO_USE" "$OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
    if [ $? -ne 0 ];then
-    echo "try_to_calibrate_the_input_frame(): a problem occurred while running util/ccd/md $OUTPUT_DARK_SUBTRACTED_FRAME_PATH $FLAT_FIELD_FILE $OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+    echo "try_to_calibrate_the_input_frame(): a problem occurred while running util/ccd/md $OUTPUT_DARK_SUBTRACTED_FRAME_PATH $FLAT_FIELD_FILE_TO_USE $OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
     # do not return: if things are bad we'll got with dark-only corrected frame
     #return 1
    else
@@ -763,17 +795,17 @@ function try_to_calibrate_the_input_frame {
     OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_FLATFIELDED_FRAME_PATH"
     # Plot the flat field for log display
     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv -v "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png 1>&2
+    util/fits2png "$FLAT_FIELD_FILE_TO_USE" &> /dev/null && mv -v "$(basename ${FLAT_FIELD_FILE_TO_USE%.*}).png" transient_report/flat.png 1>&2
     if [ $? -ne 0 ] || [ ! -s transient_report/flat.png ] ;then
      echo "try_to_calibrate_the_input_frame(): something went wrong while producing the flat field image PNG plot" 1>&2
     fi
     unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
    fi
   else
-   echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_FILE=$FLAT_FIELD_FILE does not exist or is empty" 1>&2
+   echo "try_to_calibrate_the_input_frame(): no usable flat field to apply (FLAT_FIELD_DIR_OR_FILE=$FLAT_FIELD_DIR_OR_FILE) - proceeding with dark-only correction" 1>&2
   fi
- else 
-  echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_FILE is not set" 1>&2
+ else
+  echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_DIR_OR_FILE is not set" 1>&2
  fi
  
  echo "$OUTPUT_CALIBRATED_FRAME_PATH"
@@ -1158,14 +1190,14 @@ ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC= $ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC
 BAD_REGION_FILE= $BAD_REGION_FILE
 CAMERA_SETTINGS= $CAMERA_SETTINGS
 CHECK_POINTING_ACCURACY= $CHECK_POINTING_ACCURACY
-DARK_FRAMES_DIR= $DARK_FRAMES_DIR
+DARK_FRAMES_DIR_OR_FILE= $DARK_FRAMES_DIR_OR_FILE
 EXCLUSION_LIST= $EXCLUSION_LIST
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX= $FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX
 FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX
 FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH
 FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
-FLAT_FIELD_FILE= $FLAT_FIELD_FILE
+FLAT_FIELD_DIR_OR_FILE= $FLAT_FIELD_DIR_OR_FILE
 FRAME_EDGE_OFFSET_PIX= $FRAME_EDGE_OFFSET_PIX
 GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
 MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
@@ -2093,7 +2125,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # I guess we should be including the calibration attempt here resetting SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE
  ################################
- echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE" | tee -a transient_factory_test31.txt
+ echo "Calibration settings: DARK_FRAMES_DIR_OR_FILE=$DARK_FRAMES_DIR_OR_FILE FLAT_FIELD_DIR_OR_FILE=$FLAT_FIELD_DIR_OR_FILE" | tee -a transient_factory_test31.txt
  CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__FIRST_IMAGE" 2>> transient_factory_test31.txt)
  if [ $? -eq 0 ];then
   if [ -n "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" ];then
@@ -3410,7 +3442,7 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
      WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="${WCS_CALIBRATED_IMAGE_FOR_ARCHIVE/.fz/}"
      #
      if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] ;then
-      if [ -n "$DARK_FRAMES_DIR" ] && [ -n "$FLAT_FIELD_FILE" ] ;then
+      if [ -n "$DARK_FRAMES_DIR_OR_FILE" ] && [ -n "$FLAT_FIELD_DIR_OR_FILE" ] ;then
        echo "WARNING: no fully-calibrated image to save: $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
       fi
       continue

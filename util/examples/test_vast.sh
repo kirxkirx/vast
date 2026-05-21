@@ -12308,8 +12308,11 @@ if [ -d ../NMW_calibration_test ];then
  echo "NMW calibration test " 
  echo -n "NMW calibration test: " >> vast_test_report.txt 
  # Set calibration info
+ # DARK_FRAMES_DIR is the native interface of find_best_dark.sh, which this test
+ # calls directly below; the *_OR_FILE variables are what transient_factory_test31.sh reads.
  export DARK_FRAMES_DIR=../NMW_calibration_test/darks
- export FLAT_FIELD_FILE=../NMW_calibration_test/flat/mff_0013_tail1_notbad.fit
+ export DARK_FRAMES_DIR_OR_FILE="$DARK_FRAMES_DIR"
+ export FLAT_FIELD_DIR_OR_FILE=../NMW_calibration_test/flat/mff_0013_tail1_notbad.fit
  #
  cp -v bad_region.lst_default bad_region.lst
  #
@@ -12497,7 +12500,7 @@ $GREP_RESULT"
   if [ -f f_test.fit ];then
    rm -f f_test.fit
   fi
-  util/ccd/md test.fit "$FLAT_FIELD_FILE" f_test.fit
+  util/ccd/md test.fit "$FLAT_FIELD_DIR_OR_FILE" f_test.fit
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_NONZERO_EXIT_CODE"
@@ -12547,7 +12550,7 @@ $GREP_RESULT"
    if [ -f ff_test.fit ];then
     rm -f ff_test.fit
    fi
-   util/ccd/md f_test.fit "$FLAT_FIELD_FILE" ff_test.fit
+   util/ccd/md f_test.fit "$FLAT_FIELD_DIR_OR_FILE" ff_test.fit
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_EXIT_CODE"
@@ -12600,7 +12603,8 @@ $GREP_RESULT"
  fi
 
  unset DARK_FRAMES_DIR
- unset FLAT_FIELD_FILE
+ unset DARK_FRAMES_DIR_OR_FILE
+ unset FLAT_FIELD_DIR_OR_FILE
  rm -f ../NMW_calibration_test/light/fd_*fts
 
  ###### restore exclusion list after the test if needed
@@ -21202,8 +21206,8 @@ if [ -d ../NMW_calibration_lacosmic_test ];then
   fi
  done
  # Set calibration info
- export DARK_FRAMES_DIR=../NMW_calibration_lacosmic_test/darks
- export FLAT_FIELD_FILE=../NMW_calibration_lacosmic_test/flat/mff_0013_tail1_notbad.fit
+ export DARK_FRAMES_DIR_OR_FILE=../NMW_calibration_lacosmic_test/darks
+ export FLAT_FIELD_DIR_OR_FILE=../NMW_calibration_lacosmic_test/flat/mff_0013_tail1_notbad.fit
  #
  cp -v bad_region.lst_default bad_region.lst
  #
@@ -21260,7 +21264,8 @@ if [ -d ../NMW_calibration_lacosmic_test ];then
 
  # Unset calibration variables
  unset DARK_FRAMES_DIR
- unset FLAT_FIELD_FILE
+ unset DARK_FRAMES_DIR_OR_FILE
+ unset FLAT_FIELD_DIR_OR_FILE
 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
@@ -21930,8 +21935,8 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
   fi
  done
  # Set calibration files
- export DARK_FRAMES_DIR=../NMW-STL__RefFrameMatchFail_test/darks
- export FLAT_FIELD_FILE=../NMW-STL__RefFrameMatchFail_test/flats/STL__mff_2024_febmar_full_moon.fit
+ export DARK_FRAMES_DIR_OR_FILE=../NMW-STL__RefFrameMatchFail_test/darks
+ export FLAT_FIELD_DIR_OR_FILE=../NMW-STL__RefFrameMatchFail_test/flats/STL__mff_2024_febmar_full_moon.fit
  # Test the production NMW script
  REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__RefFrameMatchFail_test/second_epoch_images
  if [ $? -ne 0 ];then
@@ -21940,7 +21945,8 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
  fi
  #
  unset DARK_FRAMES_DIR
- unset FLAT_FIELD_FILE
+ unset DARK_FRAMES_DIR_OR_FILE
+ unset FLAT_FIELD_DIR_OR_FILE
  #
  #if [ -f astorb.dat_backup ];then
  # mv astorb.dat_backup astorb.dat

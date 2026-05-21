@@ -16,8 +16,11 @@
 
 // Check if a FITS keyword value looks like a real identifier
 // rather than a placeholder like "Unknown Telescope", "___", etc.
+// min_len is the minimum acceptable string length: use 2 for
+// TELESCOP/CAMERA/CAMERAID, but 1 for FILTER because single-character
+// filter names (R, V, B, I, ...) are perfectly normal.
 // Returns 1 if the value is meaningful, 0 if it should be ignored.
-static int is_meaningful_keyword_value( const char *value ) {
+static int is_meaningful_keyword_value( const char *value, int min_len ) {
  int i;
  int len;
  int has_alnum;
@@ -25,7 +28,7 @@ static int is_meaningful_keyword_value( const char *value ) {
   return 0;
  }
  len= strlen( value );
- if ( len < 2 ) {
+ if ( len < min_len ) {
   return 0;
  }
  if ( strcasecmp( value, "Unknown Telescope" ) == 0 ) {
@@ -164,9 +167,12 @@ int main( int argc, char *argv[] ) {
  char camera_flat[FLEN_VALUE];
  char cameraid_image[FLEN_VALUE];
  char cameraid_flat[FLEN_VALUE];
+ char filter_image[FLEN_VALUE];
+ char filter_flat[FLEN_VALUE];
  int have_telescop_image, have_telescop_flat;
  int have_camera_image, have_camera_flat;
  int have_cameraid_image, have_cameraid_flat;
+ int have_filter_image, have_filter_flat;
 
  have_telescop_image= 0;
  have_telescop_flat= 0;
@@ -174,12 +180,16 @@ int main( int argc, char *argv[] ) {
  have_camera_flat= 0;
  have_cameraid_image= 0;
  have_cameraid_flat= 0;
+ have_filter_image= 0;
+ have_filter_flat= 0;
  memset( telescop_image, 0, FLEN_VALUE );
  memset( telescop_flat, 0, FLEN_VALUE );
  memset( camera_image, 0, FLEN_VALUE );
  memset( camera_flat, 0, FLEN_VALUE );
  memset( cameraid_image, 0, FLEN_VALUE );
  memset( cameraid_flat, 0, FLEN_VALUE );
+ memset( filter_image, 0, FLEN_VALUE );
+ memset( filter_flat, 0, FLEN_VALUE );
 
  if ( argc != 4 ) {
   fprintf( stderr, "Wrong number of arguments... :(\n  Usage: %s image.fit flat.fit result.fit\n", argv[0] );
@@ -231,20 +241,25 @@ int main( int argc, char *argv[] ) {
    exit( EXIT_FAILURE ); // Exit the program
   }
  }
- // Read TELESCOP and CAMERA keywords from the input image
+ // Read TELESCOP, CAMERA, CAMERAID and FILTER keywords from the input image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_image, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( telescop_image ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( telescop_image, 2 ) ) {
   have_telescop_image= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERA", camera_image, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( camera_image ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( camera_image, 2 ) ) {
   have_camera_image= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_image, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( cameraid_image ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( cameraid_image, 2 ) ) {
   have_cameraid_image= 1;
+ }
+ status= 0;
+ fits_read_key( fptr, TSTRING, "FILTER", filter_image, NULL, &status );
+ if ( status == 0 && is_meaningful_keyword_value( filter_image, 1 ) ) {
+  have_filter_image= 1;
  }
  status= 0;
  fits_get_img_type( fptr, &bitpix2, &status );
@@ -287,14 +302,14 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "Flat field and image must be the same size!\n" );
   exit( EXIT_FAILURE );
  }
- // Read TELESCOP and CAMERA keywords from the flat field and compare with the image
+ // Read TELESCOP, CAMERA, CAMERAID and FILTER keywords from the flat field and compare with the image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_flat, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( telescop_flat ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( telescop_flat, 2 ) ) {
   have_telescop_flat= 1;
  }
  status= 0;
  fits_read_key( fptr, TSTRING, "CAMERA", camera_flat, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( camera_flat ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( camera_flat, 2 ) ) {
   have_camera_flat= 1;
  }
  status= 0;
@@ -313,13 +328,26 @@ int main( int argc, char *argv[] ) {
   }
  }
  fits_read_key( fptr, TSTRING, "CAMERAID", cameraid_flat, NULL, &status );
- if ( status == 0 && is_meaningful_keyword_value( cameraid_flat ) ) {
+ if ( status == 0 && is_meaningful_keyword_value( cameraid_flat, 2 ) ) {
   have_cameraid_flat= 1;
  }
  status= 0;
  if ( have_cameraid_image && have_cameraid_flat ) {
   if ( strcmp( cameraid_image, cameraid_flat ) != 0 ) {
    fprintf( stderr, "ERROR: CAMERAID mismatch between the image (%s; %s) and flat (%s; %s)!\n", cameraid_image, argv[1], cameraid_flat, argv[2] );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ // FILTER uses a minimum meaningful length of 1 (single-letter filter names like R, V, B, I)
+ fits_read_key( fptr, TSTRING, "FILTER", filter_flat, NULL, &status );
+ if ( status == 0 && is_meaningful_keyword_value( filter_flat, 1 ) ) {
+  have_filter_flat= 1;
+ }
+ status= 0;
+ if ( have_filter_image && have_filter_flat ) {
+  if ( strcmp( filter_image, filter_flat ) != 0 ) {
+   fprintf( stderr, "ERROR: FILTER mismatch between the image (%s; %s) and flat (%s; %s)!\n", filter_image, argv[1], filter_flat, argv[2] );
    fits_close_file( fptr, &status );
    exit( EXIT_FAILURE );
   }

@@ -1,4 +1,17 @@
 XX XXX XXXX: vast-1.0rc90
+	* NMW traansient search script 'util/transients/transient_factory_test31.sh' can now 
+        do automatic flat-field selection from a directory. 
+	can now be pointed at a directory of flat fields instead of a single master flat: the new
+	util/find_best_flat.sh picks the flat closest in time to the science image among those with
+	matching image dimensions, FILTER, CAMERA (camera name), CAMERAID (camera code) and TELESCOP.
+	A keyword that is absent (or a placeholder like 'Unknown'/'None') in either file is assumed to
+	match, so single-master-flat setups keep working unchanged. 
+        The same file-or-directory choice is now also available for dark frames 
+	* util/calibrate_and_platesolve.sh is a convenience wrapper that calibrates and plate-solves a
+	single CCD image using the same strategy as the transient search: it dark-subtracts and
+	flat-fields the input frame (auto-detecting the per-camera calibration data, or honouring
+	DARK_FRAMES_DIR_OR_FILE / FLAT_FIELD_DIR_OR_FILE if set) and then plate-solves the result,
+	writing wcs_fd_<name>. 
 	* Zero-point-only magnitude calibration against catalogs ('lib/fit_zeropoint',
 	used by util/calibrate_single_image_with_tycho2.sh and the per-reference-image
 	forced-photometry filter) now uses the unweighted median of (catmag - insmag)
