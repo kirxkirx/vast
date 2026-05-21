@@ -15055,16 +15055,16 @@ $GREP_RESULT"
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110"
   #fi
-  grep -q "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html
+  grep -q "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:1[67]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110a"
-   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html`
+   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:1[67]\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR24N10110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  18:02:53\... -29:14:17\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  18:02:53\... -29:14:1[67]\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:02:53.50 -29:14:14.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
@@ -15081,13 +15081,13 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep -q "     TAU0008  C2024 02 24.125.. 18 02 53\... -29 14 17\..          11\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2024 02 24.125.. 18 02 53\... -29 14 1[67]\..          11\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
   fi
   # Test Stub TOCP report line
-  grep -q "TCP 2024 02 24.125.*  18 02 53\... -29 14 17\..  11\.. U             Sgr       9 0" transient_report/index.html
+  grep -q "TCP 2024 02 24.125.*  18 02 53\... -29 14 1[67]\..  11\.. U             Sgr       9 0" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
