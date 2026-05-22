@@ -657,6 +657,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    if [ -n "$FORCED_PHOT_NEW_MEAN_MAG" ];then
     FORCED_PHOT_DET_LIST=""
     FORCED_PHOT_HAD_EDGE=0
+    FORCED_PHOT_HAD_SATURATED=0
     for FORCED_PHOT_REF_IMAGE_PATH in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ;do
      if [ -z "$FORCED_PHOT_REF_IMAGE_PATH" ];then
       continue
@@ -712,6 +713,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       # as an sky2xy edge: remember it and reject after the loop.
       FORCED_PHOT_HAD_EDGE=1
      fi
+     if [ "$FORCED_PHOT_RESULT_STATUS" = "saturated" ];then
+      # The source is present at this position but too bright to be measured
+      # (saturated) on the reference image. This is almost always a VaST
+      # star-matching failure -- the bright source was on the reference all
+      # along and got mis-flagged as a new object -- so reject after the loop.
+      FORCED_PHOT_HAD_SATURATED=1
+     fi
      if [ "$FORCED_PHOT_RESULT_STATUS" = "detection" ];then
       FORCED_PHOT_USE_ERR="$FORCED_PHOT_RESULT_ERR"
       if ! awk -v e="$FORCED_PHOT_USE_ERR" 'BEGIN {exit !(e > 0.0 && e < 99.0)}' ;then
@@ -722,6 +730,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     done
     if [ "$FORCED_PHOT_HAD_EDGE" = "1" ];then
      echo "Forced photometry filter REJECTED candidate at $RA_MEAN_HMS $DEC_MEAN_HMS: at least one reference image reported edge (off-image or aperture/annulus past image boundary); cannot perform the forced-photometry cross-check" >&2
+     clean_tmp_files
+     exit 1
+    fi
+    if [ "$FORCED_PHOT_HAD_SATURATED" = "1" ];then
+     echo "Forced photometry filter REJECTED candidate at $RA_MEAN_HMS $DEC_MEAN_HMS: the source is saturated (present but too bright to measure) on at least one reference image -- likely a star-matching failure rather than a new transient" >&2
      clean_tmp_files
      exit 1
     fi
