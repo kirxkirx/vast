@@ -1577,6 +1577,7 @@ int main( int argc, char **argv ) {
  int image_specified_on_command_line__0_is_yes= 0; // 0 - yes, 1 - no, we'll get the image name from log file
 
  double fixed_aperture= 0.0;
+ double target_aperture_circle_diameter_pix= 0.0; // >0 draws a red circle of this diameter (pix) at the target on the finder chart
 
  // for nanosleep()
  struct timespec requested_time;
@@ -1626,7 +1627,7 @@ int main( int argc, char **argv ) {
 
  const char *const shortopt= "a:w:9sdnlftb:";
  const struct option longopt[]= {
-     { "apeture", 1, NULL, 'a' }, { "width", 1, NULL, 'w' }, { "ds9", 0, NULL, '9' }, { "imgsizestringinsideimg", 0, NULL, 's' }, { "datestringinsideimg", 0, NULL, 'd' }, { "nonortheastmarks", 0, NULL, 'n' }, { "nolabels", 0, NULL, 'l' }, { "targetmark", 0, NULL, 't' }, { "namelabel", 1, NULL, 'b' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
+     { "apeture", 1, NULL, 'a' }, { "width", 1, NULL, 'w' }, { "ds9", 0, NULL, '9' }, { "imgsizestringinsideimg", 0, NULL, 's' }, { "datestringinsideimg", 0, NULL, 'd' }, { "nonortheastmarks", 0, NULL, 'n' }, { "nolabels", 0, NULL, 'l' }, { "targetmark", 0, NULL, 't' }, { "targetaperturecircle", 1, NULL, 'C' }, { "namelabel", 1, NULL, 'b' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
  int nextopt;
 
  // Initialize arrays and variables that require executable statements
@@ -1717,6 +1718,15 @@ int main( int argc, char **argv ) {
   case 't':
    use_target_mark= 1;
    fprintf( stdout, "opt 't': Put target mark for the finder chart!\n" );
+   break;
+  case 'C':
+   cvalue= optarg;
+   target_aperture_circle_diameter_pix= atof( cvalue );
+   fprintf( stdout, "opt 'C': Drawing a red target aperture circle of %.1lf pix. in diameter!\n", target_aperture_circle_diameter_pix );
+   if ( target_aperture_circle_diameter_pix < 1.0 ) {
+    fprintf( stderr, "ERROR: the specified target aperture circle diameter is out of the expected range!\n" );
+    return 1;
+   }
    break;
   case 'b':
    cvalue= optarg;
@@ -3523,6 +3533,14 @@ int main( int argc, char **argv ) {
        // lineY[1]= markY;
        cpgline( 2, lineX, lineY );
        //
+      }
+      // draw a red circle of the photometric-aperture radius at the target (independent of the cross marker)
+      if ( target_aperture_circle_diameter_pix > 0.0 ) {
+       cpgsci( 2 ); // red
+       cpgslw( 3 ); // increase line width
+       cpgcirc( markX, markY, (float)( target_aperture_circle_diameter_pix / 2.0 ) );
+       cpgslw( 1 );
+       cpgsci( 1 );
       }
       //
       cpgslw( 1 );   // set default line width

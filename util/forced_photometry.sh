@@ -6,6 +6,12 @@
 # Usage: util/forced_photometry.sh image.fits HH:MM:SS.ss +DD:MM:SS.s FILTER
 #
 # Runs both C and Python implementations for cross-validation.
+# Set FORCED_PHOTOMETRY_ONLY_C=yes to run only the C implementation (the Python
+# step is skipped); in that case the script also prints, on stdout before the
+# '# C implementation:' block, two machine-readable lines for the caller:
+#   # aperture_diameter_pix: <APERTURE>
+#   # target_pixel: <x> <y>
+# The default (variable unset) keeps the original both-implementations behaviour.
 #
 
 #################################
@@ -341,28 +347,31 @@ fi
 
 #################################
 # Step 7: Run Python implementation
+# (skipped when FORCED_PHOTOMETRY_ONLY_C=yes)
 #################################
-echo "Step 7: Running Python forced photometry..." >&2
-PY_START=$(date +%s%N)
-if [ $LIST_MODE -eq 0 ];then
- PY_RESULT=$("$VAST_PATH"util/forced_photometry.py "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
- PY_EXIT=$?
-else
- "$VAST_PATH"util/forced_photometry.py "$FITSFILE" --list "$FORCEDPHOT_PIXLIST" $APERTURE > "$FORCEDPHOT_PY_TMP" 2>/dev/null
- PY_EXIT=$?
-fi
-PY_END=$(date +%s%N)
-PY_TIME=$(echo "$PY_START $PY_END" | awk '{printf "%.3f", ($2-$1)/1000000000.0}')
-echo "  Python execution time: ${PY_TIME}s" >&2
-if [ $PY_EXIT -ne 0 ];then
- echo "WARNING: Python forced photometry exited with code $PY_EXIT" >&2
+if [ "$FORCED_PHOTOMETRY_ONLY_C" != "yes" ];then
+ echo "Step 7: Running Python forced photometry..." >&2
+ PY_START=$(date +%s%N)
  if [ $LIST_MODE -eq 0 ];then
+  PY_RESULT=$("$VAST_PATH"util/forced_photometry.py "$FITSFILE" $PIXEL_X $PIXEL_Y $APERTURE 2>/dev/null)
+  PY_EXIT=$?
+ else
+  "$VAST_PATH"util/forced_photometry.py "$FITSFILE" --list "$FORCEDPHOT_PIXLIST" $APERTURE > "$FORCEDPHOT_PY_TMP" 2>/dev/null
+  PY_EXIT=$?
+ fi
+ PY_END=$(date +%s%N)
+ PY_TIME=$(echo "$PY_START $PY_END" | awk '{printf "%.3f", ($2-$1)/1000000000.0}')
+ echo "  Python execution time: ${PY_TIME}s" >&2
+ if [ $PY_EXIT -ne 0 ];then
+  echo "WARNING: Python forced photometry exited with code $PY_EXIT" >&2
+  if [ $LIST_MODE -eq 0 ];then
+   PY_RESULT="99.0000 99.0000 fail"
+  fi
+ fi
+ if [ $LIST_MODE -eq 0 ] && [ -z "$PY_RESULT" ];then
+  echo "WARNING: empty result from Python forced photometry" >&2
   PY_RESULT="99.0000 99.0000 fail"
  fi
-fi
-if [ $LIST_MODE -eq 0 ] && [ -z "$PY_RESULT" ];then
- echo "WARNING: empty result from Python forced photometry" >&2
- PY_RESULT="99.0000 99.0000 fail"
 fi
 
 #################################
@@ -371,10 +380,18 @@ fi
 BASENAME_FITSFILE=$(basename "$FITSFILE")
 
 if [ $LIST_MODE -eq 0 ];then
+ # When only the C implementation was requested, emit machine-readable lines
+ # (aperture diameter and target pixel position) that the caller may need.
+ if [ "$FORCED_PHOTOMETRY_ONLY_C" = "yes" ];then
+  echo "# aperture_diameter_pix: $APERTURE"
+  echo "# target_pixel: $PIXEL_X $PIXEL_Y"
+ fi
  echo "# C implementation:"
  echo "$JD  $C_RESULT  $BASENAME_FITSFILE"
- echo "# Python implementation:"
- echo "$JD  $PY_RESULT  $BASENAME_FITSFILE"
+ if [ "$FORCED_PHOTOMETRY_ONLY_C" != "yes" ];then
+  echo "# Python implementation:"
+  echo "$JD  $PY_RESULT  $BASENAME_FITSFILE"
+ fi
 else
  # Join tool output (label cx cy mag err st) with sky map (label RA Dec px py)
  # to produce: JD label RA Dec px py mag err st basename.
@@ -383,8 +400,10 @@ else
  paste -d' ' "$FORCEDPHOT_SKYMAP" "$FORCEDPHOT_C_TMP" | \
   awk -v jd="$JD" -v fn="$BASENAME_FITSFILE" \
       'NF >= 10 {printf "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s\n", jd, $1, $2, $3, $4, $5, $9, $10, $11, fn}'
- echo "# Python implementation:"
- paste -d' ' "$FORCEDPHOT_SKYMAP" "$FORCEDPHOT_PY_TMP" | \
-  awk -v jd="$JD" -v fn="$BASENAME_FITSFILE" \
-      'NF >= 10 {printf "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s\n", jd, $1, $2, $3, $4, $5, $9, $10, $11, fn}'
+ if [ "$FORCED_PHOTOMETRY_ONLY_C" != "yes" ];then
+  echo "# Python implementation:"
+  paste -d' ' "$FORCEDPHOT_SKYMAP" "$FORCEDPHOT_PY_TMP" | \
+   awk -v jd="$JD" -v fn="$BASENAME_FITSFILE" \
+       'NF >= 10 {printf "%s  %s  %s  %s  %s  %s  %s  %s  %s  %s\n", jd, $1, $2, $3, $4, $5, $9, $10, $11, fn}'
+ fi
 fi
