@@ -2422,6 +2422,32 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   # --- End SExtractor catalog cache save ---
 
+  # --- Save second-epoch SExtractor catalogs next to their image files ---
+  # Mirrors the reference-image cache save above, but writes the catalog and
+  # aperture file into the persistent image directory (alongside the wcs_fd_
+  # FITS file itself) instead of the shared cache. This lets
+  # coord_forced_photometry.py reuse the SExtractor results -- and skip the
+  # SExtractor run -- when measuring those images later. The file is named
+  # <basename(image)>.cat so the suffix follows the image (including .fz when
+  # the upload is funpack-compressed). The last SExtractor pass in the
+  # SEXTRACTOR_CONFIG_FILES loop wins by overwrite, which matches the
+  # second-of-two faint-target convention coord_forced_photometry.py picks.
+  for SE_IMG in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ; do
+   SE_BASENAME=$(basename "$SE_IMG")
+   SE_PERSIST_DIR=$(dirname "$SE_IMG")
+   SE_CATALOG_NAME=$(grep "$SE_IMG" vast_images_catalogs.log | awk '{print $1}')
+   if [ -n "$SE_CATALOG_NAME" ] && [ -f "$SE_CATALOG_NAME" ] && [ -f "${SE_CATALOG_NAME}.aperture" ]; then
+    # Atomic write: copy to temp, then rename. If two passes finish nearly
+    # simultaneously, last writer wins; both files have valid SExtractor
+    # output produced with the same image, just possibly different settings.
+    cp "$SE_CATALOG_NAME"           "$SE_PERSIST_DIR/${SE_BASENAME}.cat.tmp.$$"
+    mv "$SE_PERSIST_DIR/${SE_BASENAME}.cat.tmp.$$"           "$SE_PERSIST_DIR/${SE_BASENAME}.cat"
+    cp "${SE_CATALOG_NAME}.aperture" "$SE_PERSIST_DIR/${SE_BASENAME}.cat.aperture.tmp.$$"
+    mv "$SE_PERSIST_DIR/${SE_BASENAME}.cat.aperture.tmp.$$"  "$SE_PERSIST_DIR/${SE_BASENAME}.cat.aperture"
+   fi
+  done
+  # --- End second-epoch SExtractor catalog save ---
+
   #
   echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   record_timing "    VAST_RUN_${SEXTRACTOR_CONFIG_FILE}" "$VAST_RUN_START_UNIXSEC"
