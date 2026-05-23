@@ -3415,7 +3415,17 @@ int main( int argc, char **argv ) {
      cpgsch( 3.0 );
      cpgslw( 4 );
     }
-    cpgpt1( markX, markY, 2 );
+    // When --targetaperturecircle was passed, the aperture circle conveys
+    // both position and aperture size; we suppress the '+' so it is not
+    // drawn on top of (and obscuring) the circle. Otherwise -- including
+    // every existing caller of fits2png / make_finding_chart -- keep the
+    // default '+' marker.
+    if ( target_aperture_circle_diameter_pix > 0.0 ) {
+     cpgslw( 3 );
+     cpgcirc( markX, markY, (float)( target_aperture_circle_diameter_pix / 2.0 ) );
+    } else {
+     cpgpt1( markX, markY, 2 );
+    }
     if ( finder_chart_mode == 1 ) {
      cpgsch( 1.0 );
      cpgslw( 1 );
@@ -3534,15 +3544,9 @@ int main( int argc, char **argv ) {
        cpgline( 2, lineX, lineY );
        //
       }
-      // draw a red circle of the photometric-aperture radius at the target (independent of the cross marker)
-      if ( target_aperture_circle_diameter_pix > 0.0 ) {
-       cpgsci( 2 ); // red
-       cpgslw( 3 ); // increase line width
-       cpgcirc( markX, markY, (float)( target_aperture_circle_diameter_pix / 2.0 ) );
-       cpgslw( 1 );
-       cpgsci( 1 );
-      }
-      //
+      // (The --targetaperturecircle circle is drawn earlier, alongside the
+      // default '+' marker logic, so it appears regardless of the N/E-marks
+      // path being taken here.)
       cpgslw( 1 );   // set default line width
       cpgsch( 1.0 ); /* Set default font size */
       cpgsci( 1 );
