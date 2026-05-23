@@ -3422,6 +3422,9 @@ int main( int argc, char **argv ) {
     // default '+' marker.
     if ( target_aperture_circle_diameter_pix > 0.0 ) {
      cpgslw( 3 );
+     cpgsfs( 2 ); // outline-only fill style -- matches the existing APER
+                  // aperture drawing below, so the circle is a thin ring
+                  // through which the source pixels remain visible
      cpgcirc( markX, markY, (float)( target_aperture_circle_diameter_pix / 2.0 ) );
     } else {
      cpgpt1( markX, markY, 2 );
