@@ -2902,6 +2902,35 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
      wait
     fi
     #############
+    # Drain the background util/solve_plate_with_UCAC5 jobs dispatched in the
+    # parallel for-loop above BEFORE letting calibrate_current_field_with_tycho2.sh
+    # touch the working directory.
+    #
+    # Why: each of those background jobs runs an internal
+    # util/wcs_image_calibration.sh on its image, because
+    # util/solve_plate_with_UCAC5 unconditionally re-solves the plate with
+    # Astrometry.net (blind_plate_solve_with_astrometry_net() in
+    # src/solve_plate_with_UCAC5.c does system("wcs_image_calibration.sh ..."))
+    # regardless of whether the input already carries a usable WCS.
+    # Separately, calibrate_current_field_with_tycho2.sh itself invokes
+    # util/wcs_image_calibration.sh on the reference image when its own
+    # SExtractor-catalog check fails. Without the drain here, those two
+    # wcs_image_calibration.sh chains run concurrently in the same working
+    # directory and race on the reference image's wcs_<basename>.fits
+    # (each does cp + strip_wcs_keywords + insert_wcs_header in place on
+    # the same filename). The loser aborts with
+    #   FITSIO status = 105: couldn't create the named file
+    #   ERROR inserting WCS header in ... !!! Aborting further actions!
+    # which is non-fatal to the field run (the winner leaves a valid
+    # wcs_<basename>.fits behind, downstream uses it) but loud and wasteful.
+    #
+    # The conditional `wait` above only fires when the WCS image is missing
+    # at check time; the race here happens while the file is being modified
+    # mid-operation, so the conditional check doesn't catch it. Force an
+    # unconditional drain.
+    echo "wait (drain background util/solve_plate_with_UCAC5 jobs before Tycho-2 calibration -- avoids wcs_<basename>.fits write race)" | tee -a transient_factory_test31.txt
+    wait
+    #############
     echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
