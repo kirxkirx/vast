@@ -1006,6 +1006,7 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type=\"submit\" value='NMW images'>
 </form>
 <input type='button' value='Download charts archive' onclick=\"if(location.protocol==='file:'){alert('Download charts archive is available only when this report is viewed via the unmw web server (http/https).');return;}var u=window.location.href.split('#')[0];if(u.endsWith('/'))u+='index.html';u+='#__FASTPLOT_TRANSIENT_NAME__';window.open(window.location.origin+'/cgi-bin/unmw/fastplot.py?candidate_url='+encodeURIComponent(u),'_blank');\">
+<input type='button' value='Forced photometry' onclick=\"if(location.protocol==='file:'){alert('Forced photometry is available only when this report is viewed via the unmw web server (http/https).');return;}window.open(window.location.origin+'/cgi-bin/unmw/coord_forced_photometry.py?coords='+encodeURIComponent('$RA_MEAN_HMS $DEC_MEAN_HMS'),'_blank');\">
 "
 
 # Show the ASAS-3 button only for sources with declination below +28
