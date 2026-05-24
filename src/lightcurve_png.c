@@ -361,6 +361,8 @@ static int render_plot( const options_t *opt,
  float xmin_f, xmax_f;
  float ymin_mag, ymax_mag;
  float xch, ych;
+ float tri_w_half;
+ float tri_h_half;
  float tri_x[3];
  float tri_y[3];
  float *jd_det_f;
@@ -447,22 +449,30 @@ static int render_plot( const options_t *opt,
   cpgerrb( 6, n_det, jd_det_f, mag_det, err_det, 1.0 );
  }
 
- // Upper limits: blue downward triangles drawn with cpgpoly. The triangle
- // size is derived from the character height so it scales with the plot.
+ // Upper limits: blue downward triangles (outline only) drawn with cpgpoly.
+ // Size matches the red detection symbols by tying half-dimensions to a
+ // fraction of the character size; cpgsfs(2) tells cpgpoly to draw only the
+ // outline. We use fabsf on ych because cpgqcs returns a negative ych for
+ // our inverted (mag) y-axis -- without fabsf the apex would point up.
  if ( n_ul > 0 ) {
   cpgsci( COLOR_BLUE );
   cpgqcs( 4, &xch, &ych ); // 4 = world coordinates
+  cpgsfs( 2 );             // 2 = outline (default 1 = solid fill)
+  tri_w_half= fabsf( xch ) * 0.4f;
+  tri_h_half= fabsf( ych ) * 0.4f;
   for ( i= 0; i < n_ul; i++ ) {
-   // The y axis is inverted, so "+ych" is downward on screen and the
-   // triangle apex visually points to fainter magnitudes.
-   tri_x[0]= jd_ul_f[i] - 0.5f * xch;
-   tri_y[0]= mag_ul[i] - 0.5f * ych;
-   tri_x[1]= jd_ul_f[i] + 0.5f * xch;
-   tri_y[1]= mag_ul[i] - 0.5f * ych;
+   // Apex points to fainter magnitudes -- downward on the inverted-axis
+   // screen. The base is at brighter (smaller) mag, the apex at fainter
+   // (larger) mag.
+   tri_x[0]= jd_ul_f[i] - tri_w_half;
+   tri_y[0]= mag_ul[i] - tri_h_half; // base, brighter side (top on screen)
+   tri_x[1]= jd_ul_f[i] + tri_w_half;
+   tri_y[1]= mag_ul[i] - tri_h_half; // base
    tri_x[2]= jd_ul_f[i];
-   tri_y[2]= mag_ul[i] + 0.8f * ych;
+   tri_y[2]= mag_ul[i] + tri_h_half; // apex, fainter side (bottom on screen)
    cpgpoly( 3, tri_x, tri_y );
   }
+  cpgsfs( 1 ); // restore solid fill (defensive, in case anything draws after)
  }
 
  cpgend();
