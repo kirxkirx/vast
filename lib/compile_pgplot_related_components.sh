@@ -183,7 +183,7 @@ echo "Compiler flags: " $(cat optflags_for_scripts.tmp)
 ## -g -Wall -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 
 
 # Make sure old versions of the files are gone
-for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_zeropoint lib/fit_photocurve lib/plot_astrometric_residuals_xy ;do
+for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_zeropoint lib/fit_photocurve lib/plot_astrometric_residuals_xy lib/lightcurve_png ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -212,11 +212,17 @@ cd lib/ ; ln -s fit_mag_calib fit_linear ; ln -s fit_mag_calib fit_robust_linear
 "$CC" $(cat optflags_for_scripts.tmp) -c -o plot_astrometric_residuals_xy.o src/plot_astrometric_residuals_xy.c
 "$CC" $(cat optflags_for_scripts.tmp) -o lib/plot_astrometric_residuals_xy plot_astrometric_residuals_xy.o setenv_local_pgplot.o $PGPLOT_LIBS $CFITSIO_LIB -lm -Wall -Wextra
 
+# Non-interactive lightcurve plotter (PGPLOT /PNG output). Used by the
+# forced-photometry CGI and runnable from the command line. Reads via
+# read_lightcurve_point_raw() so noisy / faint points are plotted faithfully.
+"$CC" $(cat optflags_for_scripts.tmp) -c -o lightcurve_png.o src/lightcurve_png.c
+"$CC" $(cat optflags_for_scripts.tmp) -o lib/lightcurve_png lightcurve_png.o setenv_local_pgplot.o $PGPLOT_LIBS -lm -Wall -Wextra
+
 # Test if executable files were actually created?
 COMPILATION_ERROR=0
 echo -n "Checking compiled files:   "
 #for TEST_FILE in lib/pgplot/libpgplot.a lib/pgplot/libcpgplot.a lib/pgplot/grfont.dat lc find_candidates pgfv lib/fit_mag_calib ;do
-for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_photocurve lib/plot_astrometric_residuals_xy ;do
+for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_photocurve lib/plot_astrometric_residuals_xy lib/lightcurve_png ;do
  echo -n "$TEST_FILE - "
  if [ ! -f $TEST_FILE ];then
   COMPILATION_ERROR=1
