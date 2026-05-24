@@ -426,19 +426,19 @@ static int render_plot( const options_t *opt,
  // Roman font (cpgscf == 2) draws multi-stroke glyphs that look noticeably
  // more even on PGPLOT's PNG driver than the default single-stroke font 1.
  // The default font's thin strokes alias to inconsistent pixel widths and
- // patchy "shade of black" at low character sizes; Roman + a slightly
- // larger size (1.5 vs 1.2) makes labels and tick numbers crisper.
+ // patchy "shade of black" at low character sizes; Roman at a modestly
+ // larger-than-default size makes labels and tick numbers crisper.
  cpgscf( 2 );
- cpgsch( 1.5 );
+ cpgsch( 1.2 );
  cpgslw( 2 );
 
- // Explicit viewport sized for cpgsch(1.5) labels. PGPLOT's default viewport
- // (~10% margin on each side) was tuned for cpgsch(1.0); at our larger
- // character size the x-axis label hangs off the bottom of the canvas and
- // there is excess whitespace between the y-label / title and the plot
- // frame. These margins (~13% left/bottom, ~5% right, ~12% top) keep all
- // labels visible while leaving the plot area as large as practical.
- cpgsvp( 0.13f, 0.95f, 0.13f, 0.88f );
+ // Explicit viewport sized for cpgsch(1.2) labels. PGPLOT's default viewport
+ // (~10% margin on each side) was tuned for cpgsch(1.0); at our slightly
+ // larger character size we widen the margins a bit so the x-axis label
+ // does not hang off the bottom of the canvas and the y-label / title
+ // clear the plot frame. These margins keep all labels visible while
+ // leaving the plot area as large as practical.
+ cpgsvp( 0.11f, 0.96f, 0.11f, 0.90f );
 
  // Y axis INVERTED for magnitude convention (brighter at top).
  cpgswin( xmin_f, xmax_f, ymax_mag, ymin_mag );
