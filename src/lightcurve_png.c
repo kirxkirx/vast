@@ -423,7 +423,13 @@ static int render_plot( const options_t *opt,
  cpgscr( COLOR_BG, 1.0, 1.0, 1.0 );
  cpgscr( COLOR_FG, 0.0, 0.0, 0.0 );
  cpgpage();
- cpgsch( 1.2 );
+ // Roman font (cpgscf == 2) draws multi-stroke glyphs that look noticeably
+ // more even on PGPLOT's PNG driver than the default single-stroke font 1.
+ // The default font's thin strokes alias to inconsistent pixel widths and
+ // patchy "shade of black" at low character sizes; Roman + a slightly
+ // larger size (1.5 vs 1.2) makes labels and tick numbers crisper.
+ cpgscf( 2 );
+ cpgsch( 1.5 );
  cpgslw( 2 );
 
  // Y axis INVERTED for magnitude convention (brighter at top).
@@ -450,16 +456,22 @@ static int render_plot( const options_t *opt,
  }
 
  // Upper limits: blue downward triangles (outline only) drawn with cpgpoly.
- // Size matches the red detection symbols by tying half-dimensions to a
- // fraction of the character size; cpgsfs(2) tells cpgpoly to draw only the
- // outline. We use fabsf on ych because cpgqcs returns a negative ych for
- // our inverted (mag) y-axis -- without fabsf the apex would point up.
+ // Size is tuned to match the apparent size of cpgpt symbol 17 (filled
+ // circle) used for detections; the visible-circle diameter from cpgpt is
+ // ~0.3 of character height, so the triangle bounding box should be of
+ // similar order (NOT the full character size, which would draw triangles
+ // ~3x bigger than the dots). The thinner cpgslw(1) keeps the outline
+ // visually proportional to the filled-circle area. cpgsfs(2) makes
+ // cpgpoly draw outline only. fabsf on ych because cpgqcs returns a
+ // negative ych for the inverted (mag) y-axis -- without fabsf the apex
+ // would point up.
  if ( n_ul > 0 ) {
   cpgsci( COLOR_BLUE );
   cpgqcs( 4, &xch, &ych ); // 4 = world coordinates
   cpgsfs( 2 );             // 2 = outline (default 1 = solid fill)
-  tri_w_half= fabsf( xch ) * 0.4f;
-  tri_h_half= fabsf( ych ) * 0.4f;
+  cpgslw( 1 );             // thinner outline so the symbol does not look bloated
+  tri_w_half= fabsf( xch ) * 0.15f;
+  tri_h_half= fabsf( ych ) * 0.15f;
   for ( i= 0; i < n_ul; i++ ) {
    // Apex points to fainter magnitudes -- downward on the inverted-axis
    // screen. The base is at brighter (smaller) mag, the apex at fainter
@@ -472,7 +484,8 @@ static int render_plot( const options_t *opt,
    tri_y[2]= mag_ul[i] + tri_h_half; // apex, fainter side (bottom on screen)
    cpgpoly( 3, tri_x, tri_y );
   }
-  cpgsfs( 1 ); // restore solid fill (defensive, in case anything draws after)
+  cpgsfs( 1 ); // restore solid fill (defensive)
+  cpgslw( 2 ); // restore default thicker line for anything drawn after
  }
 
  cpgend();
