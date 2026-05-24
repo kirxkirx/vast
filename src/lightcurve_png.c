@@ -432,6 +432,14 @@ static int render_plot( const options_t *opt,
  cpgsch( 1.5 );
  cpgslw( 2 );
 
+ // Explicit viewport sized for cpgsch(1.5) labels. PGPLOT's default viewport
+ // (~10% margin on each side) was tuned for cpgsch(1.0); at our larger
+ // character size the x-axis label hangs off the bottom of the canvas and
+ // there is excess whitespace between the y-label / title and the plot
+ // frame. These margins (~13% left/bottom, ~5% right, ~12% top) keep all
+ // labels visible while leaving the plot area as large as practical.
+ cpgsvp( 0.13f, 0.95f, 0.13f, 0.88f );
+
  // Y axis INVERTED for magnitude convention (brighter at top).
  cpgswin( xmin_f, xmax_f, ymax_mag, ymin_mag );
 
