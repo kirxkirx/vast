@@ -39,15 +39,29 @@ static inline int write_lightcurve_point(FILE *lc_file_descriptor, double jd, do
 }
 
 /*
-  read_lightcurve_point() will read one line from a lightcurve file figuring out on its own the lightcurve file format
-  
-  RETURN VALUES:
+  read_lightcurve_point_raw() and read_lightcurve_point() both read one line
+  from a lightcurve file, auto-detecting the lightcurve format.
+
+  read_lightcurve_point_raw() returns the parsed values with MINIMAL filtering:
+  comment lines / EOF / NaN-inf / out-of-range JD are still rejected, but the
+  per-point science filters (BRIGHTEST_STARS, FAINTEST_STARS_ANYMAG,
+  MAX_MAG_ERROR) and the "non-positive mag_err -> default" substitution are
+  NOT applied. Use this when you want the file contents verbatim -- e.g. when
+  plotting forced photometry, where the interesting points may have very
+  large errors that the SNR cap would otherwise discard.
+
+  read_lightcurve_point() is the thin wrapper that calls _raw() and then
+  applies those filters and the substitution -- identical behavior to the
+  pre-split function. Use this for variability analysis where SNR<3
+  measurements should be silently discarded.
+
+  RETURN VALUES (both):
   -1 - end of file
    0 - OK, successfully parsed the line
    1 - cannot parse the line, it probably contains comments, jd will also be set to 0.0!
 */
 
-static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, double *mag, double *mag_err, double *x, double *y, double *app, char *string, char *comments_string) {
+static inline int read_lightcurve_point_raw(FILE *lc_file_descriptor, double *jd, double *mag, double *mag_err, double *x, double *y, double *app, char *string, char *comments_string) {
  char str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
  //int str_len; // string length
@@ -63,23 +77,23 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
   return -1;
  }
  str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
- 
+
  // everything else can burn, but *jd cannot be pointing to NULL
  if ( NULL == jd ) {
-  fprintf( stderr, "ERROR in read_lightcurve_point() the output jd is a NULL pointer!\n");
+  fprintf( stderr, "ERROR in read_lightcurve_point_raw() the output jd is a NULL pointer!\n");
   return 1;
  }
- 
+
  // Actually we kid of want mag also
  if ( NULL == mag ) {
-  fprintf( stderr, "ERROR in read_lightcurve_point() the output mag is a NULL pointer!\n");
+  fprintf( stderr, "ERROR in read_lightcurve_point_raw() the output mag is a NULL pointer!\n");
   return 1;
  }
  (*mag) = 99.999; // initialize mag to an obviously wrong value
 
  // and mag_err
  if ( NULL == mag_err ) {
-  fprintf( stderr, "ERROR in read_lightcurve_point() the output mag_err is a NULL pointer!\n");
+  fprintf( stderr, "ERROR in read_lightcurve_point_raw() the output mag_err is a NULL pointer!\n");
   return 1;
  }
  (*mag_err)= DEFAULT_PHOTOMETRY_ERROR_MAG; // initialize mag_err
@@ -241,6 +255,28 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
    return 1;
   }
 
+#endif
+
+ } // end else special case
+
+ return 0;
+}
+
+// Thin filtered wrapper around read_lightcurve_point_raw(); see the comment
+// block above the _raw function for the difference between the two. Signature
+// is identical to the pre-split read_lightcurve_point() so every existing
+// caller continues to work bit-for-bit unchanged.
+static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, double *mag, double *mag_err, double *x, double *y, double *app, char *string, char *comments_string) {
+ int ret;
+ ret= read_lightcurve_point_raw(lc_file_descriptor, jd, mag, mag_err, x, y, app, string, comments_string);
+ if( ret != 0 ) {
+  return ret;
+ }
+#ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
+ // Match the historical scope: the three science filters only ran in the full
+ // (x != NULL) path of the original function. The fast 3-column path
+ // (x == NULL) never saw them.
+ if( x != NULL ) {
   // Check the input mag
   if( (*mag) < BRIGHTEST_STARS ) {
    (*jd)= 0.0;
@@ -251,22 +287,17 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
    (*jd)= 0.0;
    return 1;
   }
-
   // Check if the measurement errors are not too big
   if( (*mag_err) > MAX_MAG_ERROR ) {
    (*jd)= 0.0;
    return 1;
   }
-
+ }
 #endif
-
- } // end else special case
-
  if( (*mag_err) <= 0.0 ) {
   // never allow zero errors as they will lead to negative weights downstream
   (*mag_err)= DEFAULT_PHOTOMETRY_ERROR_MAG;
  }
-
  return 0;
 }
 
