@@ -447,18 +447,23 @@ static int render_plot( const options_t *opt,
  cpgsci( COLOR_FG );
  cpgbox( "BCNTS", 0.0, 0, "BCNTSV", 0.0, 0 );
 
- // Axis labels and title. Pass empty top label to cpglab so it does not
- // draw the title at its default ~2.0 char-height offset above the box,
- // which leaves an oddly large gap. Draw the title with cpgmtxt at a
- // smaller displacement so it sits closer to the plot frame.
+ // Axis labels and title -- drawn via cpgmtxt directly (not cpglab) so we
+ // control each displacement independently. cpglab's hard-coded offsets
+ // are too far (bottom 3.2, top 2.0) or too close (left 2.2 overlaps the
+ // y-axis numeric labels when they have four characters like "12.5").
+ // Displacements are in character heights from the corresponding edge of
+ // the viewport.
  if ( opt->xlabel != NULL ) {
-  cpglab( opt->xlabel, opt->ylabel, "" );
+  cpgmtxt( "B", 2.5f, 0.5f, 0.5f, opt->xlabel );
  } else {
   snprintf( xlabel_buf, sizeof( xlabel_buf ), "JD - %.0f", jd_offset );
-  cpglab( xlabel_buf, opt->ylabel, "" );
+  cpgmtxt( "B", 2.5f, 0.5f, 0.5f, xlabel_buf );
+ }
+ if ( opt->ylabel != NULL && opt->ylabel[ 0 ] != '\0' ) {
+  cpgmtxt( "L", 3.2f, 0.5f, 0.5f, opt->ylabel );
  }
  if ( opt->title != NULL && opt->title[ 0 ] != '\0' ) {
-  cpgmtxt( "T", 0.5f, 0.5f, 0.5f, opt->title );
+  cpgmtxt( "T", 0.8f, 0.5f, 0.5f, opt->title );
  }
 
  // Detections: red filled circles with Y error bars.
