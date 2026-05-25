@@ -447,12 +447,18 @@ static int render_plot( const options_t *opt,
  cpgsci( COLOR_FG );
  cpgbox( "BCNTS", 0.0, 0, "BCNTSV", 0.0, 0 );
 
- // Axis labels and title.
+ // Axis labels and title. Pass empty top label to cpglab so it does not
+ // draw the title at its default ~2.0 char-height offset above the box,
+ // which leaves an oddly large gap. Draw the title with cpgmtxt at a
+ // smaller displacement so it sits closer to the plot frame.
  if ( opt->xlabel != NULL ) {
-  cpglab( opt->xlabel, opt->ylabel, opt->title );
+  cpglab( opt->xlabel, opt->ylabel, "" );
  } else {
   snprintf( xlabel_buf, sizeof( xlabel_buf ), "JD - %.0f", jd_offset );
-  cpglab( xlabel_buf, opt->ylabel, opt->title );
+  cpglab( xlabel_buf, opt->ylabel, "" );
+ }
+ if ( opt->title != NULL && opt->title[ 0 ] != '\0' ) {
+  cpgmtxt( "T", 0.5f, 0.5f, 0.5f, opt->title );
  }
 
  // Detections: red filled circles with Y error bars.
