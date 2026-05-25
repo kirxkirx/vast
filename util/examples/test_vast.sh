@@ -205,6 +205,42 @@ function check_transient_factory_wcs_leak_in_input_dir() {
  return 0
 }
 
+# Wrapper around util/transients/transient_factory_test31.sh that strips
+# .cat and .cat.aperture files from the input FITS image directory before
+# AND after the run.
+#
+# Why this exists:
+#   transient_factory_test31.sh writes <image>.cat and <image>.cat.aperture
+#   next to each input FITS image so that a later forced-photometry run
+#   on that image can reuse the SExtractor catalog. That is a deliberate
+#   production optimisation. During the test suite, however, those
+#   leftover catalogs pollute the input data directory and cause other
+#   sub-tests (e.g. the lib/try_to_guess_image_fov glob loop in the
+#   Saturn/Iapetus test) to fail on non-FITS files. We clean them up
+#   before and after every invocation so each test starts and ends with
+#   the on-disk dataset in its canonical state.
+#
+# The last positional argument MUST be the input FITS image directory.
+# Env-var prefixes (REFERENCE_IMAGES=..., POINTING_ACCURACY_LIMIT_*=..., etc.)
+# work as usual because they are applied to the wrapper invocation.
+#
+# Returns the script's own exit code.
+function run_transient_factory_test31_with_cleanup() {
+ local input_dir="${!#}"
+ if [ -n "$input_dir" ] && [ -d "$input_dir" ];then
+  find "$input_dir" -maxdepth 1 \( -name '*.cat' -o -name '*.cat.aperture' \) -delete 2>/dev/null
+ fi
+ # Call the actual script. Path-form ('util/...') always invokes the
+ # executable regardless of any same-named shell function in scope, so
+ # there is no risk of recursing back into this wrapper.
+ util/transients/transient_factory_test31.sh "$@"
+ local rc=$?
+ if [ -n "$input_dir" ] && [ -d "$input_dir" ];then
+  find "$input_dir" -maxdepth 1 \( -name '*.cat' -o -name '*.cat.aperture' \) -delete 2>/dev/null
+ fi
+ return $rc
+}
+
 # A more portable realpath wrapper
 function vastrealpath() {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -11472,7 +11508,10 @@ $GREP_RESULT"
   fi
   #
   ### Specific test to make sure lib/try_to_guess_image_fov does not crash
-  for IMAGE in ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/* ../NMW_Saturn_test/3rdepoch/* ;do
+  # Restrict glob to FITS files (*.fts) so leftover SExtractor outputs
+  # (*.fts.cat, *.fts.cat.aperture) that transient_factory_test31.sh may
+  # have produced in the input dir are not handed to try_to_guess_image_fov.
+  for IMAGE in ../NMW_Saturn_test/1referenceepoch/*.fts ../NMW_Saturn_test/2ndepoch/*.fts ../NMW_Saturn_test/3rdepoch/*.fts ;do
    lib/try_to_guess_image_fov $IMAGE
    if [ $? -ne 0 ];then
     TEST_PASSED=0
@@ -11501,7 +11540,9 @@ $GREP_RESULT"
   fi
   ################################################################################
   ### Flag image test should always be the last one because we clean the data
-  for IMAGE in ../NMW_Saturn_test/reference_images/* ../NMW_Saturn_test/second_epoch_images/* ;do
+  # Restrict glob to FITS files (*.fts) -- see note above the analogous
+  # loop in the first Saturn test.
+  for IMAGE in ../NMW_Saturn_test/reference_images/*.fts ../NMW_Saturn_test/second_epoch_images/*.fts ;do
    util/clean_data.sh
    #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
    lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
@@ -11581,7 +11622,7 @@ if [ -d ../NMW_Saturn_test ];then
  # we test the production NMW script
  SATURN2_INPUT_DIR=../NMW_Saturn_test/2ndepoch
  SATURN2_WCS_BASELINE=$(cd "$SATURN2_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW_Saturn_test/1referenceepoch/ util/transients/transient_factory_test31.sh "$SATURN2_INPUT_DIR"
+ REFERENCE_IMAGES=../NMW_Saturn_test/1referenceepoch/ run_transient_factory_test31_with_cleanup "$SATURN2_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2000_EXIT_CODE"
@@ -12071,7 +12112,7 @@ if [ -d ../NMW_Venus_test ];then
  #################################################################
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Venus_test/reference/ util/transients/transient_factory_test31.sh ../NMW_Venus_test/2nd_epoch
+ REFERENCE_IMAGES=../NMW_Venus_test/reference/ run_transient_factory_test31_with_cleanup ../NMW_Venus_test/2nd_epoch
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS000_EXIT_CODE"
@@ -12324,7 +12365,7 @@ if [ -d ../NMW_calibration_test ];then
   rm -f transient_report/index.html
  fi
  #################################################################
- REFERENCE_IMAGES=../NMW_calibration_test/calibrated_reference util/transients/transient_factory_test31.sh ../NMW_calibration_test/light
+ REFERENCE_IMAGES=../NMW_calibration_test/calibrated_reference run_transient_factory_test31_with_cleanup ../NMW_calibration_test/light
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB000_EXIT_CODE"
@@ -12674,7 +12715,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_NovaCas_august31_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas_august31_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_find_NovaCas_august31_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_find_NovaCas_august31_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_EXIT_CODE"
@@ -12949,7 +12990,7 @@ if [ -d ../NMW_nomatch_test ];then
  # Set a high pointing accuracy limit because the test data intentionally
  # includes an image with a large (~4 deg) offset to test graceful handling
  # of mismatched images. The default 1.0 deg hard limit would abort the field.
- POINTING_ACCURACY_LIMIT_DEG_HARD=5.0 POINTING_ACCURACY_LIMIT_DEG_SOFT=5.0 REFERENCE_IMAGES=../NMW_nomatch_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_nomatch_test/second_epoch_images &> test_nomatch$$.tmp
+ POINTING_ACCURACY_LIMIT_DEG_HARD=5.0 POINTING_ACCURACY_LIMIT_DEG_SOFT=5.0 REFERENCE_IMAGES=../NMW_nomatch_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_nomatch_test/second_epoch_images &> test_nomatch$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET000_EXIT_CODE"
@@ -13217,7 +13258,7 @@ if [ -d ../STEREO-A-H1__test ];then
   rm -f transient_report/index.html
  fi
  # Run transient search
- REFERENCE_IMAGES=../STEREO-A-H1__test/reference_images util/transients/transient_factory_test31.sh ../STEREO-A-H1__test/second_epoch_images
+ REFERENCE_IMAGES=../STEREO-A-H1__test/reference_images run_transient_factory_test31_with_cleanup ../STEREO-A-H1__test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STEREOA000_EXIT_CODE"
@@ -13350,7 +13391,7 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ util/transients/transient_factory_test31.sh ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_EXIT_CODE"
@@ -13853,7 +13894,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  # we test the production NMW script
  NMWNSGR20N4_INPUT_DIR=../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images
  NMWNSGR20N4_WCS_BASELINE=$(cd "$NMWNSGR20N4_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWNSGR20N4_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ run_transient_factory_test31_with_cleanup "$NMWNSGR20N4_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_EXIT_CODE"
@@ -14209,7 +14250,7 @@ if [ -d ../NMW-TexasTech__Aur-02-Q2b1x1 ];then
  fi
  AUR02_INPUT_DIR=../NMW-TexasTech__Aur-02-Q2b1x1/second_epoch_images
  AUR02_WCS_BASELINE=$(cd "$AUR02_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW-TexasTech__Aur-02-Q2b1x1/reference_images/ util/transients/transient_factory_test31.sh "$AUR02_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW-TexasTech__Aur-02-Q2b1x1/reference_images/ run_transient_factory_test31_with_cleanup "$AUR02_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_EXIT_CODE"
@@ -14467,7 +14508,7 @@ if [ -d ../NMW-TexasTech__Cas-04_platesolve_failure_test ];then
  fi
  CAS04_INPUT_DIR=../NMW-TexasTech__Cas-04_platesolve_failure_test/second_epoch_images
  CAS04_WCS_BASELINE=$(cd "$CAS04_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW-TexasTech__Cas-04_platesolve_failure_test/reference_images/ util/transients/transient_factory_test31.sh "$CAS04_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW-TexasTech__Cas-04_platesolve_failure_test/reference_images/ run_transient_factory_test31_with_cleanup "$CAS04_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_EXIT_CODE"
@@ -14807,7 +14848,7 @@ if [ -d ../NMW_Cyg5_astrometry_problem_test ];then
    rm -f transient_report/index.html
   fi
   CYG5_WCS_BASELINE=$(cd "$CYG5_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
-  REFERENCE_IMAGES=../NMW_Cyg5_astrometry_problem_test/reference_images/ util/transients/transient_factory_test31.sh "$CYG5_INPUT_DIR"
+  REFERENCE_IMAGES=../NMW_Cyg5_astrometry_problem_test/reference_images/ run_transient_factory_test31_with_cleanup "$CYG5_INPUT_DIR"
   CYG5_RUN_EXIT_CODE=$?
   if [ $CYG5_RUN_EXIT_CODE -ne 0 ];then
    if [ "$CYG5_GATING" = "strict" ];then
@@ -14940,7 +14981,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sco6_NovaSgr24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sco6_NovaSgr24N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Sco6_NovaSgr24N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Sco6_NovaSgr24N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_EXIT_CODE"
@@ -15322,7 +15363,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_EXIT_CODE"
@@ -15766,7 +15807,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Aql11_NovaHer21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Aql11_NovaHer21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Aql11_NovaHer21_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Aql11_NovaHer21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_EXIT_CODE"
@@ -16038,7 +16079,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_NovaCas21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_find_NovaCas21_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_find_NovaCas21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_EXIT_CODE"
@@ -16309,7 +16350,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sco6_NovaSgr21N2_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sco6_NovaSgr21N2_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Sco6_NovaSgr21N2_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Sco6_NovaSgr21N2_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_EXIT_CODE"
@@ -16638,7 +16679,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sgr7_NovaSgr21N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr7_NovaSgr21N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Sgr7_NovaSgr21N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Sgr7_NovaSgr21N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_EXIT_CODE"
@@ -17031,7 +17072,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Vul7_NovaVul21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Vul7_NovaVul21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_Vul7_NovaVul21_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Vul7_NovaVul21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_EXIT_CODE"
@@ -17293,7 +17334,7 @@ if [ -d ../NMW_find_Mars_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_find_Mars_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_EXIT_CODE"
@@ -17493,7 +17534,7 @@ $GREP_RESULT"
 
  #############################################################################
  cp -v bad_region.lst_default bad_region.lst
- REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/third_epoch/ &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_find_Mars_test/third_epoch/ &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_EXIT_CODE"
@@ -17762,7 +17803,7 @@ if [ -d ../NMW_find_Chandra_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_Chandra_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Chandra_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW_find_Chandra_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_find_Chandra_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA000_EXIT_CODE"
@@ -18085,7 +18126,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH000_PRELIM_VAST_RUN_EXIT_CODE"
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW_Sgr9_crash_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr9_crash_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW_Sgr9_crash_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Sgr9_crash_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH000_EXIT_CODE"
@@ -18379,7 +18420,7 @@ $GREP_RESULT"
 
  # Re-run the production NMW script, make sure that we are now finding only the hot pixels while the variables are excluded
  cp -v bad_region.lst_default bad_region.lst
- REFERENCE_IMAGES=../NMW_Sgr9_crash_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr9_crash_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW_Sgr9_crash_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW_Sgr9_crash_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN000_EXIT_CODE"
@@ -18676,7 +18717,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
  #################################################################
  # Run the search
  cp -v bad_region.lst_default bad_region.lst
- REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+ REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ run_transient_factory_test31_with_cleanup ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_001"
@@ -18706,7 +18747,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   #fi
   # Run the search again
   cp -v bad_region.lst_default bad_region.lst
-  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ run_transient_factory_test31_with_cleanup ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_101"
@@ -18861,7 +18902,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  # Test the production NMW script
  NMWSTLFINDNEPTUNE_INPUT_DIR=../NMW-STL__find_Neptune_test/second_epoch_images
  NMWSTLFINDNEPTUNE_WCS_BASELINE=$(cd "$NMWSTLFINDNEPTUNE_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW-STL__find_Neptune_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWSTLFINDNEPTUNE_INPUT_DIR"
+ REFERENCE_IMAGES=../NMW-STL__find_Neptune_test/reference_images/ run_transient_factory_test31_with_cleanup "$NMWSTLFINDNEPTUNE_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE000_EXIT_CODE"
@@ -19289,7 +19330,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
  # Test the production NMW script
  NMWSTLFINDNVUL24_INPUT_DIR=../NMW-STL__find_NovaVul24_test/second_epoch_images
  NMWSTLFINDNVUL24_WCS_BASELINE=$(cd "$NMWSTLFINDNVUL24_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh "$NMWSTLFINDNVUL24_INPUT_DIR"
+ REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_test/reference_images/ run_transient_factory_test31_with_cleanup "$NMWSTLFINDNVUL24_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24000_EXIT_CODE"
@@ -19753,7 +19794,7 @@ if [ -d ../NMW-STL__find_NovaVul24_compressed_test ];then
   cp -v ../NMW-STL__find_NovaVul24_compressed_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_compressed_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__find_NovaVul24_compressed_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_compressed_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__find_NovaVul24_compressed_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24000_EXIT_CODE"
@@ -20233,7 +20274,7 @@ if [ -d ../NMW-STL__find_NovaVul24_lacosmic_test ];then
   cp -v ../NMW-STL__find_NovaVul24_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__find_NovaVul24_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__find_NovaVul24_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__find_NovaVul24_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24000_EXIT_CODE"
@@ -20620,7 +20661,7 @@ if [ -d ../NMW__NovaVul24_Stas_lacosmic_test ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW__NovaVul24_Stas_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_EXIT_CODE"
@@ -20924,7 +20965,7 @@ if [ -d ../NMW__NovaOph24N1_lacosmic_test ];then
   cp -v ../NMW__NovaOph24N1_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW__NovaOph24N1_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24000_EXIT_CODE"
@@ -21227,7 +21268,7 @@ if [ -d ../NMW_calibration_lacosmic_test ];then
   rm -f transient_report/index.html
  fi
  #################################################################
- REFERENCE_IMAGES=../NMW_calibration_lacosmic_test/calibrated_reference util/transients/transient_factory_test31.sh ../NMW_calibration_lacosmic_test/light
+ REFERENCE_IMAGES=../NMW_calibration_lacosmic_test/calibrated_reference run_transient_factory_test31_with_cleanup ../NMW_calibration_lacosmic_test/light
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWCALIB000_EXIT_CODE"
@@ -21373,7 +21414,7 @@ if [ -d ../NMW-STL__find_Neptune_lacosmic_test ];then
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__find_Neptune_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
- REFERENCE_IMAGES=../NMW-STL__find_Neptune_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__find_Neptune_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__find_Neptune_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__find_Neptune_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLNEPTUNE000_EXIT_CODE"
@@ -21486,7 +21527,7 @@ if [ -d ../NMW-STL__RefFrameMatchFail_lacosmic_test ];then
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__RefFrameMatchFail_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
- REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__RefFrameMatchFail_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__RefFrameMatchFail_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLREFFRAME000_EXIT_CODE"
@@ -21581,7 +21622,7 @@ if [ -d ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ];then
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
- REFERENCE_IMAGES=../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLCOMET000_EXIT_CODE"
@@ -21697,7 +21738,7 @@ if [ -d ../NMW-STL__plate_solve_failure_lacosmic_test ];then
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__plate_solve_failure_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
- REFERENCE_IMAGES=../NMW-STL__plate_solve_failure_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__plate_solve_failure_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__plate_solve_failure_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__plate_solve_failure_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLPLATESOLVE000_EXIT_CODE"
@@ -21813,7 +21854,7 @@ if [ -d ../NMW-STL__NovaOph24N1_lacosmic_test ];then
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__NovaOph24N1_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
- REFERENCE_IMAGES=../NMW-STL__NovaOph24N1_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__NovaOph24N1_lacosmic_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__NovaOph24N1_lacosmic_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__NovaOph24N1_lacosmic_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLNOPH24000_EXIT_CODE"
@@ -21946,7 +21987,7 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
  export DARK_FRAMES_DIR_OR_FILE=../NMW-STL__RefFrameMatchFail_test/darks
  export FLAT_FIELD_DIR_OR_FILE=../NMW-STL__RefFrameMatchFail_test/flats/STL__mff_2024_febmar_full_moon.fit
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__RefFrameMatchFail_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__RefFrameMatchFail_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH000_EXIT_CODE"
@@ -22505,7 +22546,7 @@ if [ -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
  # cp -v ../NMW-STL__STL-11000M__find_huge_comet_test/STL_bad_region.lst ../STL_bad_region.lst
  #fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__STL-11000M__find_huge_comet_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__STL-11000M__find_huge_comet_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__STL-11000M__find_huge_comet_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__STL-11000M__find_huge_comet_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET000_EXIT_CODE"
@@ -22806,7 +22847,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
  # Test the production NMW script
  TICATESSFINDNVUL24_INPUT_DIR=../TICA_TESS__find_NovaVul24_test/second_epoch_images
  TICATESSFINDNVUL24_WCS_BASELINE=$(cd "$TICATESSFINDNVUL24_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../TICA_TESS__find_NovaVul24_test/reference_images/ util/transients/transient_factory_test31.sh "$TICATESSFINDNVUL24_INPUT_DIR"
+ REFERENCE_IMAGES=../TICA_TESS__find_NovaVul24_test/reference_images/ run_transient_factory_test31_with_cleanup "$TICATESSFINDNVUL24_INPUT_DIR"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24000_EXIT_CODE"
@@ -23067,7 +23108,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
   cp -v ../NMW-STL__plate_solve_failure_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__plate_solve_failure_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__plate_solve_failure_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__plate_solve_failure_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE000_EXIT_CODE"
@@ -23461,7 +23502,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
   cp -v ../NMW-STL__NovaOph24N1_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW-STL__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__NovaOph24N1_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW-STL__NovaOph24N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW-STL__NovaOph24N1_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24000_EXIT_CODE"
@@ -23804,7 +23845,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
   cp -v ../NMW__NovaOph24N1_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
  # Test the production NMW script
- REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaOph24N1_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24000_EXIT_CODE"
@@ -24115,7 +24156,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
  #
  ##### 1st run: populate the cache (cold start) #####
  export VAST_SEXTRACTOR_CACHE_DIR="$CATALOG_CACHE_TEST_DIR"
- REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaOph24N1_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE000_RUN1_EXIT_CODE"
@@ -24165,7 +24206,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
  fi
  cp astorb_2023.dat astorb.dat
  #
- REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_test/second_epoch_images 2>vast_catalog_cache_stderr_$$.tmp
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ run_transient_factory_test31_with_cleanup ../NMW__NovaOph24N1_test/second_epoch_images 2>vast_catalog_cache_stderr_$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE010_RUN2_EXIT_CODE"
@@ -24332,7 +24373,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
  # cp -v ../TICA_TESS_mag_calibration_failure_test/STL_bad_region.lst ../STL_bad_region.lst
  #fi
  # Test the production NMW script
- REFERENCE_IMAGES=../TICA_TESS_mag_calibration_failure_test/reference_images/ util/transients/transient_factory_test31.sh ../TICA_TESS_mag_calibration_failure_test/second_epoch_images
+ REFERENCE_IMAGES=../TICA_TESS_mag_calibration_failure_test/reference_images/ run_transient_factory_test31_with_cleanup ../TICA_TESS_mag_calibration_failure_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE000_EXIT_CODE"
@@ -24603,7 +24644,7 @@ if [ -d ../TICA_TESS__zeroRA_test ];then
  ## Set TESS camera bad regions file
  cp bad_region.lst_default bad_region.lst
  # Test the production NMW script
- REFERENCE_IMAGES=../TICA_TESS__zeroRA_test/reference_images/ util/transients/transient_factory_test31.sh ../TICA_TESS__zeroRA_test/second_epoch_images
+ REFERENCE_IMAGES=../TICA_TESS__zeroRA_test/reference_images/ run_transient_factory_test31_with_cleanup ../TICA_TESS__zeroRA_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA000_EXIT_CODE"
