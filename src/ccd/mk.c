@@ -296,53 +296,58 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
 
- // Find the first valid FITS file to use as reference
+ // Find the first valid FITS file to use as reference. A valid reference must
+ // be openable and, unless temperature checks are disabled, must have its
+ // CCD-TEMP close enough to the SET-TEMP. Frames where the camera did not have
+ // time to cool down are skipped here (and again in the stacking loop below)
+ // instead of aborting the whole stack.
+ ref_file_index= -1;
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   fits_open_file( &fptr, argv[file_counter], 0, &status );
-  if ( status == 0 ) {
-   // Successfully opened, use this as reference
-   break;
-  } else {
+  if ( status != 0 ) {
    fprintf( stderr, "WARNING: Cannot open file %s - trying next file\n", argv[file_counter] );
    fits_report_error( stderr, status );
    status= 0;
+   continue;
   }
+  // Note the set temperature of the camera
+  fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
+  if ( status != 0 ) {
+   set_temp_image= FALLBACK_CCD_TEMP_VALUE;
+   status= 0;
+  }
+  // Note the CCD temperature of the camera
+  fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
+  if ( status != 0 ) {
+   ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
+   status= 0;
+  }
+  // Check for possible mismatch between CCD-TEMP and SET-TEMP
+  if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
+    // Set temperature mismatch: the camera didn't have time to cool down.
+    // Skip this frame as a reference candidate and try the next one.
+    fprintf( stderr, "WARNING: mismatch between CCD-TEMP= %lf and SET-TEMP= %lf for %s - the camera didn't have time to cool down; skipping this frame as reference\n", ccd_temp_image, set_temp_image, argv[file_counter] );
+    fits_close_file( fptr, &status );
+    status= 0;
+    continue;
+   }
+  }
+  // This candidate is openable and within the temperature tolerance - use it as the reference image
+  ref_file_index= file_counter;
+  break;
  }
 
- if ( status != 0 || file_counter >= argc ) {
-  fprintf( stderr, "ERROR: Could not find any valid FITS files in the input!\n" );
+ if ( ref_file_index < 0 ) {
+  fprintf( stderr, "ERROR: Could not find any valid FITS file (openable and within the CCD temperature tolerance) to use as reference!\n" );
   exit( EXIT_FAILURE );
  }
 
- ref_file_index= file_counter;
  fprintf( stderr, "Using %s as reference image\n", argv[ref_file_index] );
 
- // Read reference image dimensions and header
+ // Read reference image dimensions
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes_ref[0], NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes_ref[1], NULL, &status );
- // Note the set temperature of the camera
- fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
- if ( status != 0 ) {
-  set_temp_image= FALLBACK_CCD_TEMP_VALUE;
-  status= 0;
- }
- // Note the CCD temperature of the camera
- fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
- if ( status != 0 ) {
-  ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
-  status= 0;
- }
- // Check for possible mismatch between CCD-TEMP and SET-TEMP
- if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
-  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[ref_file_index] );
-  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[ref_file_index] );
-  if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
-   // found set temperature mismatch
-   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
-   fits_close_file( fptr, &status );
-   exit( EXIT_FAILURE );
-  }
- }
  // Read TELESCOP and CAMERA keywords from the reference image
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop_ref, NULL, &status );
  if ( status == 0 && is_meaningful_keyword_value( telescop_ref ) ) {
@@ -445,10 +450,13 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[file_counter] );
    fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[file_counter] );
    if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
-    // found set temperature mismatch
-    fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
+    // Set temperature mismatch: the camera didn't have time to cool down.
+    // Skip this frame instead of aborting, so the remaining good frames can
+    // still be stacked.
+    fprintf( stderr, "WARNING: mismatch between CCD-TEMP and SET-TEMP for %s - the camera didn't have time to cool down; skipping this frame\n", argv[file_counter] );
     fits_close_file( fptr, &status );
-    exit( EXIT_FAILURE );
+    status= 0;
+    continue;
    }
   }
   // Compare TELESCOP and CAMERA keywords with the reference image
