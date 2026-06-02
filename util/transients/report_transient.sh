@@ -658,6 +658,8 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     FORCED_PHOT_DET_LIST=""
     FORCED_PHOT_HAD_EDGE=0
     FORCED_PHOT_HAD_SATURATED=0
+    FORCED_PHOT_BAD_REGION_COUNT=0
+    FORCED_PHOT_MEASURED_COUNT=0
     for FORCED_PHOT_REF_IMAGE_PATH in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ;do
      if [ -z "$FORCED_PHOT_REF_IMAGE_PATH" ];then
       continue
@@ -706,6 +708,8 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS"
      echo "$FORCED_PHOT_LINE" >&2
      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
+     # Count this reference image as actually measured (a status string was returned)
+     FORCED_PHOT_MEASURED_COUNT=$((FORCED_PHOT_MEASURED_COUNT + 1))
      if [ "$FORCED_PHOT_RESULT_STATUS" = "edge" ];then
       # The util/forced_photometry binary itself can report "edge" when the
       # aperture or background annulus extends past the image boundary even
@@ -719,6 +723,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       # star-matching failure -- the bright source was on the reference all
       # along and got mis-flagged as a new object -- so reject after the loop.
       FORCED_PHOT_HAD_SATURATED=1
+     fi
+     if [ "$FORCED_PHOT_RESULT_STATUS" = "bad_region" ];then
+      # The position falls inside a bad CCD region (bad_region.lst) on this
+      # reference image, so no useful reference measurement is possible here.
+      # If this is true for every measured reference image, reject after the
+      # loop (see below).
+      FORCED_PHOT_BAD_REGION_COUNT=$((FORCED_PHOT_BAD_REGION_COUNT + 1))
      fi
      if [ "$FORCED_PHOT_RESULT_STATUS" = "detection" ];then
       FORCED_PHOT_USE_ERR="$FORCED_PHOT_RESULT_ERR"
@@ -735,6 +746,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     fi
     if [ "$FORCED_PHOT_HAD_SATURATED" = "1" ];then
      echo "Forced photometry filter REJECTED candidate at $RA_MEAN_HMS $DEC_MEAN_HMS: the source is saturated (present but too bright to measure) on at least one reference image -- likely a star-matching failure rather than a new transient" >&2
+     clean_tmp_files
+     exit 1
+    fi
+    if [ "$FORCED_PHOT_MEASURED_COUNT" -ge 1 ] && [ "$FORCED_PHOT_BAD_REGION_COUNT" -eq "$FORCED_PHOT_MEASURED_COUNT" ];then
+     echo "Forced photometry filter REJECTED candidate at $RA_MEAN_HMS $DEC_MEAN_HMS: the position falls in a bad CCD region (bad_region.lst) on all measured reference images -- cannot perform the forced-photometry cross-check" >&2
      clean_tmp_files
      exit 1
     fi
