@@ -6,9 +6,10 @@
 // file overlays a second track of upper limits as downward-facing triangles.
 //
 // Unlike lc.c, this tool calls read_lightcurve_point_raw() which skips the
-// SNR cap and the BRIGHTEST_STARS / FAINTEST_STARS_ANYMAG mag-range filters.
-// Forced photometry can yield legitimate measurements with large errors that
-// the standard reader would silently discard.
+// SNR cap and the BRIGHTEST_STARS mag-range filter. Forced photometry can
+// yield legitimate measurements with large errors that the standard reader
+// would silently discard. Suspiciously faint magnitudes are still rejected
+// against FAINTEST_STARS_ANYMAG (see vast_limits.h).
 //
 // Detections are drawn as red filled circles with symmetric Y error bars.
 // Upper limits are drawn as blue downward triangles (cpgpoly, sized from
@@ -145,7 +146,8 @@ static int parse_args( int argc, char **argv, options_t *opt ) {
 }
 
 // Read the main lightcurve via read_lightcurve_point_raw() (no SNR cap, no
-// mag-range filters). Returns 0 on success (including n_out == 0), -1 on
+// BRIGHTEST_STARS filter), then drop points fainter than FAINTEST_STARS_ANYMAG.
+// Returns 0 on success (including n_out == 0), -1 on
 // open/OOM failure. Caller frees *jd_out / *mag_out / *err_out.
 static int read_main_lightcurve( const char *path, double **jd_out,
                                  float **mag_out, float **err_out,
@@ -198,6 +200,10 @@ static int read_main_lightcurve( const char *path, double **jd_out,
    break; // EOF
   if ( rc == 1 )
    continue; // comment / malformed / out-of-range; skip
+  // Skip suspiciously faint magnitudes (instrumental or whatever), as the
+  // standard reader does. FAINTEST_STARS_ANYMAG is defined in vast_limits.h.
+  if ( m > FAINTEST_STARS_ANYMAG )
+   continue;
   ( *jd_out )[n]= j;
   ( *mag_out )[n]= (float)m;
   ( *err_out )[n]= (float)e;
