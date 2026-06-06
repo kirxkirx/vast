@@ -55,4 +55,34 @@ for COUNTER in $(seq 0 216) ;do
  wget -O $(basename "$CONSTRUCTED_URL") "$CONSTRUCTED_URL"
 done
 
+# Report where the images were saved and how to run VaST on them.
+# The settings below mirror the TICA_TESS_FFI branch of
+# util/transients/transient_factory_test31.sh
+SAVE_DIR="$(pwd)"
+cd - >/dev/null 2>&1 || true
+echo ""
+echo "#############################################################"
+echo "All images were saved to:"
+echo "  $SAVE_DIR"
+echo ""
+echo "To run VaST on these TICA TESS FFIs, use the same settings as"
+echo "the transient search (CAMERA_SETTINGS=TICA_TESS_FFI):"
+echo ""
+echo "  # from the main VaST source directory:"
+echo "  cp default.sex.TICA_TESS default.sex"
+echo "  ./vast --norotation --starmatchraius 3.5 --matchstarnumber 500 \\"
+echo "         --selectbestaperture --sysrem 0 --type 4 --maxsextractorflag 99 \\"
+echo "         --UTC --nojdkeyword \\"
+echo "         $SAVE_DIR/*.fits"
+echo ""
+echo "Notes:"
+echo "  - SExtractor config: default.sex.TICA_TESS (copy it to default.sex)."
+echo "  - The transient factory adds --nofind (it does its own candidate"
+echo "    search on a 4-image set). For a normal variability search over the"
+echo "    full image series, leave --nofind out as shown above."
+echo "  - The transient factory keeps SExtractor flag images enabled for TICA"
+echo "    (no --noflagimage), uses --sysrem 0, and plate-solves separately"
+echo "    with util/solve_plate_with_UCAC5 --iterations 1 if WCS is needed."
+echo "#############################################################"
+
 
