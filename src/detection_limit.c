@@ -347,7 +347,7 @@ int main(){
  double detection_limit;
 
  int n=0;
- while( -1<fscanf(stdin,"%lf %lf",&mag[n],&mag_sn[n]) ){
+ while( 2==fscanf(stdin,"%lf %lf",&mag[n],&mag_sn[n]) ){
   n++;
  }
 

@@ -306,7 +306,7 @@ void normalize_spectral_window_file( unsigned long N_freq, char *periodogramfile
   exit( EXIT_FAILURE );
  }
  i= 0;
- while ( -1 < fscanf( periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i] ) )
+ while ( 3 == fscanf( periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i] ) )
   i++;
  fclose( periodogramfile );
  max_F= theta[0];

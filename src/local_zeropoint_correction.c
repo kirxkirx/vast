@@ -250,7 +250,7 @@ int main() {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma(local_zeropoint_correction.c)\n" );
   exit( EXIT_FAILURE );
  }
- while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
+ while ( 5 == fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
   safely_encode_user_input_string( lightcurvefilename, lightcurvefilename_local, OUTFILENAME_LENGTH - 1 );
   Nstars++;
  }
@@ -410,7 +410,7 @@ int main() {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma\n" );
   exit( EXIT_FAILURE );
  }
- while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
+ while ( 5 == fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
   safely_encode_user_input_string( lightcurvefilename, lightcurvefilename_local, OUTFILENAME_LENGTH - 1 );
   // escape special characters in the green_channel_only_image_name (as it was derived from "user input" fscanf() )
   // if( 0 != any_unusual_characters_in_string(lightcurvefilename) ) {

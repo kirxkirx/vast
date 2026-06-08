@@ -73,7 +73,7 @@ int main() {
   fprintf( stderr, "ERROR: Can't open file %s !\n", inputfilename );
   exit( EXIT_FAILURE );
  }
- while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
+ while ( 5 == fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
   if ( sum == -1 ) {
    sum= m;
    n= 0;
@@ -120,7 +120,7 @@ int main() {
   fprintf( stderr, "ERROR: Couldn't open file sysrem_input_star_list.tmp(select_sysrem_input_star_list.c)\n" );
   exit( EXIT_FAILURE );
  };
- while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
+ while ( 5 == fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
   // if( m>sum+M_SIGMA_BIN_MAG_OTSTUP ){
   for ( n= 0; n < i; n++ ) {
    if ( fabs( m - x[n] ) <= M_SIGMA_BIN_SIZE_M / 2 + M_SIGMA_BIN_SIZE_M / 10 ) {

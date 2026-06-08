@@ -510,7 +510,7 @@ int main( int argc, char **argv ) {
  };
  vast_sigma_selection_curve_file= fopen( "vast_sigma_selection_curve.log", "r" );
  if ( vast_sigma_selection_curve_file != NULL ) {
-  while ( -1 < fscanf( vast_sigma_selection_curve_file, "%f %f", &high_sigma_curve_mag[sigma_curve_N_points], &high_sigma_curve_limit[sigma_curve_N_points] ) ) {
+  while ( 2 == fscanf( vast_sigma_selection_curve_file, "%f %f", &high_sigma_curve_mag[sigma_curve_N_points], &high_sigma_curve_limit[sigma_curve_N_points] ) ) {
    sigma_curve_N_points++;
   }
   fclose( vast_sigma_selection_curve_file );

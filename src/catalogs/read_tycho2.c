@@ -348,7 +348,7 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  // while(-1<fscanf(sexcatfile,"%d  %lf %lf  %lf %lf  %lf %lf %lf %lf  %lf %lf %lf %lf %lf %lf  %d %lf", &arrStar[i].NUMBER, &arrStar[i].FLUX_APER, &arrStar[i].FLUXERR_APER,
  //  &arrStar[i].MAG_APER, &arrStar[i].MAGERR_APER, &arrStar[i].X_IMAGE, &arrStar[i].Y_IMAGE, &arrStar[i].ALPHA_SKY, &arrStar[i].DELTA_SKY,
  //  &arrStar[i].A_IMAGE, &arrStar[i].ERRA_IMAGE, &arrStar[i].B_IMAGE, &arrStar[i].ERRB_IMAGE, &arrStar[i].A_WORLD, &arrStar[i].B_WORLD, &arrStar[i].FLAGS,&arrStar[i].CLASS_STAR)){
- while ( -1 < fscanf( sexcatfile, "%d  %lf %lf  %lf %lf  %lf %lf %lf %lf  %d",
+ while ( 10 == fscanf( sexcatfile, "%d  %lf %lf  %lf %lf  %lf %lf %lf %lf  %d",
                       &arrStar[i].NUMBER,
                       &arrStar[i].ALPHA_SKY, &arrStar[i].DELTA_SKY,
                       &arrStar[i].X_IMAGE, &arrStar[i].Y_IMAGE,

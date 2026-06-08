@@ -30,7 +30,7 @@ int main() {
   exit( EXIT_FAILURE );
  };
 
- while ( -1 < fscanf( stdin, "%lf %lf %lf", &datax[n], &datay[n], &dataerr[n] ) )
+ while ( 3 == fscanf( stdin, "%lf %lf %lf", &datax[n], &datay[n], &dataerr[n] ) )
   n++;
 
  wpolyfit( datax, datay, dataerr, n, poly_coeff, NULL );

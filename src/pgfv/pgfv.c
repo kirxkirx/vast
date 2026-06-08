@@ -1907,7 +1907,7 @@ int main( int argc, char **argv ) {
  manymrkerscounter= 0;
  manymarkersfile= fopen( "vast_manymarkersfile.log", "r" );
  if ( manymarkersfile != NULL ) {
-  while ( manymrkerscounter < 1024 && -1 < fscanf( manymarkersfile, "%f %f %[^\t\n]", &manymarkersX[manymrkerscounter], &manymarkersY[manymrkerscounter], manymarkersstring ) )
+  while ( manymrkerscounter < 1024 && 3 == fscanf( manymarkersfile, "%f %f %[^\t\n]", &manymarkersX[manymrkerscounter], &manymarkersY[manymrkerscounter], manymarkersstring ) )
    manymrkerscounter++;
   fclose( manymarkersfile );
   fprintf( stderr, "vast_manymarkersfile.log - %d markers\n", manymrkerscounter );
@@ -1960,7 +1960,7 @@ int main( int argc, char **argv ) {
 
    // Read data.m_sigma but select only stars detected on the reference frame
    matchfile= fopen( "data.m_sigma", "r" );
-   while ( -1 < fscanf( matchfile, "%lf %lf %f %f %s", &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], RADEC ) ) {
+   while ( 5 == fscanf( matchfile, "%lf %lf %f %f %s", &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], RADEC ) ) {
     calibfile= fopen( RADEC, "r" );
     if ( calibfile != NULL ) {
      if ( 2 > fscanf( calibfile, "%*f %*f %*f %*f %*f %lf %s", &tmp_APER, imagefilename ) ) {

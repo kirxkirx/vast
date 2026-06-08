@@ -69,7 +69,7 @@ int main() {
  i= 0;
  n= 0;
  mmax= 0.0;
- while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
+ while ( 5 == fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
 
   if ( mmax == 0.0 )
    mmax= m;
@@ -142,7 +142,7 @@ int main() {
   report_lightcurve_statistics_computation_problem();
   exit( EXIT_FAILURE );
  }
- while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) { // fprintf(stderr,"%lf %lf\n",m,sigma);
+ while ( 5 == fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) { // fprintf(stderr,"%lf %lf\n",m,sigma);
   // This should avoid "interpolation error" crash.
   if ( m < x_sigma[0] )
    m= x_sigma[0];

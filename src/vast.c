@@ -2204,7 +2204,7 @@ int main( int argc, char **argv ) {
     return EXIT_FAILURE;
    } else {
     N_manually_selected_comparison_stars= 0;
-    while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf", &tmp_manually_selected_comparison_stars_X, &tmp_manually_selected_comparison_stars_Y, &tmp_manually_selected_comparison_stars_catalog_mag ) ) {
+    while ( 3 == fscanf( cmparisonstarsfile, "%lf %lf %lf", &tmp_manually_selected_comparison_stars_X, &tmp_manually_selected_comparison_stars_Y, &tmp_manually_selected_comparison_stars_catalog_mag ) ) {
      N_manually_selected_comparison_stars+= 1;
     }
     fclose( cmparisonstarsfile );
@@ -2612,7 +2612,7 @@ int main( int argc, char **argv ) {
   // return EXIT_FAILURE;
   //  We should not quit if there is no manually_selected_comparison_stars.lst
  } else {
-  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf",
+  while ( 3 == fscanf( cmparisonstarsfile, "%lf %lf %lf",
                        &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars],
                        &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars],
                        &manually_selected_comparison_stars_catalog_mag[N_manually_selected_comparison_stars] ) ) {

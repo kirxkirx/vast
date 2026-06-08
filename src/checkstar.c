@@ -260,7 +260,7 @@ int main() {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma\n" );
   exit( EXIT_FAILURE );
  }
- while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
+ while ( 5 == fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   // Get star number from the lightcurve file name
   for ( k= 3; k < strlen( lightcurvefilename ); k++ ) {
    star_number_string[k - 3]= lightcurvefilename[k];

@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   }
 
   if( lightcurve_format == 1 ) {
-   while( -1 < fscanf(lightcurvefile, "%lf %lf %lf", &jd, &mag, &merr) ) {
+   while( 3 == fscanf(lightcurvefile, "%lf %lf %lf", &jd, &mag, &merr) ) {
     if( input_in_UTC_flag == 1 ) {
      jdTT= convert_jdUT_to_jdTT(jd, &timesys);
      jd= jdTT;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   }
 
   if( lightcurve_format == 2 ) {
-   while( -1 < fscanf(lightcurvefile, "%lf %lf", &jd, &mag) ) {
+   while( 2 == fscanf(lightcurvefile, "%lf %lf", &jd, &mag) ) {
     if( input_in_UTC_flag == 1 ) {
      jdTT= convert_jdUT_to_jdTT(jd, &timesys);
      jd= jdTT;

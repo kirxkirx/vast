@@ -774,7 +774,16 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  // count the proportion of blended sources
  i= 0;
  nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
- while ( -1 < fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
+ // Require ALL 10 fields to be parsed. fscanf returns the number of successful
+ // conversions: 10 on a good line, -1 (EOF) at the end -- but 0..9 on a
+ // malformed/truncated line, and it does NOT consume the offending input. The
+ // old condition ( -1 < fscanf(...) ) was true for a 0 return, so a single
+ // non-numeric/garbage token (e.g. a catalog left truncated or with an error
+ // string when a child writing it was killed as the parent died, or a short
+ // write on a full disk) made this loop re-read the same bytes forever -- a
+ // 100% CPU, no-I/O infinite spin. Requiring == 10 stops cleanly on EOF and on
+ // any corrupted line instead.
+ while ( 10 == fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
   ///
   if ( stars[i].flux == 0 ) {
    drop_zero_flux_counter++;
@@ -814,7 +823,16 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  // do the actual thing
  i= 0;
  nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
- while ( -1 < fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
+ // Require ALL 10 fields to be parsed. fscanf returns the number of successful
+ // conversions: 10 on a good line, -1 (EOF) at the end -- but 0..9 on a
+ // malformed/truncated line, and it does NOT consume the offending input. The
+ // old condition ( -1 < fscanf(...) ) was true for a 0 return, so a single
+ // non-numeric/garbage token (e.g. a catalog left truncated or with an error
+ // string when a child writing it was killed as the parent died, or a short
+ // write on a full disk) made this loop re-read the same bytes forever -- a
+ // 100% CPU, no-I/O infinite spin. Requiring == 10 stops cleanly on EOF and on
+ // any corrupted line instead.
+ while ( 10 == fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
   ///
   if ( stars[i].flux == 0 ) {
    drop_zero_flux_counter++;

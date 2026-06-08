@@ -90,7 +90,7 @@ int main() {
   mnumber_of_stars= 0;
   data_m_sigma= fopen( "data.m_sigma", "r" );
   if ( NULL != data_m_sigma ) {
-   while ( -1 < fscanf( data_m_sigma, "%lf %lf %lf %lf %s", &mmag, &mmerr, &mx, &my, outfilename ) ) {
+   while ( 5 == fscanf( data_m_sigma, "%lf %lf %lf %lf %s", &mmag, &mmerr, &mx, &my, outfilename ) ) {
     lightcurvefile= fopen( outfilename, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", outfilename );

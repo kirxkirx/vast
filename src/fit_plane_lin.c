@@ -108,7 +108,7 @@ int main(){
  z=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
 
  unsigned int i=0;
- while(-1<fscanf(stdin,"%lf %lf %lf",&x[i],&y[i],&z[i])){
+ while(3==fscanf(stdin,"%lf %lf %lf",&x[i],&y[i],&z[i])){
   i++;
  };
 

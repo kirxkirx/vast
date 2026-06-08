@@ -255,7 +255,7 @@ int main() {
    exit( EXIT_FAILURE );
   }
 
-  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
+  while ( 5 == fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
    Nstars++;
   }
   fclose( datafile );
@@ -370,7 +370,7 @@ int main() {
    fprintf( stderr, "ERROR! Can't open file %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
    exit( EXIT_FAILURE );
   }
-  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
+  while ( 5 == fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
    memset( star_number_string, 0, FILENAME_LENGTH ); // just in case
    // Get star number from the lightcurve file name
    for ( k= 3; k < (long)strlen( lightcurvefilename ); k++ ) {
