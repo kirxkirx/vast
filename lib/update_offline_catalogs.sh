@@ -13,6 +13,83 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+#################################
+# Determine the VaST root directory from this script's own location and cd into
+# it, so the script works regardless of the directory it is launched from (e.g.
+# an /etc/crontab entry that calls it by absolute path without cd-ing first).
+# Everything below refers to the catalog files by paths relative to the VaST root.
+
+# A more portable realpath wrapper
+function vastrealpath {
+  # On Linux, just go for the fastest option which is 'readlink -f'
+  REALPATH=`readlink -f "$1" 2>/dev/null`
+  if [ $? -ne 0 ];then
+   # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
+   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   if [ $? -ne 0 ];then
+    REALPATH=`realpath "$1" 2>/dev/null`
+    if [ $? -ne 0 ];then
+     REALPATH=`grealpath "$1" 2>/dev/null`
+     if [ $? -ne 0 ];then
+      # Something that should work well enough in practice
+      OURPWD=$PWD
+      cd "$(dirname "$1")" || exit 1
+      REALPATH="$PWD/$(basename "$1")"
+      cd "$OURPWD" || exit 1
+     fi # grealpath
+    fi # realpath
+   fi # greadlink -f
+  fi # readlink -f
+  echo "$REALPATH"
+}
+
+# Function to remove the last occurrence of a directory from a path
+function remove_last_occurrence() {
+    echo "$1" | awk -F/ -v dir=$2 '{
+        found = 0;
+        for (i=NF; i>0; i--) {
+            if ($i == dir && found == 0) {
+                found = 1;
+                continue;
+            }
+            res = (i==NF ? $i : $i "/" res);
+        }
+        print res;
+    }'
+}
+
+# Function to get full path to vast main directory from the script name
+function get_vast_path_ends_with_slash_from_this_script_name() {
+ VAST_PATH=$(vastrealpath $0)
+ VAST_PATH=$(dirname "$VAST_PATH")
+
+ # Remove last occurrences of util, lib, examples
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "util")
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "lib")
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "examples")
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "transients")
+
+ # Make sure no '//' are left in the path (they look ugly)
+ VAST_PATH="${VAST_PATH/'//'/'/'}"
+ # In case the above line didn't work
+ VAST_PATH=$(echo "$VAST_PATH" | sed "s:/'/:/:g")
+
+ # Make sure no quotation marks are left in VAST_PATH
+ VAST_PATH=$(echo "$VAST_PATH" | sed "s:'::g")
+
+ # Check that VAST_PATH ends with '/'
+ LAST_CHAR_OF_VAST_PATH="${VAST_PATH: -1}"
+ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
+  VAST_PATH="$VAST_PATH/"
+ fi
+
+ echo "$VAST_PATH"
+}
+
+VAST_PATH=$(get_vast_path_ends_with_slash_from_this_script_name "$0")
+cd "$VAST_PATH" || { echo "ERROR: update_offline_catalogs.sh cannot cd to the VaST directory '$VAST_PATH'" >&2; exit 1; }
+#################################
+
 if [ ! -x lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search ];then
  echo "Error: Could not find lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search" >&2
  echo "You need to compile VaST by running 'make' before running the script $0" >&2
