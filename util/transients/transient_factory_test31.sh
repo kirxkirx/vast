@@ -1033,6 +1033,44 @@ function retry_wcs_with_lower_tweak_order {
  fi
 }
 
+# Produce the per-image astrometric residual diagnostic plot.
+# Prefers the richer Python plotter (lib/plot_astrometric_residuals_xy.py:
+# grid-averaged residual vector field + per-star magnitude map; needs numpy +
+# matplotlib). Silently falls back to the PGPLOT C tool
+# (lib/plot_astrometric_residuals_xy) if Python or the packages are missing, or
+# if the Python plotter produced no file. Writes
+# <basename>_astrometric_residuals.png in the current directory.
+# Returns 0 if a plot was produced by either tool, 1 if none was.
+function make_astrometric_residuals_plot {
+ local plot_input="$1" # wcs_<basename>.fits; residuals in $plot_input.cat.astrometric_residuals
+ local expected_png
+ local python_bin
+ expected_png=$(echo "$plot_input" | sed -e 's/\.fts$//' -e 's/\.fits$//' -e 's/\.fit$//')_astrometric_residuals.png
+ # Remove any stale plot so its presence afterwards is an unambiguous success signal.
+ rm -f "$expected_png"
+ # 1) Preferred: richer Python plotter. Pick whichever interpreter exists.
+ python_bin=""
+ if command -v python3 >/dev/null 2>&1 ; then
+  python_bin="python3"
+ elif command -v python >/dev/null 2>&1 ; then
+  python_bin="python"
+ fi
+ if [ -f lib/plot_astrometric_residuals_xy.py ] && [ -n "$python_bin" ] ; then
+  "$python_bin" lib/plot_astrometric_residuals_xy.py "$plot_input" >> transient_factory_test31.txt 2>&1
+  if [ -s "$expected_png" ]; then
+   return 0
+  fi
+ fi
+ # 2) Fall back silently to the PGPLOT C tool.
+ if [ -x lib/plot_astrometric_residuals_xy ]; then
+  lib/plot_astrometric_residuals_xy "$plot_input" >> transient_factory_test31.txt 2>&1
+  if [ -s "$expected_png" ]; then
+   return 0
+  fi
+ fi
+ return 1
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -3439,15 +3477,19 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_RATIO" "$REF_RATIO_AVG" "worst_quadrant_to_overall_ratio"
 
-    # Diagnostic plot per image: (x_pix, y_pix) of all UCAC5-matched stars.
-    # Reads the same .cat.astrometric_residuals files that fed the sigma
-    # statistics above. A radial fall-off, a one-sided gap, or a clear
-    # diagonal cut signals an unmodeled spatial distortion the SIP fit
-    # could not absorb (e.g., differential atmospheric refraction at high
-    # airmass). One PNG per image, embedded in the HTML processing log
-    # next to the WCS quality summary just printed.
-    if [ -x lib/plot_astrometric_residuals_xy ];then
-     echo "<br><b>Distribution of catalog-matched stars across the image:</b><br>" >> transient_factory_test31.txt
+    # Diagnostic plot per image: the astrometric residual vector field of all
+    # UCAC5-matched stars (measured minus catalog position). Reads the same
+    # .cat.astrometric_residuals files that fed the sigma statistics above.
+    # A radial fall-off, a one-sided gap, or a clear diagonal cut signals an
+    # unmodeled spatial distortion the SIP fit could not absorb (e.g., a
+    # TAN-only solution over a wide field, or differential atmospheric
+    # refraction at high airmass). One PNG per image, embedded in the HTML
+    # processing log next to the WCS quality summary just printed.
+    # make_astrometric_residuals_plot prefers the Python plotter and falls back
+    # to the PGPLOT C tool. If neither produces a plot we emit a WARNING so the
+    # absence is visible in the log rather than silently swallowed.
+    if [ -f lib/plot_astrometric_residuals_xy.py ] || [ -x lib/plot_astrometric_residuals_xy ];then
+     echo "<br><b>Astrometric residual vector field (catalog-matched stars):</b><br>" >> transient_factory_test31.txt
      for WCS_RES_IMG_FOR_PLOT in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ; do
       if [ -z "$WCS_RES_IMG_FOR_PLOT" ];then
        continue
@@ -3459,18 +3501,23 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
       WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/wcs_wcs_/wcs_}"
       WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/.fz/}"
       if [ ! -s "${WCS_MATCH_PLOT_INPUT}.cat.astrometric_residuals" ];then
-       echo "WCS-match plot: no residuals file for ${WCS_MATCH_PLOT_INPUT} -- skipping" | tee -a transient_factory_test31.txt
+       echo "WARNING: no astrometric residual plot for ${WCS_MATCH_PLOT_INPUT}: residuals file ${WCS_MATCH_PLOT_INPUT}.cat.astrometric_residuals is missing or empty (plate solve produced no catalog matches?)" | tee -a transient_factory_test31.txt
        continue
       fi
-      lib/plot_astrometric_residuals_xy "$WCS_MATCH_PLOT_INPUT" >> transient_factory_test31.txt 2>&1
-      # The plotter strips .fts/.fits/.fit before appending the suffix.
+      # The plotters strip .fts/.fits/.fit before appending the suffix.
       WCS_MATCH_PLOT_PNG=$(echo "$WCS_MATCH_PLOT_INPUT" | sed -e 's/\.fts$//' -e 's/\.fits$//' -e 's/\.fit$//')_astrometric_residuals.png
-      if [ -f "$WCS_MATCH_PLOT_PNG" ];then
+      if make_astrometric_residuals_plot "$WCS_MATCH_PLOT_INPUT" ;then
        if cp "$WCS_MATCH_PLOT_PNG" "transient_report/$WCS_MATCH_PLOT_PNG" ;then
         echo "<img src=\"$WCS_MATCH_PLOT_PNG\"><br>" >> transient_factory_test31.txt
+       else
+        echo "WARNING: astrometric residual plot $WCS_MATCH_PLOT_PNG was produced but could not be copied into transient_report/" | tee -a transient_factory_test31.txt
        fi
+      else
+       echo "WARNING: no astrometric residual plot produced for ${WCS_MATCH_PLOT_INPUT} -- both lib/plot_astrometric_residuals_xy.py and lib/plot_astrometric_residuals_xy failed to create ${WCS_MATCH_PLOT_PNG} (see messages above)" | tee -a transient_factory_test31.txt
       fi
      done
+    else
+     echo "WARNING: no astrometric residual plotter available (neither lib/plot_astrometric_residuals_xy.py nor lib/plot_astrometric_residuals_xy) -- skipping residual plots" | tee -a transient_factory_test31.txt
     fi
    else
     echo "Skipping WCS quality comparison: not the first SExtractor pass ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt

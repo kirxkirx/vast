@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "fitsio.h"
 #include "cpgplot.h"
@@ -157,6 +158,8 @@ int main( int argc, char **argv ) {
  const char *bn;
  size_t i;
  double aspect_ratio;
+ struct stat png_stat;
+ int png_written;
 
  if ( argc != 2 ) {
   fprintf( stderr, "Usage: %s <fits-file | .cat.astrometric_residuals>\n", argv[0] );
@@ -315,10 +318,24 @@ int main( int argc, char **argv ) {
    cpgpt( n_points, x, y, 17 );
   }
   cpgend();
-  fprintf( stderr,
-           "plot_astrometric_residuals_xy: wrote %s (%d matched stars from %s, image %ldx%ld)\n",
-           png_path, n_points, residuals_path, nx, ny );
+  // cpgbeg can report success (return 1) while the /PNG driver silently
+  // fails to write the file (e.g. a broken libpng/PGPLOT build, or a render
+  // that produced nothing). Only claim success after confirming a non-empty
+  // file actually landed on disk, so the caller is not misled into thinking
+  // a plot exists when it does not.
+  png_written= ( stat( png_path, &png_stat ) == 0 && png_stat.st_size > 0 );
+  if ( png_written ) {
+   fprintf( stderr,
+            "plot_astrometric_residuals_xy: wrote %s (%d matched stars from %s, image %ldx%ld)\n",
+            png_path, n_points, residuals_path, nx, ny );
+  } else {
+   fprintf( stderr,
+            "plot_astrometric_residuals_xy: PGPLOT /PNG device reported success but no "
+            "file appeared at %s -- no plot produced\n",
+            png_path );
+  }
  } else {
+  png_written= 0;
   fprintf( stderr,
            "plot_astrometric_residuals_xy: PGPLOT /PNG device not available -- "
            "no plot produced\n" );
@@ -326,5 +343,6 @@ int main( int argc, char **argv ) {
 
  free( x );
  free( y );
- return 0;
+ // Non-zero exit when no plot was produced so the caller can fall back / warn.
+ return png_written ? 0 : 1;
 }
