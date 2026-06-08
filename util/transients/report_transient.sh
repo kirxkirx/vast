@@ -155,8 +155,8 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   clean_tmp_files
   exit 1
  fi
- SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
- UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".cat.ucac5
+ SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".wcscat
+ UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".wcscat.ucac5
  # util/solve_plate_with_UCAC5 is supposed to be called before running this script
  DATE_INFO=$(util/get_image_date "$FITSFILE" 2>&1)
  JD_FROM_IMAGE_HEADER=$(echo "$DATE_INFO" | grep -v '= JD' | grep '        JD ' | awk '{print $2}')

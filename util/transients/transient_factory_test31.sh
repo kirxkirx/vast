@@ -979,7 +979,7 @@ function retry_wcs_with_lower_tweak_order {
  mkdir -p "$backup_dir"
 
  local f
- for f in "$wcs_basename" "$wcs_basename".cat "$wcs_basename".cat.ucac5 "$wcs_basename".cat.ds9.reg "$wcs_basename".cat.astrometric_residuals ; do
+ for f in "$wcs_basename" "$wcs_basename".wcscat "$wcs_basename".wcscat.ucac5 "$wcs_basename".wcscat.ds9.reg "$wcs_basename".wcscat.astrometric_residuals ; do
   if [ -f "$f" ]; then
    cp -p "$f" "$backup_dir/" 2>/dev/null
    rm -f "$f"
@@ -1024,7 +1024,7 @@ function retry_wcs_with_lower_tweak_order {
   rm -rf "$backup_dir"
  else
   echo "WCS_QUALITY_RETRY: --tweak-order 2 did NOT improve $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma:-N/A}, ratio ${current_ratio}->${new_ratio:-N/A}; reverting to order 3" | tee -a transient_factory_test31.txt
-  for f in "$wcs_basename" "$wcs_basename".cat "$wcs_basename".cat.ucac5 "$wcs_basename".cat.ds9.reg "$wcs_basename".cat.astrometric_residuals ; do
+  for f in "$wcs_basename" "$wcs_basename".wcscat "$wcs_basename".wcscat.ucac5 "$wcs_basename".wcscat.ds9.reg "$wcs_basename".wcscat.astrometric_residuals ; do
    if [ -f "$backup_dir/$(basename "$f")" ]; then
     cp -p "$backup_dir/$(basename "$f")" "$f"
    fi
@@ -1042,7 +1042,7 @@ function retry_wcs_with_lower_tweak_order {
 # <basename>_astrometric_residuals.png in the current directory.
 # Returns 0 if a plot was produced by either tool, 1 if none was.
 function make_astrometric_residuals_plot {
- local plot_input="$1" # wcs_<basename>.fits; residuals in $plot_input.cat.astrometric_residuals
+ local plot_input="$1" # wcs_<basename>.fits; residuals in $plot_input.wcscat.astrometric_residuals
  local expected_png
  local python_bin
  expected_png=$(echo "$plot_input" | sed -e 's/\.fts$//' -e 's/\.fits$//' -e 's/\.fit$//')_astrometric_residuals.png
@@ -2934,7 +2934,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     else
      WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename "$REFERENCE_IMAGE")
     fi
-    SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
+    SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".wcscat
     echo "$0 is checking for the presence of non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME " | tee -a transient_factory_test31.txt
     if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
      echo "$0 has not found non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME" | tee -a transient_factory_test31.txt
@@ -3479,7 +3479,7 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 
     # Diagnostic plot per image: the astrometric residual vector field of all
     # UCAC5-matched stars (measured minus catalog position). Reads the same
-    # .cat.astrometric_residuals files that fed the sigma statistics above.
+    # .wcscat.astrometric_residuals files that fed the sigma statistics above.
     # A radial fall-off, a one-sided gap, or a clear diagonal cut signals an
     # unmodeled spatial distortion the SIP fit could not absorb (e.g., a
     # TAN-only solution over a wide field, or differential atmospheric
@@ -3495,13 +3495,13 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
        continue
       fi
       # The residuals file written by util/solve_plate_with_UCAC5 lives in
-      # cwd as wcs_<basename without .fz>.cat.astrometric_residuals. Build
+      # cwd as wcs_<basename without .fz>.wcscat.astrometric_residuals. Build
       # the matching wcs_-prefixed image path to hand to the plotter.
       WCS_MATCH_PLOT_INPUT="wcs_$(basename "$WCS_RES_IMG_FOR_PLOT")"
       WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/wcs_wcs_/wcs_}"
       WCS_MATCH_PLOT_INPUT="${WCS_MATCH_PLOT_INPUT/.fz/}"
-      if [ ! -s "${WCS_MATCH_PLOT_INPUT}.cat.astrometric_residuals" ];then
-       echo "WARNING: no astrometric residual plot for ${WCS_MATCH_PLOT_INPUT}: residuals file ${WCS_MATCH_PLOT_INPUT}.cat.astrometric_residuals is missing or empty (plate solve produced no catalog matches?)" | tee -a transient_factory_test31.txt
+      if [ ! -s "${WCS_MATCH_PLOT_INPUT}.wcscat.astrometric_residuals" ];then
+       echo "WARNING: no astrometric residual plot for ${WCS_MATCH_PLOT_INPUT}: residuals file ${WCS_MATCH_PLOT_INPUT}.wcscat.astrometric_residuals is missing or empty (plate solve produced no catalog matches?)" | tee -a transient_factory_test31.txt
        continue
       fi
       # The plotters strip .fts/.fits/.fit before appending the suffix.

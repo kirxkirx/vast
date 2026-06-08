@@ -2188,25 +2188,25 @@ $GREP_RESULT"
     fi
    fi
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit
-   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 ];then
+   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006_platesolveucac5"
    else
-    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA1017S_17061_09773__00_00.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
     if [ $TEST -lt 400 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006a_too_few_stars_matched_to_ucac5_$TEST"
     fi
-    if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.cat.astrometric_residuals ];then
+    if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.wcscat.astrometric_residuals ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006b"
     fi
-    if [ ! -s wcs_SCA1017S_17061_09773__00_00.fit.cat.astrometric_residuals ];then
+    if [ ! -s wcs_SCA1017S_17061_09773__00_00.fit.wcscat.astrometric_residuals ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006c"
     else
      # compute mean astrometric offset and make sure it's less than 1 arcsec
-     MEAN_ASTROMETRIC_OFFSET=`cat wcs_SCA1017S_17061_09773__00_00.fit.cat.astrometric_residuals | awk '{print $5}' | sort -n | awk '
+     MEAN_ASTROMETRIC_OFFSET=`cat wcs_SCA1017S_17061_09773__00_00.fit.wcscat.astrometric_residuals | awk '{print $5}' | sort -n | awk '
   BEGIN {
     c = 0;
     sum = 0;
@@ -2241,15 +2241,15 @@ $GREP_RESULT"
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE008a"
     fi
-    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat ];then
+    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.wcscat ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE009"
     fi 
-    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 ];then
+    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.wcscat.ucac5 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE010"
     else
-     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA10670S_13788_08321__00_00.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
      # We expect 553 APASS stars in this field, but VizieR communication is not always reliable (may be slow and time out)
      # Let's assume the test pass if we get at least some stars
      #if [ $TEST -lt 550 ];then
@@ -2537,12 +2537,12 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE105a"
    fi
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit
-   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 ];then
+   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE106"
    fi 
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA10670S_13788_08321__00_00.fit
-   if [ ! -f wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 ];then
+   if [ ! -f wcs_SCA10670S_13788_08321__00_00.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE107"
    fi 
@@ -2728,12 +2728,12 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE205a"
    fi
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit
-   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 ];then
+   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE206"
    fi 
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA10670S_13788_08321__00_00.fit
-   if [ ! -f wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 ];then
+   if [ ! -f wcs_SCA10670S_13788_08321__00_00.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE207"
    fi 
@@ -9015,7 +9015,7 @@ $GREP_RESULT"
   fi
   #
   util/solve_plate_with_UCAC5 ../MASTER_test/wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit
-  if [ ! -f wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 ];then
+  if [ ! -f wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD005"
   else
@@ -9024,7 +9024,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD005a"
    fi
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 800 ];then
    if [ $TEST -lt 300 ];then
     TEST_PASSED=0
@@ -9175,16 +9175,16 @@ $GREP_RESULT"
   elif [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts"
-  elif [ ! -f wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 ];then
+  elif [ ! -f wcs_M31-1-001-001_dupe-1.fts.wcscat.ucac5 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts.cat.ucac5"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts.wcscat.ucac5"
   else
    lib/bin/xy2sky wcs_M31-1-001-001_dupe-1.fts 200 200 &>/dev/null
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005a"
    fi
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.wcscat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1500 ];then
    #if [ $TEST -lt 750 ];then
    #if [ $TEST -lt 500 ];then
@@ -23292,7 +23292,7 @@ $GREP_RESULT"
   # I cannot get WCS headers down to 1pix without running solve-field locally on the _image_ to verify its WCS header.
   # but the above test with transient position suggests that the local correction does the trick correcting source positions.
   # Here is my manual test:
-  # rm -f wcs_025_2023-8-20_20-50-10_002.fts* local_wcs_cache/wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ; ASTROMETRYNET_LOCAL_OR_REMOTE="local" FORCE_PLATE_SOLVE_SERVER="vast.sai.msu.ru" util/wcs_image_calibration.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts ; lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 ; lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' ) ; echo "######" ; util/solve_plate_with_UCAC5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts --no_photometric_catalog ; cat wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}'
+  # rm -f wcs_025_2023-8-20_20-50-10_002.fts* local_wcs_cache/wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals ; ASTROMETRYNET_LOCAL_OR_REMOTE="local" FORCE_PLATE_SOLVE_SERVER="vast.sai.msu.ru" util/wcs_image_calibration.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts ; lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 ; lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' ) ; echo "######" ; util/solve_plate_with_UCAC5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts --no_photometric_catalog ; cat wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}'
   #
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -23331,21 +23331,21 @@ $GREP_RESULT"
   #
   # The trick is the files may be wcs_fd_* or just wcs_* - depending on presence or absence of calibration frames on the test machine
   # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
-  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ucac5 ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ucac5 ];then 
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.wcscat.ucac5 ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.wcscat.ucac5 ];then 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_UCAC5_FILES"
   fi
   #
   # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
-  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ds9.reg ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ds9.reg ];then 
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.wcscat.ds9.reg ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.wcscat.ds9.reg ];then 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_DS9_REGION_FILES"
   fi
   #
   # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
-  if [ -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
+  if [ -s wcs_*025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals ] && [ -s wcs_*025_2023-8-20_20-51-4_003.fts.wcscat.astrometric_residuals ];then 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -23361,7 +23361,7 @@ $GREP_RESULT"
    fi
    # 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-51-4_003.fts.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -24512,9 +24512,9 @@ $GREP_RESULT"
   fi
   # 
   #
-  if [ -s wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.cat.astrometric_residuals ] ;then 
+  if [ -s wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.wcscat.astrometric_residuals ] ;then 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 20/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -25033,9 +25033,9 @@ $GREP_RESULT"
   fi
   # 
   #
-  if [ -s wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.cat.astrometric_residuals ] ;then 
+  if [ -s wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.wcscat.astrometric_residuals ] ;then 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 20/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -25371,13 +25371,13 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_solve_plate_with_UCAC5_FAILED"
     fail_early
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_fit.cat.ucac5_file"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_fit.wcscat.ucac5_file"
     fail_early
-   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_fit.cat.ucac5_file"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_fit.wcscat.ucac5_file"
     fail_early
    else
     util/magnitude_calibration.sh V robust_linear
@@ -25475,12 +25475,12 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_solve_plate_with_UCAC5_FAILED"
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_fit.cat.ucac5_file"
-   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_fit.wcscat.ucac5_file"
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_fit.cat.ucac5_file"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_fit.wcscat.ucac5_file"
    else
     util/magnitude_calibration.sh B robust_linear
     if [ $? -ne 0 ];then
@@ -25579,12 +25579,12 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_solve_plate_with_UCAC5_FAILED"
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_fit.cat.ucac5_file"
-   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_fit.wcscat.ucac5_file"
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".wcscat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_fit.cat.ucac5_file"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_fit.wcscat.ucac5_file"
    else
     util/magnitude_calibration.sh Rc robust_linear
     if [ $? -ne 0 ];then
@@ -25690,11 +25690,11 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD001a"
  fi
- if [ ! -s wcs_1630+3250.20150511T215921000.fit.cat.ucac5 ];then
+ if [ ! -s wcs_1630+3250.20150511T215921000.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_1630+3250.20150511T215921000.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_1630+3250.20150511T215921000.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 1800 ];then
   #if [ $TEST -lt 900 ];then
   #if [ $TEST -lt 500 ];then
@@ -25704,7 +25704,7 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/1630+3250.20150511T215921000.fit 2>&1 | grep -q 'The output catalog wcs_1630+3250.20150511T215921000.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/1630+3250.20150511T215921000.fit 2>&1 | grep -q 'The output catalog wcs_1630+3250.20150511T215921000.fit.wcscat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD003"
@@ -25782,11 +25782,11 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130001a"
  fi
  util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
- if [ ! -s wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 ];then
+ if [ ! -s wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   # expect 431 -- that's the wrong expectation - that's the number if saturation limit was not determined so saturated stars are included in APASS catalog match, which we don't want!
   #if [ $TEST -lt 300 ];then
   # expect 253 - that's the correct expectation that excludes saturated stars
@@ -25802,7 +25802,7 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep -q 'The output catalog wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep -q 'The output catalog wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.wcscat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130003"
@@ -25886,11 +25886,11 @@ if [ -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];the
   FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P001a"
  fi
  util/solve_plate_with_UCAC5 ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit
- if [ ! -s wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 ];then
+ if [ ! -s wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   # expect 44
   if [ $TEST -lt 40 ];then
    TEST_PASSED=0
@@ -25898,7 +25898,7 @@ if [ -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];the
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit 2>&1 | grep -q 'The output catalog wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit 2>&1 | grep -q 'The output catalog wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.wcscat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P003"
@@ -25974,11 +25974,11 @@ if [ -f ../individual_images_test/c176.fits ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE001a"
  fi
- if [ ! -f wcs_c176.fits.cat.ucac5 ];then
+ if [ ! -f wcs_c176.fits.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_c176.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_c176.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 180 ];then
   # we reduced the catalog search radius, so now it's
   #if [ $TEST -lt 170 ];then
@@ -26043,11 +26043,11 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600001a"
  fi
- if [ ! -f wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.cat.ucac5 ];then
+ if [ ! -f wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 170 ];then
   # We reduced catalog search radius
   if [ $TEST -lt 150 ];then
@@ -26149,11 +26149,11 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001a"
    fi
-   if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 ];then
+   if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002"
    else
-    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
     #if [ $TEST -lt 170 ];then
     # We reduced catalog search radius
     if [ $TEST -lt 100 ];then
@@ -26272,11 +26272,11 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED001a"
     fi
-    if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 ];then
+    if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.wcscat.ucac5 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002"
     else
-     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
      if [ $TEST -lt 50 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002a_$TEST"
@@ -26411,11 +26411,11 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ001a"
  fi
- if [ ! -f wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.cat.ucac5 ];then
+ if [ ! -f wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
   if [ $TEST -lt 200 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ002a_$TEST"
@@ -26533,11 +26533,11 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2001a"
-  elif [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 ];then
+  elif [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
    if [ $TEST -lt 400 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002a_$TEST"
@@ -26788,11 +26788,11 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG001a"
  fi
- if [ ! -s wcs_fd_Per3_2011-10-31_001.fts.cat.ucac5 ];then
+ if [ ! -s wcs_fd_Per3_2011-10-31_001.fts.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_Per3_2011-10-31_001.fts.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_Per3_2011-10-31_001.fts.wcscat.ucac5 | wc -l | awk '{print $1}'`
   if [ $TEST -lt 300 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002a_$TEST"
@@ -26851,11 +26851,11 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK001a"
  fi
- if [ ! -f wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.cat.ucac5 ];then
+ if [ ! -f wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   if [ $TEST -lt 270 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK002a_$TEST"
@@ -26926,11 +26926,11 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED001a"
  fi
- if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 ];then
+ if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   # expect 93
   if [ $TEST -lt 50 ];then
    TEST_PASSED=0
@@ -27022,11 +27022,11 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED001a"
  fi
- if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 ];then
+ if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   # expect 93
   if [ $TEST -lt 50 ];then
    TEST_PASSED=0
@@ -27093,17 +27093,17 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER001a"
    fi
-   if [ ! -f wcs_SCA13320__00_00.fits.cat.ucac5 ];then
+   if [ ! -f wcs_SCA13320__00_00.fits.wcscat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002"
    else
-    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA13320__00_00.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA13320__00_00.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
     #if [ $TEST -lt 700 ];then
     if [ $TEST -lt 300 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002a_$TEST"
     fi
-   fi # if [ ! -f wcs_SCA13320__00_00.fits.cat.ucac5 ];then
+   fi # if [ ! -f wcs_SCA13320__00_00.fits.wcscat.ucac5 ];then
   fi # if [ ! -f wcs_SCA13320__00_00.fits ];then
  fi # if [ $? -ne 0 ];then 
 
@@ -27318,11 +27318,11 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER001a"
  fi
- if [ ! -s wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 ];then
+ if [ ! -s wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 1200 ];then
   #if [ $TEST -lt 700 ];then
   if [ $TEST -lt 300 ];then
@@ -27374,7 +27374,7 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   fi # else if [ $TEST -lt 700 ];then
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep -q 'The output catalog wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep -q 'The output catalog wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.wcscat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER003"
@@ -27473,11 +27473,11 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2001a"
  fi
- if [ ! -s wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 ];then
+ if [ ! -s wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.wcscat.ucac5 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 700 ];then
   if [ $TEST -lt 300 ];then
    TEST_PASSED=0
@@ -27485,7 +27485,7 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'The output catalog wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'The output catalog wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.wcscat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2003"
@@ -27633,18 +27633,18 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL009"
   fi
-  if [ ! -s wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 ];then
+  if [ ! -s wcs_r_ncas20200820_stacked_16bit_g2.fit.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL010"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_16bit_g2.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
    if [ $TEST -lt 100 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL011_$TEST"
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.wcscat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL012"
@@ -27759,18 +27759,18 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32009"
   fi
-  if [ ! -s wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 ];then
+  if [ ! -s wcs_r_ncas20200820_stacked_32bit_g2.fit.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32010"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_32bit_g2.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
    if [ $TEST -lt 100 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32011_$TEST"
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.wcscat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32012"
@@ -27879,18 +27879,18 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND009"
   fi
-  if [ ! -s wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 ];then
+  if [ ! -s wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND010"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
    if [ $TEST -lt 100 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND011_$TEST"
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.wcscat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND012"
@@ -27997,18 +27997,18 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS009"
   fi
-  if [ ! -s wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 ];then
+  if [ ! -s wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS010"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
    if [ $TEST -lt 20 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS011_$TEST"
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep -q 'The output catalog wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep -q 'The output catalog wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.wcscat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS012"
@@ -28119,11 +28119,11 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG009"
   fi
-  if [ ! -s wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 ];then
+  if [ ! -s wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG010"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.wcscat.ucac5 | wc -l | awk '{print $1}'`
    # 1606 with 2000 ref stars
    if [ $TEST -lt 200 ];then
     TEST_PASSED=0
@@ -28131,7 +28131,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.wcscat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG012"
@@ -30551,11 +30551,11 @@ $GREP_RESULT"
   fi
   #
   util/solve_plate_with_UCAC5 ../MASTER_test/wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit
-  if [ ! -f wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 ];then
+  if [ ! -f wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF004"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.wcscat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1100 ];then
    #if [ $TEST -lt 800 ];then
    if [ $TEST -lt 300 ];then
@@ -30710,11 +30710,11 @@ $GREP_RESULT"
   fi
   #
   util/solve_plate_with_UCAC5 ../M31_ISON_test/M31-1-001-001_dupe-1.fts
-  if [ ! -f wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 ];then
+  if [ ! -f wcs_M31-1-001-001_dupe-1.fts.wcscat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF004"
   else
-   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.wcscat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1500 ];then
    #if [ $TEST -lt 700 ];then
    if [ $TEST -lt 300 ];then
@@ -34645,7 +34645,7 @@ if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec
  # Compare forced photometry vs SExtractor for 100 stars
  ########################################################
  # The forced_photometry.sh run above produced calibration files and SExtractor catalog
- WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.cat"
+ WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.wcscat"
  if [ -s "$WCS_CATALOG" ] && [ -s "calib.txt_param" ];then
   FORCEDPHOT_CALIB_P0=$(awk '{print $5}' calib.txt_param)
   FORCEDPHOT_CALIB_P1=$(awk '{print $4}' calib.txt_param)

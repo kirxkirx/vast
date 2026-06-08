@@ -14,7 +14,7 @@
 #   util/calibrate_single_image_with_tycho2.sh image.fits
 #
 # Inputs expected in CWD:
-#   - wcs_<basename>.cat          SExtractor catalog of the plate-solved image
+#   - wcs_<basename>.wcscat          SExtractor catalog of the plate-solved image
 #                                 (produced by the transient-factory plate-solve
 #                                 pass; if absent this script will try to
 #                                 (re)produce it via util/wcs_image_calibration.sh)
@@ -107,7 +107,7 @@ fi
 
 # The corresponding SExtractor catalog.  Look alongside the image first, then
 # fall back to running wcs_image_calibration.sh to (re)produce it.
-SEX_CATALOG="${WCS_IMAGE_NAME}.cat"
+SEX_CATALOG="${WCS_IMAGE_NAME}.wcscat"
 # If the image path is absolute, CAT might also be absolute; read_tycho2 expects
 # wcsmag.cat in CWD so we always copy there regardless.
 if [ ! -s "$SEX_CATALOG" ];then

@@ -21,7 +21,7 @@ export LANGUAGE LC_ALL
 
 FP_FITSFILE="../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits"
 FP_FITSFILE_URL="http://tau.kirx.net/vast_test_data/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.bz2"
-FP_WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.cat"
+FP_WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.wcscat"
 FP_FILTER="V"
 FP_TARGET_RA="19:32:43.67"
 FP_TARGET_DEC="-22:39:30.7"

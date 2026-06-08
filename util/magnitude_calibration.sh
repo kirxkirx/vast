@@ -72,9 +72,9 @@ else
  TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
  #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
  if [ "$TEST_SUBSTRING" = "wcs_" ];then
-  UCAC5_REFERENCE_IMAGE_MATCH_FILE=$(basename $REFERENCE_IMAGE).cat.ucac5
+  UCAC5_REFERENCE_IMAGE_MATCH_FILE=$(basename $REFERENCE_IMAGE).wcscat.ucac5
  else
-  UCAC5_REFERENCE_IMAGE_MATCH_FILE=wcs_$(basename $REFERENCE_IMAGE).cat.ucac5
+  UCAC5_REFERENCE_IMAGE_MATCH_FILE=wcs_$(basename $REFERENCE_IMAGE).wcscat.ucac5
  fi
  # if the output catalog file is present and is not empty
  if [ ! -s "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ];then

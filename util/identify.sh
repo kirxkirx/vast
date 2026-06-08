@@ -557,7 +557,7 @@ fi
 echo "FITSFILE after on_the_fly=$FITSFILE"
 echo "WCS_IMAGE_NAME=$WCS_IMAGE_NAME"
 
-SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
+SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".wcscat
 
 # Check if vast_summary.log file is present
 if [ ! -f "$VAST_PATH"vast_summary.log ];then
@@ -1416,7 +1416,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
     else
      WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
     fi
-    SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
+    SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".wcscat
     # Check if ucac5 plate solution is available
     UCAC5_SOLUTION_NAME="$SEXTRACTOR_CATALOG_NAME".ucac5
     if [ ! -f $UCAC5_SOLUTION_NAME ];then

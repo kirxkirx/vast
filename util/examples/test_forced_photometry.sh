@@ -138,14 +138,14 @@ echo "=============================================="
 echo ""
 
 # The forced_photometry.sh run above already produced:
-# - SExtractor catalog (wcs_*.cat)
-# - Plate solution (wcs_*.cat.ucac5)
+# - SExtractor catalog (wcs_*.wcscat)
+# - Plate solution (wcs_*.wcscat.ucac5)
 # - Calibration (calib.txt, calib.txt_param)
 # We can reuse all of these.
 
 # Find the WCS catalog produced by forced_photometry.sh
 BASENAME_FITSFILE=$(basename "$FITSFILE")
-WCS_CATALOG="wcs_${BASENAME_FITSFILE}.cat"
+WCS_CATALOG="wcs_${BASENAME_FITSFILE}.wcscat"
 # Handle wcs_wcs_ prefix duplication
 WCS_CATALOG="${WCS_CATALOG/wcs_wcs_/wcs_}"
 

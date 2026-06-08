@@ -405,7 +405,7 @@ void guess_wcs_catalog_filename( char *wcs_catalog_filename, char *fits_image_fi
  }
  strncat( wcs_catalog_filename, test_string, FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
  wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
- strncat( wcs_catalog_filename, ".cat", FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
+ strncat( wcs_catalog_filename, ".wcscat", FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
  wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
  // fprintf(stderr,"test_string=#%s#\n",test_string);
  // fprintf(stderr,"fits_image_filename=#%s#\n",fits_image_filename);
@@ -425,7 +425,7 @@ void guess_wcs_catalog_filename_old_does_not_hanlde_fz( char *wcs_catalog_filena
  }
  strncat( wcs_catalog_filename, test_string, FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
  wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
- strncat( wcs_catalog_filename, ".cat", FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
+ strncat( wcs_catalog_filename, ".wcscat", FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
  wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
  // fprintf(stderr,"test_string=#%s#\n",test_string);
  // fprintf(stderr,"fits_image_filename=#%s#\n",fits_image_filename);

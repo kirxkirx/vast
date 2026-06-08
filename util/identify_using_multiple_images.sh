@@ -29,7 +29,7 @@ N=0
 while read JD MAG MERR X Y APP FITSFILE ;do
  util/wcs_image_calibration.sh $FITSFILE $FOV
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
- SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
+ SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".wcscat
 
  #N=`echo "$N+1"|bc -q`
  N=$((N+1))

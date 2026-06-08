@@ -16,8 +16,8 @@
 #
 # Input/Output mirror the C tool exactly, so the calling pipeline can use
 # either interchangeably:
-#   Input : <image>.fits           (residuals read from <image>.fits.cat.astrometric_residuals)
-#        or <image>.fits.cat.astrometric_residuals
+#   Input : <image>.fits           (residuals read from <image>.fits.wcscat.astrometric_residuals)
+#        or <image>.fits.wcscat.astrometric_residuals
 #   Output: <image>_astrometric_residuals.png   in the current directory.
 #
 # The residuals file is written by util/solve_plate_with_UCAC5
@@ -33,7 +33,7 @@
 import os
 import sys
 
-# Column indices (0-based) in the .cat.astrometric_residuals file.
+# Column indices (0-based) in the .wcscat.astrometric_residuals file.
 COL_RESID_MAG = 4   # |resid| in arcsec
 COL_DX = 5          # dRA*cos(Dec) in arcsec (East-West residual)
 COL_DY = 6          # dDec in arcsec (North-South residual)
@@ -52,13 +52,13 @@ def strip_fits_ext(name):
 
 def derive_paths(arg):
     """Return (residuals_path, fits_path) from either kind of input path."""
-    suffix = ".cat.astrometric_residuals"
+    suffix = ".wcscat.astrometric_residuals"
     if arg.endswith(suffix):
         residuals_path = arg
         fits_path = arg[: -len(suffix)]
     else:
         fits_path = arg
-        residuals_path = arg + ".cat.astrometric_residuals"
+        residuals_path = arg + ".wcscat.astrometric_residuals"
     return residuals_path, fits_path
 
 
@@ -138,7 +138,7 @@ def mad_sigma(values):
 def main():
     if len(sys.argv) != 2:
         sys.stderr.write(
-            "Usage: %s <fits-file | .cat.astrometric_residuals>\n" % sys.argv[0])
+            "Usage: %s <fits-file | .wcscat.astrometric_residuals>\n" % sys.argv[0])
         return 1
 
     # Import the heavy dependencies inside a guard so a missing package is a

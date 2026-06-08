@@ -2,10 +2,10 @@
 // star distribution across an image.
 //
 // Input:  a FITS file (e.g., wcs_<image>.fts) or its accompanying
-//         .cat.astrometric_residuals file.
+//         .wcscat.astrometric_residuals file.
 // Output: <basename>_astrometric_residuals.png in the current directory.
 //
-// The .cat.astrometric_residuals file is produced by solve_plate_with_UCAC5
+// The .wcscat.astrometric_residuals file is produced by solve_plate_with_UCAC5
 // (write_astrometric_residuals_vector_field). Columns 8 and 9 are x_pix,
 // y_pix of each catalog-matched star. This tool plots those coordinates
 // with the plot's aspect ratio matched to the source image's NAXIS1:NAXIS2,
@@ -59,10 +59,10 @@ static size_t length_without_fits_ext( const char *path ) {
  return len;
 }
 
-// Strip the trailing ".cat.astrometric_residuals" if present; returns the
+// Strip the trailing ".wcscat.astrometric_residuals" if present; returns the
 // original length otherwise.
 static size_t length_without_residuals_ext( const char *path ) {
- const char *suffix = ".cat.astrometric_residuals";
+ const char *suffix = ".wcscat.astrometric_residuals";
  size_t len;
  size_t suffix_len;
  len= strlen( path );
@@ -162,9 +162,9 @@ int main( int argc, char **argv ) {
  int png_written;
 
  if ( argc != 2 ) {
-  fprintf( stderr, "Usage: %s <fits-file | .cat.astrometric_residuals>\n", argv[0] );
+  fprintf( stderr, "Usage: %s <fits-file | .wcscat.astrometric_residuals>\n", argv[0] );
   fprintf( stderr, "Plots the (x_pix, y_pix) distribution of catalog-matched\n" );
-  fprintf( stderr, "stars from the .cat.astrometric_residuals file accompanying\n" );
+  fprintf( stderr, "stars from the .wcscat.astrometric_residuals file accompanying\n" );
   fprintf( stderr, "the given FITS image.\n" );
   return 1;
  }
@@ -176,11 +176,11 @@ int main( int argc, char **argv ) {
  }
 
  // Determine which side of the (FITS, residuals) pair we were given.
- if ( input_len >= strlen( ".cat.astrometric_residuals" ) &&
-      strcmp( input + input_len - strlen( ".cat.astrometric_residuals" ),
-              ".cat.astrometric_residuals" ) == 0 ) {
+ if ( input_len >= strlen( ".wcscat.astrometric_residuals" ) &&
+      strcmp( input + input_len - strlen( ".wcscat.astrometric_residuals" ),
+              ".wcscat.astrometric_residuals" ) == 0 ) {
   // Input is the residuals file; derive the FITS path by stripping the
-  // ".cat.astrometric_residuals" suffix.
+  // ".wcscat.astrometric_residuals" suffix.
   size_t fits_len;
   fits_len= length_without_residuals_ext( input );
   memcpy( fits_path, input, fits_len );
@@ -189,10 +189,10 @@ int main( int argc, char **argv ) {
   residuals_path[PATH_MAX_LEN - 1]= '\0';
  } else {
   // Input is the FITS file; the residuals file sits beside it with the
-  // ".cat.astrometric_residuals" suffix.
+  // ".wcscat.astrometric_residuals" suffix.
   strncpy( fits_path, input, PATH_MAX_LEN - 1 );
   fits_path[PATH_MAX_LEN - 1]= '\0';
-  snprintf( residuals_path, PATH_MAX_LEN, "%s.cat.astrometric_residuals", fits_path );
+  snprintf( residuals_path, PATH_MAX_LEN, "%s.wcscat.astrometric_residuals", fits_path );
  }
 
  // Try to read NAXIS1 / NAXIS2. If the FITS file is not available, we will
