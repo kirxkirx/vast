@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h> // for getpid(), unlink()
 
 #include "fitsio.h"
 #include "cpgplot.h"
@@ -142,6 +143,7 @@ int main( int argc, char **argv ) {
  char fits_path[PATH_MAX_LEN];
  char residuals_path[PATH_MAX_LEN];
  char png_path[PATH_MAX_LEN];
+ char png_tmp[PATH_MAX_LEN];
  char png_device_spec[PATH_MAX_LEN];
  char title[PATH_MAX_LEN];
  char fits_basename[PATH_MAX_LEN];
@@ -284,8 +286,15 @@ int main( int argc, char **argv ) {
  }
  snprintf( png_path, PATH_MAX_LEN, "%s_astrometric_residuals.png", fits_basename );
 
+ // PGPLOT's /PNG driver silently fails when the output filename is longer than
+ // ~90 characters: cpgbeg() returns success but no file is ever written. NMW
+ // image names routinely exceed that (e.g. the wcs_fd_<field>_<date>_<exp>_
+ // <temp>_<seq> second-epoch frames produce ~92-char PNG names). So render to a
+ // SHORT, unique temporary filename and rename it to the final (possibly long)
+ // png_path afterwards.
+ snprintf( png_tmp, PATH_MAX_LEN, "pgplot_ar_%ld.png", (long)getpid() );
  // PGPLOT device specification: <filename>/PNG.
- snprintf( png_device_spec, PATH_MAX_LEN, "%s/PNG", png_path );
+ snprintf( png_device_spec, PATH_MAX_LEN, "%s/PNG", png_tmp );
 
  // Title shows the FITS basename and the matched-star count.
  snprintf( title, PATH_MAX_LEN, "%s  [%d matched]", fits_basename, n_points );
@@ -318,6 +327,10 @@ int main( int argc, char **argv ) {
    cpgpt( n_points, x, y, 17 );
   }
   cpgend();
+  // PGPLOT rendered to the short temp name; move it to the final (possibly
+  // long) name. rename() is atomic within the cwd filesystem.
+  if ( rename( png_tmp, png_path ) != 0 )
+   unlink( png_tmp ); // temp may be absent (no render) -- clean up just in case
   // cpgbeg can report success (return 1) while the /PNG driver silently
   // fails to write the file (e.g. a broken libpng/PGPLOT build, or a render
   // that produced nothing). Only claim success after confirming a non-empty
