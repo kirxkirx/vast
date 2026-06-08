@@ -75,6 +75,10 @@ else
 fi
 
 ASTCHECK_OUTPUT=""
+# Set to 1 if astcheck fails to run (see below), so that an empty result from a
+# FAILED astcheck run is treated as an error rather than silently mistaken for a
+# successful run that found no asteroid.
+ASTCHECK_RUN_FAILED=0
 
 THIS_A_PLANET_OR_COMET=0
 #####
@@ -169,10 +173,35 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
  fi
  # I want a larger search radius because TESS
  #ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
- ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r"$ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC" -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
-fi 
+ # Run astcheck and verify it actually ran to completion. astcheck is a local,
+ # deterministic computation, so a failure is a genuine error (missing/corrupt
+ # astorb.dat, the process killed under load, an I/O error, ...) -- not transient
+ # noise to retry away. But a failed run produces empty output, which must NOT be
+ # confused with a successful run that found no asteroid: doing so would report a
+ # real asteroid as a brand-new transient. astcheck echoes the input designation
+ # (TAU0008) on stdout and exits 0 only once it has loaded the elements and
+ # processed the observation, so that is our "astcheck ran to completion" signal.
+ ASTCHECK_RAW=$(lib/astcheck "$TEST_MPC_FILE" -r"$ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC" -m"$ASTEROID_SEARCH_MAG_LIMIT" 2>/dev/null)
+ ASTCHECK_RUN_EXIT_CODE=$?
+ if [ $ASTCHECK_RUN_EXIT_CODE -eq 0 ] && echo "$ASTCHECK_RAW" | grep -q "TAU0008" ;then
+  ASTCHECK_OUTPUT=$(echo "$ASTCHECK_RAW" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
+ else
+  # astcheck did not run to completion -- a real error, not "no asteroid found".
+  ASTCHECK_RUN_FAILED=1
+  echo "ERROR: astcheck failed to run (exit code $ASTCHECK_RUN_EXIT_CODE) on $TEST_MPC_FILE -- asteroid status is UNKNOWN" >&2
+ fi
+fi
 
-if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
+if [ $ASTCHECK_RUN_FAILED -eq 1 ] ;then
+ # astcheck errored out: report it as an error. Do NOT print "not found", which
+ # would let a real asteroid through as a brand-new transient.
+ if [ $COLOR -eq 1 ];then
+  echo -e "\033[01;31mERROR: astcheck failed to run\033[00m -- asteroid status UNKNOWN; please check manually (e.g. with the online MPChecker)."
+ else
+  echo -e "<b><font color=\"red\">ERROR: astcheck failed to run</font></b> -- asteroid status UNKNOWN; please check manually (e.g. with the online MPChecker)."
+ fi
+ exit 2 # return code: astcheck error -- asteroid status could not be determined
+elif [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;32mnot found\033[00m in $DATABASE_NAME."
  else
