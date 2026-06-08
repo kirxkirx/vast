@@ -42,6 +42,11 @@
 #include <sys/wait.h> // for waitpid() in execute_curl_direct()
 #include <ctype.h>    // for isspace() in parse_shell_args()
 
+#if defined( __linux__ )
+#include <signal.h>    // for SIGTERM (used with PR_SET_PDEATHSIG)
+#include <sys/prctl.h> // for prctl( PR_SET_PDEATHSIG, ... )
+#endif
+
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
@@ -3612,6 +3617,45 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  return 0;
 }
 
+// Ask the kernel to terminate this process if its parent dies.
+//
+// solve_plate_with_UCAC5 is routinely launched by a wrapper/parent (e.g. a
+// forced-photometry request handled by unmw's coord_forced_photometry.py).
+// If that parent is killed -- say its own timeout fires -- the orphaned
+// solve_plate_with_UCAC5 is simply reparented to init: orphaning does NOT
+// deliver any signal, so nothing tells it to stop. Its heavy phase (UCAC5
+// matching / local correction / polynomial fit on very crowded wide fields)
+// does essentially no I/O on the captured stdout/stderr pipe, so it also never
+// trips SIGPIPE/EOF that might otherwise stop it. The result is a process that
+// keeps burning a full CPU core for hours/days.
+//
+// PR_SET_PDEATHSIG makes the kernel send us SIGTERM the moment our parent
+// terminates, so we die promptly instead of lingering. This is Linux-specific;
+// on other platforms it is a no-op and we rely on the caller's own timeout
+// (which kills the whole process group) for cleanup.
+static void exit_when_parent_dies( void ) {
+#if defined( __linux__ )
+ // If we are already orphaned (reparented to init, PID 1) there is nothing to
+ // wait for -- bail out immediately.
+ if ( getppid() == 1 ) {
+  fprintf( stderr, "solve_plate_with_UCAC5: parent process already gone -- exiting\n" );
+  _exit( EXIT_FAILURE );
+ }
+ if ( prctl( PR_SET_PDEATHSIG, SIGTERM ) != 0 ) {
+  // Non-fatal: we just lose this safety net.
+  fprintf( stderr, "solve_plate_with_UCAC5: WARNING: prctl(PR_SET_PDEATHSIG) failed -- parent-death watchdog not armed\n" );
+  return;
+ }
+ // Race: the parent may have died between the getppid() check above and the
+ // prctl() call, in which case the death signal was never scheduled. Re-check
+ // and self-terminate if so.
+ if ( getppid() == 1 ) {
+  fprintf( stderr, "solve_plate_with_UCAC5: parent died during startup -- exiting\n" );
+  _exit( EXIT_FAILURE );
+ }
+#endif
+}
+
 int main( int argc, char **argv ) {
 
  /////////////////////////////////////
@@ -3647,6 +3691,10 @@ int main( int argc, char **argv ) {
 #ifdef DEBUGFILES
  FILE *solve_plate_debug;
 #endif
+ // Arm the parent-death watchdog as early as possible so an orphaned
+ // solve_plate_with_UCAC5 cannot keep running after its launcher is killed.
+ exit_when_parent_dies();
+
  get_path_to_vast( path_to_vast_string );
 
  number_of_stars_in_wcs_catalog= 0; // =0 just in case

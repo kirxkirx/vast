@@ -145,8 +145,27 @@ if [ -s "$UCAC5_CATALOG_NAME" ];then
 fi
 
 
-util/solve_plate_with_UCAC5 "$FITSFILE"
-if [ $? -ne 0 ];then
+# Plate-solve under a wall-clock timeout. solve_plate_with_UCAC5 has no internal
+# time limit and can spin for hours on pathological (e.g. very crowded wide-field)
+# images. Without this cap, when a parent forced-photometry process is killed,
+# an orphaned solve_plate_with_UCAC5 keeps burning a CPU core indefinitely.
+TIMEOUT_COMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
+# If the timeout implementation is GNU coreutils / gtimeout, also arm a hard
+# SIGKILL 60s after the initial SIGTERM, so a process that ignores SIGTERM is
+# still guaranteed to die. The bundled lib/timeout fallback does not support
+# -k, so fall back to a plain SIGTERM-only timeout there.
+if "$TIMEOUT_COMMAND" --help 2>&1 | grep -q -- '--kill-after' ;then
+ SOLVE_PLATE_TIMEOUT_ARGS="-k 60 900"
+else
+ SOLVE_PLATE_TIMEOUT_ARGS="900"
+fi
+$TIMEOUT_COMMAND $SOLVE_PLATE_TIMEOUT_ARGS util/solve_plate_with_UCAC5 "$FITSFILE"
+SOLVE_PLATE_EXIT_CODE=$?
+if [ $SOLVE_PLATE_EXIT_CODE -eq 124 ] || [ $SOLVE_PLATE_EXIT_CODE -eq 137 ];then
+ echo "ERROR in $0  -- solve_plate_with_UCAC5 timed out (>900s) and was killed on $FITSFILE"
+ exit 1
+fi
+if [ $SOLVE_PLATE_EXIT_CODE -ne 0 ];then
  echo "ERROR in $0  -- plate solving $FITSFILE"
  exit 1
 fi
