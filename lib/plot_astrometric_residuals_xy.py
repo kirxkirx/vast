@@ -7,12 +7,16 @@
 # lib/plot_astrometric_residuals_xy, which only plots the (x_pix, y_pix)
 # distribution of catalog-matched stars. Here we additionally draw:
 #   - the residual VECTOR FIELD (each matched star's measured-minus-catalog
-#     offset, exaggerated) coloured by residual magnitude, and
-#   - a residual-magnitude map,
+#     offset, exaggerated) coloured by the offset from the catalog position, and
+#   - an offset-from-catalog map,
 # so a glance tells you whether the WCS is good (small, random residuals) or
 # bad (large, spatially-structured residuals -- e.g. a distortion the solution
 # failed to model, which throws off the RA/Dec of every detected source and
 # makes real stars look like unidentified transients).
+#
+# Note: throughout this tool "offset" / "residual" means the angular distance
+# between a star's measured (WCS) position and its catalog position, in
+# arcseconds -- NOT a stellar brightness magnitude.
 #
 # Input/Output mirror the C tool exactly, so the calling pipeline can use
 # either interchangeably:
@@ -34,7 +38,7 @@ import os
 import sys
 
 # Column indices (0-based) in the .wcscat.astrometric_residuals file.
-COL_RESID_MAG = 4   # |resid| in arcsec
+COL_OFFSET = 4      # |resid| = offset from catalog position, arcsec
 COL_DX = 5          # dRA*cos(Dec) in arcsec (East-West residual)
 COL_DY = 6          # dDec in arcsec (North-South residual)
 COL_X = 7           # x_pix
@@ -102,10 +106,10 @@ def read_fits_dimensions(fits_path):
 
 
 def read_residuals(residuals_path):
-    """Return numpy arrays x, y, dx, dy, mag. Raises IOError if unreadable."""
+    """Return numpy arrays x, y, dx, dy, offset. Raises IOError if unreadable."""
     import numpy as np
 
-    xs, ys, dxs, dys, mags = [], [], [], [], []
+    xs, ys, dxs, dys, offsets = [], [], [], [], []
     with open(residuals_path, "r") as f:
         for line in f:
             line = line.strip()
@@ -119,11 +123,11 @@ def read_residuals(residuals_path):
                 ys.append(float(parts[COL_Y]))
                 dxs.append(float(parts[COL_DX]))
                 dys.append(float(parts[COL_DY]))
-                mags.append(float(parts[COL_RESID_MAG]))
+                offsets.append(float(parts[COL_OFFSET]))
             except ValueError:
                 continue
     return (np.asarray(xs), np.asarray(ys), np.asarray(dxs),
-            np.asarray(dys), np.asarray(mags))
+            np.asarray(dys), np.asarray(offsets))
 
 
 def mad_sigma(values):
@@ -163,7 +167,7 @@ def main():
         return 1
 
     try:
-        x, y, dx, dy, mag = read_residuals(residuals_path)
+        x, y, dx, dy, offset = read_residuals(residuals_path)
     except (IOError, OSError) as exc:
         sys.stderr.write(
             "plot_astrometric_residuals_xy.py: cannot read %s (%s)\n"
@@ -185,8 +189,8 @@ def main():
 
     # Summary statistics that make the WCS quality self-evident.
     if n_points > 0:
-        med_resid = float(np.median(mag))
-        max_resid = float(np.max(mag))
+        med_resid = float(np.median(offset))
+        max_resid = float(np.max(offset))
         sigma = np.hypot(mad_sigma(dx), mad_sigma(dy))
     else:
         med_resid = max_resid = sigma = 0.0
@@ -204,7 +208,7 @@ def main():
     # Colour scale capped at the 98th percentile so a few large outliers do
     # not wash out the structure of the bulk of the field.
     if n_points > 0:
-        vmax = float(np.percentile(mag, 98))
+        vmax = float(np.percentile(offset, 98))
         if vmax <= 0:
             vmax = max(max_resid, 1e-6)
     else:
@@ -224,7 +228,7 @@ def main():
         ey = np.linspace(0, ny, ncy + 1)
         ix = np.clip(np.digitize(x, ex) - 1, 0, ncx - 1)
         iy = np.clip(np.digitize(y, ey) - 1, 0, ncy - 1)
-        gx, gy, gdx, gdy, gmag = [], [], [], [], []
+        gx, gy, gdx, gdy, goffset = [], [], [], [], []
         for cy in range(ncy):
             for cx in range(ncx):
                 sel = (ix == cx) & (iy == cy)
@@ -234,20 +238,20 @@ def main():
                 gy.append(0.5 * (ey[cy] + ey[cy + 1]))
                 gdx.append(float(np.mean(dx[sel])))
                 gdy.append(float(np.mean(dy[sel])))
-                gmag.append(float(np.mean(mag[sel])))
+                goffset.append(float(np.mean(offset[sel])))
         gx = np.asarray(gx); gy = np.asarray(gy)
-        gdx = np.asarray(gdx); gdy = np.asarray(gdy); gmag = np.asarray(gmag)
+        gdx = np.asarray(gdx); gdy = np.asarray(gdy); goffset = np.asarray(goffset)
         # Scale so a typical (cell-mean) arrow spans roughly one grid cell.
         ref = float(np.median(np.hypot(gdx, gdy))) if gx.size else med_resid
         if ref <= 0:
             ref = max(med_resid, 1e-6)
         target_pix = 0.9 * (nx / ncx)
         scale = (ref / target_pix) if target_pix > 0 else 1.0
-        q = axA.quiver(gx, gy, gdx, gdy, gmag, angles="xy", scale_units="xy",
+        q = axA.quiver(gx, gy, gdx, gdy, goffset, angles="xy", scale_units="xy",
                        scale=scale, cmap="inferno", width=0.004,
                        clim=(0, vmax))
         cb = fig.colorbar(q, ax=axA)
-        cb.set_label("mean residual magnitude (arcsec)")
+        cb.set_label("mean offset from catalog (arcsec)")
         key_len = max(round(ref, 1), 0.1)
         axA.quiverkey(q, 0.82, 1.02, key_len, '%g"' % key_len,
                       labelpos="E", coordinates="axes")
@@ -262,13 +266,13 @@ def main():
     axA.set_title("Astrometric residual vector field (grid-averaged)\n"
                   "arrow = measured position minus catalog position")
 
-    # ---- Panel B: per-star residual magnitude map ---------------------------
+    # ---- Panel B: per-star offset-from-catalog map --------------------------
     axB = axes[1]
     if n_points > 0:
-        sc = axB.scatter(x, y, c=mag, s=14, cmap="inferno",
+        sc = axB.scatter(x, y, c=offset, s=14, cmap="inferno",
                          vmin=0, vmax=vmax, edgecolors="none")
         cb2 = fig.colorbar(sc, ax=axB)
-        cb2.set_label("residual magnitude (arcsec)")
+        cb2.set_label("offset from catalog position (arcsec)")
     else:
         axB.text(0.5, 0.5, "no matched stars", ha="center", va="center",
                  transform=axB.transAxes, color="red", fontsize=14)
@@ -277,7 +281,7 @@ def main():
     axB.set_aspect("equal")
     axB.set_xlabel("X (pixels)")
     axB.set_ylabel("Y (pixels)")
-    axB.set_title("Catalog-matched stars coloured by residual magnitude")
+    axB.set_title("Catalog-matched stars coloured by offset from catalog position")
 
     fig.suptitle(
         "%s\n%d matched stars   median=%.2f\"   max=%.1f\"   sigma(MAD)=%.2f\"   "
