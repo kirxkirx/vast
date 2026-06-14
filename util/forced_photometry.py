@@ -296,6 +296,13 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
     if net_flux > 3.0 * noise:
         inst_mag = -2.5 * math.log10(net_flux)
         mag_err = 1.0857 * noise / net_flux
+        # NOTE: mag_err is the true formal photon-noise error and is deliberately NOT floored
+        # here. For a bright, high-SNR star it can be ~0. Beware that a zero (or near-zero) error
+        # can trip up VaST tools that later read this lightcurve: read_lightcurve_point_raw() in
+        # src/lightcurve_io.h drops points whose error is exactly 0.0 (isnormal() treats 0.0 as
+        # non-normal), and a zero error also breaks inverse-variance weighting (zero error ->
+        # infinite weight). Any minimum-error floor is intentionally left to the downstream
+        # consumer that needs it (e.g. the web forced-photometry CGI floors lightcurve.dat).
         status_str = "detection"
     else:
         inst_mag = -2.5 * math.log10(3.0 * noise) if noise > 0.0 else 99.0
