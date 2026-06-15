@@ -186,6 +186,84 @@ int try_to_recognize_Zeiss2_with_FLIcam( char *fitsfilename, double *estimated_f
  return 0;
 }
 
+int try_to_recognize_Zeiss2000_with_FLInew( char *fitsfilename, double *estimated_fov_arcmin ) {
+ char telescop[1024];
+ char telescop_comment[1024];
+ char instrume[1024];
+ char instrume_comment[1024];
+ long naxes[2];
+ int status;
+ fitsfile *fptr;
+ int naxis;
+
+ status= 0;
+
+ fits_open_file( &fptr, fitsfilename, READONLY, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();
+  return status;
+ }
+
+ // The 2-m reflector Zeiss-2000 (e.g. TELESCOP= '2-m reflector Zeiss-2000').
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop, telescop_comment, &status );
+ if ( 0 != status ) {
+  status= 0;
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( NULL == memmem( telescop, strlen( telescop ), "Zeiss-2000", 10 ) ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ // ... equipped with an FLI camera (e.g. INSTRUME= 'FLI - New').
+ fits_read_key( fptr, TSTRING, "INSTRUME", instrume, instrume_comment, &status );
+ if ( 0 != status ) {
+  status= 0;
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( NULL == memmem( instrume, strlen( instrume ), "FLI", 3 ) ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_get_img_dim( fptr, &naxis, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();
+  fits_close_file( fptr, &status );
+  return status;
+ }
+
+ fits_get_img_size( fptr, 2, naxes, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();
+  fits_close_file( fptr, &status );
+  return status;
+ }
+
+ // Require the 1042x1042 (2x2 binned) frame that yields the ~0.62"/pix scale.
+ // Other binnings have different dimensions and are intentionally left to the
+ // generic FOCALLEN-based estimate.
+ if ( naxes[0] != 1042 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ if ( naxes[1] != 1042 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ ( *estimated_fov_arcmin )= 10.8;
+
+ fits_close_file( fptr, &status );
+ return 0;
+}
+
 int try_to_recognize_TESS_FFI( char *fitsfilename, double *estimated_fov_arcmin ) {
  char telescop[1024];
  char telescop_comment[1024];
@@ -823,6 +901,14 @@ int main( int argc, char **argv ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
 #ifdef FOV_DEBUG_MESSAGES
   fprintf( stderr, "The guess is based on the recognized TELESCOP keyword.\n" );
+#endif
+  return 0;
+ }
+
+ if ( 0 == try_to_recognize_Zeiss2000_with_FLInew( fitsfile_name, &estimated_fov_arcmin ) ) {
+  fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+#ifdef FOV_DEBUG_MESSAGES
+  fprintf( stderr, "That's the 2-m Zeiss-2000 with the FLI camera.\n" );
 #endif
   return 0;
  }
