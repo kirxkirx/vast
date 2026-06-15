@@ -1064,10 +1064,14 @@ grid createGrid( frame f ) {
  // nope, the above has no effect as we are searchin +/-1 cells anyway
  cellSize= sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) );
 
- minX= f.minX - f.sizeX;
- minY= f.minY - f.sizeY;
- maxX= minX + 3 * f.sizeX;
- maxY= minY + 3 * f.sizeY;
+ // Pad the grid by STAR_MATCH_GRID_PADDING_PIXELS on every side (on top of the one-frame
+ // margin already given by the -f.sizeX / -f.sizeY offset) so that stars landing slightly
+ // outside the nominal frame -- e.g. after an imperfect coordinate transformation or a
+ // meridian flip -- still fall inside the spatial index instead of overflowing it.
+ minX= f.minX - f.sizeX - STAR_MATCH_GRID_PADDING_PIXELS;
+ minY= f.minY - f.sizeY - STAR_MATCH_GRID_PADDING_PIXELS;
+ maxX= minX + 3 * f.sizeX + 2 * STAR_MATCH_GRID_PADDING_PIXELS;
+ maxY= minY + 3 * f.sizeY + 2 * STAR_MATCH_GRID_PADDING_PIXELS;
 
  gr->minX= minX;
  gr->minY= minY;
@@ -1107,6 +1111,13 @@ grid createGrid( frame f ) {
  while ( isEmpty( points ) == 0 ) {
   p= disjoinList( &points );
   pointToCell( gr, p.x, p.y, &i, &j );
+  // Defensive bounds check: a star lying outside the (padded) grid extent would otherwise
+  // index gr->array out of bounds and corrupt the heap. Such a star is more than a frame
+  // plus padding away from the image and cannot match anything on the current frame, so
+  // drop it from the index rather than insert it.
+  if ( i < 0 || i >= columns || j < 0 || j >= rows ) {
+   continue;
+  }
   gr->array[i][j]= addToList( p, gr->array[i][j] );
  }
  return gr;
@@ -1602,9 +1613,12 @@ int Ident_on_sigma( struct Star *star1,  int Number1,
                 }
                 else
                 {
-                    // Put star1 back into grid
+                    // Put star1 back into grid (skip if it somehow falls outside the
+                    // padded grid extent, mirroring the bounds check in createGrid())
                     pointToCell( gr1, p_best.x, p_best.y, &ic, &jc );
-                    gr1->array[ic][jc] = addToList( p_best, gr1->array[ic][jc] );
+                    if ( ic >= 0 && ic < gr1->columns && jc >= 0 && jc < gr1->rows ) {
+                        gr1->array[ic][jc] = addToList( p_best, gr1->array[ic][jc] );
+                    }
                     // Queue star2 for retry
                     retry_points2 = addToList( p2, retry_points2 );
                 }
@@ -1806,10 +1820,13 @@ int Ident_on_sigma( struct Star *star1,  int Number1,
                 }
                 else                                // MNN failed
                 {
-                    // 1) put star1 back into grid
+                    // 1) put star1 back into grid (skip if it somehow falls outside the
+                    //    padded grid extent, mirroring the bounds check in createGrid())
                     pointToCell( gr1, p_best.x, p_best.y, &ic, &jc );
-                    gr1->array[ic][jc] =
-                        addToList( p_best, gr1->array[ic][jc] );
+                    if ( ic >= 0 && ic < gr1->columns && jc >= 0 && jc < gr1->rows ) {
+                        gr1->array[ic][jc] =
+                            addToList( p_best, gr1->array[ic][jc] );
+                    }
 
                     // 2) queue star2 for retry
                     retry_points2 = addToList( p2, retry_points2 );

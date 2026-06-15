@@ -48,6 +48,7 @@
 #define FRAME_EDGE_INDENT_PIXELS 10.0  // Don't take into account stars closer than FRAME_EDGE_INDENT_PIXELS pixels to a frame edge.
 #define MIN_NUMBER_OF_STARS_ON_FRAME 2 // Frames with less than MIN_NUMBER_OF_STARS_ON_FRAME stars detected will not be used
 #define AUTO_SIGMA_POPADANIYA_COEF 0.6 // Important for star matchning! Stars are matched if their coordinates on two images coincide within AUTO_SIGMA_POPADANIYA_COEF*aperture if -s -m or -w switch is not set.
+#define STAR_MATCH_GRID_PADDING_PIXELS 128 // Extra margin (pix) on every side of the star-matching spatial-index grid (src/ident_lib.c createGrid). Lets stars landing just outside the nominal frame (e.g. imperfect coordinate transformation / meridian flip) still be indexed instead of overflowing the grid.
 #define HARD_MIN_NUMBER_OF_POINTS 2    // Potential transients with less than HARD_MIN_NUMBER_OF_POINTS will be discarded! 
                                        // Parameter used in  src/remove_lightcurves_with_small_number_of_points.c
 #define SOFT_MIN_NUMBER_OF_POINTS 40   // Recommend a user to use at least SOFT_MIN_NUMBER_OF_POINTS images in the series
