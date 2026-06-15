@@ -141,16 +141,69 @@ int xy2sky( char *fitsfilename, float X, float Y ) {
  return systemcommand_return_value;
 }
 
+// Run lib/bin/sky2xy on a single image and parse its
+// "RA DEC J2000 -> X Y" output line. Returns:
+//   0 - solved: *outX, *outY hold a valid in-image pixel position
+//   1 - the image has no usable WCS, or the tool could not be run / its output parsed
+//   2 - the image has a WCS but the requested position is off the image
+// On a non-zero return the pixel position is set to 0,0.
+int run_sky2xy_tool_on_image( char *path_to_vast_string, char *encoded_fitsfilename, char *encoded_input_RA_string, char *encoded_input_DEC_string, float *outX, float *outY ) {
+ char systemcommand[2 * VAST_PATH_MAX];
+ char command_output_string[VAST_PATH_MAX];
+ FILE *pipe_for_sky2xy;
+
+ ( *outX )= 0.0;
+ ( *outY )= 0.0;
+
+ sprintf( systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, encoded_fitsfilename, encoded_input_RA_string, encoded_input_DEC_string );
+ systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
+
+ fprintf( stderr, "%s\n", systemcommand );
+
+ pipe_for_sky2xy= popen( systemcommand, "r" );
+ if ( NULL == pipe_for_sky2xy ) {
+  return 1;
+ }
+ if ( NULL == fgets( command_output_string, VAST_PATH_MAX, pipe_for_sky2xy ) ) {
+  pclose( pipe_for_sky2xy );
+  return 1;
+ }
+ pclose( pipe_for_sky2xy );
+ command_output_string[VAST_PATH_MAX - 1]= '\0'; // just in case
+
+ if ( NULL != strstr( command_output_string, "off" ) ) {
+  return 2; // valid WCS, but the position is off the image
+ }
+ // expecting:
+ // 18:19:53.683 -30:41:12.54 J2000 -> 1676.500 1266.500
+ if ( 2 != sscanf( command_output_string, "%*s %*s J2000 -> %f %f", outX, outY ) ) {
+  return 1; // no WCS / unparseable output (e.g. "No WCS in image file ...")
+ }
+ if ( ( *outX ) <= 0.0 || ( *outY ) <= 0.0 ) {
+  return 2; // WCS resolved the position off the lower/left edge of the image
+ }
+ return 0; // solved
+}
+
+// Convert the user-supplied marker position to pixel coordinates. Returns:
+//   0 - *outX, *outY hold pixel coordinates from a WCS conversion
+//   1 - the input was pixel coordinates (or an off-image celestial position);
+//       *outX, *outY are set accordingly (0,0 when off-image)
+//   2 - the input was celestial coordinates but no WCS is available to convert
+//       it; an informative message was printed and the caller must NOT place a marker
 int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, float *outX, float *outY ) {
  char path_to_vast_string[VAST_PATH_MAX];
- char systemcommand[2 * VAST_PATH_MAX];
  unsigned int i, n_semicol; // counter
- FILE *pipe_for_sky2xy;
- char command_output_string[VAST_PATH_MAX];
 
  char encoded_fitsfilename[FILENAME_LENGTH];
  char encoded_input_RA_string[FILENAME_LENGTH];
  char encoded_input_DEC_string[FILENAME_LENGTH];
+
+ char fitsfilename_basename_copy[FILENAME_LENGTH];
+ char input_image_basename[FILENAME_LENGTH];
+ char wcs_solved_copy_name[FILENAME_LENGTH];
+ char *image_to_use_for_wcs;
+ int tool_result;
 
  // Check all input strings
  safely_encode_user_input_string( encoded_fitsfilename, fitsfilename, FILENAME_LENGTH );
@@ -160,7 +213,9 @@ int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, f
  safely_encode_user_input_string( encoded_input_DEC_string, input_DEC_string, FILENAME_LENGTH );
  encoded_input_DEC_string[FILENAME_LENGTH - 1]= '\0';
 
- // Check that the input coordinates are in the 01:02:03.45 +06:07:08.9 format
+ // Check that the input coordinates are in the 01:02:03.45 +06:07:08.9 format.
+ // If not, the input is taken as pixel coordinates (X Y) -- this is the marker
+ // placement by pixel position, which must keep working exactly as before.
  n_semicol= 0;
  for ( i= 0; i < strlen( encoded_input_RA_string ); i++ ) {
   if ( encoded_input_RA_string[i] == ':' ) {
@@ -181,46 +236,48 @@ int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, f
 
  get_path_to_vast( path_to_vast_string );
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- sprintf( systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, encoded_fitsfilename, encoded_input_RA_string, encoded_input_DEC_string );
- systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
 
- fprintf( stderr, "%s\n", systemcommand );
+ // Decide which image carries the WCS we will use for the conversion. VaST
+ // normally strips the WCS from the input image and writes the plate solution
+ // into a separate wcs_<basename> copy in the current directory, so prefer that
+ // copy if it is present. Its pixel grid is identical to the input image, so the
+ // resulting X,Y are valid for the input image either way.
+ strncpy( fitsfilename_basename_copy, encoded_fitsfilename, FILENAME_LENGTH );
+ fitsfilename_basename_copy[FILENAME_LENGTH - 1]= '\0';
+ snprintf( input_image_basename, FILENAME_LENGTH, "%s", basename( fitsfilename_basename_copy ) );
+ input_image_basename[FILENAME_LENGTH - 1]= '\0';
+ snprintf( wcs_solved_copy_name, FILENAME_LENGTH, "wcs_%s", input_image_basename );
+ wcs_solved_copy_name[FILENAME_LENGTH - 1]= '\0';
 
- pipe_for_sky2xy= popen( systemcommand, "r" );
- if ( NULL == pipe_for_sky2xy ) {
-  ( *outX )= (float)atof( encoded_input_RA_string );
-  ( *outY )= (float)atof( encoded_input_DEC_string );
-  return 1;
+ if ( 0 != strcmp( wcs_solved_copy_name, encoded_fitsfilename ) && 0 == access( wcs_solved_copy_name, R_OK ) ) {
+  fprintf( stderr, "Using the WCS solution from the plate-solved copy %s found in the current directory.\n", wcs_solved_copy_name );
+  image_to_use_for_wcs= wcs_solved_copy_name;
+ } else {
+  image_to_use_for_wcs= encoded_fitsfilename;
  }
- if ( NULL == fgets( command_output_string, VAST_PATH_MAX, pipe_for_sky2xy ) ) {
-  pclose( pipe_for_sky2xy );
-  ( *outX )= (float)atof( encoded_input_RA_string );
-  ( *outY )= (float)atof( encoded_input_DEC_string );
-  return 1;
+
+ tool_result= run_sky2xy_tool_on_image( path_to_vast_string, image_to_use_for_wcs, encoded_input_RA_string, encoded_input_DEC_string, outX, outY );
+
+ if ( tool_result == 0 ) {
+  return 0; // solved -- *outX, *outY hold the pixel position
  }
- pclose( pipe_for_sky2xy );
- command_output_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- if ( NULL != strstr( command_output_string, "off" ) ) {
+ if ( tool_result == 2 ) {
+  // The image has a WCS but the requested position falls outside it.
   fprintf( stderr, "#### The specified celestial position is outside the image! ####\n" );
   ( *outX )= 0.0;
   ( *outY )= 0.0;
-  return 1;
- }
- // expecting:
- // 18:19:53.683 -30:41:12.54 J2000 -> 1676.500 1266.500
- if ( 2 != sscanf( command_output_string, "%*s %*s J2000 -> %f %f", outX, outY ) ) {
-  ( *outX )= (float)atof( encoded_input_RA_string );
-  ( *outY )= (float)atof( encoded_input_DEC_string );
-  return 1;
+  return 1; // caller reports "outside the image", as before
  }
 
- if ( ( *outX ) <= 0.0 || ( *outY ) <= 0.0 ) {
-  ( *outX )= (float)atof( encoded_input_RA_string );
-  ( *outY )= (float)atof( encoded_input_DEC_string );
-  return 1;
- }
-
- return 0;
+ // tool_result == 1: the image we tried has no usable WCS. The input is in
+ // equatorial coordinates, but with no WCS we cannot convert it to pixels. Do
+ // NOT fall back to interpreting the sexagesimal strings as pixel numbers.
+ fprintf( stderr, "ERROR: cannot place a marker at the celestial position %s %s -- no WCS solution is available.\n", encoded_input_RA_string, encoded_input_DEC_string );
+ fprintf( stderr, "       No plate-solved 'wcs_%s' copy was found in the current directory and the input image has no WCS of its own.\n", input_image_basename );
+ fprintf( stderr, "       Plate-solve the image first (e.g. with util/wcs_image_calibration.sh) or specify the marker position in pixel coordinates.\n" );
+ ( *outX )= 0.0;
+ ( *outY )= 0.0;
+ return 2; // equatorial input but no WCS -- caller must NOT place a marker
 }
 
 void write_list_of_all_stars_with_calibrated_magnitudes_to_file( float *sextractor_catalog__X, float *sextractor_catalog__Y, double *sextractor_catalog__MAG, double *sextractor_catalog__MAG_ERR, int *sextractor_catalog__star_number, int *sextractor_catalog__se_FLAG, int *sextractor_catalog__ext_FLAG, int sextractor_catalog__counter, char *sextractor_catalog_filename ) {
@@ -1423,6 +1480,7 @@ int main( int argc, char **argv ) {
  int hist_trigger= 0;
  int zscale_trigger= 0;
  int mark_trigger= 0;
+ int sky2xy_return_code= 1; // return code of sky2xy(): 2 means equatorial input could not be converted (no WCS) -- do not place a marker
 
  float markX= 0.0;
  float markY= 0.0;
@@ -1890,12 +1948,18 @@ int main( int argc, char **argv ) {
   // Now we need to figure out if the input values are pixel or celestial coordinates
   // Don't do this check if this is fits2png
   if ( finder_chart_mode != 1 && use_labels != 0 ) {
-   sky2xy( fits_image_name, argv[optind - image_specified_on_command_line__0_is_yes + 2], argv[optind - image_specified_on_command_line__0_is_yes + 3], &markX, &markY );
+   sky2xy_return_code= sky2xy( fits_image_name, argv[optind - image_specified_on_command_line__0_is_yes + 2], argv[optind - image_specified_on_command_line__0_is_yes + 3], &markX, &markY );
   } else {
    markX= (float)atof( argv[optind - image_specified_on_command_line__0_is_yes + 2] );
    markY= (float)atof( argv[optind - image_specified_on_command_line__0_is_yes + 3] );
+   sky2xy_return_code= 1; // input taken as pixel coordinates
   }
-  if ( markX > 0.0 && markY > 0.0 ) {
+  if ( sky2xy_return_code == 2 ) {
+   // The input was equatorial coordinates that could not be converted to pixel
+   // coordinates because no WCS is available; sky2xy() already printed an
+   // informative message. Do not place a marker.
+   mark_trigger= 0;
+  } else if ( markX > 0.0 && markY > 0.0 ) {
    mark_trigger= 1;
    fprintf( stderr, "Putting mark on pixel position \x1B[01;35m %.3lf %.3lf \x1B[33;00m \n", markX, markY );
   } else {
