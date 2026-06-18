@@ -761,6 +761,19 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
 
  int max_acceptable_SE_flag= 1;
 
+ // Bad CCD regions (bad_region.lst): detector pixel coordinates fixed to the
+ // chip, so they apply to any image - including the one being plate-solved.
+ double *bad_X1= NULL;
+ double *bad_Y1= NULL;
+ double *bad_X2= NULL;
+ double *bad_Y2= NULL;
+ int N_bad_regions= 0;
+ int max_N_bad_regions_for_malloc;
+ int counter_rejected_bad_region= 0;
+ // Small margin around the centroid (half-aperture 0.5 pix) when testing
+ // whether a detection falls inside a bad region.
+ double bad_region_check_aperture_pix= 1.0;
+
  timesys= 0; // for gettime()
  // gettime( fits_image_filename, &double_garbage, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is just an overkill way to get X_im_size Y_im_size
  gettime( fits_image_filename, &JD, &timesys, 0, &X_im_size, &Y_im_size, NULL, NULL, 0, 0, NULL ); // This is to get observing time for proper motion correction and X_im_size Y_im_size
@@ -771,6 +784,27 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  if ( f == NULL ) {
   return 1;
  }
+ // Load bad CCD regions so detections inside them can be excluded from UCAC5
+ // matching, just as they are excluded from the main photometry in vast.c.
+ max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file( "bad_region.lst" );
+ bad_X1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ bad_Y1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ bad_X2= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ bad_Y2= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ if ( bad_X1 == NULL || bad_Y1 == NULL || bad_X2 == NULL || bad_Y2 == NULL ) {
+  fprintf( stderr, "ERROR: cannot allocate memory for bad region arrays in read_wcs_catalog()\n" );
+  if ( bad_X1 != NULL )
+   free( bad_X1 );
+  if ( bad_Y1 != NULL )
+   free( bad_Y1 );
+  if ( bad_X2 != NULL )
+   free( bad_X2 );
+  if ( bad_Y2 != NULL )
+   free( bad_Y2 );
+  fclose( f );
+  return 1;
+ }
+ read_bad_CCD_regions_lst( bad_X1, bad_Y1, bad_X2, bad_Y2, &N_bad_regions );
  // count the proportion of blended sources
  i= 0;
  nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
@@ -876,6 +910,11 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   if ( 1 == is_point_close_or_off_the_frame_edge( stars[i].x_pix, stars[i].y_pix, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
    stars[i].good_star= 0;
   }
+  // Reject detections that fall inside a bad CCD region (bad_region.lst)
+  if ( N_bad_regions > 0 && 0 != exclude_region( bad_X1, bad_Y1, bad_X2, bad_Y2, N_bad_regions, stars[i].x_pix, stars[i].y_pix, bad_region_check_aperture_pix ) ) {
+   stars[i].good_star= 0;
+   counter_rejected_bad_region++;
+  }
   if ( stars[i].good_star == 1 ) {
    good_stars_counter++;
   }
@@ -900,14 +939,22 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   if ( i >= MAX_NUMBER_OF_STARS ) {
    fprintf( stderr, "ERROR: too many stars in the SExtractor catalog file %s\n", wcs_catalog_filename );
    fclose( f );
+   free( bad_X1 );
+   free( bad_Y1 );
+   free( bad_X2 );
+   free( bad_Y2 );
    return 1;
   }
  }
  //
- fprintf( stderr, "SExtractor catalog parsing summary: zero_flux=%d, no_flux_err=%d, no_mag=%d, no_mag_err=%d, low_SNR=%d, blended=%d, passed=%d\n", drop_zero_flux_counter, drop_no_flux_err_counter, drop_mag_99_counter, drop_mag_err_99_counter, drop_low_SNR_counter, blend_counter, nodrop_counter );
+ fprintf( stderr, "SExtractor catalog parsing summary: zero_flux=%d, no_flux_err=%d, no_mag=%d, no_mag_err=%d, low_SNR=%d, blended=%d, bad_region=%d, passed=%d\n", drop_zero_flux_counter, drop_no_flux_err_counter, drop_mag_99_counter, drop_mag_err_99_counter, drop_low_SNR_counter, blend_counter, counter_rejected_bad_region, nodrop_counter );
  //
  ( *number_of_stars_in_wcs_catalog )= i;
  fclose( f );
+ free( bad_X1 );
+ free( bad_Y1 );
+ free( bad_X2 );
+ free( bad_Y2 );
  if ( i < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf( stderr, "ERROR: too few stars (%d<%d) in the SExtractor catalog file %s\n", i, MIN_NUMBER_OF_STARS_ON_FRAME, wcs_catalog_filename );
   // Print the catalog for debug purposes
