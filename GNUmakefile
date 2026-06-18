@@ -499,8 +499,8 @@ make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astromet
 lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
 
-util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
-	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o exclude_region.o
+	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o exclude_region.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -sf solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c  $(SRC_PATH)solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
