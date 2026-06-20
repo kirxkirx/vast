@@ -1,7 +1,67 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h> // for tolower() in card_contains_substring_ci()
 #include "../fitsio.h"
 #include "../vast_limits.h"
+
+// Case-insensitive substring test, portable (avoids strcasestr / _GNU_SOURCE).
+static int card_contains_substring_ci( const char *card, const char *needle_lowercase ) {
+ char lowercard[FLEN_CARD];
+ int i;
+ for ( i= 0; card[i] != '\0' && i < FLEN_CARD - 1; i++ ) {
+  lowercard[i]= (char)tolower( (unsigned char)card[i] );
+ }
+ lowercard[i]= '\0';
+ if ( strstr( lowercard, needle_lowercase ) != NULL ) {
+  return 1;
+ }
+ return 0;
+}
+
+// Delete HISTORY/COMMENT cards that mark the image as solved by Astrometry.net
+// (or the AIJ "Astronomy.net" variant). util/identify.sh decides whether to
+// blindly trust an existing WCS by grep-ing the header for these markers, so
+// leaving them in place after stripping the WCS would make a freshly-stripped
+// image still look "already solved" and skip the re-solve. Removing them lets a
+// WCS-stripped image be treated as unsolved and re-solved with the desired
+// settings (e.g. a different SIP polynomial order).
+void delete_astrometrynet_provenance_keywords( fitsfile *fptr, int *status ) {
+ char card[FLEN_CARD];
+ int nkeys;
+ int keynum;
+
+ nkeys= 0;
+ fits_get_hdrspace( fptr, &nkeys, NULL, status );
+ if ( *status ) {
+  fits_report_error( stderr, *status );
+  *status= 0;
+  return;
+ }
+
+ keynum= 1;
+ while ( keynum <= nkeys ) {
+  if ( fits_read_record( fptr, keynum, card, status ) ) {
+   fits_report_error( stderr, *status );
+   *status= 0;
+   keynum++;
+   continue;
+  }
+  // Only commentary cards carry the Astrometry.net provenance text.
+  if ( ( strncmp( card, "HISTORY", 7 ) == 0 || strncmp( card, "COMMENT", 7 ) == 0 ) &&
+       ( card_contains_substring_ci( card, "astrometry.net" ) == 1 || card_contains_substring_ci( card, "astronomy.net" ) == 1 ) ) {
+   fits_delete_record( fptr, keynum, status );
+   if ( *status ) {
+    fits_report_error( stderr, *status );
+    *status= 0;
+    keynum++; // avoid an infinite loop if a record cannot be deleted
+   } else {
+    nkeys--; // a record was removed; re-check the same position
+   }
+  } else {
+   keynum++;
+  }
+ }
+}
 
 // Function to delete TR WCS keywords inserted by PinPoint
 void delete_tr_keywords( fitsfile *fptr, int *status ) {
@@ -292,6 +352,7 @@ int main( int argc, char **argv ) {
   strip_wcs_sip_keywords( fptr, &status );
   delete_tpv_keywords( fptr, &status );
   delete_tr_keywords( fptr, &status );
+  delete_astrometrynet_provenance_keywords( fptr, &status );
 
   if ( status ) {
    fits_report_error( stderr, status ); // Report any error on processing
@@ -306,6 +367,6 @@ int main( int argc, char **argv ) {
   return status;
  }
 
- printf( "WCS keywords have been successfully stripped from all HDUs in the file.\n" );
+ printf( "WCS keywords and Astrometry.net provenance markers have been successfully stripped from all HDUs in the file.\n" );
  return EXIT_SUCCESS;
 }
