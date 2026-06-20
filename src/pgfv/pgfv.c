@@ -3470,7 +3470,19 @@ int main( int argc, char **argv ) {
    // Done with labels
 
    /// Put a mark
-   if ( mark_trigger == 1 && ( use_labels == 1 || finder_chart_mode == 1 ) ) {
+   // Draw the target marker only where it is wanted:
+   //   use_labels == 1                       -- interactive view and the
+   //                                            make_finding_chart cutouts that
+   //                                            keep labels (the transient-search
+   //                                            discovery cutouts)
+   //   fits2png_fullframe == 1               -- forced-photometry full-frame previews
+   //   target_aperture_circle_diameter_pix>0 -- an aperture circle was explicitly
+   //                                            requested (--targetaperturecircle)
+   // Plain finder charts (make_finding_chart --nolabels, e.g. those produced by
+   // util/transients/fastplot.sh) deliberately get NO marker. Previously this
+   // gate used "|| finder_chart_mode == 1", which drew an unwanted '+' on every
+   // finder chart.
+   if ( mark_trigger == 1 && ( use_labels == 1 || fits2png_fullframe == 1 || target_aperture_circle_diameter_pix > 0.0 ) ) {
     cpgsci( 2 );
     fprintf( stderr, "Putting marker 001: %.3f %.3f\n", markX, markY );
     // In finder-chart and fits2png modes the canvas is small (typically 128 px
@@ -3481,8 +3493,7 @@ int main( int argc, char **argv ) {
     }
     // When --targetaperturecircle was passed, the aperture circle conveys
     // both position and aperture size; we suppress the '+' so it is not
-    // drawn on top of (and obscuring) the circle. Otherwise -- including
-    // every existing caller of fits2png / make_finding_chart -- keep the
+    // drawn on top of (and obscuring) the circle. Otherwise draw the
     // default '+' marker.
     if ( target_aperture_circle_diameter_pix > 0.0 ) {
      cpgslw( 3 );
