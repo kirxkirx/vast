@@ -76,6 +76,14 @@ static int validate_dec_string( const char *s ) {
 static int convert_and_print( const char *ra_str, const char *dec_str, int is_uas_mode ) {
  double in, ss;
  int hh, mm;
+ // Roll a seconds value over to the next minute when it would be *displayed*
+ // as "60". The threshold is half a unit in the last printed decimal, so it
+ // must track the print precision: the old fixed 0.01 was too coarse for the
+ // one-decimal Dec output (it left ":60.0" in the string) and too fine for the
+ // high-precision *_uas output (it would prematurely round real sub-arcsecond
+ // values up to the next minute).
+ double ra_seconds_round_threshold= is_uas_mode ? 0.5e-6 : 0.005;  // %09.6lf : %05.2lf
+ double dec_seconds_round_threshold= is_uas_mode ? 0.5e-5 : 0.05;  // %08.5lf : %04.1lf
 
  if ( validate_ra_string( ra_str ) != 0 ) {
   return 1;
@@ -93,7 +101,7 @@ static int convert_and_print( const char *ra_str, const char *dec_str, int is_ua
  hh= (int)in;
  mm= (int)( ( in - hh ) * 60 );
  ss= ( ( in - hh ) * 60 - mm ) * 60;
- if ( fabs( ss - 60.0 ) < 0.01 ) {
+ if ( ss >= 60.0 - ra_seconds_round_threshold ) {
   mm+= 1;
   ss= 0.0;
  }
@@ -113,24 +121,26 @@ static int convert_and_print( const char *ra_str, const char *dec_str, int is_ua
   fprintf( stderr, "ERROR: the input Dec (%s interpreted as %lf) is our of range!\n", dec_str, in );
   return 1;
  }
+ // Print the sign first, then decompose the ABSOLUTE value into DMS. Negating
+ // the individual components instead (the old approach) turned a seconds field
+ // that rounds to zero into negative zero, which printf renders as "-0.0" --
+ // producing a malformed Dec string like "-16:30:-0.0" (e.g. for Dec -16.5).
+ if ( in < 0.0 ) {
+  fprintf( stdout, "-" );
+ } else {
+  fprintf( stdout, "+" );
+ }
+ in= fabs( in );
  hh= (int)in;
  mm= (int)( ( in - hh ) * 60 );
  ss= ( ( in - hh ) * 60 - mm ) * 60;
- // fprintf(stderr," ###%s### ___%c___\n",dec_str,dec_str[0]);
- if ( in < 0.0 ) {
-  hh*= -1;
-  fprintf( stdout, "-" );
-  mm*= -1;
-  ss*= -1;
- } else
-  fprintf( stdout, "+" );
- if ( fabs( ss - 60.0 ) < 0.01 ) {
+ if ( ss >= 60.0 - dec_seconds_round_threshold ) {
   mm+= 1;
   ss= 0.0;
  }
  if ( mm == 60 ) {
   hh+= 1;
-  mm= 0.0;
+  mm= 0;
  }
  if ( is_uas_mode ) {
   // print results with sub-mas precision

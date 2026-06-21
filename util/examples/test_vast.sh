@@ -31078,7 +31078,53 @@ if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION006"
  fi
- 
+
+ ##### deg2hms sexagesimal-formatting edge cases #####
+ # Negative Dec with exactly-zero seconds must format as -16:30:00.0,
+ # never -16:30:-0.0 (a stray negative-zero seconds field that
+ # put_two_sources_in_one_field rejects as not a valid Dec string).
+ lib/deg2hms 200.0 -16.5 | grep -q -- '-16:30:00.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_NEGZERO"
+ fi
+ if lib/deg2hms 200.0 -16.5 | grep -qF -- '-0.0' ;then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_NEGZERO_STRAY"
+ fi
+ # The downstream consumer must accept the formatted Dec (the original bug
+ # produced -16:30:-0.0, rejected as "does not look like a Dec string").
+ DEG2HMS_REGRESSION_DEC=$(lib/deg2hms 200.0 -16.5 | awk '{print $2}')
+ if lib/put_two_sources_in_one_field 13:20:00.00 "$DEG2HMS_REGRESSION_DEC" 13:20:00.00 +00:00:00.0 2>&1 | grep -q 'does not look like a Dec string' ;then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_PUTTWO_REJECT"
+ fi
+ # Seconds that round up to 60 must roll over to the next minute, not print
+ # ":60.0": Dec -89.99999 -> -90:00:00.0, RA 200.49999 deg -> 13:22:00.00.
+ lib/deg2hms 200.0 -89.99999 | grep -q -- '-90:00:00.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_DEC_SEC60ROLL"
+ fi
+ if lib/deg2hms 200.0 -89.99999 | grep -qF ':60.0' ;then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_DEC_SEC60_STRAY"
+ fi
+ lib/deg2hms 200.49999 0.0 | grep -q '13:22:00.00'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_RA_SEC60ROLL"
+ fi
+ # The high-precision *_uas output must NOT prematurely roll a real
+ # sub-arcsecond value up to the next minute. 16.99999861 deg = 16:59:59.99500,
+ # whose seconds fall in the old 0.01 guard's wrongful-roll window (it would
+ # have become 17:00:00); the per-precision guard must keep it at 16:59:59.
+ lib/deg2hms_uas 200.0 16.99999861 | grep -q '16:59:59'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DEG2HMS_UAS_NOPREMATUREROLL"
+ fi
+
  lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep -q 'Average position  00:02:00.00 +00:30:00.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
