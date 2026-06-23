@@ -90,21 +90,28 @@ function validate_png_images() {
             continue
         fi
 
-        # Get PNG dimensions using the 'file' command
-        # Output format: "filename: PNG image data, WIDTH x HEIGHT, ..."
+        # Validate the image is a real PNG or WebP, then get its dimensions.
+        # Thumbnails (reference/discovery) may be WebP; previews stay PNG.
         png_info=$(file "$full_path")
-        if ! echo "$png_info" | grep -q 'PNG image data'; then
-            echo "ERROR: Not a valid PNG file: $full_path"
+        if ! echo "$png_info" | grep -qE 'PNG image data|Web/?P'; then
+            echo "ERROR: Not a valid PNG or WebP image file: $full_path"
             test_passed_return_code=1
             continue
         fi
 
-        png_width=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/ x .*//')
-        png_height=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/.* x //' | sed 's/,.*//' | sed 's/ .*//')
+        # 'identify' reports dimensions for both PNG and WebP; 'file' only does so
+        # for PNG, so prefer identify when it is available.
+        if command -v identify >/dev/null 2>&1; then
+            png_width=$(identify -format '%w' "$full_path" 2>/dev/null)
+            png_height=$(identify -format '%h' "$full_path" 2>/dev/null)
+        else
+            png_width=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/ x .*//')
+            png_height=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/.* x //' | sed 's/,.*//' | sed 's/ .*//')
+        fi
 
         # Validate dimensions based on filename pattern
         case "$png_file" in
-            *_reference.png|*_discovery*.png)
+            *_reference.png|*_reference.webp|*_discovery*.png|*_discovery*.webp)
                 # Finding charts must be exactly 400x400
                 if [ "$png_width" != "400" ] || [ "$png_height" != "400" ]; then
                     echo "ERROR: Wrong dimensions for finding chart $png_file: got ${png_width}x${png_height}, expected 400x400"
@@ -135,7 +142,7 @@ function validate_png_images() {
                 continue
                 ;;
         esac
-    done < <(grep -o 'src="[^"]*\.png"' "$index_file" | sed 's/src="//;s/"$//' | sort -u)
+    done < <(grep -oE 'src="[^"]*\.(png|webp)"' "$index_file" | sed 's/src="//;s/"$//' | sort -u)
 
     return $test_passed_return_code
 }
