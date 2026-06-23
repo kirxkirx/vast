@@ -1538,10 +1538,20 @@ echo "<!DOCTYPE html>
 <script type='text/javascript'>
 function toggleElement(id)
 {
-    if (document.getElementById(id).style.display == 'none') {
-        document.getElementById(id).style.display = '';
+    var el = document.getElementById(id);
+    if (el.style.display == 'none') {
+        el.style.display = '';
+        // Lazy-load deferred images (full-frame previews carry the URL in
+        // data-src instead of src, so the browser does not fetch them while
+        // the section is hidden). Load them only on first open.
+        var imgs = el.getElementsByTagName('img');
+        for (var i = 0; i < imgs.length; i++) {
+            if (!imgs[i].getAttribute('src') && imgs[i].getAttribute('data-src')) {
+                imgs[i].setAttribute('src', imgs[i].getAttribute('data-src'));
+            }
+        }
     } else {
-        document.getElementById(id).style.display = 'none';
+        el.style.display = 'none';
     }
 }
 

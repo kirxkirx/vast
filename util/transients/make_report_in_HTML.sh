@@ -520,9 +520,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
     DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$REFERENCE_IMAGE")
     DIRNAME_2ND_EPOCH_IMAGES=$(basename "$DIRNAME_2ND_EPOCH_IMAGES")
-    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_REFERENCE_IMAGE'>$BASENAME_REFERENCE_IMAGE</a><br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
+    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_REFERENCE_IMAGE'>$BASENAME_REFERENCE_IMAGE</a><br><img data-src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
    else
-    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\">$BASENAME_REFERENCE_IMAGE<br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
+    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\">$BASENAME_REFERENCE_IMAGE<br><img data-src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
    fi
    while read JD MAG ERR X Y APP IMAGE REST ;do
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
@@ -577,9 +577,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
       DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$IMAGE")
       DIRNAME_2ND_EPOCH_IMAGES=$(basename "$DIRNAME_2ND_EPOCH_IMAGES")
-      echo "<br><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_IMAGE'>$BASENAME_IMAGE</a><br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
+      echo "<br><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_IMAGE'>$BASENAME_IMAGE</a><br><img data-src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      else
-      echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
+      echo "<br>$BASENAME_IMAGE<br><img data-src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      fi
     fi
    done < "$LIGHTCURVE_FILE_OUTDAT"
