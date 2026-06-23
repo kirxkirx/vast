@@ -203,7 +203,7 @@ int	debug;
 	nby = wcs->nypix / tol2;
 	nby2 = 2 * nby;
 	nnby = -nby;
-	obin = calloc (nbx2 * nby2, sizeof(int));
+	{ size_t obin_n = (size_t)nbx2 * (size_t)nby2; obin = calloc (obin_n, sizeof(int)); }
 	nset = 0;
 	npos = 0;
 	for (s = 0; s < ns; s++) {
@@ -484,7 +484,7 @@ int	debug;
     pfit = ParamFit (nmatch);
 
     /* Get parameters to fit from digits of pfit */
-    sprintf (vpar, "%d", pfit);
+    snprintf (vpar, sizeof(vpar), "%d", pfit);
     nfit = 0;
     vfit[0] = -1;
     for (i = 1; i < NPAR1; i++) {
@@ -546,9 +546,9 @@ int	debug;
     /* If we have extra bins, repeat with the best ones */
     bestbin = nfit + 1;
     if (resid_refine && nmatch > bestbin) {
-	double *resid = (double *) malloc (nmatch * sizeof(double));
-	double *xe = (double *) malloc (nmatch * sizeof(double));
-	double *ye = (double *) malloc (nmatch * sizeof(double));
+	double *resid = (double *) calloc (nmatch, sizeof(double));
+	double *xe = (double *) calloc (nmatch, sizeof(double));
+	double *ye = (double *) calloc (nmatch, sizeof(double));
 	int i, j;
 	double xmean, ymean, rmean, xsumsq, ysumsq, diff;
 	double mx, my, xsig, ysig, rsig, siglim;
@@ -1200,7 +1200,7 @@ int	debug;		/* Printed debugging information if not zero */
 	pfit = 12345;
 
     /* Get parameters to fit from digits of pfit */
-    sprintf (vpar, "%d", pfit);
+    snprintf (vpar, sizeof(vpar), "%d", pfit);
     nfit = 0;
     vfit[0] = -1;
     for (i = 1; i < NPAR1; i++) {
@@ -1262,9 +1262,9 @@ int	debug;		/* Printed debugging information if not zero */
     /* If we have extra bins, repeat with the best ones */
     bestbin = nfit + 1;
     if (resid_refine && nmatch > bestbin) {
-	double *resid = (double *) malloc (nmatch * sizeof(double));
-	double *xe = (double *) malloc (nmatch * sizeof(double));
-	double *ye = (double *) malloc (nmatch * sizeof(double));
+	double *resid = (double *) calloc (nmatch, sizeof(double));
+	double *xe = (double *) calloc (nmatch, sizeof(double));
+	double *ye = (double *) calloc (nmatch, sizeof(double));
 	int i, j;
 	double xmean, ymean, rmean, xsumsq, ysumsq, diff;
 	double mra, mdec, xsig, ysig, rsig, siglim;
@@ -1806,7 +1806,7 @@ int	*nfunk;
 int i,j,ilo,ihi,inhi,ndim1=ndim+1;
 double ytry,ysave,sum,rtol,*psum;
 
-    psum = (double *) malloc ((unsigned)ndim * sizeof(double));
+    psum = (double *) calloc ((unsigned)ndim, sizeof(double));
     *nfunk = 0;
     for (j=0; j<ndim; j++) {
 	for (i=0,sum=0.0; i<ndim1; i++)
@@ -1885,7 +1885,7 @@ int	*nfunk;
     int j;
     double fac1,fac2,ytry,*ptry;
 
-    ptry = (double *) malloc ((unsigned) ndim * sizeof(double));
+    ptry = (double *) calloc ((unsigned)ndim, sizeof(double));
     fac1 = (1.0 - fac) / ndim;
     fac2 = fac1 - fac;
     for (j = 0; j < ndim; j++)
