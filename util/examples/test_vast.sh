@@ -15777,6 +15777,122 @@ fi
 
 
 
+##### Artificial-star insert-and-recovery test (NMW Nova Vul 2024 ST data) #####
+# Verifies that the artificial transient insert-and-recovery test recovers a high
+# fraction of injected faint transients. The test is gated on the availability of the
+# test data, python3 with numpy and astropy (needed by the artificial-star inserter),
+# and the run_artificial_star_test_oneflux.sh symlink (created by 'make'). If any of
+# these is missing the test is silently skipped (recorded as NOT_PERFORMED_ARTSTARRECOVERY_*
+# and stripped from the failed-test codes near the end of this script).
+# Download the test dataset if needed (same dataset as the NMW Nova Vul 2024 ST test)
+if [ ! -d ../NMW__NovaVul24_Stas_test ];then
+ cd .. || exit 1
+ #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# Decide whether the test can run; if not, remember why so it can be silently skipped
+ARTSTARRECOVERY_TEST_CAN_RUN=1
+ARTSTARRECOVERY_SKIP_REASON=""
+if [ ! -d ../NMW__NovaVul24_Stas_test ];then
+ ARTSTARRECOVERY_TEST_CAN_RUN=0
+ ARTSTARRECOVERY_SKIP_REASON="nodata"
+elif [ ! -x util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh ];then
+ ARTSTARRECOVERY_TEST_CAN_RUN=0
+ ARTSTARRECOVERY_SKIP_REASON="noscript"
+elif ! command -v python3 &> /dev/null ;then
+ ARTSTARRECOVERY_TEST_CAN_RUN=0
+ ARTSTARRECOVERY_SKIP_REASON="nopython3"
+elif ! python3 -c "import numpy, astropy.io.fits, astropy.wcs, astropy.stats" &> /dev/null ;then
+ ARTSTARRECOVERY_TEST_CAN_RUN=0
+ ARTSTARRECOVERY_SKIP_REASON="nonumpyastropy"
+fi
+#
+if [ $ARTSTARRECOVERY_TEST_CAN_RUN -eq 1 ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "Artificial-star insert-and-recovery test (NMW Nova Vul 2024 ST)"
+ echo -n "Artificial-star insert-and-recovery test: " >> vast_test_report.txt
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ rm -f artificial_star_test_results.txt
+ # Run the insert-and-recovery test with a single faint flux (oneflux variant)
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_artificial_star_recovery_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_EXIT_CODE"
+ fi
+ #
+ if [ -s artificial_star_test_results.txt ];then
+  # Columns of artificial_star_test_results.txt: mag frac Ndet Nins P F1 F10
+  # 'frac' (column 2) is the fraction of injected transients that were recovered.
+  RECOVERED_FRACTION=$(awk '{print $2}' artificial_star_test_results.txt | head -n1)
+  # Require the recovered fraction to be above 0.75 (it was 0.94 in the reference run)
+  TEST=$(echo "$RECOVERED_FRACTION" | awk '{if ( $1 ~ /^[0-9]*\.?[0-9]+$/ && $1 > 0.75 ) print 1 ;else print 0 }')
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_FRACTION_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_FRACTION_TOO_LOW_${RECOVERED_FRACTION}"
+    GREP_RESULT=$(cat artificial_star_test_results.txt)
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ARTSTARRECOVERY_FRACTION_TOO_LOW ######
+$GREP_RESULT"
+   fi
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_NO_RESULTS_FILE"
+  GREP_RESULT=$(tail -n 50 test_artificial_star_recovery_terminal_output$$.tmp 2>/dev/null)
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ARTSTARRECOVERY_NO_RESULTS_FILE ######
+$GREP_RESULT"
+ fi
+ rm -f test_artificial_star_recovery_terminal_output$$.tmp
+ #
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mArtificial-star insert-and-recovery test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mArtificial-star insert-and-recovery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_ARTSTARRECOVERY_${ARTSTARRECOVERY_SKIP_REASON}"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
@@ -34995,6 +35111,12 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOT_TEST_NOT_PERFORMED/}"
  # forced photometry --list mode test uses the same specific test image
  FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOTLIST_TEST_NOT_PERFORMED/}"
+ # artificial-star insert-and-recovery test: silently skipped when the test data, the
+ # built run_artificial_star_test_oneflux.sh symlink, python3, or numpy/astropy are absent
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nodata/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_noscript/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nopython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nonumpyastropy/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR)
  # and frequently fails due to network timeouts unrelated to VaST code
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS001/}"
