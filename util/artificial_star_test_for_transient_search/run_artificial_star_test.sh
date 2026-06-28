@@ -291,6 +291,12 @@ for FLUX in $TRIAL_FLUXES ;do
 
 done # iteration over fluxes
 
+if [ ! -s artificial_star_test_results.txt ];then
+ echo "Test error!
+artificial_star_test_results.txt was not created"
+ exit 1
+fi
+
 echo "Test completed!
 The results are saved to artificial_star_test_results.txt"
 
@@ -303,22 +309,37 @@ printf "%5s %6s %4s %4s %6s %6s %6s\n" "mag" "frac" "Ndet" "Nins" "P" "F1" "F10"
 cat artificial_star_test_results_header.txt
 cat artificial_star_test_results.txt
 
-echo "Trying to make a plot using gnuplot..."
+N_LINES=$(cat artificial_star_test_results.txt | wc -l)
 
-echo "set terminal postscript eps enhanced color solid 'Times' 24 linewidth 2
+if [ $N_LINES -gt 1 ];then
+ echo "Trying to make a plot using gnuplot..."
+
+ echo "set terminal postscript eps enhanced color solid 'Times' 24 linewidth 2
 set output 'artificial_star_test_results.eps'
 set xlabel '(mag.)'
 set ylabel 'Recovery fraction'
-set yrange [0.5:1.0]
+set yrange [0.0:1.0]
 set format x '%4.1f'
 set format y '%4.2f'
-plot 'artificial_star_test_results.txt' u 1:2 pt 7 ps 1 lc '#33a02c' title ''
+
+f(x) = 0.5* (1 - a*(x-b)/sqrt(1 + a**2 * (x-b)**2) )
+a=0.8
+b=11.5
+fit f(x) 'artificial_star_test_results.txt' using 1:2 via a,b
+
+set key bottom left at screen 0.03,0.20
+
+plot \\
+f(x) lc rgb '#d62728' lw 2 title sprintf('{/Symbol a} = %.1f, mag_{lim} = %.1f', a, b), \\
+'artificial_star_test_results.txt' u 1:2 pt 7 ps 1 lc '#33a02c' title ''
 ! convert -density 150 artificial_star_test_results.eps  -background white -alpha remove  artificial_star_test_results.png
 " > artificial_star_test_results.gnuplot
-cat artificial_star_test_results.gnuplot | gnuplot
+ cat artificial_star_test_results.gnuplot | gnuplot
 
-if [ -s artificial_star_test_results.png ];then
- echo "gnuplot succeeded: the recovery-fraction plot is saved to artificial_star_test_results.png"
-else
- echo "WARNING: gnuplot did not produce artificial_star_test_results.png (is gnuplot and ImageMagick 'convert'/'magick' installed?)"
+ if [ -s artificial_star_test_results.png ];then
+  echo "gnuplot succeeded: the recovery-fraction plot is saved to artificial_star_test_results.png"
+ else
+  echo "WARNING: gnuplot did not produce artificial_star_test_results.png (is gnuplot and ImageMagick 'convert'/'magick' installed?)"
+ fi
+
 fi
