@@ -387,7 +387,7 @@ fit f(x) 'artificial_star_test_results.txt' using 1:3 via frac_max, s, mlim, w
 set key bottom left at screen 0.03,0.20
 
 plot \\
-f(x) lc rgb '#d62728' lw 2 title sprintf('mag_{lim} = %.1f  f_{max} = %.2f', mlim, frac_max), \\
+f(x) lc rgb '#d62728' lw 2 title sprintf('f_{max} = %.2f  mag_{lim} = %.1f', frac_max, mlim), \\
 'artificial_star_test_results.txt' u 1:3 pt 7 ps 1 lc '#33a02c' title ''
 ! convert -density 150 artificial_star_test_results.eps  -background white -alpha remove  artificial_star_test_results.png
 " > artificial_star_test_results.gnuplot
