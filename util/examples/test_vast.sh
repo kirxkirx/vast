@@ -15828,9 +15828,9 @@ if [ $ARTSTARRECOVERY_TEST_CAN_RUN -eq 1 ];then
  fi
  #
  if [ -s artificial_star_test_results.txt ];then
-  # Columns of artificial_star_test_results.txt: mag frac Ndet Nins P F1 F10
-  # 'frac' (column 2) is the fraction of injected transients that were recovered.
-  RECOVERED_FRACTION=$(awk '{print $2}' artificial_star_test_results.txt | head -n1)
+  # Columns of artificial_star_test_results.txt: in_mag me_mag frac Ndet Nins P F1 F10
+  # 'frac' (column 3) is the fraction of injected transients that were recovered.
+  RECOVERED_FRACTION=$(awk '{print $3}' artificial_star_test_results.txt | head -n1)
   # Require the recovered fraction to be above 0.75 (it was 0.94 in the reference run)
   TEST=$(echo "$RECOVERED_FRACTION" | awk '{if ( $1 ~ /^[0-9]*\.?[0-9]+$/ && $1 > 0.75 ) print 1 ;else print 0 }')
   re='^[0-9]+$'

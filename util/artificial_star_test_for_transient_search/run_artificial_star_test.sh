@@ -147,6 +147,39 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# Establish the flux-to-magnitude zero-point from the baseline magnitude calibration so the
+# injected fluxes can be reported as input magnitudes via the Pogson formula. calib.txt holds
+# pairs of (instrumental, calibrated) magnitudes written by the baseline run; the fits2cat
+# SOURCE_CATALOG gives the (aperture-independent) SExtractor instrumental zero-point. Together:
+#   calibrated_mag = -2.5*log10(FLUX_APER) + MAG_ZP ,  MAG_ZP = C_SE + ZP_shift
+MAG_ZP=""
+if [ -s calib.txt ];then
+ C_SE=$(awk '$2>0 {print $4 + 2.5*log($2)/log(10)}' "$SOURCE_CATALOG" | util/colstat | grep 'MEDIAN=' | awk '{print $2}')
+ ZP_SHIFT=$(awk '{print $2-$1}' calib.txt | util/colstat | grep 'MEDIAN=' | awk '{print $2}')
+ MAG_ZP=$(echo "$C_SE $ZP_SHIFT" | awk '{printf "%f", $1+$2}')
+ echo "Magnitude zero-point from the baseline calibration: MAG_ZP=$MAG_ZP (C_SE=$C_SE ZP_shift=$ZP_SHIFT)"
+else
+ echo "WARNING: calib.txt not found - input magnitudes (in_mag) will be reported as -99.99"
+fi
+
+# Analytic aperture correction for the injected 2D Gaussian: the fraction AC of the total
+# injected flux that falls within the photometry aperture (radius = APERTURE/2,
+# sigma = FWHM/2.355):  AC = 1 - exp( -(APERTURE/2)^2 / (2*sigma^2) ).
+# The zero-point above maps an aperture flux to a calibrated magnitude, so applying AC to the
+# injected total flux yields the magnitude the search would measure (directly comparable to
+# the measured magnitude). If the aperture cannot be read, fall back to AC=1 (no correction).
+APERTURE_DIAMETER=""
+if [ -s "$SOURCE_CATALOG".aperture ];then
+ APERTURE_DIAMETER=$(head -n1 "$SOURCE_CATALOG".aperture)
+fi
+APERTURE_CORRECTION=$(awk -v fwhm="$FWHM" -v apdiam="$APERTURE_DIAMETER" 'BEGIN{
+  if ( apdiam ~ /^[0-9]*\.?[0-9]+$/ && apdiam>0 && fwhm>0 ) {
+   sigma=fwhm/2.355; r=apdiam/2.0; ac=1-exp(-(r*r)/(2*sigma*sigma));
+  } else { ac=1.0 }
+  printf "%.6f", ac
+}')
+echo "Aperture correction for injected Gaussians: AC=$APERTURE_CORRECTION (aperture diameter=$APERTURE_DIAMETER pix, FWHM=$FWHM pix)"
+
 # FLUX is assumed to be the flux corresponding to the limiting magnitude:
 # the one at which we reliably detect sources (and appparently transients),
 echo $0 | grep -q 'run_artificial_star_test_oneflux.sh'
@@ -281,10 +314,18 @@ for FLUX in $TRIAL_FLUXES ;do
  F1=$(echo "$C $P" | awk '{ s=$1+$2; if(s>0) printf "%.4f",2*$1*$2/s; else printf "0.0000" }')
  F10=$(echo "$C $P" | awk -v beta=10 '{ s=$1+beta*beta*$2; if(s>0) printf "%.4f",(1+beta*beta)*$1*$2/s; else printf "0.0000" }')
 
+ # Input magnitude of the injected stars: Pogson formula with the baseline zero-point and the
+ # analytic aperture correction applied to this trial's injected total flux.
+ if [ -n "$MAG_ZP" ];then
+  INPUT_MAG=$(echo "$MAG_ZP $APERTURE_CORRECTION $FLUX" | awk '{ f=$2*$3; if(f>0) printf "%.4f", $1 - 2.5*log(f)/log(10); else printf "-99.99" }')
+ else
+  INPUT_MAG="-99.99"
+ fi
+
  # Print the results only if some of the inserted stars were recovered
  if [ $N_FOUND -gt 0 ] && [ "$MEADIAN_MAG" != "0.0000" ] ;then
-  echo "$MEADIAN_MAG $RECOVERED_FRACTION $N_FOUND / $N_ARTSTARS_INSERTED_TOTAL recovered (false_positives=$N_FALSE_POSITIVES_TOTAL)"
-  printf "%5.2f %6.4f %4d %4d %6.4f %6.4f %6.4f\n" "$MEADIAN_MAG" "$RECOVERED_FRACTION" "$N_FOUND" "$N_ARTSTARS_INSERTED_TOTAL" "$P" "$F1" "$F10" >> artificial_star_test_results.txt
+  echo "in_mag=$INPUT_MAG measure_mag=$MEADIAN_MAG frac=$RECOVERED_FRACTION $N_FOUND / $N_ARTSTARS_INSERTED_TOTAL recovered (false_positives=$N_FALSE_POSITIVES_TOTAL)"
+  printf "%6.2f %6.2f %6.4f %4d %4d %6.4f %6.4f %6.4f\n" "$INPUT_MAG" "$MEADIAN_MAG" "$RECOVERED_FRACTION" "$N_FOUND" "$N_ARTSTARS_INSERTED_TOTAL" "$P" "$F1" "$F10" >> artificial_star_test_results.txt
  fi
  
  rm -f "$IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE"
@@ -303,7 +344,7 @@ The results are saved to artificial_star_test_results.txt"
 # Write the column-name header to a separate file. It is kept separate from the
 # data file so that artificial_star_test_results.txt stays purely numeric and can
 # be fed directly to gnuplot/awk, while the header can still be printed above it.
-printf "%5s %6s %4s %4s %6s %6s %6s\n" "mag" "frac" "Ndet" "Nins" "P" "F1" "F10" > artificial_star_test_results_header.txt
+printf "%6s %6s %6s %4s %4s %6s %6s %6s\n" "in_mag" "me_mag" "frac" "Ndet" "Nins" "P" "F1" "F10" > artificial_star_test_results_header.txt
 
 # Print the column names above the values so the table is readable on stdout
 cat artificial_star_test_results_header.txt
@@ -316,22 +357,23 @@ if [ $N_LINES -gt 1 ];then
 
  echo "set terminal postscript eps enhanced color solid 'Times' 24 linewidth 2
 set output 'artificial_star_test_results.eps'
-set xlabel '(mag.)'
+set xlabel 'input mag.'
 set ylabel 'Recovery fraction'
-set yrange [0.0:1.0]
+set yrange [-0.1:1.1]
 set format x '%4.1f'
 set format y '%4.2f'
 
+# Column 1 is the input magnitude (in_mag), column 3 is the recovered fraction (frac)
 f(x) = 0.5* (1 - a*(x-b)/sqrt(1 + a**2 * (x-b)**2) )
 a=0.8
 b=11.5
-fit f(x) 'artificial_star_test_results.txt' using 1:2 via a,b
+fit f(x) 'artificial_star_test_results.txt' using 1:(\$3 >= 0.25 ? \$3 : 1/0) via a,b
 
-set key bottom left at screen 0.03,0.20
+set key bottom left at screen 0.06,0.20
 
 plot \\
 f(x) lc rgb '#d62728' lw 2 title sprintf('{/Symbol a} = %.1f, mag_{lim} = %.1f', a, b), \\
-'artificial_star_test_results.txt' u 1:2 pt 7 ps 1 lc '#33a02c' title ''
+'artificial_star_test_results.txt' u 1:3 pt 7 ps 1 lc '#33a02c' title ''
 ! convert -density 150 artificial_star_test_results.eps  -background white -alpha remove  artificial_star_test_results.png
 " > artificial_star_test_results.gnuplot
  cat artificial_star_test_results.gnuplot | gnuplot
