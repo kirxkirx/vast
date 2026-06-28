@@ -5,10 +5,11 @@ N_ARTSTARS_PER_ITER=100
 N_ITERATIONS=1
 
 function print_usage_and_exit() {
- echo "Usage: 
- REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ $0 ../NMW__NovaVul24_Stas_test/second_epoch_images_wcs
-where ../NMW__NovaVul24_Stas_test/reference_images/ is the reference images directory and 
-../NMW__NovaVul24_Stas_test/second_epoch_images_wcs is the new images directory. 
+ echo "Usage:
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ $0 ../NMW__NovaVul24_Stas_test/second_epoch_images_wcs [N_ITERATIONS]
+where ../NMW__NovaVul24_Stas_test/reference_images/ is the reference images directory,
+../NMW__NovaVul24_Stas_test/second_epoch_images_wcs is the new images directory, and
+the optional N_ITERATIONS (default 1) is the number of insert-and-recover iterations per trial flux.
 The input should be similar to that of util/transients/transient_factory_test31.sh script."
  exit 1
 }
@@ -32,6 +33,18 @@ if [ ! -d "$INPUT_IMAGE_DIR" ];then
  echo "ERROR in $0: $INPUT_IMAGE_DIR is not a directory"
  print_usage_and_exit
 fi
+
+# Optional second argument: number of insert-and-recover iterations per trial flux (default 1)
+if [ -n "$2" ];then
+ case "$2" in
+  *[!0-9]*|"") echo "ERROR in $0: N_ITERATIONS must be a positive integer, got '$2'" ; print_usage_and_exit ;;
+ esac
+ if [ "$2" -lt 1 ];then
+  echo "ERROR in $0: N_ITERATIONS must be >= 1, got '$2'" ; print_usage_and_exit
+ fi
+ N_ITERATIONS="$2"
+fi
+echo "Number of insert-and-recover iterations per trial flux: N_ITERATIONS=$N_ITERATIONS"
 
 # Clean the working directory from any remains of previous runs
 util/clean_data.sh
