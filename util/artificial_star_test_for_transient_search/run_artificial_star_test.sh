@@ -361,18 +361,33 @@ set xlabel 'input mag.'
 set ylabel 'Recovery fraction'
 set yrange [-0.1:1.1]
 set format x '%4.1f'
-set format y '%4.2f'
+set format y '%4.1f'
 
-# Column 1 is the input magnitude (in_mag), column 3 is the recovered fraction (frac)
-f(x) = 0.5* (1 - a*(x-b)/sqrt(1 + a**2 * (x-b)**2) )
-a=0.8
-b=11.5
-fit f(x) 'artificial_star_test_results.txt' using 1:(\$3 >= 0.25 ? \$3 : 1/0) via a,b
+# Column 1 is the input magnitude (in_mag), column 3 is the recovered fraction (frac).
+#
+# --- Alternative model kept for reference: symmetric Fleming/Pritchet sigmoid. ---
+# It saturates at 1.0 at the bright end and is symmetric about the midpoint, so it
+# cannot reproduce the gradual bright-end decline; superseded by the model below.
+#f(x) = 0.5* (1 - a*(x-b)/sqrt(1 + a**2 * (x-b)**2) )
+#a=0.8
+#b=11.5
+#fit f(x) 'artificial_star_test_results.txt' using 1:(\$3 >= 0.25 ? \$3 : 1/0) via a,b
+#
+# --- Active model: quadratic crowding (bright-end decline) x logistic detection cutoff. ---
+#   frac_max = bright-end recovered fraction (crowding/blending plateau)
+#   mlim     = 50% point of the detection cutoff;  w = cutoff width;  s = crowding slope
+stats [*:*][*:*] 'artificial_star_test_results.txt' using 1 nooutput
+x0 = STATS_min
+crowd(x)  = frac_max - s*(x - x0)**2
+detect(x) = 1.0/(1.0 + exp((x - mlim)/w))
+f(x)      = crowd(x)*detect(x)
+frac_max = 0.98; s = 0.005; mlim = 13.4; w = 0.15
+fit f(x) 'artificial_star_test_results.txt' using 1:3 via frac_max, s, mlim, w
 
-set key bottom left at screen 0.06,0.20
+set key bottom left at screen 0.03,0.20
 
 plot \\
-f(x) lc rgb '#d62728' lw 2 title sprintf('{/Symbol a} = %.1f, mag_{lim} = %.1f', a, b), \\
+f(x) lc rgb '#d62728' lw 2 title sprintf('mag_{lim} = %.1f  f_{max} = %.2f', mlim, frac_max), \\
 'artificial_star_test_results.txt' u 1:3 pt 7 ps 1 lc '#33a02c' title ''
 ! convert -density 150 artificial_star_test_results.eps  -background white -alpha remove  artificial_star_test_results.png
 " > artificial_star_test_results.gnuplot
