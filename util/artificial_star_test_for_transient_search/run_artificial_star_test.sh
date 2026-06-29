@@ -428,7 +428,7 @@ x0 = STATS_min
 crowd(x)  = frac_max - s*(x - x0)**2
 detect(x) = 1.0/(1.0 + exp((x - mlim)/w))
 f(x)      = crowd(x)*detect(x)
-frac_max = 0.98; s = 0.005; mlim = 13.4; w = 0.15
+frac_max = 1.00; s = 0.005; mlim = 14.0; w = 0.15
 fit f(x) 'artificial_star_test_results.txt' using 1:3 via frac_max, s, mlim, w
 
 set key bottom left at screen 0.03,0.20
