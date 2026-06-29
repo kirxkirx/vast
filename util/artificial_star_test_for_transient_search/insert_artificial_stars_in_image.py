@@ -298,5 +298,15 @@ def main():
 
     print(f"Coordinates of inserted stars (from first image) saved to '{coord_file}'")
 
+    # Record the basename of the image whose pixel frame coordinates.txt is written in
+    # (the first image). The recovery step matches candidates reported for THIS image,
+    # irrespective of the 'Discovery image 1/2/3' label, so the comparison is always done
+    # in the same pixel frame regardless of the dither between the two second-epoch images.
+    image_name_file = coord_file + '.image'
+    with open(image_name_file, 'w') as f:
+        f.write(f"{os.path.basename(source_file_path1)}\n")
+
+    print(f"Injection image name (frame of coordinates.txt) saved to '{image_name_file}'")
+
 if __name__ == "__main__":
     main()

@@ -2839,7 +2839,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   fi
 
   UCAC5_START_UNIXSEC=$(date +%s)
-  echo "Preparing for ar aprallel run" | tee -a transient_factory_test31.txt
+  echo "Preparing for a parallel run" | tee -a transient_factory_test31.txt
   # Array to hold names of temporary files
   declare -a solve_plate_with_UCAC5_tempFiles
   # Now solve all images in parallel with no photomeric calibration

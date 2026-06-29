@@ -80,6 +80,13 @@ if [ ! -s "$FIRST_IMAGE_TO_BE_MODIFIED" ];then
  echo "ERROR in $0: cannot find the first input FITS image $FIRST_IMAGE_TO_BE_MODIFIED"
  print_usage_and_exit
 fi
+# The injector writes coordinates.txt in the pixel frame of this (filename-sorted-first) image.
+# Recovery and the baseline true-transient parse below key on candidates reported for THIS image
+# name, not on the 'Discovery image 1/2/3' label - so the comparison is always made in the same
+# pixel frame, regardless of the dither between the two second-epoch images or the detection
+# channel (the flare channel adds a third discovery image). The injector records the name it
+# actually used in coordinates.txt.image; we cross-check the two agree right after injection.
+INJECTION_IMAGE_BASENAME=$(basename "$FIRST_IMAGE_TO_BE_MODIFIED")
 
 # Baseline (control) run: run the transient search on the clean (un-injected) images to
 # locate the genuine astrophysical transients in the field. We assume every real transient
@@ -103,10 +110,16 @@ if [ $? -ne 0 ];then
 fi
 # Save positions (X Y on the discovery image) of candidates that ARE catalog-matched,
 # i.e. their block does NOT report "not found" in all of VSX, ASASSN-V and astcheck.
-awk '/Processing complete!/{exit}
+# X Y are taken from the discovery row whose FITS basename matches the injection image, so the
+# positions are in the same pixel frame as coordinates.txt (see INJECTION_IMAGE_BASENAME above).
+awk -v img="$INJECTION_IMAGE_BASENAME" '/Processing complete!/{exit}
  function flush(){ if(have && !(nf_vsx && nf_as && nf_ast)) print x, y }
  /<a name=/ { flush(); have=0; nf_vsx=0; nf_as=0; nf_ast=0 }
- /Discovery image 2/ { split($0,a,"<td>"); split(a[7],xy," "); x=xy[1]; y=xy[2]; have=1 }
+ /Discovery image/ {
+   split($0,a,"<td>");
+   f=a[8]; sub(/<\/td>.*/,"",f); sub(/.*\//,"",f); gsub(/[ \t]/,"",f);
+   if(f==img){ split(a[7],xy," "); x=xy[1]; y=xy[2]; have=1 }
+ }
  /not found/ && /VSX/ { nf_vsx=1 }
  /not found/ && /ASASSN-V/ { nf_as=1 }
  /not found/ && /astcheck/ { nf_ast=1 }
@@ -220,6 +233,19 @@ for FLUX in $TRIAL_FLUXES ;do
    exit 1
   fi
 
+  # Cross-check that the image the injector wrote coordinates.txt for is the same one the
+  # recovery parse keys on. They are derived independently (Python sorted() vs shell ls), so a
+  # disagreement (e.g. mixed .fits/.fts extensions in one directory) would silently break matching.
+  RECORDED_INJECTION_IMAGE=$(cat "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/coordinates.txt.image 2>/dev/null)
+  if [ -z "$RECORDED_INJECTION_IMAGE" ];then
+   echo "ERROR in $0: injector did not record the injection image name (coordinates.txt.image missing)"
+   exit 1
+  fi
+  if [ "$RECORDED_INJECTION_IMAGE" != "$INJECTION_IMAGE_BASENAME" ];then
+   echo "ERROR in $0: injector wrote into '$RECORDED_INJECTION_IMAGE' but recovery expects '$INJECTION_IMAGE_BASENAME'"
+   exit 1
+  fi
+
   # Run the transient search
   #REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ 
   util/transients/transient_factory_test31.sh "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/
@@ -236,14 +262,16 @@ for FLUX in $TRIAL_FLUXES ;do
 
   # Create the list of candidate transients and their magnitudes.
   # Only the candidates table ABOVE the '<H2>Processing complete!</H2>' marker holds
-  # the actual candidates. 'Discovery image 2' also appears further down inside the
+  # the actual candidates. 'Discovery image' rows also appear further down inside the
   # collapsible "Processing log" block (log echoes), which must NOT be counted or
-  # matched. The leading awk stops reading at the marker line. The 'Processing complete!'
+  # matched. The leading condition stops reading at the marker line. The 'Processing complete!'
   # string (with the '!') uniquely matches that <H2> marker - the page-top instruction
   # text says 'Processing complete' without '!', and the footer says 'Processing completed'.
-  # WARNING: cannot use 'Discovery image 1' as this will be first-epoch image for the transients detected via the flare channel
-  # 'Discovery image 2' should be one of the second-epoch images for both 'transients' and 'flares'
-  # in awk, the NF condition checks if there are any fields in the line (NF = Number of Fields).
+  # We keep only the discovery row whose FITS basename (last <td>) equals the injection image,
+  # NOT a fixed 'Discovery image N' label: the injected image may be reported as discovery image
+  # 1, 2 or 3 (the flare channel adds a third), and the per-row X Y are raw pixel coordinates on
+  # THAT image. Keying on the image name guarantees the candidate positions are in the same pixel
+  # frame as coordinates.txt, regardless of the dither between the two second-epoch images.
   # NO catalog check is applied here: an injected star must be counted as recovered even if
   # it coincides with a known source. Real transients are handled via the baseline run
   # (TRUE_TRANSIENTS_FILE) when computing purity below.
@@ -253,7 +281,15 @@ for FLUX in $TRIAL_FLUXES ;do
   # centroids - so without this dedup the false-positive count would be inflated.
   ARTSTARS_DIR="$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars
   CAND_ALL="$ARTSTARS_DIR"/candidate_coordinates_and_magnitudes.txt
-  awk '/Processing complete!/{exit} 1' transient_report/index.html | grep 'Discovery image 2' | awk -F'<td>' '{print $5" "$7}' | awk 'NF {print $3" "$4" "$1}' | sort | uniq | awk '{
+  awk -v img="$INJECTION_IMAGE_BASENAME" '/Processing complete!/{exit}
+   /Discovery image/{
+    split($0,a,"<td>");
+    f=a[8]; sub(/<\/td>.*/,"",f); sub(/.*\//,"",f); gsub(/[ \t]/,"",f);
+    if(f!=img) next;
+    xy=a[7]; gsub(/&nbsp;/,"",xy); sub(/<\/td>.*/,"",xy);
+    mg=a[5]; gsub(/&nbsp;/,"",mg); sub(/<\/td>.*/,"",mg); gsub(/[ \t]/,"",mg);
+    nxy=split(xy,c," "); if(nxy>=2) print c[1]" "c[2]" "mg
+   }' transient_report/index.html | sort | uniq | awk '{
     keep = 1;
     for ( j = 1; j <= n; j++ ) {
      d = sqrt(($1 - kx[j])^2 + ($2 - ky[j])^2);
@@ -322,10 +358,21 @@ for FLUX in $TRIAL_FLUXES ;do
   INPUT_MAG="-99.99"
  fi
 
- # Print the results only if some of the inserted stars were recovered
- if [ $N_FOUND -gt 0 ] && [ "$MEADIAN_MAG" != "0.0000" ] ;then
-  echo "in_mag=$INPUT_MAG measure_mag=$MEADIAN_MAG frac=$RECOVERED_FRACTION $N_FOUND / $N_ARTSTARS_INSERTED_TOTAL recovered (false_positives=$N_FALSE_POSITIVES_TOTAL)"
-  printf "%6.2f %6.2f %6.4f %4d %4d %6.4f %6.4f %6.4f\n" "$INPUT_MAG" "$MEADIAN_MAG" "$RECOVERED_FRACTION" "$N_FOUND" "$N_ARTSTARS_INSERTED_TOTAL" "$P" "$F1" "$F10" >> artificial_star_test_results.txt
+ # Record one data point per trial flux for which stars were actually inserted and searched.
+ # A flux that recovers zero stars is a legitimate point (frac=0.0) at the faint end - it must
+ # be written, not skipped, otherwise a genuinely-undetectable flux would abort the whole run via
+ # the "Test error!" guard below. The measured magnitude (me_mag) is undefined when nothing was
+ # recovered, so it is reported as -99.99 in that case. Rows are still skipped when nothing was
+ # inserted at all (e.g. every iteration bailed out on a transient_factory error), so the guard
+ # below still catches a completely failed run.
+ if [ "$N_ARTSTARS_INSERTED_TOTAL" -gt 0 ] ;then
+  if [ $N_FOUND -gt 0 ] && [ "$MEADIAN_MAG" != "0.0000" ] ;then
+   ME_MAG_OUT="$MEADIAN_MAG"
+  else
+   ME_MAG_OUT="-99.99"
+  fi
+  echo "in_mag=$INPUT_MAG measure_mag=$ME_MAG_OUT frac=$RECOVERED_FRACTION $N_FOUND / $N_ARTSTARS_INSERTED_TOTAL recovered (false_positives=$N_FALSE_POSITIVES_TOTAL)"
+  printf "%6.2f %6.2f %6.4f %4d %4d %6.4f %6.4f %6.4f\n" "$INPUT_MAG" "$ME_MAG_OUT" "$RECOVERED_FRACTION" "$N_FOUND" "$N_ARTSTARS_INSERTED_TOTAL" "$P" "$F1" "$F10" >> artificial_star_test_results.txt
  fi
  
  rm -f "$IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE"
