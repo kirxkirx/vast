@@ -126,10 +126,15 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-# Check if python tools are installed
-command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null
-if [ $? -ne 0 ];then
- echo "WARNING from $0: install astropy and sympy to use PV<->SIP WCS header keyword conversion"
+# Check if python tools are installed.
+# The SIP->PV WCS conversion (needed before swarp, see below) can be done either
+# with the upstream sympy-based converter (util/sip_tpv/sip_to_pv.py) or with the
+# sympy-free least-squares converter (util/sip_tpv/sip_to_pv_lstsq.py) that needs
+# only astropy+numpy. Warn only if none of these will work.
+if command -v python &>/dev/null && python -c "import astropy, numpy" &>/dev/null ;then
+ : # astropy+numpy present -- the least-squares SIP->PV converter will work
+else
+ echo "WARNING from $0: install the python 'astropy' and 'numpy' modules (optionally 'sympy') to enable SIP->PV WCS header keyword conversion. Without it, finder charts made from SIP-distorted images (e.g. TESS) will be offset from the true target position."
 fi
 
 
@@ -218,12 +223,48 @@ FITSFILE_NAME_FOR_PNG="r_$(basename "$FITSFILE")"
 FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
 
 
-# Do the SIP->PV converion as swarp understands only PV
-# Check if python tools are installed
-command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null && util/sip_tpv/sip_to_pv.py "$FITSFILE" "pv$$.fits" 
-if [ $? -eq 0 ];then
- echo "INFO from $0: performed SIP->PV converion $FITSFILE -> pv$$.fits"
- FITSFILE="pv$$.fits"
+# Do the SIP->PV conversion: swarp understands only the PV/TPV distortion
+# convention, not SIP. Wide-field, strongly-distorted detectors (e.g. TESS FFIs,
+# whose astrometric solution needs high-order SIP) MUST have their distortion
+# converted to PV before resampling. If a SIP header is fed to swarp unchanged,
+# swarp silently ignores the polynomial terms and resamples using the linear CD
+# matrix only -- which shifts stars (and hence the target crosshair) away from
+# their true positions by tens of pixels / hundreds of arcsec. So: if the image
+# carries SIP distortion we convert it, and if no converter is available we abort
+# rather than emit a wrong finder chart.
+IMAGE_HAS_SIP=0
+if "$VAST_PATH"util/listhead "$FITSFILE" | grep -qE 'A_ORDER|B_ORDER' ;then
+ IMAGE_HAS_SIP=1
+fi
+if [ "$IMAGE_HAS_SIP" -eq 1 ];then
+ PV_CONVERTED=0
+ # Preferred: upstream sympy-based converter
+ if [ "$PV_CONVERTED" -eq 0 ] && command -v python &>/dev/null && python -c "import astropy, sympy" &>/dev/null ;then
+  if util/sip_tpv/sip_to_pv.py "$FITSFILE" "pv$$.fits" ;then
+   echo "INFO from $0: performed SIP->PV conversion (sympy) $FITSFILE -> pv$$.fits"
+   PV_CONVERTED=1
+  fi
+ fi
+ # Fallback: sympy-free least-squares converter (needs only astropy+numpy)
+ if [ "$PV_CONVERTED" -eq 0 ] && command -v python &>/dev/null && python -c "import astropy, numpy" &>/dev/null ;then
+  if util/sip_tpv/sip_to_pv_lstsq.py "$FITSFILE" "pv$$.fits" --overwrite ;then
+   echo "INFO from $0: performed SIP->PV conversion (numpy least squares) $FITSFILE -> pv$$.fits"
+   PV_CONVERTED=1
+  fi
+ fi
+ if [ "$PV_CONVERTED" -eq 1 ] && [ -s "pv$$.fits" ];then
+  FITSFILE="pv$$.fits"
+ else
+  echo "ERROR in $0: the input image $FITSFILE carries SIP distortion (A_ORDER/B_ORDER)"
+  echo "but the SIP->PV conversion could not be performed. swarp will ignore the"
+  echo "distortion and the resulting finder chart may be offset from the true target"
+  echo "position -- by tens of pixels for strongly-distorted detectors such as TESS,"
+  echo "less for narrower-field cameras (e.g. ST, STL). Install the python 'astropy'"
+  echo "and 'numpy' modules (or 'sympy') to enable the conversion. Continuing anyway."
+  # Do not abort: for cameras with mild distortion the linear-only resampling is
+  # usually good enough, so proceed with the unconverted SIP image rather than
+  # failing to produce any finder chart at all.
+ fi
 fi
 
 # Resample the image to the new grid
