@@ -1330,6 +1330,13 @@ if [ $? -ne 0 ];then
  echo "ERROR updating catalogs (including astorb.dat)" | tee -a transient_factory_test31.txt
  exit 1
 fi
+# The ASASSN-V catalog is optional: lib/update_offline_catalogs.sh does NOT abort when it cannot
+# be downloaded (e.g. an empty file served by the mirror). Report a loud ERROR here so it is
+# propagated into the HTML report and the summary log via transient_factory_test31.txt, but keep
+# going - the ASASSN-V identification of candidates is simply skipped for this run.
+if [ ! -s lib/catalogs/asassnv.csv ];then
+ echo "ERROR: ASASSN-V catalog lib/catalogs/asassnv.csv is missing or empty - the ASASSN-V identification of transient candidates will be SKIPPED for this run" | tee -a transient_factory_test31.txt
+fi
 
 echo "Reference image directory is set to $REFERENCE_IMAGES" | tee -a transient_factory_test31.txt
 if [ -z "$1" ]; then

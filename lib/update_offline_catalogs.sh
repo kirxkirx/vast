@@ -328,6 +328,10 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   CURL_LOCAL_COMMAND=""
   UNPACK_COMMAND=""
   TMP_OUTPUT=""
+  # Optional catalogs are the ones the transient search can run without (it will just skip
+  # the corresponding identification step). A failed/empty download of an optional catalog is
+  # reported as an ERROR but is NOT fatal to the update run.
+  CATALOG_IS_OPTIONAL=0
   if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
    TMP_OUTPUT="ObsCodes.html_new"
    # curl https://www.minorplanetcenter.net/iau/lists/ObsCodes.html > ObsCodes.html
@@ -348,6 +352,9 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
+   # The ASASSN-V catalog is only used to annotate transient candidates; the search can proceed
+   # without it, so a failed/empty download must not abort the whole run.
+   CATALOG_IS_OPTIONAL=1
    TMP_OUTPUT="asassnv.csv"
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
@@ -392,12 +399,16 @@ $PWD" >&2
    echo "Failed to download from the local link, fallig back to $CURL_COMMAND" >&2
    $CURL_COMMAND
    if [ $? -ne 0 ];then
-    echo "ERROR running the download command" >&2 
+    echo "ERROR running the download command" >&2
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
     if [ -f "$TMP_OUTPUT".gz ];then
      rm -f "$TMP_OUTPUT".gz
+    fi
+    if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+     echo "ERROR: failed to download the optional catalog $FILE_TO_UPDATE - continuing without updating it" >&2
+     continue
     fi
     exit 1
    fi
@@ -419,9 +430,13 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    fi
   fi
   if [ ! -s "$TMP_OUTPUT" ];then
-   echo "ERROR: $TMP_OUTPUT is EMPTY!" >&2  
+   echo "ERROR: $TMP_OUTPUT is EMPTY!" >&2
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
+   fi
+   if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+    echo "ERROR: the optional catalog $FILE_TO_UPDATE could not be updated (empty download) - continuing without it" >&2
+    continue
    fi
    exit 1
   fi
