@@ -277,8 +277,14 @@
 // THIS DOES NOT WORK WELL AS SOME ODD DETECTIONS ARE THE ONES DEFINING THE REF FRAME LIMIT
 #define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 0.0 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag 
                                                           // above the detection limit on the reference frame.
-#define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image 
+#define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image
                                                           // will be also listed as transient candidates
+#define TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD 3.0 // If a transient candidate matched with a known variable star (VSX, ASASSN-V) or an asteroid (astcheck)
+                                                          // is more than TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD mag brighter than the maximum brightness
+                                                          // expected from the catalog record, highlight this in the HTML report (the match may be a chance
+                                                          // coincidence or the known object is doing something unusual). The threshold is intentionally large
+                                                          // to absorb the difference between the catalog and instrumental photometric bands.
+                                                          // Used by src/catalogs/check_catalogs_offline.c and util/transients/MPCheck_v2.sh (the script greps this file).
 
 //// src/fit_mag_calib.c ////
 #define MAX_NUMBER_OF_STARS_MAG_CALIBR MAX_NUMBER_OF_STARS

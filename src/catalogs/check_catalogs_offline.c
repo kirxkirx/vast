@@ -3,14 +3,172 @@
 #include <string.h>
 #include <math.h>
 
+#include "../vast_limits.h" // for TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD
+
 // #define VSX_SEARCH_RADIUS_DEG 35.0 / 3600.0
 #define VSX_SEARCH_RADIUS_DEG 25.0 / 3600.0
 
 #define ASASSN_SEARCH_RADIUS_DEG 20.0 / 3600.0
 
-/* Auxiliary definitions */
+// Sentinel value indicating that the measured magnitude of the transient
+// was not supplied on the command line (so no magnitude comparison is done
+// and the output is identical to the one produced by the older versions).
+#define MEASURED_MAG_NOT_PROVIDED -100.0
+
+// The vsx.dat record tail (descr) is parsed only up to this many characters:
+// this covers the max/min magnitude fields but cuts before the epoch column,
+// so a JD can never be mistaken for a magnitude.
+#define VSX_DESCR_MAG_REGION_LENGTH 44
+// Tokens starting before this offset within descr belong to the max
+// magnitude field, tokens starting at or after it belong to the min
+// magnitude (or amplitude) field.
+#define VSX_DESCR_MAXFIELD_BOUNDARY 18
+
+/* Auxiliary definitions (vast_limits.h provides functionally identical ones) */
+#ifndef MAX
 #define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
+#endif
+#ifndef MIN
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
+#endif
+
+// Check if a whitespace-delimited token from a catalog record is a magnitude
+// value. One leading limit flag '<' or '>' and one trailing ':' (uncertainty
+// flag) are allowed and ignored. Values outside the plausible magnitude range
+// are rejected (this also protects against misinterpreting a JD or a period
+// as a magnitude). Returns 1 on success.
+int parse_mag_token( const char *token, double *value ) {
+ char *endptr;
+ const char *startptr;
+ double v;
+ if ( NULL == token ) {
+  return 0;
+ }
+ startptr= token;
+ if ( startptr[0] == '<' || startptr[0] == '>' ) {
+  startptr++;
+ }
+ if ( startptr[0] == '\0' ) {
+  return 0;
+ }
+ v= strtod( startptr, &endptr );
+ if ( endptr == startptr ) {
+  return 0;
+ }
+ if ( *endptr == ':' ) {
+  endptr++;
+ }
+ while ( *endptr == ' ' || *endptr == '\t' || *endptr == '\n' || *endptr == '\r' ) {
+  endptr++;
+ }
+ if ( *endptr != '\0' ) {
+  return 0;
+ }
+ if ( v < -5.0 || v > 30.0 ) {
+  return 0;
+ }
+ ( *value )= v;
+ return 1;
+}
+
+// Extract the expected maximum brightness (the brightest magnitude the object
+// is expected to reach according to its catalog record) from the magnitude
+// section of a vsx.dat record.
+// The input is the tail of a vsx.dat line starting at file byte 92 (as stored
+// in descr by search_vsx), so offset 0 of the input corresponds to byte 92 of
+// the catalog record. Empirically verified layout of the current CDS B/vsx
+// vsx.dat file (the byte positions in the CDS ReadMe are off by a few columns,
+// so the fields are located here by tokens + position windows rather than by
+// exact column numbers):
+//   offsets  4-9  magnitude at maximum (or the mean magnitude), may be
+//                 preceded by a '>' or '<' limit flag and followed by a ':'
+//   offset  13+   passband of the max magnitude
+//   offsets 21-22 'Y' flag indicating that the min field holds a full
+//                 peak-to-peak amplitude rather than the minimum magnitude
+//                 (in that case the max field holds the MEAN magnitude,
+//                 see https://www.aavso.org/magnitude-range-amplitude )
+//   offsets 26-31 magnitude at minimum (or the amplitude)
+//   offset  45+   epoch (JD) followed by the period - must not be mistaken
+//                 for magnitudes, hence the region and value range cuts
+// Returns 1 and sets (*expected_brightest_mag) on success, 0 otherwise.
+int get_expected_brightest_mag_from_vsx_descr( const char *descr, double *expected_brightest_mag ) {
+ char region[VSX_DESCR_MAG_REGION_LENGTH + 1];
+ char token[VSX_DESCR_MAG_REGION_LENGTH + 1];
+ int i, j, token_start;
+ int have_max, have_min, min_is_amplitude;
+ double max_mag, min_mag, token_value;
+
+ have_max= 0;
+ have_min= 0;
+ min_is_amplitude= 0;
+ max_mag= 0.0;
+ min_mag= 0.0;
+
+ if ( NULL == descr ) {
+  return 0;
+ }
+
+ // Copy the magnitude region of the record, cutting before the epoch column
+ for ( i= 0; i < VSX_DESCR_MAG_REGION_LENGTH && descr[i] != '\0' && descr[i] != '\n' && descr[i] != '\r'; i++ ) {
+  region[i]= descr[i];
+ }
+ region[i]= '\0';
+
+ // Scan whitespace-separated tokens keeping track of their position in the record
+ i= 0;
+ while ( region[i] != '\0' ) {
+  if ( region[i] == ' ' || region[i] == '\t' ) {
+   i++;
+   continue;
+  }
+  token_start= i;
+  for ( j= 0; region[i] != '\0' && region[i] != ' ' && region[i] != '\t'; i++, j++ ) {
+   token[j]= region[i];
+  }
+  token[j]= '\0';
+  // The 'Y' amplitude flag is a standalone 'Y' in the min part of the record
+  // that comes before the min value. A 'Y' right after the max value is the
+  // near-IR Y passband of the max magnitude, and a 'Y' after the min value
+  // would be the passband of the min magnitude - both are ignored.
+  if ( 0 == have_min && token_start >= VSX_DESCR_MAXFIELD_BOUNDARY && 0 == strcmp( token, "Y" ) ) {
+   min_is_amplitude= 1;
+   continue;
+  }
+  if ( 0 == parse_mag_token( token, &token_value ) ) {
+   continue;
+  }
+  if ( token_start < VSX_DESCR_MAXFIELD_BOUNDARY ) {
+   if ( 0 == have_max ) {
+    max_mag= token_value;
+    have_max= 1;
+   }
+  } else {
+   if ( 0 == have_min ) {
+    min_mag= token_value;
+    have_min= 1;
+   }
+  }
+ }
+
+ if ( 0 == have_max ) {
+  // Only the minimum magnitude (or nothing at all) is given in the record,
+  // so we have no expectation of how bright the object may get.
+  return 0;
+ }
+
+ if ( 1 == min_is_amplitude && 1 == have_min ) {
+  // The max field holds the mean magnitude and the min field holds the full
+  // peak-to-peak amplitude. Depending on the star type the mean may sit
+  // anywhere between the extremes (for dwarf-nova-like objects it is close
+  // to the quiescent state), so conservatively assume the star may get as
+  // bright as the mean minus the full amplitude.
+  ( *expected_brightest_mag )= max_mag - min_mag;
+ } else {
+  ( *expected_brightest_mag )= max_mag;
+ }
+
+ return 1;
+}
 
 int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
  FILE *mymdvfile;
@@ -94,7 +252,7 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
  return is_found;
 }
 
-int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
+int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output, double measured_mag_of_transient ) {
  FILE *vsx_dat;
  char name[32];
  char RA_char[32];
@@ -111,6 +269,8 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  char best_name[32];
  char best_type[32];
  char best_descr[128];
+
+ double expected_brightest_mag;
 
  int is_found= 0;
 
@@ -208,6 +368,30 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   } else {
    fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
   }
+  // Compare the measured brightness of the transient with the brightest state
+  // expected from the catalog record (if the measured magnitude was supplied).
+  // A transient that is much brighter than the cataloged maximum deserves
+  // attention even though it matches a known variable star position.
+  // The wording of the ATTENTION line must not contain the phrases
+  // 'The object was', 'found in' or 'not found' that are relied upon by the
+  // downstream parsers (unmw filter_report.py, transient_factory_test31.sh,
+  // the artificial star test); the 'mag brighter than the' substring is the
+  // stable marker the downstream tools may key on.
+  if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
+   if ( 1 == get_expected_brightest_mag_from_vsx_descr( best_descr, &expected_brightest_mag ) ) {
+    if ( expected_brightest_mag - measured_mag_of_transient > TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ) {
+     // Make sure the ATTENTION line starts on a new line even if the record was missing the trailing newline
+     if ( strlen( best_descr ) == 0 || best_descr[strlen( best_descr ) - 1] != '\n' ) {
+      fprintf( stdout, "\n" );
+     }
+     if ( 1 == html_output ) {
+      fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!</font></b>\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+     } else {
+      fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+     }
+    }
+   }
+  }
  }
 
  fclose( vsx_dat );
@@ -228,7 +412,7 @@ const char *getfield_from_csv_string( char *line, int num ) {
  return whitespace; // Return pointer to 31 white space on failure
 }
 
-int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
+int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output, double measured_mag_of_transient ) {
  FILE *asassnv_csv;
  char name[32];
  double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
@@ -242,6 +426,8 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  int i, j;
 
  double distance_deg;
+
+ double asassn_mean_mag, asassn_amplitude, expected_brightest_mag;
 
  int is_found= 0;
 
@@ -418,6 +604,27 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
     fprintf( stdout, "The object was found in ASASSN-V\n" );
     fprintf( stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
    }
+   // Compare the measured brightness of the transient with the brightest state
+   // expected from the catalog record (if the measured magnitude was supplied).
+   // The ASAS-SN catalog provides the mean magnitude and the full amplitude,
+   // so conservatively assume the star may get as bright as the mean minus the
+   // full amplitude. See the matching code in search_vsx() for the wording
+   // constraints imposed by the downstream parsers.
+   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
+    if ( 1 == parse_mag_token( MeanMag, &asassn_mean_mag ) ) {
+     expected_brightest_mag= asassn_mean_mag;
+     if ( 1 == parse_mag_token( Amplitude, &asassn_amplitude ) ) {
+      expected_brightest_mag= asassn_mean_mag - asassn_amplitude;
+     }
+     if ( expected_brightest_mag - measured_mag_of_transient > TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ) {
+      if ( 1 == html_output ) {
+       fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!</font></b>\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+      } else {
+       fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+      }
+     }
+    }
+   }
    is_found= 1;
    break; // find one and be happy
   }
@@ -442,9 +649,14 @@ int main( int argc, char **argv ) {
  int is_found;
  double target_RA_deg;
  double target_Dec_deg;
+ double measured_mag;
+ double measured_mag_input;
+ char *endptr_argv4;
+
+ measured_mag= MEASURED_MAG_NOT_PROVIDED;
 
  if ( argc < 3 ) {
-  fprintf( stderr, "Usage: %s 12.345 67.890\nor\n%s 12.345 67.890 H  # for HTML output", argv[0], argv[0] );
+  fprintf( stderr, "Usage: %s 12.345 67.890\nor\n%s 12.345 67.890 H  # for HTML output\nor\n%s 12.345 67.890 H 12.3  # HTML output + comparison of the measured transient mag 12.3 with the catalog record", argv[0], argv[0], argv[0] );
   return 1;
  }
 
@@ -470,6 +682,22 @@ int main( int argc, char **argv ) {
   }
  }
 
+ // The optional 5th command line argument is the measured magnitude of the
+ // transient. When it is provided (by util/transients/report_transient.sh),
+ // a match with a known variable star will be checked for a large brightness
+ // difference between the measurement and the catalog record expectation.
+ if ( argc >= 5 ) {
+  measured_mag_input= strtod( argv[4], &endptr_argv4 );
+  while ( *endptr_argv4 == ' ' || *endptr_argv4 == '\t' ) {
+   endptr_argv4++;
+  }
+  if ( endptr_argv4 == argv[4] || *endptr_argv4 != '\0' || measured_mag_input < -2.0 || measured_mag_input > 30.0 ) {
+   fprintf( stderr, "WARNING: ignoring the measured transient magnitude '%s' that does not look like a valid magnitude value\n", argv[4] );
+  } else {
+   measured_mag= measured_mag_input;
+  }
+ }
+
  // This script should take care of updating the catalogs.
  // Note: The relative path "lib/update_offline_catalogs.sh" requires this program to be
  // executed from the VaST root directory. Calling scripts (e.g., util/search_databases_with_vizquery.sh)
@@ -485,17 +713,17 @@ int main( int argc, char **argv ) {
 
  // First try small search radius
  // was 3.0 an caused problems with the STANDALONEDBSCRIPT_MULTCLOSEVAR test, 5 is not cutting it
- // is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output );
- is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600, 1, html_output );
+ // is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
+ is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600, 1, html_output, measured_mag );
  if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output );
+  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
  }
  // If nothing found - try a larger search radius
  if ( is_found != 1 ) {
-  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output );
+  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
  }
  if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output );
+  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
  }
  if ( is_found != 1 ) {
   is_found= search_myMDV( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output );

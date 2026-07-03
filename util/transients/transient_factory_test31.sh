@@ -3689,7 +3689,8 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
   fi
   # Mac OS X grep does not handle well the combination --max-count=1 -A8
   #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep -q 'not found'
-  grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep -q 'not found'
+  # -A10 (not -A8) as the VSX/ASASSN-V block may include an extra 'ATTENTION: ... mag brighter than the ...' line
+  grep -A10 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep -q 'not found'
   if [ $? -eq 0 ];then
    echo "$RADECSTR"
    echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt

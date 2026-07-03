@@ -521,7 +521,14 @@ The script will try to download these catalogs now - it will take some time!
   # Note that grep 'The object was found' assumes lib/catalogs/check_catalogs_offline was not run in the HTML output mode
   LOCAL_NAME=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 'The object was found' | tail -n 1 | awk -F '"' '{print $2}' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}')
   LOCAL_TYPE=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk -F 'Type:' '{print $2}' | awk '{$1=$1;print}')
-  LOCAL_PERIOD=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '#   Max.' | tail -n 1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}')
+  # The period value occupies a fixed column range of the vsx.dat record
+  # (the printed line reproduces the record starting from its byte 92, so
+  # the period value living around bytes 157-177 of the record appears
+  # around characters 63-86 of the printed line). Extract it by position
+  # rather than by counting whitespace-separated fields: the number of
+  # fields before the period varies between records (passbands and JD0 may
+  # be missing, the min value may be an amplitude preceded by the 'Y' flag).
+  LOCAL_PERIOD=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '#   Max.' | tail -n 1 | awk '{s=substr($0,63,27); gsub(/[()<>:]/," ",s); n=split(s,a," "); for(i=1;i<=n;i++){if(a[i] ~ /^[0-9]+\.?[0-9]*$/){print a[i]; exit}}}')
   if [ -z "$LOCAL_PERIOD" ];then
    LOCAL_PERIOD=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk -F 'Period' '{print $2}' | awk '{print $1}')
   fi

@@ -882,7 +882,8 @@ echo "$GALACTIC_COORDINATES  $CONSTELLATION  Second-epoch detections are separat
 # Check if this is a known source or if it looks like a hot pixel
 TEMP_FILE__SDWC_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_SDWC_OUTPUT_$$.tmp")
 {
- lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN H > "$TEMP_FILE__SDWC_OUTPUT"
+ # $MAG_MEAN enables the comparison of the measured transient brightness with the VSX/ASASSN-V record
+ lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN H $MAG_MEAN > "$TEMP_FILE__SDWC_OUTPUT"
  echo $? > "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp"
 } &
 TEMP_FILE__MPCheck_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_MPCheck_OUTPUT_$$.tmp")

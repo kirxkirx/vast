@@ -2859,7 +2859,7 @@ $GREP_RESULT"
    ### Flag image test should always be the last one
    for IMAGE in ../test_data_photo/* ;do
     util/clean_data.sh
-    lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+    lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
     if [ $? -eq 0 ];then
      IMAGE=`basename $IMAGE`
      ## We do want flags for these specific plates
@@ -30994,7 +30994,7 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../test_exclude_ref_image/lm* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep -q "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`

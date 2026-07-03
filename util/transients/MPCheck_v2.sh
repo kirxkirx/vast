@@ -54,10 +54,15 @@ else
  COLOR=0
 fi  
 
+MEASURED_TRANSIENT_MAG=""
 if [ -z "$7" ];then
  MAG_FOR_MPC_REPORT="20.1"
 else
  MAG_FOR_MPC_REPORT="$7"
+ # Remember that the measured magnitude was explicitly provided:
+ # this enables the comparison of the measured transient brightness
+ # with the astcheck-predicted asteroid brightness below
+ MEASURED_TRANSIENT_MAG="$7"
 fi
 
 if [ -z "$8" ];then
@@ -242,6 +247,34 @@ else
         print bolded, rest;
     }
 }'
- fi 
+ fi
+ # Compare the measured brightness of the transient with the astcheck-predicted brightness of the matched asteroid.
+ # A transient that is much brighter than the prediction deserves attention as the positional match
+ # may be a chance coincidence. The comparison is done only if the measured magnitude was explicitly
+ # provided on the command line and this is a real astcheck match (not a planet/moon/comet list match
+ # that carries no magnitude). The wording of the ATTENTION line must not contain the phrases
+ # 'The object was', 'found in' or 'not found' relied upon by the downstream parsers
+ # (unmw filter_report.py, transient_factory_test31.sh, the artificial star test);
+ # 'mag brighter than the' is the stable marker substring the downstream tools may key on.
+ if [ -n "$MEASURED_TRANSIENT_MAG" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ];then
+  # In the astcheck output line the predicted magnitude is the 3rd field from the end:
+  # designation(s)  dRA"  dDec"  dist"  mag  dRA/hr  dDec/hr
+  PREDICTED_ASTEROID_MAG=$(echo "$ASTCHECK_OUTPUT" | awk '{print $(NF-2)}')
+  # Get the threshold from vast_limits.h, fall back to the default value if the file is not reachable
+  TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD=$(grep '#define TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ' src/vast_limits.h 2>/dev/null | awk '{print $3}')
+  if [ -z "$TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD" ];then
+   TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD=3.0
+  fi
+  # Require both magnitudes to be valid numbers in a plausible range and the difference to be large
+  TEST=$(echo "$PREDICTED_ASTEROID_MAG $MEASURED_TRANSIENT_MAG $TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD" | awk '{if ( $1 != $1+0 || $2 != $2+0 || $1 <= 0 || $1 > 30 || $2 < -2 || $2 > 30 ) {print 0} else {if ( $1 - $2 > $3 ) {print 1} else {print 0}}}')
+  if [ "$TEST" = "1" ];then
+   MAG_DIFF_FOR_DISPLAY=$(echo "$PREDICTED_ASTEROID_MAG $MEASURED_TRANSIENT_MAG" | awk '{printf "%.1f", $1-$2}')
+   if [ $COLOR -eq 1 ];then
+    echo -e "\033[01;31mATTENTION: measured mag $MEASURED_TRANSIENT_MAG is $MAG_DIFF_FOR_DISPLAY mag brighter than the predicted asteroid brightness $PREDICTED_ASTEROID_MAG - the transient may be an unrelated new object!\033[00m"
+   else
+    echo "<b><font color=\"red\">ATTENTION: measured mag $MEASURED_TRANSIENT_MAG is $MAG_DIFF_FOR_DISPLAY mag brighter than the predicted asteroid brightness $PREDICTED_ASTEROID_MAG - the transient may be an unrelated new object!</font></b>"
+   fi
+  fi
+ fi
  exit 0 # return code will signal we have an ID
 fi # else lib/astcheck 
