@@ -223,6 +223,29 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/catalogs/read_tycho2"
  exit 1
 fi
+
+# Calibration-star yield check: with a healthy reference-image plate
+# solution at least a few percent of the detected stars match Tycho-2
+# (typically 8-60% depending on the detection depth); a broken plate
+# solution leaves ~0.1% of chance matches, and a zero point fitted from
+# those is off by magnitudes. Report an ERROR (which the nightly summary
+# page picks up from the log) but DO NOT exit: the calibration proceeds so
+# the report is still produced for inspection. The check is skipped for
+# very shallow catalogs where small-number statistics would make the
+# fraction meaningless.
+MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION=1.0
+MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
+if [ -s calib.txt ] && [ -s wcsmag.cat ];then
+ N_CALIBRATION_STARS=$(wc -l < calib.txt)
+ N_DETECTED_STARS_FOR_CALIBRATION=$(wc -l < wcsmag.cat)
+ if [ "$N_DETECTED_STARS_FOR_CALIBRATION" -ge "$MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK" ];then
+  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" -v p="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
+   MATCH_PERCENT_FOR_DISPLAY=$(awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" 'BEGIN { printf "%.2f", 100.0 * n / d }')
+   echo "ERROR: only $N_CALIBRATION_STARS of $N_DETECTED_STARS_FOR_CALIBRATION stars detected on the reference image matched the Tycho-2 photometric calibration catalog ($MATCH_PERCENT_FOR_DISPLAY%) - the reference image plate solution is likely broken and the magnitude calibration is unreliable"
+  fi
+ fi
+fi
+
 MAGNITUDE_CALIBRATION_PARAMETERS=$(lib/fit_zeropoint)
 if [ $? -ne 0 ];then
  echo "ERROR fitting the magnitude scale with lib/fit_zeropoint"

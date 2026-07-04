@@ -3481,6 +3481,36 @@ reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_
 warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 ###################################" | tee -a transient_factory_test31.txt
 
+    # Reference-image plate-solution consistency check. The two reference
+    # images show the same sky field, so their astrometric residuals must
+    # be similar; a large mismatch means the worse one carries a broken
+    # (usually cached or header-inherited) plate solution. The magnitude
+    # calibration is performed against the FIRST reference image, so a bad
+    # reference plate solution silently shifts every reported magnitude by
+    # magnitudes (and floods the report with bogus "brightenings").
+    # Report an ERROR (the summary page turns the field row red) but
+    # continue processing so the report is still produced for inspection.
+    # The case of BOTH reference images having bad plate solutions slips
+    # past this ratio test by construction; it is caught instead by the
+    # calibration-star yield check in the magnitude calibration scripts.
+    WCS_REF_SIGMA_CONSISTENCY_RATIO_THRESHOLD=10.0
+    if [ -n "$REF1_SIGMA" ] && [ -n "$REF2_SIGMA" ]; then
+     if awk -v a="$REF1_SIGMA" -v b="$REF2_SIGMA" -v t="$WCS_REF_SIGMA_CONSISTENCY_RATIO_THRESHOLD" 'BEGIN { exit !( a > 0 && b > 0 && ( a / b > t || b / a > t ) ) }' ; then
+      if awk -v a="$REF1_SIGMA" -v b="$REF2_SIGMA" 'BEGIN { exit !( a > b ) }' ; then
+       BAD_REF_DIAG_NAME="$REF1_DIAG_NAME"
+       BAD_REF_SIGMA="$REF1_SIGMA"
+       GOOD_REF_SIGMA="$REF2_SIGMA"
+      else
+       BAD_REF_DIAG_NAME="$REF2_DIAG_NAME"
+       BAD_REF_SIGMA="$REF2_SIGMA"
+       GOOD_REF_SIGMA="$REF1_SIGMA"
+      fi
+      echo "ERROR: reference image $BAD_REF_DIAG_NAME has a bad plate solution (astrometric residuals $BAD_REF_SIGMA arcsec while the other reference image of the same field has $GOOD_REF_SIGMA arcsec) - the magnitude calibration relying on it is unreliable" | tee -a transient_factory_test31.txt
+      echo "***** REFERENCE IMAGE PLATE SOLUTION ERROR ($BAD_REF_DIAG_NAME residuals $BAD_REF_SIGMA arcsec vs $GOOD_REF_SIGMA arcsec) *****" >> transient_factory.log
+      echo "############################################################" >> transient_factory.log
+     fi
+    fi
+
     # If either new image's sigma or worst_quadrant_to_overall_ratio exceeds
     # the threshold relative to the reference average, retry that image's
     # plate solve with VAST_TWEAK_ORDER=2. Reference images are not retried.

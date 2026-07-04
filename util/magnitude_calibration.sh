@@ -407,6 +407,29 @@ if [ -f calib.png ];then
  cp calib.png calib_backup.png
 fi
 
+# Calibration-star yield check, mirroring the one in
+# util/transients/calibrate_current_field_with_tycho2.sh: with a healthy
+# reference-image plate solution at least a few percent of the stars
+# detected on the reference image match the photometric catalog; ~0.1%
+# means the plate solution is broken and the zero point fitted from the
+# chance matches is off by magnitudes. ERROR is reported (for the NMW
+# summary page log grep) but the script continues so the results are
+# still produced for inspection. Skipped when the detected-star catalog
+# is unavailable (manual calib.txt runs) or too shallow for the fraction
+# to be meaningful.
+MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION=1.0
+MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
+if [ -n "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ] && [ -s "${UCAC5_REFERENCE_IMAGE_MATCH_FILE%.ucac5}" ] && [ -s calib.txt ];then
+ N_CALIBRATION_STARS=$(wc -l < calib.txt)
+ N_DETECTED_STARS_FOR_CALIBRATION=$(wc -l < "${UCAC5_REFERENCE_IMAGE_MATCH_FILE%.ucac5}")
+ if [ "$N_DETECTED_STARS_FOR_CALIBRATION" -ge "$MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK" ];then
+  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" -v p="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
+   MATCH_PERCENT_FOR_DISPLAY=$(awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" 'BEGIN { printf "%.2f", 100.0 * n / d }')
+   echo "ERROR: only $N_CALIBRATION_STARS of $N_DETECTED_STARS_FOR_CALIBRATION stars detected on the reference image matched the photometric calibration catalog ($MATCH_PERCENT_FOR_DISPLAY%) - the reference image plate solution is likely broken and the magnitude calibration is unreliable"
+  fi
+ fi
+fi
+
 if [ "$2" == "linear" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_linear)
  if [ $? -ne 0 ];then
