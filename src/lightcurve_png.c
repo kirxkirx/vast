@@ -18,18 +18,39 @@
 // Output: writes the PNG via PGPLOT's /PNG device. If the linked PGPLOT was
 // built without libpng support, prints a clear error and exits non-zero;
 // no plot is written.
+//
+// Long output paths: PGPLOT's device-string handling truncates long
+// filenames (somewhere around 90 characters the PNG driver ends up trying
+// to open a chopped path, prints "plotting disabled" and every plot call
+// becomes a no-op while cpgbeg still reports success). To make -o work
+// with arbitrarily long paths, the plot is rendered under a short
+// temporary name in the current working directory whenever the requested
+// output path is long, and the file is then rename()d (or byte-copied
+// across filesystems) to its destination. Independently of that, the
+// output file's existence and non-zero size are verified after rendering,
+// so "Wrote ..." is never printed -- and the exit code is never 0 -- when
+// nothing was actually written.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <getopt.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "cpgplot.h"
 #include "setenv_local_pgplot.h"
 #include "lightcurve_io.h"
 
 #define PATH_MAX_LEN 4096
+// Output paths at least this long are rendered under a short temporary
+// name in the current directory and then moved into place, because
+// PGPLOT truncates long device filenames (see the comment at the top).
+// The observed truncation point is ~90 characters; stay well below it.
+#define PGPLOT_SAFE_FILENAME_LEN 80
 #define DEFAULT_OUTPUT_PNG "lightcurve.png"
 #define DEFAULT_WIDTH 800
 #define DEFAULT_HEIGHT 600
@@ -278,6 +299,64 @@ static int read_upperlimits( const char *path, double **jd_out,
  return 0;
 }
 
+// Return 1 if path exists as a regular file with size > 0, else 0. Used to
+// verify that PGPLOT really wrote the plot: its PNG driver can fail to open
+// the output file yet leave cpgbeg reporting success ("plotting disabled").
+static int file_exists_nonempty( const char *path ) {
+ struct stat st;
+ if ( 0 != stat( path, &st ) )
+  return 0;
+ if ( !S_ISREG( st.st_mode ) )
+  return 0;
+ if ( st.st_size <= 0 )
+  return 0;
+ return 1;
+}
+
+// Move src to dst: try rename() first; on a cross-filesystem failure
+// (EXDEV) fall back to a byte copy followed by unlink of src. Returns 0 on
+// success, -1 on failure (dst is removed if the copy was incomplete).
+static int move_file( const char *src, const char *dst ) {
+ FILE *in;
+ FILE *out;
+ size_t n_read;
+ char buf[16384];
+
+ if ( 0 == rename( src, dst ) )
+  return 0;
+ if ( errno != EXDEV )
+  return -1;
+ in= fopen( src, "rb" );
+ if ( in == NULL )
+  return -1;
+ out= fopen( dst, "wb" );
+ if ( out == NULL ) {
+  fclose( in );
+  return -1;
+ }
+ while ( ( n_read= fread( buf, 1, sizeof( buf ), in ) ) > 0 ) {
+  if ( fwrite( buf, 1, n_read, out ) != n_read ) {
+   fclose( in );
+   fclose( out );
+   unlink( dst );
+   return -1;
+  }
+ }
+ if ( ferror( in ) ) {
+  fclose( in );
+  fclose( out );
+  unlink( dst );
+  return -1;
+ }
+ fclose( in );
+ if ( 0 != fclose( out ) ) {
+  unlink( dst );
+  return -1;
+ }
+ unlink( src );
+ return 0;
+}
+
 // Sweep both tracks to find x and y plotting ranges, including detection
 // error bars in the y range. Adds fractional padding with a floor for the
 // single-point / single-magnitude edge cases.
@@ -351,7 +430,9 @@ static void compute_axis_ranges( const double *jd_det, const float *mag_det,
 // Open PGPLOT /PNG, draw axes, plot detections (red filled circles + Y
 // errorbars) then upper limits (blue downward triangles), close. Returns
 // EXIT_SUCCESS / EXIT_FAILURE so main() can exit with the right code.
-static int render_plot( const options_t *opt,
+// plot_path is the filename PGPLOT actually writes -- main() passes either
+// the requested output path or a short temporary name for long paths.
+static int render_plot( const options_t *opt, const char *plot_path,
                         const double *jd_det, const float *mag_det,
                         const float *err_det, int n_det,
                         const double *jd_ul, const float *mag_ul,
@@ -384,7 +465,7 @@ static int render_plot( const options_t *opt,
  setenv( "PGPLOT_PNG_WIDTH", wbuf, 1 );
  setenv( "PGPLOT_PNG_HEIGHT", hbuf, 1 );
 
- snprintf( device_spec, sizeof( device_spec ), "%s/PNG", opt->output_png );
+ snprintf( device_spec, sizeof( device_spec ), "%s/PNG", plot_path );
  pgplot_status= cpgbeg( 0, device_spec, 1, 1 );
  if ( pgplot_status != 1 ) {
   fprintf( stderr,
@@ -529,6 +610,8 @@ int main( int argc, char **argv ) {
  int n_det;
  int n_ul;
  int rc;
+ int use_temp;
+ char plot_path[PATH_MAX_LEN];
 
  jd_det= NULL;
  mag_det= NULL;
@@ -537,6 +620,7 @@ int main( int argc, char **argv ) {
  mag_ul= NULL;
  n_det= 0;
  n_ul= 0;
+ use_temp= 0;
 
  if ( parse_args( argc, argv, &opt ) != 0 )
   return EXIT_FAILURE;
@@ -572,13 +656,51 @@ int main( int argc, char **argv ) {
   free( mag_ul );
   return EXIT_FAILURE;
  }
- rc= render_plot( &opt, jd_det, mag_det, err_det, n_det,
+ // PGPLOT truncates long device filenames (see the comment at the top of
+ // this file), so long output paths are rendered under a short temporary
+ // name in the current directory and moved into place afterwards.
+ if ( strlen( opt.output_png ) >= PGPLOT_SAFE_FILENAME_LEN ) {
+  use_temp= 1;
+  snprintf( plot_path, sizeof( plot_path ), "lightcurve_png_tmp_%d.png",
+            (int)getpid() );
+ } else {
+  snprintf( plot_path, sizeof( plot_path ), "%s", opt.output_png );
+ }
+
+ rc= render_plot( &opt, plot_path, jd_det, mag_det, err_det, n_det,
                   jd_ul, mag_ul, n_ul );
  free( jd_det );
  free( mag_det );
  free( err_det );
  free( jd_ul );
  free( mag_ul );
+
+ // Verify PGPLOT really wrote the plot before claiming success: the PNG
+ // driver can fail to open the output file (permissions, bad path) and
+ // print only "plotting disabled" while cpgbeg reports success -- without
+ // this check the tool would exit 0 having written nothing.
+ if ( rc == EXIT_SUCCESS ) {
+  if ( 0 == file_exists_nonempty( plot_path ) ) {
+   fprintf( stderr,
+            "ERROR: PGPLOT did not write %s (see any \"PGPLOT /png:\" "
+            "message above; check directory permissions). "
+            "No plot written.\n",
+            plot_path );
+   rc= EXIT_FAILURE;
+  }
+ }
+ if ( rc == EXIT_SUCCESS && use_temp != 0 ) {
+  if ( 0 != move_file( plot_path, opt.output_png ) ) {
+   fprintf( stderr,
+            "ERROR: cannot move the plot from %s to %s\n",
+            plot_path, opt.output_png );
+   unlink( plot_path );
+   rc= EXIT_FAILURE;
+  }
+ }
+ if ( rc != EXIT_SUCCESS && use_temp != 0 ) {
+  unlink( plot_path ); // best-effort temp cleanup; may not exist
+ }
  if ( rc == EXIT_SUCCESS ) {
   fprintf( stderr, "Wrote %s (%d detection%s, %d upper limit%s)\n",
            opt.output_png,
