@@ -899,6 +899,37 @@ if [ -n "$NETWORK_TIMING_LOG" ]; then
 fi
 VARIABLE_STAR_ID=$(cat "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp")
 ASTEROID_ID=$(cat "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp")
+# Cross-check the variable-star and asteroid identifications before printing:
+# an ATTENTION line raised because the measured brightness is inconsistent
+# with one record is silenced (replaced with a calm NOTE line) when the OTHER
+# identification accounts for the object. Both ATTENTION lines survive only
+# when both the variable-star record and the asteroid prediction are too
+# faint for the measured magnitude - the genuinely suspicious case.
+# An identification accounts for the object simply when its own ATTENTION
+# line did not fire: for the asteroid this means the predicted brightness is
+# consistent with the measured one (or this is a planet/comet match that
+# carries no magnitude), for the variable star that the record maximum is not
+# much fainter than the measured magnitude (or the record has no maximum).
+# The NOTE wording must avoid the marker substrings relied upon by the
+# downstream parsers (unmw filter_report.py, transient_factory_test31.sh,
+# the artificial star test): 'The object was', 'found in', 'not found' and
+# 'mag brighter than the'. The replacement never makes the block longer (one
+# NOTE line replaces one or more ATTENTION lines), so the grep -A10 context
+# window in transient_factory_test31.sh still covers the block.
+if grep -q -e 'mag brighter than the VSX record' -e 'mag brighter than the ASASSN-V record' "$TEMP_FILE__SDWC_OUTPUT" ;then
+ if grep -q 'The object was found in' "$TEMP_FILE__MPCheck_OUTPUT" && ! grep -q 'mag brighter than the predicted asteroid brightness' "$TEMP_FILE__MPCheck_OUTPUT" ;then
+  awk -v note="NOTE: the measured brightness disagrees with the variable-star record above, but is consistent with the asteroid identification below - so this is likely the asteroid rather than an outburst of the variable." \
+      'index($0, "mag brighter than the VSX record") > 0 || index($0, "mag brighter than the ASASSN-V record") > 0 { if ( note_printed != 1 ) { print note ; note_printed=1 } ; next } { print }' \
+      "$TEMP_FILE__SDWC_OUTPUT" > "${TEMP_FILE__SDWC_OUTPUT}_noattention.tmp" && mv "${TEMP_FILE__SDWC_OUTPUT}_noattention.tmp" "$TEMP_FILE__SDWC_OUTPUT"
+ fi
+fi
+if grep -q 'mag brighter than the predicted asteroid brightness' "$TEMP_FILE__MPCheck_OUTPUT" ;then
+ if grep -q 'The object was found in' "$TEMP_FILE__SDWC_OUTPUT" && ! grep -q 'mag brighter than the' "$TEMP_FILE__SDWC_OUTPUT" ;then
+  awk -v note="NOTE: the measured brightness disagrees with the predicted asteroid brightness, but the matched variable star above likely accounts for this object." \
+      'index($0, "mag brighter than the predicted asteroid brightness") > 0 { if ( note_printed != 1 ) { print note ; note_printed=1 } ; next } { print }' \
+      "$TEMP_FILE__MPCheck_OUTPUT" > "${TEMP_FILE__MPCheck_OUTPUT}_noattention.tmp" && mv "${TEMP_FILE__MPCheck_OUTPUT}_noattention.tmp" "$TEMP_FILE__MPCheck_OUTPUT"
+ fi
+fi
 cat "$TEMP_FILE__SDWC_OUTPUT"
 cat "$TEMP_FILE__MPCheck_OUTPUT"
 rm -f "$TEMP_FILE__SDWC_OUTPUT" "$TEMP_FILE__MPCheck_OUTPUT" "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp" "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp"
