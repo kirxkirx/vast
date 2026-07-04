@@ -385,9 +385,9 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
       fprintf( stdout, "\n" );
      }
      if ( 1 == html_output ) {
-      fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!</font></b>\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+      fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!</font></b> (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
      } else {
-      fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+      fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable! (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
      }
     }
    }
@@ -618,9 +618,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
      }
      if ( expected_brightest_mag - measured_mag_of_transient > TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ) {
       if ( 1 == html_output ) {
-       fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!</font></b>\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+       fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!</font></b> (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
       } else {
-       fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
+       fprintf( stdout, "ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable! (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
       }
      }
     }
