@@ -102,7 +102,6 @@ def main():
     ax.set_ylim(y_center - y_scale, y_center + y_scale)
     ax.set_title(title + title_suffix, color=title_color, fontsize=11)
     ax.legend(loc="upper left", fontsize=9)
-    ax.grid(True, alpha=0.3)
     annotation = "STATUS: %s\nk = %+.4f mag/airmass\nN = %d  span = %.2f airmasses\nscatter = %.3f mag" % (
         status, k_fitted, n_used, span, sigma_fit)
     ax.text(0.98, 0.02, annotation, transform=ax.transAxes, fontsize=9,
