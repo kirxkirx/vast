@@ -60,14 +60,21 @@ jobs:
           python3 -c "import skyfield; print(skyfield.__version__)"
           python3 -c "import numpy; print(numpy.__version__)"
           python3 -c "import pandas; print(pandas.__version__)"
-      - name: Install Selenium + requests (Python)
+      # The two selenium-related install steps are allowed to fail:
+      # test_vast.sh skips the selenium tests when the selenium module is
+      # missing (NOT_PERFORMED_*_SELENIUM_TEST) and strips selenium test
+      # outcomes from the final failure list, so a transient PyPI or snap
+      # store outage must not kill the whole CI run before make even starts.
+      - name: Install Selenium + requests (Python, optional)
+        continue-on-error: true
         run: |
           pip3 install --upgrade selenium requests
           python3 -c "import selenium; print(selenium.__version__)"
           python3 -c "import requests; print(requests.__version__)"
-      - name: Install Chromium and ChromeDriver
+      - name: Install Chromium and ChromeDriver (optional)
+        continue-on-error: true
         run: |
-          sudo apt-get install -y chromium-browser chromium-chromedriver
+          sudo apt-get install -y chromium-browser chromium-chromedriver || { echo "chromium install failed (transient snap store error?) - retrying in 30 s"; sleep 30; sudo apt-get install -y chromium-browser chromium-chromedriver; }
           chromium-browser --version
           chromedriver --version
       - name: Install shellcheck
