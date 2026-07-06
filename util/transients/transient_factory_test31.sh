@@ -84,6 +84,13 @@ CHECK_POINTING_ACCURACY="YES"
 # in the environment or in the per-camera block below.
 : "${FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER:=yes}"
 export FORCED_PHOTOMETRY_ON_REFERENCE_IMAGES_FILTER
+# Airmass-aware zero-point for the forced-photometry filter (see
+# .claude/airmass_zeropoint_forced_photometry_design.md): per-reference-image
+# linear-in-airmass zero-point term, fitted from the calibration stars and gated
+# on fit quality (narrow-field images never pass the gates and keep the constant
+# zero-point). Default off.
+: "${FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT:=no}"
+export FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT
 
 # Limits on the size of stars in pixels
 # (star size is implied by the size of the automatically chosen aperture that is listed for each image in vast_image_details.log)
@@ -166,6 +173,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
+  # NMW site coordinates for the airmass computations: never trust SITELAT/SITELONG
+  # in Stas/STL headers (they have been seen swapped by the acquisition software)
+  export AIRMASS_ZP_SITELAT='43 38 58'
+  export AIRMASS_ZP_SITELONG='41 25 34'
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR_OR_FILE" ];then
    #export DARK_FRAMES_DIR_OR_FILE=/dataX/cgi-bin/unmw/uploads/darks
@@ -186,6 +197,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   echo "### Using search settings for $CAMERA_SETTINGS camera ###" | tee -a transient_factory_test31.txt
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
   export MPC_CODE=C32
+  # NMW site coordinates for the airmass computations: never trust SITELAT/SITELONG
+  # in Stas/STL headers (they have been seen swapped by the acquisition software)
+  export AIRMASS_ZP_SITELAT='43 38 58'
+  export AIRMASS_ZP_SITELONG='41 25 34'
   # The reference frames are very dark, but we want to process very bright frames
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
@@ -3109,6 +3124,43 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
        continue
       fi
       echo "Forced-photometry filter: calibrated $FORCED_PHOT_WCS_REF -> $FORCED_PHOT_CALIB_OUT (aperture=$(cat "${FORCED_PHOT_CALIB_OUT}.aperture"))" | tee -a transient_factory_test31.txt
+      # Airmass-aware zero-point fit for this reference image (optional; see
+      # .claude/airmass_zeropoint_forced_photometry_design.md). The fit result is
+      # stored next to the per-ref calibration and applied by report_transient.sh;
+      # a rejected fit (narrow field, too few stars, noisy slope) means no term.
+      if [ "$FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT" = "yes" ];then
+       AIRMASS_ZP_SITE_ARGS=()
+       if [ -n "$AIRMASS_ZP_SITELAT" ] && [ -n "$AIRMASS_ZP_SITELONG" ];then
+        AIRMASS_ZP_SITE_ARGS=(--sitelat "$AIRMASS_ZP_SITELAT" --sitelong "$AIRMASS_ZP_SITELONG")
+       fi
+       AIRMASS_ZP_REF_TABLE="airmass_zeropoint_fit_table_ref$$.txt"
+       AIRMASS_ZP_REF_LINE=$(util/pixel_flux_airmass_correction --fit-airmass-zeropoint "${AIRMASS_ZP_SITE_ARGS[@]}" --calib-param "$FORCED_PHOT_CALIB_OUT" --fit-table "$AIRMASS_ZP_REF_TABLE" calib.txt "${FORCED_PHOT_WCS_REF}.wcscat" "$FORCED_PHOT_WCS_REF" 2>> transient_factory_test31.txt)
+       if [ $? -ne 0 ] || [ -z "$AIRMASS_ZP_REF_LINE" ];then
+        AIRMASS_ZP_REF_LINE="REJECT_FIT_FAILED 0 0 0 0 0 0 0 0 0"
+       fi
+       echo "$AIRMASS_ZP_REF_LINE" > "${FORCED_PHOT_CALIB_OUT}.airmass"
+       echo "Airmass zero-point for $FORCED_PHOT_WCS_REF: $AIRMASS_ZP_REF_LINE" | tee -a transient_factory_test31.txt
+       # Diagnostic plot, gated on matplotlib availability (never an error if missing)
+       if [ -f lib/plot_airmass_zeropoint.py ];then
+        AIRMASS_ZP_PYBIN=""
+        if command -v python3 >/dev/null 2>&1 ;then
+         AIRMASS_ZP_PYBIN="python3"
+        elif command -v python >/dev/null 2>&1 ;then
+         AIRMASS_ZP_PYBIN="python"
+        fi
+        if [ -n "$AIRMASS_ZP_PYBIN" ];then
+         AIRMASS_ZP_REF_PNG="calib_ref_${FORCED_PHOT_WCS_REF%.fits}_airmass.png"
+         rm -f "transient_report/$AIRMASS_ZP_REF_PNG"
+         "$AIRMASS_ZP_PYBIN" lib/plot_airmass_zeropoint.py "$AIRMASS_ZP_REF_TABLE" "${FORCED_PHOT_CALIB_OUT}.airmass" "transient_report/$AIRMASS_ZP_REF_PNG" "$FORCED_PHOT_WCS_REF" >> transient_factory_test31.txt 2>&1
+         if [ -s "transient_report/$AIRMASS_ZP_REF_PNG" ];then
+          echo "<br><b>Airmass zero-point diagnostic for $FORCED_PHOT_WCS_REF:</b><br><img src=\"$AIRMASS_ZP_REF_PNG\"><br>" >> transient_factory_test31.txt
+         else
+          echo "Airmass zero-point diagnostic plot was not produced (matplotlib missing?)" >> transient_factory_test31.txt
+         fi
+        fi
+       fi
+       rm -f "$AIRMASS_ZP_REF_TABLE"
+      fi
      done
      export REFERENCE_EPOCH__FIRST_IMAGE REFERENCE_EPOCH__SECOND_IMAGE
     fi

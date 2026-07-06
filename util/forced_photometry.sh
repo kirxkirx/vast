@@ -99,6 +99,17 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 
 #################################
+# Airmass-aware zero-point (see .claude/airmass_zeropoint_forced_photometry_design.md):
+# when enabled, the constant zero-point calibration is supplemented by a per-image
+# linear-in-airmass term fitted from the calibration stars; the term is applied to
+# the output magnitudes. The fit is gated (star count, airmass span, slope quality),
+# and any rejected fit falls back to the constant zero-point - identical to the
+# behaviour with the feature disabled.
+#################################
+: "${FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT:=no}"
+: "${FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT_PLOT:=no}"
+
+#################################
 # Parse command-line arguments
 #################################
 LIST_MODE=0
@@ -230,6 +241,66 @@ if [ ! -s "calib.txt_param" ];then
 fi
 
 #################################
+# Step 3a: Airmass-aware zero-point fit (optional)
+#################################
+AIRMASS_ZP_STATUS="off"
+AIRMASS_ZP_D0=0
+AIRMASS_ZP_B=0
+AIRMASS_ZP_XMIN=0
+AIRMASS_ZP_XMAX=0
+AIRMASS_ZP_IMAGE="$FITSFILE"
+AIRMASS_ZP_SITE_ARGS=()
+if [ "$FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT" = "yes" ];then
+ echo "Step 3a: Fitting the airmass-aware zero-point..." >&2
+ # The SExtractor catalog of this image produced by the calibration step
+ AIRMASS_ZP_WCSNAME="wcs_$(basename "$FITSFILE")"
+ AIRMASS_ZP_WCSNAME="${AIRMASS_ZP_WCSNAME/wcs_wcs_/wcs_}"
+ AIRMASS_ZP_WCSNAME="${AIRMASS_ZP_WCSNAME/.fz/}"
+ AIRMASS_ZP_CATALOG="${AIRMASS_ZP_WCSNAME}.wcscat"
+ # The image whose WCS and time drive the airmass computation: prefer the solved copy
+ if [ -s "$AIRMASS_ZP_WCSNAME" ];then
+  AIRMASS_ZP_IMAGE="$AIRMASS_ZP_WCSNAME"
+ fi
+ # Site coordinates: never trust the header of NMW Stas/STL frames (SITELAT/SITELONG
+ # have been seen swapped there); explicit env AIRMASS_ZP_SITELAT/SITELONG win over everything
+ if [ -n "$AIRMASS_ZP_SITELAT" ] && [ -n "$AIRMASS_ZP_SITELONG" ];then
+  AIRMASS_ZP_SITE_ARGS=(--sitelat "$AIRMASS_ZP_SITELAT" --sitelong "$AIRMASS_ZP_SITELONG")
+ else
+  if "$VAST_PATH"util/listhead "$FITSFILE" 2>/dev/null | grep '^INSTRUME' | grep -q -e 'ST-8300' -e 'STL-11000' ;then
+   AIRMASS_ZP_SITE_ARGS=(--sitelat '43 38 58' --sitelong '41 25 34')
+   echo "  NMW camera detected - using the known site coordinates instead of the header ones" >&2
+  fi
+ fi
+ AIRMASS_ZP_LINE=$("$VAST_PATH"util/pixel_flux_airmass_correction --fit-airmass-zeropoint "${AIRMASS_ZP_SITE_ARGS[@]}" --fit-table airmass_zeropoint_fit_table.txt calib.txt "$AIRMASS_ZP_CATALOG" "$AIRMASS_ZP_IMAGE" 2>/dev/null)
+ if [ $? -ne 0 ] || [ -z "$AIRMASS_ZP_LINE" ];then
+  AIRMASS_ZP_LINE="REJECT_FIT_FAILED 0 0 0 0 0 0 0 0 0"
+ fi
+ echo "$AIRMASS_ZP_LINE" > calib.txt_param_airmass
+ AIRMASS_ZP_STATUS=$(echo "$AIRMASS_ZP_LINE" | awk '{print $1}')
+ AIRMASS_ZP_D0=$(echo "$AIRMASS_ZP_LINE" | awk '{print $2}')
+ AIRMASS_ZP_B=$(echo "$AIRMASS_ZP_LINE" | awk '{print $3}')
+ AIRMASS_ZP_XMIN=$(echo "$AIRMASS_ZP_LINE" | awk '{print $9}')
+ AIRMASS_ZP_XMAX=$(echo "$AIRMASS_ZP_LINE" | awk '{print $10}')
+ if [ "$AIRMASS_ZP_STATUS" = "OK" ];then
+  echo "  airmass zero-point: OK  k=$(echo "$AIRMASS_ZP_LINE" | awk '{print $5}') mag/airmass  N=$(echo "$AIRMASS_ZP_LINE" | awk '{print $6}')  span=$(echo "$AIRMASS_ZP_LINE" | awk '{print $7}')" >&2
+ else
+  echo "  airmass zero-point: $AIRMASS_ZP_STATUS - constant zero-point used" >&2
+ fi
+ # Optional diagnostic plot (matplotlib-gated; failure to plot is never an error)
+ if [ "$FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT_PLOT" = "yes" ] && [ -f "$VAST_PATH"lib/plot_airmass_zeropoint.py ];then
+  AIRMASS_ZP_PYBIN=""
+  if command -v python3 >/dev/null 2>&1 ;then
+   AIRMASS_ZP_PYBIN="python3"
+  elif command -v python >/dev/null 2>&1 ;then
+   AIRMASS_ZP_PYBIN="python"
+  fi
+  if [ -n "$AIRMASS_ZP_PYBIN" ];then
+   "$AIRMASS_ZP_PYBIN" "$VAST_PATH"lib/plot_airmass_zeropoint.py airmass_zeropoint_fit_table.txt calib.txt_param_airmass "airmass_zeropoint_$(basename "$FITSFILE").png" "$(basename "$FITSFILE")" >&2 || true
+  fi
+ fi
+fi
+
+#################################
 # Step 4: Convert RA/Dec to pixel coordinates
 #################################
 echo "Step 4: Converting RA/Dec to pixel coordinates..." >&2
@@ -343,6 +414,38 @@ fi
 if [ $LIST_MODE -eq 0 ] && [ -z "$C_RESULT" ];then
  echo "WARNING: empty result from C forced photometry" >&2
  C_RESULT="99.0000 99.0000 fail"
+fi
+
+#################################
+# Step 6a: Apply the airmass-aware zero-point term (optional)
+#################################
+if [ "$AIRMASS_ZP_STATUS" = "OK" ];then
+ if [ $LIST_MODE -eq 0 ];then
+  FORCEDPHOT_AMXY=$(mktemp 2>/dev/null || echo "forcedphot_amxy_$$.tmp")
+  printf '%s %s\n' "$PIXEL_X" "$PIXEL_Y" > "$FORCEDPHOT_AMXY"
+  AIRMASS_ZP_XT=$("$VAST_PATH"util/pixel_flux_airmass_correction -k 1 --predict-list "$FORCEDPHOT_AMXY" "${AIRMASS_ZP_SITE_ARGS[@]}" "$AIRMASS_ZP_IMAGE" 2>/dev/null | awk 'f {print $4} /^# X_pix/ {f=1}')
+  rm -f "$FORCEDPHOT_AMXY"
+  if [ -n "$AIRMASS_ZP_XT" ];then
+   C_RESULT=$(echo "$C_RESULT" | awk -v xt="$AIRMASS_ZP_XT" -v d0="$AIRMASS_ZP_D0" -v b="$AIRMASS_ZP_B" -v xmin="$AIRMASS_ZP_XMIN" -v xmax="$AIRMASS_ZP_XMAX" '{x=xt+0; if (x<xmin) x=xmin; if (x>xmax) x=xmax; if ($1+0 < 90.0) {printf "%.4f %s %s\n", $1+d0+b*x, $2, $3} else {print $0} }')
+   echo "  airmass zero-point term applied at airmass $AIRMASS_ZP_XT" >&2
+  else
+   echo "WARNING: could not evaluate the target airmass - airmass zero-point term NOT applied" >&2
+  fi
+ else
+  FORCEDPHOT_AMTMP=$(mktemp 2>/dev/null || echo "forcedphot_amtmp_$$.tmp")
+  "$VAST_PATH"util/pixel_flux_airmass_correction -k 1 --predict-list "$FORCEDPHOT_PIXLIST" "${AIRMASS_ZP_SITE_ARGS[@]}" "$AIRMASS_ZP_IMAGE" 2>/dev/null | awk 'f {print $4} /^# X_pix/ {f=1}' > "$FORCEDPHOT_AMTMP"
+  if [ -s "$FORCEDPHOT_AMTMP" ] && [ "$(wc -l < "$FORCEDPHOT_AMTMP")" -eq "$(wc -l < "$FORCEDPHOT_C_TMP")" ];then
+   FORCEDPHOT_AMADJ=$(mktemp 2>/dev/null || echo "forcedphot_amadj_$$.tmp")
+   paste -d' ' "$FORCEDPHOT_C_TMP" "$FORCEDPHOT_AMTMP" | \
+    awk -v d0="$AIRMASS_ZP_D0" -v b="$AIRMASS_ZP_B" -v xmin="$AIRMASS_ZP_XMIN" -v xmax="$AIRMASS_ZP_XMAX" \
+        '{x=$NF+0; if (x<xmin) x=xmin; if (x>xmax) x=xmax; if ($4+0 < 90.0) {$4=sprintf("%.4f", $4+d0+b*x)}; NF=NF-1; print}' > "$FORCEDPHOT_AMADJ"
+   mv "$FORCEDPHOT_AMADJ" "$FORCEDPHOT_C_TMP"
+   echo "  airmass zero-point term applied to the position list" >&2
+  else
+   echo "WARNING: airmass prediction count mismatch - airmass zero-point term NOT applied" >&2
+  fi
+  rm -f "$FORCEDPHOT_AMTMP"
+ fi
 fi
 
 #################################

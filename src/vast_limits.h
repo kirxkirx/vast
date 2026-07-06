@@ -222,6 +222,20 @@
 //#define MAX_LIN_CORR_MAG 0.5                // Maximum CCD-position-dependent magnitude correctin/
 #define MAX_LIN_CORR_MAG 1.0 // If the estimated correction is larger at frame's corners, the magnitude calibration will be failed
 
+// Differential atmospheric extinction (airmass) pixel flux correction defaults for util/pixel_flux_airmass_correction
+#define DEFAULT_EXTINCTION_MAG_PER_AIRMASS 0.25 // assumed broadband extinction coefficient (mag per unit airmass) if not specified on the command line
+#define AIRMASS_CORRECTION_MAX_DELTA_MAG 1.0    // cap on the absolute per-pixel brightness correction (mag)
+#define AIRMASS_CORRECTION_GRID_STEP_PIX 16     // airmass is computed on a coarse pixel grid with this step and bilinearly interpolated in between
+
+// Airmass-aware zero-point fit for forced photometry (util/pixel_flux_airmass_correction --fit-airmass-zeropoint)
+// The fit is rejected (and no airmass term is applied, falling back to the constant zero-point)
+// unless all of the following gates pass; this automatically excludes narrow-field images.
+#define AIRMASS_ZP_MIN_STARS 100          // minimum number of calibration stars surviving the clipping
+#define AIRMASS_ZP_MIN_AIRMASS_SPAN 0.1   // minimum airmass range covered by the calibration stars
+#define AIRMASS_ZP_MAX_K_ERR 0.05         // maximum acceptable 1-sigma uncertainty of the fitted slope (mag/airmass)
+#define AIRMASS_ZP_MIN_K -0.05            // fitted extinction coefficient sanity range:
+#define AIRMASS_ZP_MAX_K 0.6              // small negative values are noise around zero and pass, larger deviations indicate a broken fit
+
 #define MAX_STRING_LENGTH_AUTOCANDIDATESDETAILS 512
 
 ///////////////////////////////////////////////////////////

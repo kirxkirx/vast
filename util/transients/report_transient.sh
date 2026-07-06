@@ -703,9 +703,29 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      FORCED_PHOT_RESULT_MAG=$(echo "$FORCED_PHOT_RESULT" | awk '{print $1}')
      FORCED_PHOT_RESULT_ERR=$(echo "$FORCED_PHOT_RESULT" | awk '{print $2}')
      FORCED_PHOT_RESULT_STATUS=$(echo "$FORCED_PHOT_RESULT" | awk '{print $3}')
+     # Airmass-aware zero-point term (see .claude/airmass_zeropoint_forced_photometry_design.md):
+     # adjust the magnitude before it enters the HTML line and the filter decision below
+     FORCED_PHOT_AIRMASS_NOTE=""
+     if [ "$FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT" = "yes" ] && [ -s "${FORCED_PHOT_CALIB}.airmass" ];then
+      FORCED_PHOT_AIRMASS_LINE=$(head -n1 "${FORCED_PHOT_CALIB}.airmass")
+      if [ "$(echo "$FORCED_PHOT_AIRMASS_LINE" | awk '{print $1}')" = "OK" ];then
+       FORCED_PHOT_AMXY_TMP=$(mktemp 2>/dev/null || echo "forcedphot_amxy_$$.tmp")
+       printf '%s %s\n' "$FORCED_PHOT_PX" "$FORCED_PHOT_PY" > "$FORCED_PHOT_AMXY_TMP"
+       FORCED_PHOT_SITE_ARGS=()
+       if [ -n "$AIRMASS_ZP_SITELAT" ] && [ -n "$AIRMASS_ZP_SITELONG" ];then
+        FORCED_PHOT_SITE_ARGS=(--sitelat "$AIRMASS_ZP_SITELAT" --sitelong "$AIRMASS_ZP_SITELONG")
+       fi
+       FORCED_PHOT_XT=$(util/pixel_flux_airmass_correction -k 1 --predict-list "$FORCED_PHOT_AMXY_TMP" "${FORCED_PHOT_SITE_ARGS[@]}" "$FORCED_PHOT_WCS_REF" 2>/dev/null | awk 'f {print $4} /^# X_pix/ {f=1}')
+       rm -f "$FORCED_PHOT_AMXY_TMP"
+       if [ -n "$FORCED_PHOT_XT" ];then
+        FORCED_PHOT_RESULT_MAG=$(echo "$FORCED_PHOT_AIRMASS_LINE" | awk -v m="$FORCED_PHOT_RESULT_MAG" -v xt="$FORCED_PHOT_XT" '{x=xt+0; if (x<$9) x=$9; if (x>$10) x=$10; if (m+0 < 90.0) {printf "%.4f", m+$2+$3*x} else {printf "%s", m} }')
+        FORCED_PHOT_AIRMASS_NOTE="  airmass-corrected"
+       fi
+      fi
+     fi
      # Round only for display; internal math below keeps the full precision
      FORCED_PHOT_RESULT_DISPLAY=$(awk -v m="$FORCED_PHOT_RESULT_MAG" -v e="$FORCED_PHOT_RESULT_ERR" 'BEGIN {printf "%.2f +/- %.2f", m, e}')
-     FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS"
+     FORCED_PHOT_LINE="Forced photometry on $FORCED_PHOT_WCS_REF at $RA_MEAN_HMS $DEC_MEAN_HMS:  $FORCED_PHOT_RESULT_DISPLAY  $FORCED_PHOT_RESULT_STATUS$FORCED_PHOT_AIRMASS_NOTE"
      echo "$FORCED_PHOT_LINE" >&2
      FORCED_PHOT_HTML_BUFFER="${FORCED_PHOT_HTML_BUFFER}${FORCED_PHOT_LINE}"$'\n'
      # Count this reference image as actually measured (a status string was returned)
