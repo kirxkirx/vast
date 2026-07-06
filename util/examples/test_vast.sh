@@ -21865,7 +21865,15 @@ if [ -d ../NMW-STL__plate_solve_failure_lacosmic_test ];then
   rm -f astorb.dat
  fi
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
+  # Same dataset as the NMW-STL plate solve failure test: the broken reference
+  # plate solution is the test premise, so the calibration-star yield ERROR
+  # ('plate solution is likely broken') is expected and excluded from the check.
+  grep -q 'plate solution is likely broken' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLPLATESOLVE_NO_BROKEN_SOLUTION_ERROR"
+  fi
+  grep -v -i 'Soft' transient_report/index.html | grep -v 'plate solution is likely broken' | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLPLATESOLVE_ERROR_MESSAGE_IN_index_html"
@@ -23238,7 +23246,16 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
+  # The reference image of this dataset cannot be properly plate-solved BY DESIGN,
+  # so the calibration-star yield check is expected to report
+  # 'the reference image plate solution is likely broken' - that specific ERROR
+  # is the desired behavior and is excluded from the no-unexpected-ERRORs check below.
+  grep -q 'plate solution is likely broken' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_NO_BROKEN_SOLUTION_ERROR"
+  fi
+  grep -v -i 'Soft' transient_report/index.html | grep -v 'plate solution is likely broken' | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html"

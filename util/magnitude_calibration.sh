@@ -417,7 +417,11 @@ fi
 # still produced for inspection. Skipped when the detected-star catalog
 # is unavailable (manual calib.txt runs) or too shallow for the fraction
 # to be meaningful.
-MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION=1.0
+# The threshold is env-overridable: cameras with a naturally low match fraction
+# (e.g. TICA TESS FFIs at 21 arcsec/pix detect tens of thousands of mostly
+# blended sources of which only a few hundred match the calibration catalog)
+# set a lower per-camera value in transient_factory_test31.sh.
+: "${MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION:=1.0}"
 MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
 if [ -n "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ] && [ -s "${UCAC5_REFERENCE_IMAGE_MATCH_FILE%.ucac5}" ] && [ -s calib.txt ];then
  N_CALIBRATION_STARS=$(wc -l < calib.txt)

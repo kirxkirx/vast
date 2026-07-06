@@ -275,6 +275,12 @@ if [ -n "$CAMERA_SETTINGS" ];then
   UCAC5_PLATESOLVE_ITERATIONS=1
   PHOTOMETRIC_CALIBRATION="APASS_I"
   export GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="RPmag"
+  # TESS FFIs at 21 arcsec/pix detect tens of thousands of mostly blended sources
+  # of which only a few hundred (~0.6 percent) match the photometric calibration
+  # catalog even with a perfectly healthy plate solution, so the default 1 percent
+  # calibration-star yield threshold would raise a false plate-solution ERROR on
+  # every TICA field. Lower the threshold for this camera.
+  export MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION=0.2
   # Set a limit on how much higher background on the second epoch images can be compared to the reference
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=5
  fi

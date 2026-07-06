@@ -233,7 +233,9 @@ fi
 # the report is still produced for inspection. The check is skipped for
 # very shallow catalogs where small-number statistics would make the
 # fraction meaningless.
-MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION=1.0
+# The threshold is env-overridable so cameras with a naturally low match
+# fraction can set a per-camera value in transient_factory_test31.sh.
+: "${MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION:=1.0}"
 MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
 if [ -s calib.txt ] && [ -s wcsmag.cat ];then
  N_CALIBRATION_STARS=$(wc -l < calib.txt)
