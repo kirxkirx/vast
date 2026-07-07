@@ -3720,6 +3720,142 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
   
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
 
+ # -------- Source monitoring: forced photometry of monitored sources --------
+ # Gated by MONITORING_POSITIONS_FILE (set by the unmw wrapper when activated
+ # monitoring sources fall on this field; see source_monitoring_design.md in
+ # the unmw repository). Measures the monitored positions on the SECOND-EPOCH
+ # images only, reusing this run's plate solutions and SExtractor catalogs
+ # (the per-image zero-point calibration is cheap because wcs_*.wcscat already
+ # exists). Results go to an ASCII hand-off file next to the report for the
+ # unmw ingest. Any failure here is logged and never fatal to the pipeline.
+ if [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
+  echo "Source monitoring: measuring positions from $MONITORING_POSITIONS_FILE" | tee -a transient_factory_test31.txt
+  MONITORING_RAW_OUTPUT="transient_report/monitoring_raw_measurements.txt"
+  # Map PHOTOMETRIC_CALIBRATION to the single-image calibration method
+  # (same mapping as the forced-photometry reference filter above)
+  MONITORING_CALIB_METHOD=""
+  MONITORING_CALIB_BAND=""
+  case "$PHOTOMETRIC_CALIBRATION" in
+   "APASS_B")  MONITORING_CALIB_BAND="B" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_V")  MONITORING_CALIB_BAND="V" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_g")  MONITORING_CALIB_BAND="g" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_r")  MONITORING_CALIB_BAND="r" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_i")  MONITORING_CALIB_BAND="i" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_R")  MONITORING_CALIB_BAND="R" ; MONITORING_CALIB_METHOD="apass" ;;
+   "APASS_I")  MONITORING_CALIB_BAND="I" ; MONITORING_CALIB_METHOD="apass" ;;
+   "TYCHO2_V") MONITORING_CALIB_BAND="V" ; MONITORING_CALIB_METHOD="tycho2" ;;
+  esac
+  if [ -z "$MONITORING_CALIB_METHOD" ];then
+   echo "Source monitoring: cannot map PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION to a calibration method - skipping" | tee -a transient_factory_test31.txt
+  else
+   for MONITORING_IMAGE_PATH in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
+    if [ -z "$MONITORING_IMAGE_PATH" ];then
+     continue
+    fi
+    MONITORING_BASENAME=$(basename "$MONITORING_IMAGE_PATH")
+    MONITORING_WCS="wcs_$MONITORING_BASENAME"
+    MONITORING_WCS="${MONITORING_WCS/wcs_wcs_/wcs_}"
+    MONITORING_WCS="${MONITORING_WCS/.fz/}"
+    if [ ! -s "$MONITORING_WCS" ];then
+     echo "Source monitoring: plate-solved image $MONITORING_WCS not found - skipping this image" | tee -a transient_factory_test31.txt
+     continue
+    fi
+    # Per-image zero-point calibration reusing the existing .wcscat catalog
+    rm -f calib.txt calib.txt_param calib.txt_param_monitoring
+    if [ "$MONITORING_CALIB_METHOD" = "tycho2" ];then
+     util/calibrate_single_image_with_tycho2.sh "$MONITORING_WCS" >> transient_factory_test31.txt 2>&1
+    else
+     util/calibrate_single_image.sh "$MONITORING_WCS" "$MONITORING_CALIB_BAND" >> transient_factory_test31.txt 2>&1 && lib/fit_zeropoint > /dev/null 2>&1
+    fi
+    if [ ! -s calib.txt_param ];then
+     echo "Source monitoring: per-image calibration failed for $MONITORING_WCS - skipping this image" | tee -a transient_factory_test31.txt
+     continue
+    fi
+    mv calib.txt_param calib.txt_param_monitoring
+    # Airmass-aware zero-point: always on for monitoring measurements
+    MONITORING_SITE_ARGS=()
+    if [ -n "$AIRMASS_ZP_SITELAT" ] && [ -n "$AIRMASS_ZP_SITELONG" ];then
+     MONITORING_SITE_ARGS=(--sitelat "$AIRMASS_ZP_SITELAT" --sitelong "$AIRMASS_ZP_SITELONG")
+    fi
+    MONITORING_AIRMASS_LINE=$(util/pixel_flux_airmass_correction --fit-airmass-zeropoint "${MONITORING_SITE_ARGS[@]}" --calib-param calib.txt_param_monitoring calib.txt "${MONITORING_WCS}.wcscat" "$MONITORING_WCS" 2>> transient_factory_test31.txt)
+    if [ $? -ne 0 ] || [ -z "$MONITORING_AIRMASS_LINE" ];then
+     MONITORING_AIRMASS_LINE="REJECT_FIT_FAILED 0 0 0 0 0 0 0 0 0"
+    fi
+    echo "Source monitoring: airmass zero-point for $MONITORING_WCS: $MONITORING_AIRMASS_LINE" | tee -a transient_factory_test31.txt
+    # Measurement aperture: reuse the aperture VaST selected for this image
+    # (key-based extraction of the ap= value from vast_image_details.log)
+    MONITORING_AP=$(grep "$MONITORING_IMAGE_PATH" vast_image_details.log | head -n1 | sed 's/.*ap=[ ]*//' | awk '{print $1}')
+    if [ -z "$(echo "$MONITORING_AP" | grep -E '^[0-9]+(\.[0-9]+)?$')" ];then
+     MONITORING_AP=$(lib/sextract_single_image_noninteractive "$MONITORING_WCS" 2>/dev/null)
+    fi
+    if [ -z "$MONITORING_AP" ];then
+     echo "Source monitoring: cannot determine the measurement aperture for $MONITORING_WCS - skipping this image" | tee -a transient_factory_test31.txt
+     continue
+    fi
+    # Observation time (mid-exposure JD, UTC)
+    MONITORING_JD=$(util/get_image_date "$MONITORING_WCS" 2>&1 | grep '  JD ' | awk '{print $2}' | head -n1)
+    if [ -z "$MONITORING_JD" ];then
+     MONITORING_JD="na"
+    fi
+    # Convert the monitored positions to pixel coordinates on this image;
+    # off-frame positions are recorded as 'edge' so they are never retried
+    MONITORING_PIXLIST="monitoring_pixlist$$.tmp"
+    : > "$MONITORING_PIXLIST"
+    while read -r MONITORING_RA MONITORING_DEC MONITORING_ID ;do
+     if [ -z "$MONITORING_ID" ];then
+      continue
+     fi
+     MONITORING_S2X=$(lib/bin/sky2xy "$MONITORING_WCS" "$MONITORING_RA" "$MONITORING_DEC" 2>&1)
+     if echo "$MONITORING_S2X" | grep -q -e 'off image' -e 'offscale' ;then
+      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
+      continue
+     fi
+     MONITORING_PX=$(echo "$MONITORING_S2X" | awk '{print $5}')
+     MONITORING_PY=$(echo "$MONITORING_S2X" | awk '{print $6}')
+     if [ -z "$MONITORING_PX" ] || [ -z "$MONITORING_PY" ];then
+      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
+      continue
+     fi
+     echo "$MONITORING_PX $MONITORING_PY $MONITORING_ID" >> "$MONITORING_PIXLIST"
+    done < "$MONITORING_POSITIONS_FILE"
+    if [ ! -s "$MONITORING_PIXLIST" ];then
+     rm -f "$MONITORING_PIXLIST"
+     continue
+    fi
+    # Measure all monitored positions on this image in one list-mode call
+    MONITORING_MEAS_TMP="monitoring_meas$$.tmp"
+    util/forced_photometry "$MONITORING_WCS" --list "$MONITORING_PIXLIST" "$MONITORING_AP" --calib calib.txt_param_monitoring > "$MONITORING_MEAS_TMP" 2>> transient_factory_test31.txt
+    # Apply the airmass zero-point term (clamped to the fitted airmass span)
+    if [ "$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $1}')" = "OK" ] && [ -s "$MONITORING_MEAS_TMP" ];then
+     MONITORING_AMASS_TMP="monitoring_amass$$.tmp"
+     util/pixel_flux_airmass_correction -k 1 --predict-list "$MONITORING_PIXLIST" "${MONITORING_SITE_ARGS[@]}" "$MONITORING_WCS" 2>/dev/null | awk 'f {print $4} /^# X_pix/ {f=1}' > "$MONITORING_AMASS_TMP"
+     if [ -s "$MONITORING_AMASS_TMP" ] && [ "$(wc -l < "$MONITORING_AMASS_TMP")" -eq "$(wc -l < "$MONITORING_MEAS_TMP")" ];then
+      MONITORING_MEAS_ADJ="monitoring_measadj$$.tmp"
+      paste -d' ' "$MONITORING_MEAS_TMP" "$MONITORING_AMASS_TMP" | \
+       awk -v d0="$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $2}')" -v b="$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $3}')" -v xmin="$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $9}')" -v xmax="$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $10}')" \
+           '{x=$NF+0; if (x<xmin) x=xmin; if (x>xmax) x=xmax; if ($4+0 < 90.0) {$4=sprintf("%.4f", $4+d0+b*x)}; NF=NF-1; print}' > "$MONITORING_MEAS_ADJ"
+      mv "$MONITORING_MEAS_ADJ" "$MONITORING_MEAS_TMP"
+      echo "Source monitoring: airmass zero-point term applied to the measurements on $MONITORING_WCS" | tee -a transient_factory_test31.txt
+     else
+      echo "Source monitoring: airmass prediction count mismatch - term NOT applied on $MONITORING_WCS" | tee -a transient_factory_test31.txt
+     fi
+     rm -f "$MONITORING_AMASS_TMP"
+    fi
+    # Emit the hand-off rows: source_id image_basename JD mag err status camera
+    if [ -s "$MONITORING_MEAS_TMP" ];then
+     # list-mode output rows are: label X Y mag err status
+     awk -v img="$MONITORING_WCS" -v jd="$MONITORING_JD" -v cam="$CAMERA_SETTINGS" \
+         'NF >= 6 {printf "%s %s %s %s %s %s %s\n", $1, img, jd, $4, $5, $6, cam}' "$MONITORING_MEAS_TMP" >> "$MONITORING_RAW_OUTPUT"
+     echo "Source monitoring: $(grep -c '' "$MONITORING_PIXLIST") position(s) measured on $MONITORING_WCS (aperture $MONITORING_AP pix)" | tee -a transient_factory_test31.txt
+    else
+     echo "Source monitoring: WARNING - util/forced_photometry produced no output for $MONITORING_WCS" | tee -a transient_factory_test31.txt
+    fi
+    rm -f "$MONITORING_PIXLIST" "$MONITORING_MEAS_TMP" calib.txt_param_monitoring
+   done
+  fi
+ fi
+ # -------- End source monitoring --------
+
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt

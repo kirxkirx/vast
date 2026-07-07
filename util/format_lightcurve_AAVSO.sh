@@ -150,14 +150,18 @@ Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  fi
 fi
 
-# the default obscode should be changed by the user
-AAVSO_OBSCODE="SKA"
-# the previous AAVSO file header should contain the correct OBSCODE
-if [ -s AAVSO_previously_used_header.txt ];then
- AAVSO_OBSCODE=`grep '#OBSCODE=' AAVSO_previously_used_header.txt | awk -F'=' '{print $2}' | tr -d '\r'`
- if [ -z "$AAVSO_OBSCODE" ];then
-  echo "ERROR: cannot get OBSCODE from AAVSO_previously_used_header.txt"
-  AAVSO_OBSCODE="XXX"
+# A preset AAVSO_OBSCODE environment variable overrides everything below
+# (used by the unmw source monitoring, which exports it from local_config.sh)
+if [ -z "$AAVSO_OBSCODE" ];then
+ # the default obscode should be changed by the user
+ AAVSO_OBSCODE="SKA"
+ # the previous AAVSO file header should contain the correct OBSCODE
+ if [ -s AAVSO_previously_used_header.txt ];then
+  AAVSO_OBSCODE=`grep '#OBSCODE=' AAVSO_previously_used_header.txt | awk -F'=' '{print $2}' | tr -d '\r'`
+  if [ -z "$AAVSO_OBSCODE" ];then
+   echo "ERROR: cannot get OBSCODE from AAVSO_previously_used_header.txt"
+   AAVSO_OBSCODE="XXX"
+  fi
  fi
 fi
 
