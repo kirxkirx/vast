@@ -292,6 +292,22 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  char best_type[32];
  char best_descr[128];
 
+ // The nearest brightness-COMPATIBLE match is tracked separately: a record
+ // whose catalog maximum can account for the measured magnitude (same
+ // per-type threshold as the brightening ATTENTION check below). It rescues
+ // the identification when the nearest match is a faint variable that cannot
+ // possibly be the measured object (common in crowded galactic-plane fields).
+ double compat_best_distance_deg= 90.0;
+ char compat_best_name[32];
+ char compat_best_type[32];
+ char compat_best_descr[128];
+ double row_expected_brightest_mag;
+ double row_warn_threshold_mag;
+ int have_compatible_match= 0;
+ int nearest_triggers_attention= 0;
+ int headline_is_takeover= 0;
+ int print_far_compatible_note= 0;
+
  double expected_brightest_mag;
  double brightening_warn_threshold_mag;
 
@@ -307,6 +323,9 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  memset( best_name, '\0', 32 );
  memset( best_type, '\0', 32 );
  memset( best_descr, '\0', 128 );
+ memset( compat_best_name, '\0', 32 );
+ memset( compat_best_type, '\0', 32 );
+ memset( compat_best_descr, '\0', 128 );
 
  // download_vsx();
  vsx_dat= fopen( "lib/catalogs/vsx.dat", "r" );
@@ -375,6 +394,26 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
     strncpy( best_descr, descr, 128 );
     best_descr[128 - 1]= '\0';
    }
+   // Track the nearest match whose record maximum can account for the
+   // measured magnitude (records with no parseable maximum carry no
+   // brightness information and never qualify)
+   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
+    if ( 1 == get_expected_brightest_mag_from_vsx_descr( descr, &row_expected_brightest_mag ) ) {
+     row_warn_threshold_mag= is_mira_variability_type( type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
+     if ( row_expected_brightest_mag - measured_mag_of_transient <= row_warn_threshold_mag ) {
+      if ( distance_deg < compat_best_distance_deg ) {
+       compat_best_distance_deg= distance_deg;
+       strncpy( compat_best_name, name, 32 );
+       compat_best_name[31 - 1]= '\0';
+       strncpy( compat_best_type, type, 32 );
+       compat_best_type[31 - 1]= '\0';
+       strncpy( compat_best_descr, descr, 128 );
+       compat_best_descr[128 - 1]= '\0';
+       have_compatible_match= 1;
+      }
+     }
+    }
+   }
   }
  }
  if ( is_found == 0 ) {
@@ -386,30 +425,82 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
    }
   }
  } else {
-  if ( 1 == html_output ) {
-   fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
-  } else {
-   fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
-  }
+  // Decide which matched record to present as the identification (headline).
+  // Default: the nearest match. When the measured magnitude is known and the
+  // nearest record's maximum CANNOT account for it, a brightness-compatible
+  // match slightly farther away is the more likely counterpart:
+  //  - within VSX_COMPATIBLE_MATCH_TAKEOVER_RADIUS_ARCSEC it takes over as
+  //    the headline (so the downstream AAVSO/VSNET report lines carry its
+  //    name) and a NOTE mentions the skipped nearer faint record;
+  //  - farther out it is only mentioned in a NOTE replacing the ATTENTION.
   // Compare the measured brightness of the transient with the brightest state
   // expected from the catalog record (if the measured magnitude was supplied).
   // A transient that is much brighter than the cataloged maximum deserves
   // attention even though it matches a known variable star position.
-  // The wording of the ATTENTION line must not contain the phrases
+  // The wording of the ATTENTION and NOTE lines must not contain the phrases
   // 'The object was', 'found in' or 'not found' that are relied upon by the
   // downstream parsers (unmw filter_report.py, transient_factory_test31.sh,
   // the artificial star test); the 'mag brighter than the' substring is the
   // stable marker the downstream tools may key on.
+  nearest_triggers_attention= 0;
+  headline_is_takeover= 0;
+  print_far_compatible_note= 0;
   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
    if ( 1 == get_expected_brightest_mag_from_vsx_descr( best_descr, &expected_brightest_mag ) ) {
     // Miras get a relaxed threshold: pg catalog maxima + V-pg color of these
     // red stars + cycle-to-cycle maximum variations easily exceed 3 mag
     brightening_warn_threshold_mag= is_mira_variability_type( best_type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
     if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
-     // Make sure the ATTENTION line starts on a new line even if the record was missing the trailing newline
-     if ( strlen( best_descr ) == 0 || best_descr[strlen( best_descr ) - 1] != '\n' ) {
-      fprintf( stdout, "\n" );
+     nearest_triggers_attention= 1;
+    }
+   }
+  }
+  if ( 1 == nearest_triggers_attention && 1 == have_compatible_match ) {
+   if ( compat_best_distance_deg * 3600.0 <= VSX_COMPATIBLE_MATCH_TAKEOVER_RADIUS_ARCSEC ) {
+    headline_is_takeover= 1;
+   } else {
+    print_far_compatible_note= 1;
+   }
+  }
+  if ( 1 == headline_is_takeover ) {
+   // The brightness-compatible match is the identification; the nearer faint
+   // record only gets a NOTE. Trim the fixed-width field padding of the
+   // skipped name so the NOTE reads cleanly.
+   for ( i= (int)strlen( best_name ) - 1; i >= 0 && ' ' == best_name[i]; i-- ) {
+    best_name[i]= '\0';
+   }
+   for ( j= 0; ' ' == best_name[j]; j++ ) {
+    ;
+   }
+   if ( 1 == html_output ) {
+    fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", compat_best_distance_deg * 3600.0, compat_best_name, compat_best_type, compat_best_descr );
+   } else {
+    fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", compat_best_distance_deg * 3600.0, compat_best_name, compat_best_type, compat_best_descr );
+   }
+   if ( strlen( compat_best_descr ) == 0 || compat_best_descr[strlen( compat_best_descr ) - 1] != '\n' ) {
+    fprintf( stdout, "\n" );
+   }
+   fprintf( stdout, "NOTE: the nearer VSX entry %s at %.0f\" (record maximum %.2f) is too faint to account for the measured mag %.2f - the brighter variable above is the more likely counterpart.\n", &best_name[j], best_distance_deg * 3600.0, expected_brightest_mag, measured_mag_of_transient );
+  } else {
+   if ( 1 == html_output ) {
+    fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
+   } else {
+    fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
+   }
+   if ( 1 == nearest_triggers_attention ) {
+    // Make sure the ATTENTION/NOTE line starts on a new line even if the record was missing the trailing newline
+    if ( strlen( best_descr ) == 0 || best_descr[strlen( best_descr ) - 1] != '\n' ) {
+     fprintf( stdout, "\n" );
+    }
+    if ( 1 == print_far_compatible_note ) {
+     for ( i= (int)strlen( compat_best_name ) - 1; i >= 0 && ' ' == compat_best_name[i]; i-- ) {
+      compat_best_name[i]= '\0';
      }
+     for ( j= 0; ' ' == compat_best_name[j]; j++ ) {
+      ;
+     }
+     fprintf( stdout, "NOTE: the measured mag %.2f is inconsistent with the record above (maximum %.2f), and the brighter VSX variable %s at %.0f\" may be the actual counterpart.\n", measured_mag_of_transient, expected_brightest_mag, &compat_best_name[j], compat_best_distance_deg * 3600.0 );
+    } else {
      if ( 1 == html_output ) {
       fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the VSX record maximum brightness %.2f - possible unusual activity of a known variable!</font></b> (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
      } else {
@@ -740,19 +831,34 @@ int main( int argc, char **argv ) {
  // The use of the reduced search radius is a silly attempt to handle the situation where
  // multiple known variables are within the search radius and ideally we want the nearest one to the search position.
 
- // First try small search radius
- // was 3.0 an caused problems with the STANDALONEDBSCRIPT_MULTCLOSEVAR test, 5 is not cutting it
- // is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
- is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600, 1, html_output, measured_mag );
- if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
- }
- // If nothing found - try a larger search radius
- if ( is_found != 1 ) {
+ if ( measured_mag > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
+  // With a measured magnitude available, search_vsx() itself prefers the
+  // nearest brightness-compatible match over the full search radius, so the
+  // small-radius pre-pass must not run: it would lock in a faint nearest
+  // match and hide a compatible brighter variable sitting at 7-10" (common
+  // in crowded galactic-plane fields).
   is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
- }
- if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
+  if ( is_found != 1 ) {
+   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
+  }
+  if ( is_found != 1 ) {
+   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
+  }
+ } else {
+  // First try small search radius
+  // was 3.0 an caused problems with the STANDALONEDBSCRIPT_MULTCLOSEVAR test, 5 is not cutting it
+  // is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
+  is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600, 1, html_output, measured_mag );
+  if ( is_found != 1 ) {
+   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output, measured_mag );
+  }
+  // If nothing found - try a larger search radius
+  if ( is_found != 1 ) {
+   is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
+  }
+  if ( is_found != 1 ) {
+   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
+  }
  }
  if ( is_found != 1 ) {
   is_found= search_myMDV( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output );

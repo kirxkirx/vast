@@ -1895,6 +1895,90 @@ if [ $? -eq 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR_THE_WRONG_ANSWER"
 fi
 
+# Dual-match selection with a measured magnitude supplied (the mode used by
+# util/transients/report_transient.sh): when the nearest VSX match is a faint
+# variable that cannot account for the measured brightness, the nearest
+# brightness-COMPATIBLE match within VSX_COMPATIBLE_MATCH_TAKEOVER_RADIUS_ARCSEC
+# takes over as the identification and a NOTE mentions the skipped record.
+# Real-sky case: crowded Sgr field where the faint Gaia DR3 4062345235970045952
+# (max G=16.04) sits 6" from the measured position while the Mira V2419 Sgr
+# (max 15.6 pg, compatible with mag 12.38 thanks to the relaxed Mira threshold)
+# sits at 7".
+lib/catalogs/check_catalogs_offline 269.60633 -29.19036 H 12.38 > dualmatch_test$$.out 2>/dev/null
+grep -q 'V2419 Sgr' dualmatch_test$$.out
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH01_TAKEOVER_HEADLINE"
+fi
+grep 'NOTE: the nearer VSX entry' dualmatch_test$$.out | grep -q 'Gaia DR3 4062345235970045952'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH01_TAKEOVER_NOTE"
+fi
+grep -q 'mag brighter than the VSX record' dualmatch_test$$.out
+if [ $? -eq 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH01_ATTENTION_NOT_SILENCED"
+fi
+rm -f dualmatch_test$$.out
+# Real-sky case: the Mira ASAS J174843-3444.3 (max Ic=12.18) measured at
+# mag 12.10 (practically at its catalog maximum) must win over the nearer-by-0.1"
+# faint Gaia DR3 4041529973322763904 (max G=19.19), with no ATTENTION raised.
+lib/catalogs/check_catalogs_offline 267.18500 -34.73697 H 12.10 > dualmatch_test$$.out 2>/dev/null
+grep -q 'ASAS J174843-3444.3' dualmatch_test$$.out && ! grep -q 'mag brighter than the VSX record' dualmatch_test$$.out
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH02_MIRA_AT_MAX"
+fi
+rm -f dualmatch_test$$.out
+# Control: with no compatible alternative in the field the ATTENTION must
+# survive (KX Cas, Mira, max 14.5 pg: 4.2 mag brightening exceeds even the
+# relaxed Mira threshold)...
+lib/catalogs/check_catalogs_offline 345.65179 57.91978 H 10.30 2>/dev/null | grep -q 'mag brighter than the VSX record'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH03_ATTENTION_PRESERVED"
+fi
+# ...while a 3.7 mag brightening of the same Mira stays below the relaxed
+# Mira threshold and must raise neither an ATTENTION nor a NOTE
+lib/catalogs/check_catalogs_offline 345.65179 57.91978 H 10.81 2>/dev/null | grep -q -e 'mag brighter than the VSX record' -e 'NOTE:'
+if [ $? -eq 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH04_MIRA_THRESHOLD_SILENT"
+fi
+# Hermetic sandbox checks with a fabricated two-star vsx.dat (immune to VSX
+# record revisions): a faint L star 2" from the query position and a bright
+# SR star either at 8" (inside the takeover radius - it must become the
+# identification) or at 15" (outside - the faint star keeps the headline but
+# the ATTENTION is replaced by a NOTE naming the bright star).
+# The column layout matches the fixed-width fields parsed by
+# lib/catalogs/check_catalogs_offline (name [8:38], RA [41:50], Dec [51:60],
+# type [61:70], description [91:]).
+DUALMATCH_SANDBOX="dualmatch_sandbox$$"
+mkdir -p "$DUALMATCH_SANDBOX/lib/catalogs"
+printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
+  1 "VaST TEST FAINT VAR" 0 100.0 0.00056 "L" "    19.050   G            19.630   G" > "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
+printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
+  2 "VaST TEST BRIGHT VAR" 0 100.0 0.00222 "SR" "    12.100   V            13.500   V" >> "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
+DUALMATCH_TAKEOVER_OUT=$(cd "$DUALMATCH_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 100.0 0.0 H 12.0 2>/dev/null)
+echo "$DUALMATCH_TAKEOVER_OUT" | grep -q 'VaST TEST BRIGHT VAR' && echo "$DUALMATCH_TAKEOVER_OUT" | grep -q 'too faint to account' && ! echo "$DUALMATCH_TAKEOVER_OUT" | grep -q 'mag brighter than the VSX record'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH05_SANDBOX_TAKEOVER"
+fi
+# Move the bright star out to 15" for the far-zone NOTE variant
+printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
+  1 "VaST TEST FAINT VAR" 0 100.0 0.00056 "L" "    19.050   G            19.630   G" > "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
+printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
+  2 "VaST TEST BRIGHT VAR" 0 100.0 0.00417 "SR" "    12.100   V            13.500   V" >> "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
+DUALMATCH_FARNOTE_OUT=$(cd "$DUALMATCH_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 100.0 0.0 H 12.0 2>/dev/null)
+echo "$DUALMATCH_FARNOTE_OUT" | grep -q 'VaST TEST FAINT VAR' && echo "$DUALMATCH_FARNOTE_OUT" | grep 'may be the actual counterpart' | grep -q 'VaST TEST BRIGHT VAR' && ! echo "$DUALMATCH_FARNOTE_OUT" | grep -q 'mag brighter than the VSX record'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH06_SANDBOX_FARNOTE"
+fi
+rm -rf "$DUALMATCH_SANDBOX"
+
 # Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
 util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep -q 'may be a known variable'
 if [ $? -ne 0 ];then
