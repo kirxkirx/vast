@@ -835,7 +835,7 @@ int main( int argc, char **argv ) {
   // With a measured magnitude available, search_vsx() itself prefers the
   // nearest brightness-compatible match over the full search radius, so the
   // small-radius pre-pass must not run: it would lock in a faint nearest
-  // match and hide a compatible brighter variable sitting at 7-10" (common
+  // match and hide a compatible brighter variable sitting at 7-15" (common
   // in crowded galactic-plane fields).
   is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output, measured_mag );
   if ( is_found != 1 ) {

@@ -1949,7 +1949,7 @@ fi
 # Hermetic sandbox checks with a fabricated two-star vsx.dat (immune to VSX
 # record revisions): a faint L star 2" from the query position and a bright
 # SR star either at 8" (inside the takeover radius - it must become the
-# identification) or at 15" (outside - the faint star keeps the headline but
+# identification) or at 20" (outside - the faint star keeps the headline but
 # the ATTENTION is replaced by a NOTE naming the bright star).
 # The column layout matches the fixed-width fields parsed by
 # lib/catalogs/check_catalogs_offline (name [8:38], RA [41:50], Dec [51:60],
@@ -1966,11 +1966,11 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_DUALMATCH05_SANDBOX_TAKEOVER"
 fi
-# Move the bright star out to 15" for the far-zone NOTE variant
+# Move the bright star out to 20" for the far-zone NOTE variant
 printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
   1 "VaST TEST FAINT VAR" 0 100.0 0.00056 "L" "    19.050   G            19.630   G" > "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
 printf '%-8s%-30s %s %9.5f %9.5f %-9s                     %s\n' \
-  2 "VaST TEST BRIGHT VAR" 0 100.0 0.00417 "SR" "    12.100   V            13.500   V" >> "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
+  2 "VaST TEST BRIGHT VAR" 0 100.0 0.00556 "SR" "    12.100   V            13.500   V" >> "$DUALMATCH_SANDBOX/lib/catalogs/vsx.dat"
 DUALMATCH_FARNOTE_OUT=$(cd "$DUALMATCH_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 100.0 0.0 H 12.0 2>/dev/null)
 echo "$DUALMATCH_FARNOTE_OUT" | grep -q 'VaST TEST FAINT VAR' && echo "$DUALMATCH_FARNOTE_OUT" | grep 'may be the actual counterpart' | grep -q 'VaST TEST BRIGHT VAR' && ! echo "$DUALMATCH_FARNOTE_OUT" | grep -q 'mag brighter than the VSX record'
 if [ $? -ne 0 ];then

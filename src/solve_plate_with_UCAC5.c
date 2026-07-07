@@ -1101,7 +1101,7 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
  fclose( f );
  fprintf( stderr, "Matched %d stars with UCAC5 using vizquery.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "ERROR: too few stars matched!\n" );
+  fprintf( stderr, "ERROR: too few stars matched (%d, need at least 5) with the UCAC5 astrometric catalog via VizieR vizquery!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
  }
  return 0;
@@ -1320,7 +1320,7 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
    fprintf( stderr, "ERROR: Too few stars matched and #END# marker found!\n" );
    return 2; // return code 2 means 'do not retry'
   } else {
-   fprintf( stderr, "ERROR: too few stars matched!\n" );
+   fprintf( stderr, "ERROR: too few stars matched (%d, need at least 5) with the PanSTARRS1 photometric catalog via VizieR - the query may be retried!\n", N_stars_matched_with_photometric_catalog );
    return 1; // return code 1 means 'may retry'
   }
  }
@@ -1543,6 +1543,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  // and http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt
  unsigned int zone_counter;
  char zonefilename[24]; // should match the length of sprintf string below
+ int n_zone_files_with_read_errors= 0;
 
  // double gaia_ra_deg, garia_dec_deg;
  double ucac_ra_deg, ucac_dec_deg;
@@ -1847,14 +1848,25 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
    // fprintf(stderr, "%li  %.7lf %.7lf  %.3lf %.3lf  %.1lf %.1lf %.1lf %.1lf\n", srcid, ucac_ra_deg, ucac_dec_deg, ucac_epoch, ucac_mag,  ucac_pm_ra_masy, ucac_pm_ra_err_masy, ucac_pm_dec_masy, ucac_pm_dec_err_masy );
   } // while( 1 == 1 ) { // Read all stars in the zone file
 
+  // A failing storage device makes fread() return 0 (looking like a normal
+  // end-of-file to the reading loop above) while fopen() still succeeds, so
+  // a zone silently reads as empty. Report it: this is how an unreadable
+  // local UCAC5 copy manifests as the mysterious 'Matched 0 stars'.
+  if ( 0 != ferror( ptr ) ) {
+   n_zone_files_with_read_errors++;
+  }
+
   fclose( ptr );
  } // for( zone_counter==0; zone_counter<900; zone_counter++ ) { // Read each zone file
 
  fprintf( stderr, "Done reading UCAC5 zone files...\n" );
+ if ( n_zone_files_with_read_errors > 0 ) {
+  fprintf( stderr, "ERROR: input/output errors while reading %d of %u UCAC5 zone files - the storage device hosting lib/catalogs/ucac5 may be failing or disconnected!\n", n_zone_files_with_read_errors, zone_end - zone_start + 1 );
+ }
 
  fprintf( stderr, "Matched %d stars with the local copy of UCAC5.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "ERROR: too few stars matched!\n" );
+  fprintf( stderr, "ERROR: too few stars matched (%d, need at least 5) with the local copy of UCAC5 - will fall back to the remote UCAC5 servers!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
  }
 
@@ -2667,7 +2679,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fclose( f );
  fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "WARNING: too few stars matched!\n" );
+  fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
  }
 
@@ -2952,7 +2964,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  fclose( f );
  fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "WARNING: too few stars matched!\n" );
+  fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
  }
 
