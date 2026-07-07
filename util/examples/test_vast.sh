@@ -578,7 +578,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -14456,6 +14456,201 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
+##### NMW-TexasTech Aql-03-Q1b1x1 asteroid-variable ATTENTION cross-check test #####
+# The 2026-07-06 evening frames of the galactic-plane Aql-03 field catch the
+# bright asteroid (57) Mnemosyne (predicted mag 11.9, measured 12.1) passing
+# right over the faint variable Gaia DR3 4265273850649440896 (VSX type L,
+# record maximum G=16.33).  The candidate therefore matches BOTH a variable
+# star and an asteroid: the measured brightness is >3 mag brighter than the
+# VSX record maximum (which alone would raise the ATTENTION line), but the
+# asteroid identification fully accounts for it, so report_transient.sh must
+# replace the ATTENTION with the calm NOTE line.  This exercises the
+# cross-check code path that was dead in production for HTML output until
+# 2026-07-07 (the 'The object was found in' phrase is tag-split in HTML mode
+# and must be tested on tag-stripped text).
+# Download the test dataset if needed
+if [ ! -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2" && tar -xvjf NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2 && rm -f NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Aql-03-Q1b1x1 asteroid-variable cross-check test "
+ echo -n "NMW-TexasTech Aql-03-Q1b1x1 asteroid-variable cross-check test: " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ AQL03XCHK_INPUT_DIR=../NMW-TexasTech__Aql-03-Q1b1x1_test/second_epoch_images
+ AQL03XCHK_WCS_BASELINE=$(cd "$AQL03XCHK_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-TexasTech__Aql-03-Q1b1x1_test/reference_images/ run_transient_factory_test31_with_cleanup "$AQL03XCHK_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$AQL03XCHK_INPUT_DIR" "$AQL03XCHK_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_REF_WCS_LEAK"
+ fi
+ # Test for the specific error message
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message
+  grep -q 'ERROR: distance between reference and second-epoch image centers' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_ERROR_MESSAGE_IN_index_html"
+  fi
+  # Processing sanity
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK001"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK002"
+  fi
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_TYCHO2_V"
+  fi
+  # Candidate count sanity (baseline 2026-07-07: 94 candidates, all identified;
+  # the count varies with the success of the online Gaia/APASS exclusion queries)
+  NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
+  if [ "$NUMBER_OF_CANDIDATES" -lt 50 ] || [ "$NUMBER_OF_CANDIDATES" -gt 160 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_NCANDIDATES_$NUMBER_OF_CANDIDATES"
+  fi
+
+  # ----------------------------------------------------------------------
+  # The double-match candidate: (57) Mnemosyne on top of
+  # Gaia DR3 4265273850649440896 at 18:53:05.51 -01:07:18.8, measured ~12.1
+  # ----------------------------------------------------------------------
+  grep -q 'Gaia DR3 4265273850649440896' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_GAIAVAR_NOT_FOUND"
+  fi
+  grep -q '57 Mnemosyne' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_MNEMOSYNE_NOT_FOUND"
+  fi
+  # Position and magnitude from the human-readable line
+  #                    2026 07 07.1290  2461228.6290  12.12  18:53:05.50 -01:07:19.0
+  grep -q "2026 07 07.129.  2461228.629.  1[12]\...  18:53:0.\... -01:07:1.\." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_POSMAG"
+  fi
+  RADECPOSITION_TO_TEST=$(grep "2026 07 07.129.  2461228.629.  1[12]\...  18:53:0" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+  if [ -n "$RADECPOSITION_TO_TEST" ];then
+   DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 18:53:05.51 -01:07:18.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_POS_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_POS_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+  fi
+  # ----------------------------------------------------------------------
+  # THE CORE CHECKS: within this candidate's block the VSX brightness
+  # mismatch ATTENTION must be replaced by the cross-check NOTE, the
+  # asteroid identification must be present (test it on tag-stripped text -
+  # the phrase is broken up by font tags in the raw HTML!), and no asteroid
+  # brightness ATTENTION should appear (Mnemosyne accounts for the object).
+  # ----------------------------------------------------------------------
+  AQL03XCHK_CANDIDATE_BLOCK=$(grep -A10 'Gaia DR3 4265273850649440896' transient_report/index.html | head -n 11)
+  echo "$AQL03XCHK_CANDIDATE_BLOCK" | grep -q 'likely the asteroid rather than an outburst of the variable'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_NO_CROSSCHECK_NOTE"
+  fi
+  echo "$AQL03XCHK_CANDIDATE_BLOCK" | grep -q 'mag brighter than the VSX record'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_VSX_ATTENTION_NOT_SILENCED"
+  fi
+  echo "$AQL03XCHK_CANDIDATE_BLOCK" | grep -q 'mag brighter than the predicted asteroid brightness'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_UNEXPECTED_ASTEROID_ATTENTION"
+  fi
+  echo "$AQL03XCHK_CANDIDATE_BLOCK" | sed 's:<[^>]*>::g' | grep -q 'The object was found in astcheck'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_NO_ASTCHECK_MATCH_IN_BLOCK"
+  fi
+  # The AAVSO report line pins the calibrated magnitude
+  # Gaia DR3 4265273850649440896,2461228.6290,12.12,0.05,CV
+  grep -q "Gaia DR3 4265273850649440896,2461228\.629.,1[12]\...,0\.0.,CV" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_AAVSO_LINE"
+  fi
+
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_NO_index_html"
+ fi
+ # Restore the backup exclusion list if we moved it
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Aql-03-Q1b1x1 asteroid-variable cross-check test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Aql-03-Q1b1x1 asteroid-variable cross-check test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
