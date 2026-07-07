@@ -1655,6 +1655,8 @@ int main( int argc, char **argv ) {
 
  // variables to store cpgqvsz output
  float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
+ // plot (paper) width in inches computed to fit the window preserving the image aspect ratio
+ float pgpap_width;
 
  //
  int user_request_to_exit_with_nonzero_exit_code= 0;
@@ -2723,13 +2725,27 @@ int main( int argc, char **argv ) {
  }
  cpgpage();
  if ( finder_chart_mode == 0 || fits2png_fullframe == 1 ) {
-  // Trying to circumvent giza bug that does not implement cpgpap( 0.0, 1.0 / axis_ratio );
-  // so we need to specify the width in inches explicitly, see
+  // We want to fill as much of the window as possible while preserving the
+  // image aspect ratio (axis_ratio = image width / image height). The
+  // intended call is cpgpap( 0.0, 1.0 / axis_ratio ) ("fill the device width,
+  // keep the aspect"), but 0.0 is not honored by giza, so we specify the plot
+  // width in inches explicitly, see
   // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#PGPAP
   // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#pgqvsz
-  // cpgpap( 0.0, 1.0 / axis_ratio ); // does not work with giza
+  // cpgqvsz() returns the view surface size in inches: cpgqvsz_x2 is the
+  // window width, cpgqvsz_y2 is the window height. The plot width is limited
+  // either by the window width, or by (window height * axis_ratio), whichever
+  // is smaller, so the plot fits inside the window in BOTH dimensions for any
+  // window shape. NOTE: the old code used the window HEIGHT (cpgqvsz_y2) as
+  // the plot width, which left a background band on the right whenever the
+  // window was wider than the image aspect ratio (e.g. a large landscape
+  // screen) and displayed only part of the image.
   cpgqvsz( 1, &cpgqvsz_x1, &cpgqvsz_x2, &cpgqvsz_y1, &cpgqvsz_y2 );
-  cpgpap( cpgqvsz_y2, 1.0 / axis_ratio );
+  pgpap_width= cpgqvsz_y2 * axis_ratio;
+  if ( pgpap_width > cpgqvsz_x2 ) {
+   pgpap_width= cpgqvsz_x2;
+  }
+  cpgpap( pgpap_width, 1.0 / axis_ratio );
   //
   cpgsvp( 0.05, 0.95, 0.035, 0.035 + 0.9 );
  } else {
