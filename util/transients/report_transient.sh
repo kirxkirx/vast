@@ -936,15 +936,21 @@ ASTEROID_ID=$(cat "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp")
 # 'mag brighter than the'. The replacement never makes the block longer (one
 # NOTE line replaces one or more ATTENTION lines), so the grep -A10 context
 # window in transient_factory_test31.sh still covers the block.
+# IMPORTANT: in the HTML output mode used here the found-line phrase is
+# broken up by font tags ('The object was <font ...>found</font> in ...'),
+# so the tags must be stripped before testing for 'The object was found in'
+# (a plain grep of the raw file NEVER matches in HTML mode - that bug kept
+# this whole cross-check inactive in production). The ATTENTION marker
+# 'mag brighter than the' is not tag-split, so it is safe to grep raw.
 if grep -q -e 'mag brighter than the VSX record' -e 'mag brighter than the ASASSN-V record' "$TEMP_FILE__SDWC_OUTPUT" ;then
- if grep -q 'The object was found in' "$TEMP_FILE__MPCheck_OUTPUT" && ! grep -q 'mag brighter than the predicted asteroid brightness' "$TEMP_FILE__MPCheck_OUTPUT" ;then
+ if sed 's:<[^>]*>::g' "$TEMP_FILE__MPCheck_OUTPUT" | grep -q 'The object was found in' && ! grep -q 'mag brighter than the predicted asteroid brightness' "$TEMP_FILE__MPCheck_OUTPUT" ;then
   awk -v note="NOTE: the measured brightness disagrees with the variable-star record above, but is consistent with the asteroid identification below - so this is likely the asteroid rather than an outburst of the variable." \
       'index($0, "mag brighter than the VSX record") > 0 || index($0, "mag brighter than the ASASSN-V record") > 0 { if ( note_printed != 1 ) { print note ; note_printed=1 } ; next } { print }' \
       "$TEMP_FILE__SDWC_OUTPUT" > "${TEMP_FILE__SDWC_OUTPUT}_noattention.tmp" && mv "${TEMP_FILE__SDWC_OUTPUT}_noattention.tmp" "$TEMP_FILE__SDWC_OUTPUT"
  fi
 fi
 if grep -q 'mag brighter than the predicted asteroid brightness' "$TEMP_FILE__MPCheck_OUTPUT" ;then
- if grep -q 'The object was found in' "$TEMP_FILE__SDWC_OUTPUT" && ! grep -q 'mag brighter than the' "$TEMP_FILE__SDWC_OUTPUT" ;then
+ if sed 's:<[^>]*>::g' "$TEMP_FILE__SDWC_OUTPUT" | grep -q 'The object was found in' && ! grep -q 'mag brighter than the' "$TEMP_FILE__SDWC_OUTPUT" ;then
   awk -v note="NOTE: the measured brightness disagrees with the predicted asteroid brightness, but the matched variable star above likely accounts for this object." \
       'index($0, "mag brighter than the predicted asteroid brightness") > 0 { if ( note_printed != 1 ) { print note ; note_printed=1 } ; next } { print }' \
       "$TEMP_FILE__MPCheck_OUTPUT" > "${TEMP_FILE__MPCheck_OUTPUT}_noattention.tmp" && mv "${TEMP_FILE__MPCheck_OUTPUT}_noattention.tmp" "$TEMP_FILE__MPCheck_OUTPUT"
