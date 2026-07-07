@@ -13,9 +13,15 @@ C 7-Sep-1994  New routine [TJP].
 C-----------------------------------------------------------------------
       INCLUDE 'grpckg1.inc'
       INTEGER  I,IV,IX,IX1,IX2,IY,IY1,IY2,J, NPIX, LCHR
+      INTEGER  MAXNPIX
+C     Maximum number of device pixels in one image scanline. Was 1024,
+C     which dropped the right part of a wide image on large windows (the
+C     "to be fixed!" note below). Raised to cover any realistic screen
+C     width; the X and PNG drivers both accept a scanline of any length.
+      PARAMETER (MAXNPIX=32768)
       REAL     DEN, AV, SFAC, SFACL
       REAL     XXAA,XXBB,YYAA,YYBB,XYAA,XYBB,YXAA,YXBB,XYAAIY,YXAAIY
-      REAL     BUFFER(1026)
+      REAL     BUFFER(MAXNPIX+2)
       CHARACTER*1 CHR
       INTRINSIC NINT, LOG
       PARAMETER (SFAC=65000.0)
@@ -79,7 +85,7 @@ C
                 IV = MININD
             END IF
 C
-            IF (NPIX.LE.1024) THEN
+            IF (NPIX.LE.MAXNPIX) THEN
 C               -- drop pixels if buffer too small (to be fixed!)
                 NPIX = NPIX+1
                 IF (NPIX.EQ.1) BUFFER(1) = IX
