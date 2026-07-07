@@ -170,6 +170,28 @@ int get_expected_brightest_mag_from_vsx_descr( const char *descr, double *expect
  return 1;
 }
 
+// Return 1 if the variability type string denotes a Mira variable: exactly 'M'
+// or the uncertain-classification variant 'M:'. Combined and other M-starting
+// types ('MISC', 'EA/M', 'M9') do not match. Miras get a relaxed brightening
+// warning threshold (TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA):
+// their catalog maxima are often photographic, they are very red, and their
+// maxima vary from cycle to cycle.
+static int is_mira_variability_type( const char *type_string ) {
+ if ( type_string == NULL ) {
+  return 0;
+ }
+ if ( type_string[0] != 'M' ) {
+  return 0;
+ }
+ if ( type_string[1] == '\0' ) {
+  return 1;
+ }
+ if ( type_string[1] == ':' && type_string[2] == '\0' ) {
+  return 1;
+ }
+ return 0;
+}
+
 int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
  FILE *mymdvfile;
  char name[32];
@@ -271,6 +293,7 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  char best_descr[128];
 
  double expected_brightest_mag;
+ double brightening_warn_threshold_mag;
 
  int is_found= 0;
 
@@ -379,7 +402,10 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   // stable marker the downstream tools may key on.
   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
    if ( 1 == get_expected_brightest_mag_from_vsx_descr( best_descr, &expected_brightest_mag ) ) {
-    if ( expected_brightest_mag - measured_mag_of_transient > TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ) {
+    // Miras get a relaxed threshold: pg catalog maxima + V-pg color of these
+    // red stars + cycle-to-cycle maximum variations easily exceed 3 mag
+    brightening_warn_threshold_mag= is_mira_variability_type( best_type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
+    if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
      // Make sure the ATTENTION line starts on a new line even if the record was missing the trailing newline
      if ( strlen( best_descr ) == 0 || best_descr[strlen( best_descr ) - 1] != '\n' ) {
       fprintf( stdout, "\n" );
@@ -428,6 +454,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  double distance_deg;
 
  double asassn_mean_mag, asassn_amplitude, expected_brightest_mag;
+ double brightening_warn_threshold_mag;
 
  int is_found= 0;
 
@@ -616,7 +643,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
      if ( 1 == parse_mag_token( Amplitude, &asassn_amplitude ) ) {
       expected_brightest_mag= asassn_mean_mag - asassn_amplitude;
      }
-     if ( expected_brightest_mag - measured_mag_of_transient > TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD ) {
+     // Miras get a relaxed threshold, same as in search_vsx()
+     brightening_warn_threshold_mag= is_mira_variability_type( type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
+     if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
       if ( 1 == html_output ) {
        fprintf( stdout, "<b><font color=\"red\">ATTENTION: measured mag %.2f is %.1f mag brighter than the ASASSN-V record maximum brightness %.2f - possible unusual activity of a known variable!</font></b> (Alternatively, this may be a new object that coincides with the known variable's position just by chance.)\n", measured_mag_of_transient, expected_brightest_mag - measured_mag_of_transient, expected_brightest_mag );
       } else {

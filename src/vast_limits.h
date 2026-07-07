@@ -299,6 +299,10 @@
                                                           // coincidence or the known object is doing something unusual). The threshold is intentionally large
                                                           // to absorb the difference between the catalog and instrumental photometric bands.
                                                           // Used by src/catalogs/check_catalogs_offline.c and util/transients/MPCheck_v2.sh (the script greps this file).
+#define TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA 4.0 // Relaxed version of the above threshold for Mira (VSX/ASASSN-V type 'M' or 'M:') variables:
+                                                               // their catalog maxima are often photographic while we measure CV, the V-pg difference for
+                                                               // these very red stars reaches magnitudes, and the brightness of Mira maxima genuinely varies
+                                                               // from cycle to cycle - so a >3 mag apparent 'overbrightening' is normal Mira behavior.
 
 //// src/fit_mag_calib.c ////
 #define MAX_NUMBER_OF_STARS_MAG_CALIBR MAX_NUMBER_OF_STARS
