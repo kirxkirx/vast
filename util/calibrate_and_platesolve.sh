@@ -321,12 +321,16 @@ else
 fi
 
 #################################
-# Plate-solve the calibrated image
+# Plate-solve the calibrated image, auto-selecting the SIP distortion order.
+# util/solve_plate_with_best_sip_order.sh solves the image at each candidate
+# SIP polynomial order and keeps the one with the best astrometric residuals.
+# It writes wcs_<basename> into the current directory (same name and place the
+# ordinary solver produced), so the "Final output:" line below is unchanged.
 echo ""
-echo "Plate-solving the calibrated image..."
-echo "Running: $VAST_PATH"util/wcs_image_nocatalog.sh "$OUTPUT_CALIBRATED_IMAGE"
+echo "Plate-solving the calibrated image (auto-selecting the SIP polynomial order)..."
+echo "Running: $VAST_PATH"util/solve_plate_with_best_sip_order.sh "$OUTPUT_CALIBRATED_IMAGE"
 
-"$VAST_PATH"util/wcs_image_nocatalog.sh "$OUTPUT_CALIBRATED_IMAGE"
+"$VAST_PATH"util/solve_plate_with_best_sip_order.sh "$OUTPUT_CALIBRATED_IMAGE"
 WCS_EXIT_CODE=$?
 
 # Determine the expected WCS output filename (in current directory)
