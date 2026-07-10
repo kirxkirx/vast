@@ -1801,7 +1801,27 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "REFERENCE_EPOCH__FIRST_IMAGE= $REFERENCE_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
  REFERENCE_EPOCH__SECOND_IMAGE=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
  echo "REFERENCE_EPOCH__SECOND_IMAGE= $REFERENCE_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
- 
+
+ # Record the reference and second-epoch images of this field for the
+ # 'FITS images used in this processing run' download-link section of the
+ # HTML report. That section is written after the 'Processing complete!'
+ # line, so the links are available even when no transient candidates pass
+ # the selection for this field (allowing one to download the input images
+ # and reproduce the processing locally).
+ {
+  if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE" ];then
+   echo "$FIELD reference $REFERENCE_EPOCH__FIRST_IMAGE"
+  fi
+  if [ -n "$REFERENCE_EPOCH__SECOND_IMAGE" ] && [ "$REFERENCE_EPOCH__SECOND_IMAGE" != "$REFERENCE_EPOCH__FIRST_IMAGE" ];then
+   echo "$FIELD reference $REFERENCE_EPOCH__SECOND_IMAGE"
+  fi
+  for SECOND_EPOCH_IMAGE_TO_RECORD in "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
+   if [ -f "$SECOND_EPOCH_IMAGE_TO_RECORD" ];then
+    echo "$FIELD second-epoch $SECOND_EPOCH_IMAGE_TO_RECORD"
+   fi
+  done
+ } >> transient_report/fits_images_for_download.txt
+
  # Choose second epoch images
  # first, count how many there are
  NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | wc -l)
@@ -4112,6 +4132,36 @@ echo "<H2>Processing complete!</H2>" >> transient_report/index.html
 
 TOTAL_NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
 echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> transient_report/index.html
+
+# List the reference and second-epoch FITS images of each processed field so
+# they can be downloaded (when URL_OF_DATA_PROCESSING_ROOT is set by the
+# calling script) and the processing reproduced locally. This section is
+# intentionally placed after the 'Processing complete!' line: unmw's
+# combine_reports.sh copies the report content between 'Processing fields'
+# and 'Processing complete!' into the combined candidates page, and these
+# links should appear only on the per-run page. The links are constructed
+# the same way as the per-candidate full-frame image links in
+# util/transients/make_report_in_HTML.sh: the images are expected to be
+# served from URL_OF_DATA_PROCESSING_ROOT/<last path element of the dir>/.
+if [ -s transient_report/fits_images_for_download.txt ];then
+ {
+  echo "<div id=\"downloadable_fits_images\"><H3>FITS images used in this processing run:</H3>"
+  while read -r DOWNLOAD_LINK_FIELD DOWNLOAD_LINK_IMG_TYPE DOWNLOAD_LINK_IMG_PATH ;do
+   if [ -z "$DOWNLOAD_LINK_IMG_PATH" ];then
+    continue
+   fi
+   BASENAME_DOWNLOAD_LINK_IMG=$(basename "$DOWNLOAD_LINK_IMG_PATH")
+   if [ -n "$URL_OF_DATA_PROCESSING_ROOT" ];then
+    DIRNAME_DOWNLOAD_LINK_IMG=$(dirname "$DOWNLOAD_LINK_IMG_PATH")
+    DIRNAME_DOWNLOAD_LINK_IMG=$(basename "$DIRNAME_DOWNLOAD_LINK_IMG")
+    echo "Field $DOWNLOAD_LINK_FIELD $DOWNLOAD_LINK_IMG_TYPE image: <a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_DOWNLOAD_LINK_IMG/$BASENAME_DOWNLOAD_LINK_IMG'>$BASENAME_DOWNLOAD_LINK_IMG</a><br>"
+   else
+    echo "Field $DOWNLOAD_LINK_FIELD $DOWNLOAD_LINK_IMG_TYPE image: $BASENAME_DOWNLOAD_LINK_IMG<br>"
+   fi
+  done < transient_report/fits_images_for_download.txt
+  echo "</div>"
+ } >> transient_report/index.html
+fi
 
 echo "<a href=\"javascript:toggleElement('processing_log')\"><H3>Processing log:</H3></a>
 <div id=\"processing_log\" style=\"display:none\">
