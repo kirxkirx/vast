@@ -303,6 +303,9 @@
                                                                // their catalog maxima are often photographic while we measure CV, the V-pg difference for
                                                                // these very red stars reaches magnitudes, and the brightness of Mira maxima genuinely varies
                                                                // from cycle to cycle - so a >3 mag apparent 'overbrightening' is normal Mira behavior.
+                                                               // Also applied to semiregular (VSX type 'SR' and its subtypes, including ':') variables
+                                                               // when the VSX record maximum is measured in the pg, B or g band - blue-band maxima
+                                                               // of these red stars similarly underestimate the V/CV-band brightness.
 #define VSX_COMPATIBLE_MATCH_TAKEOVER_RADIUS_ARCSEC 15.0 // When the nearest VSX match cannot account for the measured brightness of a transient
                                                          // candidate (it would trigger the brightening ATTENTION above) but a brightness-compatible
                                                          // variable lies within this distance of the measured position, present the compatible one

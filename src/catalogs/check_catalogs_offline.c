@@ -170,6 +170,69 @@ int get_expected_brightest_mag_from_vsx_descr( const char *descr, double *expect
  return 1;
 }
 
+// Extract the passband in which the maximum (or mean) magnitude of a vsx.dat
+// record is measured. The input is the same descr string that
+// get_expected_brightest_mag_from_vsx_descr() parses (see the record layout
+// description above): the passband is the first token within the max
+// magnitude field that follows the successfully parsed max magnitude value
+// and is not a detached ':' uncertainty flag. The output buffer must be at
+// least VSX_DESCR_MAG_REGION_LENGTH+1 bytes long.
+// Returns 1 and sets passband on success, 0 otherwise.
+static int get_max_mag_passband_from_vsx_descr( const char *descr, char *passband ) {
+ char region[VSX_DESCR_MAG_REGION_LENGTH + 1];
+ char token[VSX_DESCR_MAG_REGION_LENGTH + 1];
+ int i, j, token_start;
+ int have_max;
+ double token_value;
+
+ have_max= 0;
+
+ if ( NULL == descr || NULL == passband ) {
+  return 0;
+ }
+
+ // Copy the magnitude region of the record, cutting before the epoch column
+ for ( i= 0; i < VSX_DESCR_MAG_REGION_LENGTH && descr[i] != '\0' && descr[i] != '\n' && descr[i] != '\r'; i++ ) {
+  region[i]= descr[i];
+ }
+ region[i]= '\0';
+
+ // Scan whitespace-separated tokens keeping track of their position in the record
+ i= 0;
+ while ( region[i] != '\0' ) {
+  if ( region[i] == ' ' || region[i] == '\t' ) {
+   i++;
+   continue;
+  }
+  token_start= i;
+  for ( j= 0; region[i] != '\0' && region[i] != ' ' && region[i] != '\t'; i++, j++ ) {
+   token[j]= region[i];
+  }
+  token[j]= '\0';
+  if ( token_start >= VSX_DESCR_MAXFIELD_BOUNDARY ) {
+   // We are past the max magnitude field, so no passband was given for the max
+   break;
+  }
+  if ( 1 == parse_mag_token( token, &token_value ) ) {
+   have_max= 1;
+   continue;
+  }
+  if ( 0 == have_max ) {
+   // Something unparseable before the max value, like a detached '<' or '>' limit flag
+   continue;
+  }
+  if ( 0 == strcmp( token, ":" ) ) {
+   // A detached uncertainty flag between the max value and its passband
+   continue;
+  }
+  strncpy( passband, token, VSX_DESCR_MAG_REGION_LENGTH );
+  passband[VSX_DESCR_MAG_REGION_LENGTH]= '\0';
+  return 1;
+ }
+
+ return 0;
+}
+
 // Return 1 if the variability type string denotes a Mira variable: exactly 'M'
 // or the uncertain-classification variant 'M:'. Combined and other M-starting
 // types ('MISC', 'EA/M', 'M9') do not match. Miras get a relaxed brightening
@@ -190,6 +253,55 @@ static int is_mira_variability_type( const char *type_string ) {
   return 1;
  }
  return 0;
+}
+
+// Return 1 if the variability type string denotes a semiregular variable:
+// 'SR' or one of its subtypes 'SRA', 'SRB', 'SRC', 'SRD', 'SRS', optionally
+// followed by the uncertain-classification flag ':'. Combined types
+// ('SR/M', 'SRB+EA') do not match, same strictness as
+// is_mira_variability_type().
+static int is_semiregular_variability_type( const char *type_string ) {
+ int i;
+ if ( type_string == NULL ) {
+  return 0;
+ }
+ if ( type_string[0] != 'S' || type_string[1] != 'R' ) {
+  return 0;
+ }
+ i= 2;
+ if ( type_string[i] == 'A' || type_string[i] == 'B' || type_string[i] == 'C' || type_string[i] == 'D' || type_string[i] == 'S' ) {
+  i++;
+ }
+ if ( type_string[i] == ':' ) {
+  i++;
+ }
+ if ( type_string[i] == '\0' ) {
+  return 1;
+ }
+ return 0;
+}
+
+// Select the threshold for the 'measured mag is brighter than the record
+// maximum' ATTENTION warning for a VSX record. Mira variables always get the
+// relaxed TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA threshold.
+// Semiregular variables get the same relaxed threshold when the record
+// maximum is measured in the photographic 'pg', Johnson 'B' or Sloan 'g'
+// band ('g' is case-sensitive so Gaia 'G' does not match): like Miras these
+// are red stars, so their V/CV-band maximum may be magnitudes brighter than
+// the blue-band catalog maximum.
+static double vsx_record_brightening_warn_threshold( const char *type_string, const char *descr ) {
+ char max_mag_passband[VSX_DESCR_MAG_REGION_LENGTH + 1];
+ if ( 1 == is_mira_variability_type( type_string ) ) {
+  return TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA;
+ }
+ if ( 1 == is_semiregular_variability_type( type_string ) ) {
+  if ( 1 == get_max_mag_passband_from_vsx_descr( descr, max_mag_passband ) ) {
+   if ( 0 == strcmp( max_mag_passband, "pg" ) || 0 == strcmp( max_mag_passband, "B" ) || 0 == strcmp( max_mag_passband, "g" ) ) {
+    return TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA;
+   }
+  }
+ }
+ return TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
 }
 
 int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
@@ -399,7 +511,7 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
    // brightness information and never qualify)
    if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
     if ( 1 == get_expected_brightest_mag_from_vsx_descr( descr, &row_expected_brightest_mag ) ) {
-     row_warn_threshold_mag= is_mira_variability_type( type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
+     row_warn_threshold_mag= vsx_record_brightening_warn_threshold( type, descr );
      if ( row_expected_brightest_mag - measured_mag_of_transient <= row_warn_threshold_mag ) {
       if ( distance_deg < compat_best_distance_deg ) {
        compat_best_distance_deg= distance_deg;
@@ -447,9 +559,11 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   print_far_compatible_note= 0;
   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
    if ( 1 == get_expected_brightest_mag_from_vsx_descr( best_descr, &expected_brightest_mag ) ) {
-    // Miras get a relaxed threshold: pg catalog maxima + V-pg color of these
-    // red stars + cycle-to-cycle maximum variations easily exceed 3 mag
-    brightening_warn_threshold_mag= is_mira_variability_type( best_type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
+    // Miras (always) and semiregulars (when the catalog maximum is pg, B
+    // or g) get a relaxed threshold: blue-band catalog maxima + the color
+    // of these red stars + cycle-to-cycle maximum variations easily
+    // exceed 3 mag
+    brightening_warn_threshold_mag= vsx_record_brightening_warn_threshold( best_type, best_descr );
     if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
      nearest_triggers_attention= 1;
     }
@@ -734,7 +848,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
      if ( 1 == parse_mag_token( Amplitude, &asassn_amplitude ) ) {
       expected_brightest_mag= asassn_mean_mag - asassn_amplitude;
      }
-     // Miras get a relaxed threshold, same as in search_vsx()
+     // Miras get a relaxed threshold as in search_vsx(); the semiregular
+     // blue-band relaxation of search_vsx() does not apply here as the
+     // ASAS-SN mean magnitudes are V band
      brightening_warn_threshold_mag= is_mira_variability_type( type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
      if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
       if ( 1 == html_output ) {
