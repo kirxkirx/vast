@@ -548,7 +548,7 @@ shell_commands_record_compiler_version:
 	lib/record_vast_build_number.sh # seve vast build number to .cc.build
 	
 libident.o: $(SOURCE_IDENT_PATH)ident_lib.c $(SOURCE_IDENT_PATH)ident.h 
-	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c 
+	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c -I$(GSL_INCLUDE)
 	cp $(SRC_PATH)ident_lib.o libident.o # file name kept for historical reasons
 
 ccd: util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic
