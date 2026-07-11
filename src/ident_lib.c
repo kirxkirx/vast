@@ -2258,16 +2258,30 @@ static int poly_2d_nterms( int order ) {
 // Fill the monomial basis {1, xn, yn, xn^2, xn*yn, yn^2, ...} up to `order` for
 // normalized coordinates (xn, yn). Returns the number of terms.
 static int poly_2d_basis( double xn, double yn, int order, double *terms ) {
- int i, j, k;
- k= 0;
- for ( i= 0; i <= order; i++ ) {
-  for ( j= 0; j <= i; j++ ) {
-   // term = xn^(i-j) * yn^j
-   terms[k]= pow( xn, (double)( i - j ) ) * pow( yn, (double)j );
-   k++;
-  }
+ // Explicit monomials via plain multiplication (no pow(); the compiler reuses the
+ // repeated xn*xn etc.) -- this is the innermost loop of both the fit and the eval.
+ // The term order MUST stay {1, xn, yn, xn^2, xn*yn, yn^2, xn^3, xn^2*yn, xn*yn^2,
+ // yn^3} so fit_poly_2d and eval_poly_2d agree on which coefficient pairs with
+ // which term. The unused higher-order slots are zeroed so the whole buffer is
+ // always defined, although callers only read the first (order+1)(order+2)/2.
+ // NOTE: the explicit indices assume STAR_MATCH_MAX_POLY_ORDER == 3
+ // (STAR_MATCH_POLY_MAX_NTERMS == 10); raising the max order means extending these.
+ terms[3]= terms[4]= terms[5]= terms[6]= terms[7]= terms[8]= terms[9]= 0.0;
+ terms[0]= 1.0;
+ terms[1]= xn;
+ terms[2]= yn;
+ if ( order >= 2 ) {
+  terms[3]= xn * xn;
+  terms[4]= xn * yn;
+  terms[5]= yn * yn;
  }
- return k;
+ if ( order >= 3 ) {
+  terms[6]= xn * xn * xn;
+  terms[7]= xn * xn * yn;
+  terms[8]= xn * yn * yn;
+  terms[9]= yn * yn * yn;
+ }
+ return ( order + 1 ) * ( order + 2 ) / 2;
 }
 
 // Fit z = polynomial(x, y) of the given order by least squares (GSL multifit).
