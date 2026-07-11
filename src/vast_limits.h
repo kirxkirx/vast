@@ -201,6 +201,16 @@
                                                                                               // needs to be kept in memory all the time...
 #define POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE 0.1                                       // Assume the position of a star may be measured with accuracy of POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE
 #define MAX_SCALE_FACTOR 0.05                                                                 // Assume that images have the same scale to the accuracy of MAX_SCALE_FACTOR - important for star matching.
+// CV-gated polynomial residual model in Ident() (ON by default; VAST_STEP1_CVPOLY=0 disables). The
+// residual after the global affine is fit by a 2D polynomial whose order (1..MAX)
+// is chosen by cross-validation: order 1 reproduces the classic plane fit for
+// narrow/undistorted/few-star fields; higher orders capture wide-field distortion
+// only when they demonstrably improve the held-out residual.
+#define STAR_MATCH_MAX_POLY_ORDER 3                                                            // highest polynomial order the CV may select
+#define STAR_MATCH_POLY_MAX_NTERMS 10                                                          // (MAX_POLY_ORDER+1)*(MAX_POLY_ORDER+2)/2
+#define STAR_MATCH_POLY_CV_MARGIN 0.98                                                         // held-out residual must drop below this fraction of the lower order's to escalate
+#define STAR_MATCH_POLY_CV_MIN_STARS 40                                                        // below this many matched stars, always use order 1 (no CV)
+#define STAR_MATCH_POLY_CV_STARS_PER_TERM 5                                                    // require this many stars per polynomial term per CV fold
 #define ONE_PLUS_MAX_SCALE_FACTOR_SIX (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR)
 
 // Magnitude calibration

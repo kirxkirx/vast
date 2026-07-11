@@ -28,6 +28,8 @@
 #include <math.h>
 #include <string.h> // for memcpy in Star_Copy
 
+#include <gsl/gsl_multifit.h> // Step 1: general 2D polynomial least-squares for the CV-gated residual fit
+
 #include "vast_types.h"
 #include "ident.h"
 #include "ident_debug.h"
@@ -2241,6 +2243,187 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
  After the initial coordinate transformation has been established, the stars are matched against the full list of considered stars (STAR1).
 
  */
+// --- Step 1: CV-gated polynomial residual model ---------------------------
+// After the global affine, the (dx,dy) residual is modelled by a 2D polynomial
+// whose order is chosen per image by cross-validation: order 1 == the classic
+// plane fit (narrow/undistorted/few-star fields stay here), higher orders are
+// used only when they demonstrably reduce the held-out residual (wide distorted
+// fields). Enabled by env VAST_STEP1_CVPOLY=1.
+
+// Number of terms in a 2D polynomial of the given order: (order+1)(order+2)/2.
+static int poly_2d_nterms( int order ) {
+ return ( order + 1 ) * ( order + 2 ) / 2;
+}
+
+// Fill the monomial basis {1, xn, yn, xn^2, xn*yn, yn^2, ...} up to `order` for
+// normalized coordinates (xn, yn). Returns the number of terms.
+static int poly_2d_basis( double xn, double yn, int order, double *terms ) {
+ int i, j, k;
+ k= 0;
+ for ( i= 0; i <= order; i++ ) {
+  for ( j= 0; j <= i; j++ ) {
+   // term = xn^(i-j) * yn^j
+   terms[k]= pow( xn, (double)( i - j ) ) * pow( yn, (double)j );
+   k++;
+  }
+ }
+ return k;
+}
+
+// Fit z = polynomial(x, y) of the given order by least squares (GSL multifit).
+// Coordinates are normalized to [-1,1] with the image size for conditioning.
+// Returns 0 on success (coef[] filled with nterms coefficients), 1 on failure.
+static int fit_poly_2d( double *x, double *y, double *z, unsigned int N, int order,
+                        double sizeX, double sizeY, double *coef ) {
+ gsl_matrix *Xm;
+ gsl_vector *zv, *cv;
+ gsl_matrix *cov;
+ gsl_multifit_linear_workspace *work;
+ double terms[STAR_MATCH_POLY_MAX_NTERMS];
+ double chisq, x0, y0, xs, ys, xn, yn;
+ unsigned int i;
+ int k, nterms;
+
+ nterms= poly_2d_nterms( order );
+ if ( N < (unsigned int)nterms )
+  return 1;
+ x0= sizeX / 2.0;
+ y0= sizeY / 2.0;
+ xs= sizeX / 2.0;
+ ys= sizeY / 2.0;
+ if ( xs <= 0.0 )
+  xs= 1.0;
+ if ( ys <= 0.0 )
+  ys= 1.0;
+ Xm= gsl_matrix_alloc( N, nterms );
+ zv= gsl_vector_alloc( N );
+ cv= gsl_vector_alloc( nterms );
+ cov= gsl_matrix_alloc( nterms, nterms );
+ work= gsl_multifit_linear_alloc( N, nterms );
+ if ( Xm == NULL || zv == NULL || cv == NULL || cov == NULL || work == NULL ) {
+  if ( work != NULL ) gsl_multifit_linear_free( work );
+  if ( cov != NULL ) gsl_matrix_free( cov );
+  if ( cv != NULL ) gsl_vector_free( cv );
+  if ( zv != NULL ) gsl_vector_free( zv );
+  if ( Xm != NULL ) gsl_matrix_free( Xm );
+  return 1;
+ }
+ for ( i= 0; i < N; i++ ) {
+  xn= ( x[i] - x0 ) / xs;
+  yn= ( y[i] - y0 ) / ys;
+  poly_2d_basis( xn, yn, order, terms );
+  for ( k= 0; k < nterms; k++ )
+   gsl_matrix_set( Xm, i, (size_t)k, terms[k] );
+  gsl_vector_set( zv, i, z[i] );
+ }
+ gsl_multifit_linear( Xm, zv, cv, cov, &chisq, work );
+ for ( k= 0; k < nterms; k++ )
+  coef[k]= gsl_vector_get( cv, (size_t)k );
+ gsl_multifit_linear_free( work );
+ gsl_matrix_free( cov );
+ gsl_vector_free( cv );
+ gsl_vector_free( zv );
+ gsl_matrix_free( Xm );
+ return 0;
+}
+
+// Evaluate the fitted polynomial at (x, y); same normalization as fit_poly_2d.
+static double eval_poly_2d( double x, double y, int order, double sizeX, double sizeY, double *coef ) {
+ double terms[STAR_MATCH_POLY_MAX_NTERMS];
+ double x0, y0, xs, ys, val;
+ int nterms, k;
+ x0= sizeX / 2.0;
+ y0= sizeY / 2.0;
+ xs= sizeX / 2.0;
+ ys= sizeY / 2.0;
+ if ( xs <= 0.0 )
+  xs= 1.0;
+ if ( ys <= 0.0 )
+  ys= 1.0;
+ nterms= poly_2d_basis( ( x - x0 ) / xs, ( y - y0 ) / ys, order, terms );
+ val= 0.0;
+ for ( k= 0; k < nterms; k++ )
+  val+= coef[k] * terms[k];
+ return val;
+}
+
+// Choose the residual-polynomial order (1..max_order) by two-fold cross-validation
+// on an even/odd split. The order is escalated only while the held-out 2D residual
+// keeps dropping by more than the CV margin -- so narrow/undistorted/few-star
+// fields stay at order 1 (the classic plane fit) and only genuinely distorted
+// wide fields with enough stars go higher. Returns the chosen order.
+static int select_poly_order_cv( double *x, double *y, double *zx, double *zy,
+                                 unsigned int N, int max_order, double sizeX, double sizeY ) {
+ double *xa, *ya, *zxa, *zya, *xb, *yb, *zxb, *zyb;
+ double coefx[STAR_MATCH_POLY_MAX_NTERMS], coefy[STAR_MATCH_POLY_MAX_NTERMS];
+ unsigned int i, na, nb;
+ int order, best_order, nterms;
+ double err, prev_err, rx, ry;
+
+ if ( N < STAR_MATCH_POLY_CV_MIN_STARS )
+  return 1;
+
+ xa= malloc( N * sizeof( double ) );
+ ya= malloc( N * sizeof( double ) );
+ zxa= malloc( N * sizeof( double ) );
+ zya= malloc( N * sizeof( double ) );
+ xb= malloc( N * sizeof( double ) );
+ yb= malloc( N * sizeof( double ) );
+ zxb= malloc( N * sizeof( double ) );
+ zyb= malloc( N * sizeof( double ) );
+ if ( xa == NULL || ya == NULL || zxa == NULL || zya == NULL || xb == NULL || yb == NULL || zxb == NULL || zyb == NULL ) {
+  free( xa ); free( ya ); free( zxa ); free( zya );
+  free( xb ); free( yb ); free( zxb ); free( zyb );
+  return 1;
+ }
+ na= nb= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( ( i % 2 ) == 0 ) {
+   xa[na]= x[i]; ya[na]= y[i]; zxa[na]= zx[i]; zya[na]= zy[i]; na++;
+  } else {
+   xb[nb]= x[i]; yb[nb]= y[i]; zxb[nb]= zx[i]; zyb[nb]= zy[i]; nb++;
+  }
+ }
+ best_order= 1;
+ prev_err= -1.0;
+ for ( order= 1; order <= max_order; order++ ) {
+  nterms= poly_2d_nterms( order );
+  if ( na < (unsigned int)( nterms * STAR_MATCH_POLY_CV_STARS_PER_TERM ) ||
+       nb < (unsigned int)( nterms * STAR_MATCH_POLY_CV_STARS_PER_TERM ) )
+   break; // not enough stars per fold for this order
+  err= 0.0;
+  // fit on fold A, evaluate on fold B
+  fit_poly_2d( xa, ya, zxa, na, order, sizeX, sizeY, coefx );
+  fit_poly_2d( xa, ya, zya, na, order, sizeX, sizeY, coefy );
+  for ( i= 0; i < nb; i++ ) {
+   rx= zxb[i] - eval_poly_2d( xb[i], yb[i], order, sizeX, sizeY, coefx );
+   ry= zyb[i] - eval_poly_2d( xb[i], yb[i], order, sizeX, sizeY, coefy );
+   err+= rx * rx + ry * ry;
+  }
+  // fit on fold B, evaluate on fold A
+  fit_poly_2d( xb, yb, zxb, nb, order, sizeX, sizeY, coefx );
+  fit_poly_2d( xb, yb, zyb, nb, order, sizeX, sizeY, coefy );
+  for ( i= 0; i < na; i++ ) {
+   rx= zxa[i] - eval_poly_2d( xa[i], ya[i], order, sizeX, sizeY, coefx );
+   ry= zya[i] - eval_poly_2d( xa[i], ya[i], order, sizeX, sizeY, coefy );
+   err+= rx * rx + ry * ry;
+  }
+  err= err / (double)N; // mean held-out squared 2D residual
+  if ( prev_err < 0.0 ) {
+   prev_err= err; // order 1 baseline
+  } else if ( err < prev_err * STAR_MATCH_POLY_CV_MARGIN ) {
+   best_order= order;
+   prev_err= err;
+  } else {
+   break; // higher order does not help enough -> stop
+  }
+ }
+ free( xa ); free( ya ); free( zxa ); free( zya );
+ free( xb ); free( yb ); free( zxb ); free( zyb );
+ return best_order;
+}
+// --- end Step 1 helper ----------------------------------------------------
+
 // int Ident(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
 //         struct Frame frame1, struct Frame frame2, int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y ) {
 int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
@@ -2257,6 +2440,11 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  double *x;
  double *y;
  double *z;
+ double *zy;             // dy residuals (Step 1: fit dx and dy together)
+ int use_cvpoly;         // Step 1 toggle (env VAST_STEP1_CVPOLY), default 0
+ int poly_order;         // CV-selected residual polynomial order (>=1)
+ double coef_x[STAR_MATCH_POLY_MAX_NTERMS]; // residual polynomial coefficients (dx)
+ double coef_y[STAR_MATCH_POLY_MAX_NTERMS]; // residual polynomial coefficients (dy)
 
  // Set the number of reference stars based on the requested nuber supplied to his function as struct_pixel_coordinate_transformation->Number_of_main_star .
  Number1= (int)( (double)( struct_pixel_coordinate_transformation->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
@@ -2434,6 +2622,22 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
    exit( EXIT_FAILURE );
   };
+  zy= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // dy residuals (Step 1)
+  if ( zy == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for zy(ident_lib.c)\n" );
+   exit( EXIT_FAILURE );
+  };
+  // Step 1: CV-gated polynomial residual model, ON by default. It corrects
+  // wide-field optical + atmospheric distortion in the star matching and reduces
+  // to the classic plane fit (order 1) on narrow/undistorted/few-star fields, so
+  // it is safe across regimes. Set VAST_STEP1_CVPOLY=0 to disable it and recover
+  // the exact pre-Step-1 (classic plane-fit) behaviour.
+  use_cvpoly= 1;
+  poly_order= 1;
+  if ( getenv( "VAST_STEP1_CVPOLY" ) != NULL ) {
+   if ( 0 == strcmp( getenv( "VAST_STEP1_CVPOLY" ), "0" ) )
+    use_cvpoly= 0;
+  }
 
   // Fit a plane to x residuals
   for ( iii= 0, ii= 0; ii < (unsigned int)nm; ii++ ) {
@@ -2441,27 +2645,38 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
     x[iii]= star2[Pos2[ii]].x_frame;
     y[iii]= star2[Pos2[ii]].y_frame;
     z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    zy[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
     iii++;
    }
   }
-  fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
   // fprintf(stderr,"dx=(%lf)*x+(%lf)*y+(%lf)\n",Ax,Bx,Cx);
 
   // Fit a plane to y residuals
-  for ( iii= 0, ii= 0; ii < (unsigned int)nm; ii++ ) {
-   if ( star2[Pos2[ii]].moving_object == 0 ) {
-    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-    iii++;
-   }
+  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
+  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
+  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  if ( use_cvpoly == 1 ) {
+   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
+   if ( poly_order > 1 )
+    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
+   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
+   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+  } else {
+   fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
+   fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );
   }
-  fit_plane_lin( x, y, z, iii, &Ay, &By, &Cy );
   // fprintf(stderr,"dy=(%lf)*x+(%lf)*y+(%lf)\n",Ay,By,Cy);
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
   // fprintf(stderr,"Applying coordinate corrections...\n");
   for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
-   dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
-   dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   if ( use_cvpoly == 1 ) {
+    dx= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_x );
+    dy= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_y );
+   } else {
+    dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
+    dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   }
    star2[Pos2[ii]].x-= dx;
    star2[Pos2[ii]].y-= dy;
   }
@@ -2480,6 +2695,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    free( star2 );
 
    free( z );
+   free( zy );
    free( y );
    free( x );
 
@@ -2493,24 +2709,35 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
     x[iii]= star2[Pos2[ii]].x_frame;
     y[iii]= star2[Pos2[ii]].y_frame;
     z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    zy[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
     iii++;
    }
   }
-  fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
 
   // Fit a plane to y residuals
-  for ( iii= 0, ii= 0; ii < (unsigned int)nm; ii++ ) {
-   if ( star2[Pos2[ii]].moving_object == 0 ) {
-    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-    iii++;
-   }
+  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
+  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
+  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  if ( use_cvpoly == 1 ) {
+   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
+   if ( poly_order > 1 )
+    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
+   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
+   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+  } else {
+   fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
+   fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );
   }
-  fit_plane_lin( x, y, z, iii, &Ay, &By, &Cy );
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
   for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
-   dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
-   dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   if ( use_cvpoly == 1 ) {
+    dx= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_x );
+    dy= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_y );
+   } else {
+    dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
+    dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   }
    star2[Pos2[ii]].x-= dx;
    star2[Pos2[ii]].y-= dy;
   }
@@ -2529,6 +2756,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    free( star2 );
 
    free( z );
+   free( zy );
    free( y );
    free( x );
 
@@ -2542,24 +2770,35 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
     x[iii]= star2[Pos2[ii]].x_frame;
     y[iii]= star2[Pos2[ii]].y_frame;
     z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    zy[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
     iii++;
    }
   }
-  fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
 
   // Fit a plane to y residuals
-  for ( iii= 0, ii= 0; ii < (unsigned int)nm; ii++ ) {
-   if ( star2[Pos2[ii]].moving_object == 0 ) {
-    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-    iii++;
-   }
+  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
+  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
+  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  if ( use_cvpoly == 1 ) {
+   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
+   if ( poly_order > 1 )
+    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
+   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
+   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+  } else {
+   fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
+   fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );
   }
-  fit_plane_lin( x, y, z, iii, &Ay, &By, &Cy );
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
   for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
-   dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
-   dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   if ( use_cvpoly == 1 ) {
+    dx= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_x );
+    dy= (float)eval_poly_2d( (double)star2[Pos2[ii]].x_frame, (double)star2[Pos2[ii]].y_frame, poly_order, image_size_X, image_size_Y, coef_y );
+   } else {
+    dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
+    dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+   }
    star2[Pos2[ii]].x-= dx;
    star2[Pos2[ii]].y-= dy;
   }
@@ -2578,6 +2817,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    free( star2 );
 
    free( z );
+   free( zy );
    free( y );
    free( x );
 
@@ -2587,6 +2827,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   // Free memory if everything is OK
 
   free( z );
+  free( zy );
   free( y );
   free( x );
 
