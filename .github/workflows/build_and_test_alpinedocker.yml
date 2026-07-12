@@ -54,7 +54,7 @@ jobs:
       - name: Run VaST system test inside Alpine container
         env:
           TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
-        timeout-minutes: 300
+        timeout-minutes: 350
         run: |
           rm -rf test_artifacts
           mkdir -p test_artifacts

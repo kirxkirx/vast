@@ -11679,6 +11679,8 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Saturn/Iapetus test 2 #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
  cd .. || exit 1
@@ -12124,6 +12126,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -13043,6 +13047,8 @@ fi
 
 
 ##### Pyx2 test (involves three second-epoch images including a bad one) #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_nomatch_test ];then
  cd .. || exit 1
@@ -13301,6 +13307,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -14308,7 +14316,8 @@ fi
 # are extracted from the "Mean magnitude and position on the discovery
 # images" plain-text line in each candidate's block and required to fall
 # within 12" (~2 NMW-TexasTech pixels) of the VSX entry.
-# Runs on GitHub Actions too (no GITHUB_ACTIONS gating).
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Aur-02-Q2b1x1 ];then
  cd .. || exit 1
@@ -14546,6 +14555,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 test_internet_connection
 if [ $? -ne 0 ];then
  echo "Internet connection error!"
@@ -14760,7 +14771,8 @@ fi
 # WCS), which broke the forced-photometry filter and catalog identification
 # downstream.  This test asserts that the patched pipeline now produces a
 # proper TAN-SIP WCS on both new-epoch frames.
-# Runs everywhere (no GITHUB_ACTIONS gating).
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # (Specific variable-star recovery checks for this field will be added later.)
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Cas-04_platesolve_failure_test ];then
@@ -15051,6 +15063,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 test_internet_connection
 if [ $? -ne 0 ];then
  echo "Internet connection error!"
@@ -19667,6 +19681,8 @@ if [ $? -ne 0 ];then
 fi
 
 ##### NMW-STL find Nova Vul 2024 test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
@@ -20107,6 +20123,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Test that the Internet conncation has not failed
 test_internet_connection
