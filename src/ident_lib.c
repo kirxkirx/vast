@@ -2844,15 +2844,21 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   // (wide-field distortion, low-altitude differential refraction) still enter
   // the fit instead of being censored at the strict radius before the model
   // ever sees them. The FINAL rematch keeps the strict user radius, so the
-  // matched set returned by Ident() has unchanged semantics. Wrong pairs
-  // admitted by the enlarged radii are rejected by the sigma-clipping in
-  // robust_fit_poly_2d(). The radii are capped by the Ident_on_sigma() spatial
-  // grid cell size: its neighborhood search is complete only out to one cell.
+  // matched set returned by Ident() has unchanged semantics.
+  // The radii are capped at a fraction of the mean star separation on the
+  // reference list: on dense fields (small frames, rich star fields) an
+  // enlarged radius makes the nearest-neighbor pairing ambiguous and can trip
+  // the too-many-ambiguous-matches guard in Ident_on_sigma(), which would
+  // drop the image entirely. The fraction also keeps the radii well within
+  // the spatial grid completeness limit (one full cell). As the last line of
+  // defense, every annealed pairing that still fails is retried at the strict
+  // radius before giving up on the image, so annealing can never do worse
+  // than the classic fixed-radius behaviour.
   anneal_radius_initial= struct_pixel_coordinate_transformation->sigma_popadaniya;
   anneal_radius_second= struct_pixel_coordinate_transformation->sigma_popadaniya;
   anneal_radius_third= struct_pixel_coordinate_transformation->sigma_popadaniya;
   if ( use_anneal == 1 && NUMBER1 > 0 ) {
-   anneal_radius_cap= sqrt( image_size_X * image_size_Y / (double)NUMBER1 );
+   anneal_radius_cap= STAR_MATCH_ANNEAL_CAP_FRACTION_OF_MEAN_SEPARATION * sqrt( image_size_X * image_size_Y / (double)NUMBER1 );
    if ( anneal_radius_cap > struct_pixel_coordinate_transformation->sigma_popadaniya ) {
     anneal_radius_initial= STAR_MATCH_ANNEAL_MULT_INITIAL * struct_pixel_coordinate_transformation->sigma_popadaniya;
     anneal_radius_second= STAR_MATCH_ANNEAL_MULT_SECOND * struct_pixel_coordinate_transformation->sigma_popadaniya;
@@ -2864,13 +2870,23 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
     if ( anneal_radius_third > anneal_radius_cap )
      anneal_radius_third= anneal_radius_cap;
    }
-   // else: the base radius already exceeds the grid completeness limit - no annealing
+   // else: the field is too dense for any annealing - keep the strict radius
   }
   // star1 -> STAR1
   // Note, at this point we assume we have a reasonably good coordinate transofrmation
   // based on the best similar triangle constructed from the reference stars. The following
   // function will apply the transformation to match stars in structures STAR2 and STAR1.
   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_initial, image_size_X, image_size_Y );
+  if ( nm < min_number_of_matched_stars && anneal_radius_initial > struct_pixel_coordinate_transformation->sigma_popadaniya ) {
+   // The enlarged radius made the pairing ambiguous or otherwise unusable on
+   // this field - fall back to the strict radius (classic behaviour) and
+   // disable annealing for the remaining pairings of this image.
+   fprintf( stderr, "the annealed match radius failed on this field, retrying with the strict radius... " );
+   anneal_radius_initial= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   anneal_radius_second= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   anneal_radius_third= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_initial, image_size_X, image_size_Y );
+  }
 
   // If the match is bad - exit and retry.
   if ( nm < min_number_of_matched_stars ) {
@@ -2956,6 +2972,13 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   }
   // And now match stars again
   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_second, image_size_X, image_size_Y );
+  if ( nm < min_number_of_matched_stars && anneal_radius_second > struct_pixel_coordinate_transformation->sigma_popadaniya ) {
+   // annealed-radius fallback, see the comment at the initial pairing above
+   fprintf( stderr, "the annealed match radius failed on this field, retrying with the strict radius... " );
+   anneal_radius_second= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   anneal_radius_third= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_second, image_size_X, image_size_Y );
+  }
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched, ", nm );
   // Check the match sucess, otherwise VaST wil crash when reaching fit_plane_lin()
@@ -3013,6 +3036,12 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   }
   // And now match stars again
   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_third, image_size_X, image_size_Y );
+  if ( nm < min_number_of_matched_stars && anneal_radius_third > struct_pixel_coordinate_transformation->sigma_popadaniya ) {
+   // annealed-radius fallback, see the comment at the initial pairing above
+   fprintf( stderr, "the annealed match radius failed on this field, retrying with the strict radius... " );
+   anneal_radius_third= struct_pixel_coordinate_transformation->sigma_popadaniya;
+   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_third, image_size_X, image_size_Y );
+  }
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched (2nd iteration). ", nm );
 

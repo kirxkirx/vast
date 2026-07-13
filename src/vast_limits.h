@@ -215,6 +215,10 @@
 #define STAR_MATCH_ANNEAL_MULT_SECOND 2.0                                                      // match-radius annealing: radius multiplier for the rematch feeding the second residual fit
 #define STAR_MATCH_ANNEAL_MULT_THIRD 1.5                                                       // match-radius annealing: radius multiplier for the rematch feeding the third residual fit
                                                                                                // (the final rematch always uses the strict user-specified radius)
+#define STAR_MATCH_ANNEAL_CAP_FRACTION_OF_MEAN_SEPARATION 0.25                                 // cap the annealed radii at this fraction of the mean star separation sqrt(X*Y/N) on the
+                                                                                               // reference list: on dense fields (small frames, rich star fields) an enlarged radius makes
+                                                                                               // the nearest-neighbor pairing ambiguous and can trip the too-many-ambiguous-matches guard
+                                                                                               // in Ident_on_sigma(), dropping the image entirely (seen on the 528x512 sample_data frames)
 #define STAR_MATCH_POLY_CLIP_SIGMA 3.0                                                         // sigma-clipping threshold for the residual polynomial fit, in units of 1.48*median(2D residual)
 #define STAR_MATCH_POLY_CLIP_MAX_ITER 2                                                        // maximum sigma-clipping iterations in robust_fit_poly_2d()
 #define STAR_MATCH_POLY_CLIP_MIN_LIMIT_PIX 1.0                                                 // floor of the clipping limit: residuals below this are star centroid noise, not wrong
