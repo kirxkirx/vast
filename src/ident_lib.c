@@ -2361,18 +2361,27 @@ static double eval_poly_2d( double x, double y, int order, double sizeX, double 
  return val;
 }
 
-// Choose the residual-polynomial order (1..max_order) by two-fold cross-validation
-// on an even/odd split. The order is escalated only while the held-out 2D residual
-// keeps dropping by more than the CV margin -- so narrow/undistorted/few-star
-// fields stay at order 1 (the classic plane fit) and only genuinely distorted
-// wide fields with enough stars go higher. Returns the chosen order.
+// Choose the residual-polynomial order (1..max_order) by two-fold cross-validation.
+// The order is escalated only while the held-out 2D residual drops by more than
+// the CV margin -- so narrow/undistorted/few-star fields stay at order 1 (the
+// classic plane fit) and only genuinely distorted wide fields with enough stars
+// go higher. Returns the chosen order.
+// improved_ladder=1 enables two refinements over the classic behaviour:
+// (a) the folds are split by a spatial checkerboard instead of even/odd list
+//     order (the list order is brightness order, so even/odd folds are nearly
+//     identical spatially and the split adds variance to the order choice);
+// (b) all feasible orders are evaluated instead of stopping at the first
+//     non-improving one -- with strong low-altitude refraction the residual
+//     field can be S-shaped along one axis so that order 2 barely improves on
+//     the plane while order 3 wins decisively.
 static int select_poly_order_cv( double *x, double *y, double *zx, double *zy,
-                                 unsigned int N, int max_order, double sizeX, double sizeY ) {
+                                 unsigned int N, int max_order, double sizeX, double sizeY,
+                                 int improved_ladder ) {
  double *xa, *ya, *zxa, *zya, *xb, *yb, *zxb, *zyb;
  double coefx[STAR_MATCH_POLY_MAX_NTERMS], coefy[STAR_MATCH_POLY_MAX_NTERMS];
  unsigned int i, na, nb;
- int order, best_order, nterms;
- double err, prev_err, rx, ry;
+ int order, best_order, nterms, fold;
+ double err, prev_err, rx, ry, cell;
 
  if ( N < STAR_MATCH_POLY_CV_MIN_STARS )
   return 1;
@@ -2390,12 +2399,32 @@ static int select_poly_order_cv( double *x, double *y, double *zx, double *zy,
   free( xb ); free( yb ); free( zxb ); free( zyb );
   return 1;
  }
+ cell= MAX( sizeX, sizeY ) / 8.0;
+ if ( cell <= 0.0 )
+  cell= 1.0;
  na= nb= 0;
  for ( i= 0; i < N; i++ ) {
-  if ( ( i % 2 ) == 0 ) {
+  if ( improved_ladder == 1 ) {
+   fold= ( (int)( x[i] / cell ) + (int)( y[i] / cell ) ) % 2;
+  } else {
+   fold= (int)( i % 2 );
+  }
+  if ( fold == 0 ) {
    xa[na]= x[i]; ya[na]= y[i]; zxa[na]= zx[i]; zya[na]= zy[i]; na++;
   } else {
    xb[nb]= x[i]; yb[nb]= y[i]; zxb[nb]= zx[i]; zyb[nb]= zy[i]; nb++;
+  }
+ }
+ // A degenerate spatial split (all stars concentrated in a few checkerboard
+ // cells of one color) falls back to the classic even/odd split
+ if ( improved_ladder == 1 && ( na < N / 4 || nb < N / 4 ) ) {
+  na= nb= 0;
+  for ( i= 0; i < N; i++ ) {
+   if ( ( i % 2 ) == 0 ) {
+    xa[na]= x[i]; ya[na]= y[i]; zxa[na]= zx[i]; zya[na]= zy[i]; na++;
+   } else {
+    xb[nb]= x[i]; yb[nb]= y[i]; zxb[nb]= zx[i]; zyb[nb]= zy[i]; nb++;
+   }
   }
  }
  best_order= 1;
@@ -2429,12 +2458,188 @@ static int select_poly_order_cv( double *x, double *y, double *zx, double *zy,
    best_order= order;
    prev_err= err;
   } else {
-   break; // higher order does not help enough -> stop
+   if ( improved_ladder == 0 ) {
+    break; // classic ladder: stop at the first non-improving order
+   }
+   // improved ladder: keep evaluating higher orders - a non-improving
+   // order 2 does not preclude order 3 winning
   }
  }
  free( xa ); free( ya ); free( zxa ); free( zya );
  free( xb ); free( yb ); free( zxb ); free( zyb );
  return best_order;
+}
+// qsort comparator for double values (used for the median in robust_fit_poly_2d)
+static int compare_double_for_qsort( const void *a, const void *b ) {
+ double d1, d2;
+ d1= *(const double *)a;
+ d2= *(const double *)b;
+ if ( d1 < d2 )
+  return -1;
+ if ( d1 > d2 )
+  return 1;
+ return 0;
+}
+
+// Robust (sigma-clipped) residual polynomial fit: fit the dx and dy polynomials
+// of the given order, then iteratively reject pairs whose combined 2D residual
+// exceeds STAR_MATCH_POLY_CLIP_SIGMA * 1.48 * median(2D residual) and refit on
+// the survivors. dx and dy share ONE inlier set, so a wrongly matched pair is
+// removed from both axes at once. This protects the fit from wrong star pairs
+// admitted by the annealed (enlarged) match radii. Keeps the current fit when
+// too few pairs would survive the clipping.
+// Returns the number of pairs used in the final fit (0 on allocation failure -
+// the caller-provided coefficients are then left as plain unclipped fits);
+// the RMS of the final fit residuals over the final pairs is returned via
+// rms_after (may be NULL).
+static int robust_fit_poly_2d( double *x, double *y, double *zx, double *zy, unsigned int N, int order,
+                               double sizeX, double sizeY, double *coef_x, double *coef_y, double *rms_after ) {
+ double *xw, *yw, *zxw, *zyw, *r, *rsorted;
+ unsigned int i, nw, nkeep;
+ int clip_iter, min_keep;
+ double rx, ry, median_r, clip_limit, sum_r2;
+
+ min_keep= poly_2d_nterms( order ) * STAR_MATCH_POLY_CV_STARS_PER_TERM;
+
+ // plain fit first - this is also the fallback result if clipping cannot proceed
+ fit_poly_2d( x, y, zx, N, order, sizeX, sizeY, coef_x );
+ fit_poly_2d( x, y, zy, N, order, sizeX, sizeY, coef_y );
+
+ xw= malloc( N * sizeof( double ) );
+ yw= malloc( N * sizeof( double ) );
+ zxw= malloc( N * sizeof( double ) );
+ zyw= malloc( N * sizeof( double ) );
+ r= malloc( N * sizeof( double ) );
+ rsorted= malloc( N * sizeof( double ) );
+ if ( xw == NULL || yw == NULL || zxw == NULL || zyw == NULL || r == NULL || rsorted == NULL ) {
+  free( xw ); free( yw ); free( zxw ); free( zyw );
+  free( r ); free( rsorted );
+  return 0;
+ }
+ for ( i= 0; i < N; i++ ) {
+  xw[i]= x[i];
+  yw[i]= y[i];
+  zxw[i]= zx[i];
+  zyw[i]= zy[i];
+ }
+ nw= N;
+ for ( clip_iter= 0; clip_iter < STAR_MATCH_POLY_CLIP_MAX_ITER; clip_iter++ ) {
+  // 2D residuals of the current fit over the current working set
+  for ( i= 0; i < nw; i++ ) {
+   rx= zxw[i] - eval_poly_2d( xw[i], yw[i], order, sizeX, sizeY, coef_x );
+   ry= zyw[i] - eval_poly_2d( xw[i], yw[i], order, sizeX, sizeY, coef_y );
+   r[i]= sqrt( rx * rx + ry * ry );
+   rsorted[i]= r[i];
+  }
+  qsort( rsorted, nw, sizeof( double ), compare_double_for_qsort );
+  median_r= rsorted[nw / 2];
+  clip_limit= STAR_MATCH_POLY_CLIP_SIGMA * 1.48 * median_r;
+  if ( clip_limit <= 0.0 )
+   break; // degenerate residuals - nothing sensible to clip
+  if ( clip_limit < STAR_MATCH_POLY_CLIP_MIN_LIMIT_PIX )
+   clip_limit= STAR_MATCH_POLY_CLIP_MIN_LIMIT_PIX; // do not clip within the star centroid noise floor
+  nkeep= 0;
+  for ( i= 0; i < nw; i++ ) {
+   if ( r[i] <= clip_limit )
+    nkeep++;
+  }
+  if ( nkeep == nw || (int)nkeep < min_keep )
+   break; // nothing to clip, or clipping would starve the fit
+  // compact the working arrays to the surviving pairs
+  nkeep= 0;
+  for ( i= 0; i < nw; i++ ) {
+   if ( r[i] <= clip_limit ) {
+    xw[nkeep]= xw[i];
+    yw[nkeep]= yw[i];
+    zxw[nkeep]= zxw[i];
+    zyw[nkeep]= zyw[i];
+    nkeep++;
+   }
+  }
+  nw= nkeep;
+  fit_poly_2d( xw, yw, zxw, nw, order, sizeX, sizeY, coef_x );
+  fit_poly_2d( xw, yw, zyw, nw, order, sizeX, sizeY, coef_y );
+ }
+ if ( rms_after != NULL ) {
+  sum_r2= 0.0;
+  for ( i= 0; i < nw; i++ ) {
+   rx= zxw[i] - eval_poly_2d( xw[i], yw[i], order, sizeX, sizeY, coef_x );
+   ry= zyw[i] - eval_poly_2d( xw[i], yw[i], order, sizeX, sizeY, coef_y );
+   sum_r2+= rx * rx + ry * ry;
+  }
+  ( *rms_after )= nw > 0 ? sqrt( sum_r2 / (double)nw ) : 0.0;
+ }
+ free( xw ); free( yw ); free( zxw ); free( zyw );
+ free( r ); free( rsorted );
+ return (int)nw;
+}
+
+// One CV-gated polynomial fit iteration for Ident(): select the residual
+// polynomial order by cross-validation, fit it (sigma-clipped when use_clip=1)
+// and print a one-line diagnostic: the selected order, the number of pairs
+// feeding the fit and surviving the clipping, the pair RMS before/after the
+// fit, and the correction amplitude at the frame corners (the region most
+// exposed to poorly constrained extrapolation of the polynomial).
+// Returns the selected polynomial order; fills coef_x and coef_y.
+static int cvpoly_fit_iteration( double *x, double *y, double *zx, double *zy, unsigned int npairs,
+                                 int iter_number, int use_clip, int improved_cv_ladder,
+                                 double image_size_X, double image_size_Y,
+                                 double *coef_x, double *coef_y ) {
+ int poly_order, k, n_inliers;
+ unsigned int i;
+ double rms_before, rms_after, corner_max_corr, corner_corr;
+ double rx, ry, ddx, ddy;
+ double corner_x[4], corner_y[4];
+
+ for ( k= 0; k < STAR_MATCH_POLY_MAX_NTERMS; k++ ) {
+  coef_x[k]= 0.0;
+  coef_y[k]= 0.0;
+ }
+ rms_before= 0.0;
+ for ( i= 0; i < npairs; i++ ) {
+  rms_before+= zx[i] * zx[i] + zy[i] * zy[i];
+ }
+ if ( npairs > 0 )
+  rms_before= sqrt( rms_before / (double)npairs );
+ poly_order= select_poly_order_cv( x, y, zx, zy, npairs, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y, improved_cv_ladder );
+ n_inliers= 0;
+ rms_after= 0.0;
+ if ( use_clip == 1 ) {
+  n_inliers= robust_fit_poly_2d( x, y, zx, zy, npairs, poly_order, image_size_X, image_size_Y, coef_x, coef_y, &rms_after );
+ }
+ if ( n_inliers == 0 ) {
+  // clipping disabled or robust fit could not run - plain unclipped fit
+  fit_poly_2d( x, y, zx, npairs, poly_order, image_size_X, image_size_Y, coef_x );
+  fit_poly_2d( x, y, zy, npairs, poly_order, image_size_X, image_size_Y, coef_y );
+  n_inliers= (int)npairs;
+  rms_after= 0.0;
+  for ( i= 0; i < npairs; i++ ) {
+   rx= zx[i] - eval_poly_2d( x[i], y[i], poly_order, image_size_X, image_size_Y, coef_x );
+   ry= zy[i] - eval_poly_2d( x[i], y[i], poly_order, image_size_X, image_size_Y, coef_y );
+   rms_after+= rx * rx + ry * ry;
+  }
+  if ( npairs > 0 )
+   rms_after= sqrt( rms_after / (double)npairs );
+ }
+ corner_x[0]= 0.0;
+ corner_y[0]= 0.0;
+ corner_x[1]= image_size_X;
+ corner_y[1]= 0.0;
+ corner_x[2]= 0.0;
+ corner_y[2]= image_size_Y;
+ corner_x[3]= image_size_X;
+ corner_y[3]= image_size_Y;
+ corner_max_corr= 0.0;
+ for ( k= 0; k < 4; k++ ) {
+  ddx= eval_poly_2d( corner_x[k], corner_y[k], poly_order, image_size_X, image_size_Y, coef_x );
+  ddy= eval_poly_2d( corner_x[k], corner_y[k], poly_order, image_size_X, image_size_Y, coef_y );
+  corner_corr= sqrt( ddx * ddx + ddy * ddy );
+  if ( corner_corr > corner_max_corr )
+   corner_max_corr= corner_corr;
+ }
+ fprintf( stderr, "[CVPOLY iter %d: order=%d pairs=%u inliers=%d rms %.2f -> %.2f pix, max corner correction %.1f pix] ",
+          iter_number, poly_order, npairs, n_inliers, rms_before, rms_after, corner_max_corr );
+ return poly_order;
 }
 // --- end Step 1 helper ----------------------------------------------------
 
@@ -2459,6 +2664,13 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  int poly_order;         // CV-selected residual polynomial order (>=1)
  double coef_x[STAR_MATCH_POLY_MAX_NTERMS]; // residual polynomial coefficients (dx)
  double coef_y[STAR_MATCH_POLY_MAX_NTERMS]; // residual polynomial coefficients (dy)
+ int use_anneal;         // match-radius annealing toggle (env VAST_STEP1_ANNEAL), active only with CVPOLY
+ int use_clip;           // sigma-clipped residual fit toggle (env VAST_STEP1_CLIP), active only with CVPOLY
+ int improved_cv_ladder; // CV ladder improvements toggle (env VAST_STEP1_CVLADDER), active only with CVPOLY
+ double anneal_radius_initial; // enlarged match radius for the pairing feeding the first residual fit
+ double anneal_radius_second;  // enlarged match radius for the rematch feeding the second residual fit
+ double anneal_radius_third;   // enlarged match radius for the rematch feeding the third residual fit
+ double anneal_radius_cap;     // spatial-grid completeness cap for the annealed radii
 
  // Set the number of reference stars based on the requested nuber supplied to his function as struct_pixel_coordinate_transformation->Number_of_main_star .
  Number1= (int)( (double)( struct_pixel_coordinate_transformation->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
@@ -2590,11 +2802,75 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
 
  // If enough stars are detected on the current frame... (If not, it may be a bad frame with clouds etc.)
  if ( NUMBER2 > MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  // Step 1: CV-gated polynomial residual model, ON by default. It corrects
+  // wide-field optical + atmospheric distortion in the star matching and reduces
+  // to the classic plane fit (order 1) on narrow/undistorted/few-star fields, so
+  // it is safe across regimes. Set VAST_STEP1_CVPOLY=0 to disable it and recover
+  // the exact pre-Step-1 (classic plane-fit) behaviour.
+  use_cvpoly= 1;
+  poly_order= 1;
+  if ( getenv( "VAST_STEP1_CVPOLY" ) != NULL ) {
+   if ( 0 == strcmp( getenv( "VAST_STEP1_CVPOLY" ), "0" ) )
+    use_cvpoly= 0;
+  }
+  // The sub-features below are active only together with the polynomial model
+  // and may be toggled individually with environment variables for testing and
+  // triage. With VAST_STEP1_CVPOLY=0 they are all inert and the classic
+  // behaviour is exactly preserved.
+  use_anneal= use_cvpoly;
+  improved_cv_ladder= use_cvpoly;
+  // Sigma-clipping of the residual fit is OFF by default (set VAST_STEP1_CLIP=1
+  // to enable it for experiments): on strongly distorted low-altitude fields
+  // the clipping rejects the genuine large-residual corner pairs - the very
+  // signal the polynomial must absorb - so the corners stay under-corrected
+  // and their stars produce false 'new object' transient candidates. Tested on
+  // the 2026-07-12 airmass-4.3 NMW-TexasTech fields: clipping ON gave more
+  // false candidates than the unclipped fit on every field.
+  use_clip= 0;
+  if ( getenv( "VAST_STEP1_ANNEAL" ) != NULL ) {
+   if ( 0 == strcmp( getenv( "VAST_STEP1_ANNEAL" ), "0" ) )
+    use_anneal= 0;
+  }
+  if ( getenv( "VAST_STEP1_CLIP" ) != NULL ) {
+   if ( 0 == strcmp( getenv( "VAST_STEP1_CLIP" ), "1" ) )
+    use_clip= use_cvpoly;
+  }
+  if ( getenv( "VAST_STEP1_CVLADDER" ) != NULL ) {
+   if ( 0 == strcmp( getenv( "VAST_STEP1_CVLADDER" ), "0" ) )
+    improved_cv_ladder= 0;
+  }
+  // Match-radius annealing: the pairings that feed the residual polynomial fits
+  // temporarily use enlarged match radii so that strongly displaced stars
+  // (wide-field distortion, low-altitude differential refraction) still enter
+  // the fit instead of being censored at the strict radius before the model
+  // ever sees them. The FINAL rematch keeps the strict user radius, so the
+  // matched set returned by Ident() has unchanged semantics. Wrong pairs
+  // admitted by the enlarged radii are rejected by the sigma-clipping in
+  // robust_fit_poly_2d(). The radii are capped by the Ident_on_sigma() spatial
+  // grid cell size: its neighborhood search is complete only out to one cell.
+  anneal_radius_initial= struct_pixel_coordinate_transformation->sigma_popadaniya;
+  anneal_radius_second= struct_pixel_coordinate_transformation->sigma_popadaniya;
+  anneal_radius_third= struct_pixel_coordinate_transformation->sigma_popadaniya;
+  if ( use_anneal == 1 && NUMBER1 > 0 ) {
+   anneal_radius_cap= sqrt( image_size_X * image_size_Y / (double)NUMBER1 );
+   if ( anneal_radius_cap > struct_pixel_coordinate_transformation->sigma_popadaniya ) {
+    anneal_radius_initial= STAR_MATCH_ANNEAL_MULT_INITIAL * struct_pixel_coordinate_transformation->sigma_popadaniya;
+    anneal_radius_second= STAR_MATCH_ANNEAL_MULT_SECOND * struct_pixel_coordinate_transformation->sigma_popadaniya;
+    anneal_radius_third= STAR_MATCH_ANNEAL_MULT_THIRD * struct_pixel_coordinate_transformation->sigma_popadaniya;
+    if ( anneal_radius_initial > anneal_radius_cap )
+     anneal_radius_initial= anneal_radius_cap;
+    if ( anneal_radius_second > anneal_radius_cap )
+     anneal_radius_second= anneal_radius_cap;
+    if ( anneal_radius_third > anneal_radius_cap )
+     anneal_radius_third= anneal_radius_cap;
+   }
+   // else: the base radius already exceeds the grid completeness limit - no annealing
+  }
   // star1 -> STAR1
   // Note, at this point we assume we have a reasonably good coordinate transofrmation
   // based on the best similar triangle constructed from the reference stars. The following
   // function will apply the transformation to match stars in structures STAR2 and STAR1.
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_initial, image_size_X, image_size_Y );
 
   // If the match is bad - exit and retry.
   if ( nm < min_number_of_matched_stars ) {
@@ -2641,18 +2917,6 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    fprintf( stderr, "ERROR: Couldn't allocate memory for zy(ident_lib.c)\n" );
    exit( EXIT_FAILURE );
   };
-  // Step 1: CV-gated polynomial residual model, ON by default. It corrects
-  // wide-field optical + atmospheric distortion in the star matching and reduces
-  // to the classic plane fit (order 1) on narrow/undistorted/few-star fields, so
-  // it is safe across regimes. Set VAST_STEP1_CVPOLY=0 to disable it and recover
-  // the exact pre-Step-1 (classic plane-fit) behaviour.
-  use_cvpoly= 1;
-  poly_order= 1;
-  if ( getenv( "VAST_STEP1_CVPOLY" ) != NULL ) {
-   if ( 0 == strcmp( getenv( "VAST_STEP1_CVPOLY" ), "0" ) )
-    use_cvpoly= 0;
-  }
-
   // Fit a plane to x residuals
   for ( iii= 0, ii= 0; ii < (unsigned int)nm; ii++ ) {
    if ( star2[Pos2[ii]].moving_object == 0 ) {
@@ -2666,15 +2930,11 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   // fprintf(stderr,"dx=(%lf)*x+(%lf)*y+(%lf)\n",Ax,Bx,Cx);
 
   // Fit a plane to y residuals
-  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
-  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
-  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  // Fit the residuals. Step 1: when enabled, CV-select the polynomial order and
+  // fit with sigma-clipping of wrong pairs; otherwise the classic per-axis
+  // least-squares plane fit (byte-identical to the old behaviour).
   if ( use_cvpoly == 1 ) {
-   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
-   if ( poly_order > 1 )
-    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
-   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
-   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+   poly_order= cvpoly_fit_iteration( x, y, z, zy, iii, 1, use_clip, improved_cv_ladder, image_size_X, image_size_Y, coef_x, coef_y );
   } else {
    fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
    fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );
@@ -2695,7 +2955,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    star2[Pos2[ii]].y-= dy;
   }
   // And now match stars again
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_second, image_size_X, image_size_Y );
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched, ", nm );
   // Check the match sucess, otherwise VaST wil crash when reaching fit_plane_lin()
@@ -2729,15 +2989,11 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   }
 
   // Fit a plane to y residuals
-  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
-  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
-  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  // Fit the residuals. Step 1: when enabled, CV-select the polynomial order and
+  // fit with sigma-clipping of wrong pairs; otherwise the classic per-axis
+  // least-squares plane fit (byte-identical to the old behaviour).
   if ( use_cvpoly == 1 ) {
-   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
-   if ( poly_order > 1 )
-    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
-   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
-   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+   poly_order= cvpoly_fit_iteration( x, y, z, zy, iii, 2, use_clip, improved_cv_ladder, image_size_X, image_size_Y, coef_x, coef_y );
   } else {
    fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
    fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );
@@ -2756,7 +3012,7 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
    star2[Pos2[ii]].y-= dy;
   }
   // And now match stars again
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, anneal_radius_third, image_size_X, image_size_Y );
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched (2nd iteration). ", nm );
 
@@ -2790,15 +3046,11 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
   }
 
   // Fit a plane to y residuals
-  // Fit the residual planes. Step 1: when enabled, use a robust affine fit that
-  // sigma-clips outlier pairs from a SHARED dx/dy inlier set; otherwise the
-  // classic per-axis least-squares fit (byte-identical to the old behaviour).
+  // Fit the residuals. Step 1: when enabled, CV-select the polynomial order and
+  // fit with sigma-clipping of wrong pairs; otherwise the classic per-axis
+  // least-squares plane fit (byte-identical to the old behaviour).
   if ( use_cvpoly == 1 ) {
-   poly_order= select_poly_order_cv( x, y, z, zy, iii, STAR_MATCH_MAX_POLY_ORDER, image_size_X, image_size_Y );
-   if ( poly_order > 1 )
-    fprintf( stderr, "[CVPOLY: correcting distortion with a residual polynomial of order %d] ", poly_order );
-   fit_poly_2d( x, y, z, iii, poly_order, image_size_X, image_size_Y, coef_x );
-   fit_poly_2d( x, y, zy, iii, poly_order, image_size_X, image_size_Y, coef_y );
+   poly_order= cvpoly_fit_iteration( x, y, z, zy, iii, 3, use_clip, improved_cv_ladder, image_size_X, image_size_Y, coef_x, coef_y );
   } else {
    fit_plane_lin( x, y, z, iii, &Ax, &Bx, &Cx );
    fit_plane_lin( x, y, zy, iii, &Ay, &By, &Cy );

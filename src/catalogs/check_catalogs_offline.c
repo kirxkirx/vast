@@ -281,20 +281,46 @@ static int is_semiregular_variability_type( const char *type_string ) {
  return 0;
 }
 
+// Return 1 if the variability type string denotes a slow irregular variable:
+// 'L' or one of its subtypes 'LB', 'LC', optionally followed by the
+// uncertain-classification flag ':'. Combined and other L-starting types
+// ('L/SR', 'LB+E', 'LBV', 'LPB', 'LPV') do not match, same strictness as
+// is_mira_variability_type().
+static int is_slow_irregular_variability_type( const char *type_string ) {
+ int i;
+ if ( type_string == NULL ) {
+  return 0;
+ }
+ if ( type_string[0] != 'L' ) {
+  return 0;
+ }
+ i= 1;
+ if ( type_string[i] == 'B' || type_string[i] == 'C' ) {
+  i++;
+ }
+ if ( type_string[i] == ':' ) {
+  i++;
+ }
+ if ( type_string[i] == '\0' ) {
+  return 1;
+ }
+ return 0;
+}
+
 // Select the threshold for the 'measured mag is brighter than the record
 // maximum' ATTENTION warning for a VSX record. Mira variables always get the
 // relaxed TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA threshold.
-// Semiregular variables get the same relaxed threshold when the record
-// maximum is measured in the photographic 'pg', Johnson 'B' or Sloan 'g'
-// band ('g' is case-sensitive so Gaia 'G' does not match): like Miras these
-// are red stars, so their V/CV-band maximum may be magnitudes brighter than
-// the blue-band catalog maximum.
+// Semiregular and slow irregular variables get the same relaxed threshold
+// when the record maximum is measured in the photographic 'pg', Johnson 'B'
+// or Sloan 'g' band ('g' is case-sensitive so Gaia 'G' does not match):
+// like Miras these are red stars, so their V/CV-band maximum may be
+// magnitudes brighter than the blue-band catalog maximum.
 static double vsx_record_brightening_warn_threshold( const char *type_string, const char *descr ) {
  char max_mag_passband[VSX_DESCR_MAG_REGION_LENGTH + 1];
  if ( 1 == is_mira_variability_type( type_string ) ) {
   return TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA;
  }
- if ( 1 == is_semiregular_variability_type( type_string ) ) {
+ if ( 1 == is_semiregular_variability_type( type_string ) || 1 == is_slow_irregular_variability_type( type_string ) ) {
   if ( 1 == get_max_mag_passband_from_vsx_descr( descr, max_mag_passband ) ) {
    if ( 0 == strcmp( max_mag_passband, "pg" ) || 0 == strcmp( max_mag_passband, "B" ) || 0 == strcmp( max_mag_passband, "g" ) ) {
     return TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA;
@@ -559,10 +585,10 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   print_far_compatible_note= 0;
   if ( measured_mag_of_transient > MEASURED_MAG_NOT_PROVIDED + 1.0 ) {
    if ( 1 == get_expected_brightest_mag_from_vsx_descr( best_descr, &expected_brightest_mag ) ) {
-    // Miras (always) and semiregulars (when the catalog maximum is pg, B
-    // or g) get a relaxed threshold: blue-band catalog maxima + the color
-    // of these red stars + cycle-to-cycle maximum variations easily
-    // exceed 3 mag
+    // Miras (always), semiregulars and slow irregulars (when the catalog
+    // maximum is pg, B or g) get a relaxed threshold: blue-band catalog
+    // maxima + the color of these red stars + cycle-to-cycle maximum
+    // variations easily exceed 3 mag
     brightening_warn_threshold_mag= vsx_record_brightening_warn_threshold( best_type, best_descr );
     if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
      nearest_triggers_attention= 1;
@@ -849,8 +875,8 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
       expected_brightest_mag= asassn_mean_mag - asassn_amplitude;
      }
      // Miras get a relaxed threshold as in search_vsx(); the semiregular
-     // blue-band relaxation of search_vsx() does not apply here as the
-     // ASAS-SN mean magnitudes are V band
+     // and slow-irregular blue-band relaxation of search_vsx() does not
+     // apply here as the ASAS-SN mean magnitudes are V band
      brightening_warn_threshold_mag= is_mira_variability_type( type ) ? TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD_MIRA : TRANSIENT_BRIGHTER_THAN_CATALOG_MAG_THRESHOLD;
      if ( expected_brightest_mag - measured_mag_of_transient > brightening_warn_threshold_mag ) {
       if ( 1 == html_output ) {

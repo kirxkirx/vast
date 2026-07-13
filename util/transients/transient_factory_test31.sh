@@ -376,7 +376,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
-  #STARMATCH_RADIUS_PIX=4 # testing new values
+  # Widened from the 3.5 pix default: at very low altitude (airmass >4) the
+  # differential-refraction distortion between the reference and second-epoch
+  # frames leaves multi-pixel residuals at the frame corners even after the
+  # polynomial correction in the star matcher; the wider radius together with
+  # the matcher's radius annealing recovers those corner stars instead of
+  # reporting them as false transient candidates (validated on the
+  # 2026-07-12 Cam-10/Per-05/Per-02/Aur-02 airmass-4.3 fields).
+  STARMATCH_RADIUS_PIX=5
   # Let's try to reduce from 50 to 25
   # Nope, looks like we can avoid many mismatches with a larger edge ident
   FRAME_EDGE_OFFSET_PIX=100
@@ -442,7 +449,9 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
-  STARMATCH_RADIUS_PIX=4 # testing new values
+  # Widened to 5 pix consistent with TTUQ1b1x1 (see the comment in that camera
+  # block: low-altitude differential-refraction distortion at the frame corners)
+  STARMATCH_RADIUS_PIX=5
   # Let's try to reduce from 50 to 25
   # Nope, looks like we can avoid many mismatches with a larger edge ident
   #FRAME_EDGE_OFFSET_PIX=100

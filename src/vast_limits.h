@@ -211,6 +211,15 @@
 #define STAR_MATCH_POLY_CV_MARGIN 0.98                                                         // held-out residual must drop below this fraction of the lower order's to escalate
 #define STAR_MATCH_POLY_CV_MIN_STARS 40                                                        // below this many matched stars, always use order 1 (no CV)
 #define STAR_MATCH_POLY_CV_STARS_PER_TERM 5                                                    // require this many stars per polynomial term per CV fold
+#define STAR_MATCH_ANNEAL_MULT_INITIAL 3.0                                                     // match-radius annealing: radius multiplier for the initial pairing feeding the first residual fit
+#define STAR_MATCH_ANNEAL_MULT_SECOND 2.0                                                      // match-radius annealing: radius multiplier for the rematch feeding the second residual fit
+#define STAR_MATCH_ANNEAL_MULT_THIRD 1.5                                                       // match-radius annealing: radius multiplier for the rematch feeding the third residual fit
+                                                                                               // (the final rematch always uses the strict user-specified radius)
+#define STAR_MATCH_POLY_CLIP_SIGMA 3.0                                                         // sigma-clipping threshold for the residual polynomial fit, in units of 1.48*median(2D residual)
+#define STAR_MATCH_POLY_CLIP_MAX_ITER 2                                                        // maximum sigma-clipping iterations in robust_fit_poly_2d()
+#define STAR_MATCH_POLY_CLIP_MIN_LIMIT_PIX 1.0                                                 // floor of the clipping limit: residuals below this are star centroid noise, not wrong
+                                                                                               // pairs - without the floor a well-fit dense field center drives the median residual (and
+                                                                                               // hence the clip limit) so low that genuine noisy faint stars get rejected from the fit
 #define ONE_PLUS_MAX_SCALE_FACTOR_SIX (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR)
 
 // Magnitude calibration
@@ -313,9 +322,10 @@
                                                                // their catalog maxima are often photographic while we measure CV, the V-pg difference for
                                                                // these very red stars reaches magnitudes, and the brightness of Mira maxima genuinely varies
                                                                // from cycle to cycle - so a >3 mag apparent 'overbrightening' is normal Mira behavior.
-                                                               // Also applied to semiregular (VSX type 'SR' and its subtypes, including ':') variables
-                                                               // when the VSX record maximum is measured in the pg, B or g band - blue-band maxima
-                                                               // of these red stars similarly underestimate the V/CV-band brightness.
+                                                               // Also applied to semiregular (VSX type 'SR' and its subtypes, including ':') and slow
+                                                               // irregular (VSX type 'L', 'LB', 'LC', including ':') variables when the VSX record maximum
+                                                               // is measured in the pg, B or g band - blue-band maxima of these red stars similarly
+                                                               // underestimate the V/CV-band brightness.
 #define VSX_COMPATIBLE_MATCH_TAKEOVER_RADIUS_ARCSEC 15.0 // When the nearest VSX match cannot account for the measured brightness of a transient
                                                          // candidate (it would trigger the brightening ATTENTION above) but a brightness-compatible
                                                          // variable lies within this distance of the measured position, present the compatible one
