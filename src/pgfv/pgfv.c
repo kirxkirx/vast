@@ -546,13 +546,17 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
 
  min= max= im[0];
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
-  if ( im[i] < min && im[i] > 0 )
+  // track the TRUE minimum including negative pixels: background-subtracted
+  // images (e.g. swarp coadds made with SUBTRACT_BACK Y) have about half of
+  // their pixels negative, and the offset branch below must fire for them
+  // regardless of the sign of the first pixel of the array
+  if ( im[i] < min )
    min= im[i];
   if ( im[i] > max && im[i] > 0 )
    max= im[i];
  }
 
- // may only happen if im[0] was negative
+ // shift the image to non-negative values
  if ( min < 0.0 ) {
   for ( i= 0; i < NUM_OF_PIXELS; i++ )
    im[i]= im[i] - min;
