@@ -151,7 +151,12 @@ function process_one_image {
  # Unique working basename. wcs_image_calibration.sh writes wcs_<workbase>*
  # into VAST_PATH; the tag keeps those from colliding with, or clobbering, a
  # real wcs_<image> the user may keep in the VaST directory.
- workbase="vastsiptmp$$_${base}"
+ # Any 'wcs_' substring is removed from the working basename: the working
+ # copy has its WCS deliberately stripped, and a 'wcs_' in the filename makes
+ # util/solve_plate_with_UCAC5 take the exact-FOV-from-WCS shortcut, which
+ # returns a zero field of view for the WCS-less copy and breaks the blind
+ # solve (bites when re-solving already-solved archive images named wcs_*).
+ workbase="vastsiptmp$$_${base//wcs_/}"
  stripped="$master_workdir/$workbase"
  if ! cp "$abs_image" "$stripped" ; then
   echo "ERROR: could not copy $abs_image to $stripped" >&2

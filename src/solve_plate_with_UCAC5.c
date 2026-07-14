@@ -3863,6 +3863,13 @@ int main( int argc, char **argv ) {
    } else {
     if ( 1 == fscanf( pipe_for_try_to_guess_image_fov, "%lf", &approximate_field_of_view_arcmin ) ) {
      pclose( pipe_for_try_to_guess_image_fov );
+     // A wcs_*-named image that carries no actual WCS (e.g. a deliberately
+     // stripped working copy made for a fresh solve) yields a zero or absurd
+     // field of view here - reset to the default so the guessing code below runs
+     if ( approximate_field_of_view_arcmin < 2.0 ) {
+      fprintf( stderr, "WARNING: implausible field of view %lf arcmin extracted from the image WCS - will try to guess the field of view another way\n", approximate_field_of_view_arcmin );
+      approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+     }
     } else {
      pclose( pipe_for_try_to_guess_image_fov ); // ???
      fprintf( stderr, "WARNING: error parsing the output of the command: %s\n", command_string );
