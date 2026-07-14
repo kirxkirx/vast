@@ -43,8 +43,8 @@ fi
 # Construct User-Agent with tns_marker
 TNS_USER_AGENT="tns_marker{\"tns_id\":${TNS_ID},\"type\": \"${TNS_TYPE}\", \"name\":\"${TNS_NAME}\"}"
 
-# TNS search URL - CSV format, last 30 days, up to 500 results, sorted by discovery date
-TNS_SEARCH_URL="https://www.wis-tns.org/search?discovered_period_value=30&discovered_period_units=days&num_page=500&format=csv"
+# TNS search URL - CSV format, last 30 days, up to 100 results, sorted by discovery date
+TNS_SEARCH_URL="https://www.wis-tns.org/search?discovered_period_value=30&discovered_period_units=days&num_page=100&format=csv"
 
 # Set timeout command
 TIMEOUTCOMMAND=""
