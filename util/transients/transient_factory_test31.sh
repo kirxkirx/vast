@@ -1400,6 +1400,9 @@ if [ $? -ne 0 ];then
 else
  TIMEOUTCOMMAND_GAIA_VIZIER="$TIMEOUTCOMMAND 40 "
  export TIMEOUTCOMMAND_GAIA_VIZIER
+ # The paginated TNS transient list download is rate-limited by the server
+ # and takes minutes - give it more time than the general 200 sec limit
+ TIMEOUTCOMMAND_TNS="$TIMEOUTCOMMAND 400 "
  TIMEOUTCOMMAND="$TIMEOUTCOMMAND 200 "
  export TIMEOUTCOMMAND
 fi
@@ -2635,11 +2638,29 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    #
    # Download the TNS transients list (only if TNS credentials are configured)
    if [ -n "$TNS_ID" ] && [ -n "$TNS_NAME" ];then
-    if [ -n "$(find ../tns_transients_list.txt -mmin -30 2>/dev/null)" ]; then
+    if [ -n "$(find ../tns_transients_list.txt -mmin -120 2>/dev/null)" ]; then
      echo "Re-using ../tns_transients_list.txt" | tee -a transient_factory_test31.txt
      cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1
     else
-     { $TIMEOUTCOMMAND lib/update_tns_transients_list.sh && cp -v tns_transients_list.txt ../tns_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1 ; } &
+     # The paginated TNS download is slow (minutes) and multiple factory
+     # instances processing different fields may reach this point at the same
+     # time. The mkdir-based lock makes sure only ONE instance downloads.
+     # The instance holding the lock touches the shared file right away, so
+     # the freshness check above holds the other instances off meanwhile.
+     TNS_UPDATE_LOCKDIR="../tns_transients_list_update.lockdir"
+     # Remove a stale lock possibly left behind by a dead process
+     if [ -n "$(find "$TNS_UPDATE_LOCKDIR" -maxdepth 0 -mmin +10 2>/dev/null)" ];then
+      rmdir "$TNS_UPDATE_LOCKDIR" 2>/dev/null
+     fi
+     if mkdir "$TNS_UPDATE_LOCKDIR" 2>/dev/null ;then
+      if [ -f ../tns_transients_list.txt ];then
+       touch ../tns_transients_list.txt
+      fi
+      { $TIMEOUTCOMMAND_TNS lib/update_tns_transients_list.sh && cp -v tns_transients_list.txt ../tns_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1 ; rmdir "$TNS_UPDATE_LOCKDIR" 2>/dev/null ; } &
+     else
+      echo "Another process is updating the TNS transients list - re-using the current ../tns_transients_list.txt" | tee -a transient_factory_test31.txt
+      cp -v ../tns_transients_list.txt tns_transients_list.txt >> transient_factory_test31.txt 2>&1
+     fi
     fi
    fi
    #
