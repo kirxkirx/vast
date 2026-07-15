@@ -151,6 +151,7 @@ fi
 for TOOL in "${VAST_PATH}lib/bin/sky2xy" \
             "${VAST_PATH}lib/fit_zeropoint" \
             "${VAST_PATH}util/calibrate_single_image.sh" \
+            "${VAST_PATH}util/calibrate_single_image_with_tycho2.sh" \
             "${VAST_PATH}util/get_image_date" \
             "${VAST_PATH}lib/sextract_single_image_noninteractive" \
             "${VAST_PATH}util/forced_photometry" \
@@ -215,11 +216,29 @@ echo "  Aperture diameter: $APERTURE pixels" >&2
 #################################
 # Step 2: Calibrate (internally runs solve_plate_with_UCAC5)
 #################################
+# Calibration catalog selection: by default the magnitude calibration uses
+# APASS via a live VizieR query (the historical behavior, appropriate for
+# narrow-field images). Cameras whose transient pipeline calibrates with
+# PHOTOMETRIC_CALIBRATION=TYCHO2_V (wide-field NMW telephoto data) should
+# set FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 in the environment (for
+# unmw deployments: in local_config.sh, which the forced-photometry wrapper
+# sources) so the forced photometry is calibrated in the SAME photometric
+# system as the nightly lightcurves - and using the local Tycho-2 catalog,
+# without a VizieR round trip for every image. With tycho2 the calibration
+# is always Tycho-2 V and the FILTER argument does not affect it.
 echo "Step 2: Calibrating..." >&2
-"$VAST_PATH"util/calibrate_single_image.sh "$FITSFILE" "$FILTER"
-if [ $? -ne 0 ];then
- echo "ERROR: calibrate_single_image.sh failed" >&2
- exit 1
+if [ "$FORCED_PHOTOMETRY_CALIBRATION_METHOD" = "tycho2" ];then
+ "$VAST_PATH"util/calibrate_single_image_with_tycho2.sh "$FITSFILE"
+ if [ $? -ne 0 ];then
+  echo "ERROR: calibrate_single_image_with_tycho2.sh failed" >&2
+  exit 1
+ fi
+else
+ "$VAST_PATH"util/calibrate_single_image.sh "$FITSFILE" "$FILTER"
+ if [ $? -ne 0 ];then
+  echo "ERROR: calibrate_single_image.sh failed" >&2
+  exit 1
+ fi
 fi
 if [ ! -s "calib.txt" ];then
  echo "ERROR: calib.txt not found or empty after calibration" >&2

@@ -105,14 +105,24 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  fi
 fi
 
-# The corresponding SExtractor catalog.  Look alongside the image first, then
-# fall back to running wcs_image_calibration.sh to (re)produce it.
-SEX_CATALOG="${WCS_IMAGE_NAME}.wcscat"
-# If the image path is absolute, CAT might also be absolute; read_tycho2 expects
-# wcsmag.cat in CWD so we always copy there regardless.
+# The corresponding SExtractor catalog. util/wcs_image_calibration.sh always
+# writes it to the CURRENT directory named after the image basename (even
+# when the image itself is given by an absolute path outside the VaST dir,
+# as util/forced_photometry.sh does), so look for the CWD copy first - in
+# the pipelines it is usually already there from an earlier plate-solve
+# pass. Accept a catalog sitting next to an out-of-tree image as a
+# fallback, and only then (re)produce it in CWD.
+WCS_IMAGE_BASENAME=$(basename "$WCS_IMAGE_NAME")
+SEX_CATALOG="${WCS_IMAGE_BASENAME}.wcscat"
+if [ ! -s "$SEX_CATALOG" ] && [ -s "${WCS_IMAGE_NAME}.wcscat" ];then
+ SEX_CATALOG="${WCS_IMAGE_NAME}.wcscat"
+fi
+# read_tycho2 expects wcsmag.cat in CWD so we always copy there regardless.
 if [ ! -s "$SEX_CATALOG" ];then
  echo "$0: $SEX_CATALOG not found, running util/wcs_image_calibration.sh $WCS_IMAGE_NAME" >&2
  util/wcs_image_calibration.sh "$WCS_IMAGE_NAME" >/dev/null 2>&1
+ # the catalog is created in the current directory, named after the basename
+ SEX_CATALOG="${WCS_IMAGE_BASENAME}.wcscat"
  if [ ! -s "$SEX_CATALOG" ];then
   echo "ERROR in $0: could not produce $SEX_CATALOG" >&2
   exit 1
