@@ -165,15 +165,23 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
     print("Annulus: inner=%.2f outer=%.2f" % (annulus_inner, annulus_outer),
           file=sys.stderr)
 
+    # The per-position skip conditions below (edge, bad region, NaN,
+    # saturation, too few annulus pixels) are expected data conditions, not
+    # failures: they are reported with the status token the callers act
+    # upon, and the stderr notes must not say 'ERROR' - the word would
+    # propagate into processing logs that are scanned for real errors.
+
     # Edge check (1-based coordinates)
     if (center_x - annulus_outer < 1.0 or center_x + annulus_outer > float(naxis1) or
             center_y - annulus_outer < 1.0 or center_y + annulus_outer > float(naxis2)):
-        print("ERROR: aperture/annulus extends beyond image edge", file=sys.stderr)
+        print("NOTE: aperture/annulus extends beyond image edge"
+              " - skipping the measurement", file=sys.stderr)
         return (99.0, 99.0, "edge")
 
     # Bad region check (1-based)
     if check_exclude_region(center_x, center_y, aperture_diameter, bad_regions):
-        print("ERROR: position falls in a bad CCD region (bad_region.lst)",
+        print("NOTE: position falls in a bad CCD region (bad_region.lst)"
+              " - skipping the measurement",
               file=sys.stderr)
         return (99.0, 99.0, "bad_region")
 
@@ -186,7 +194,8 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
     ap_weights = ap_mask.data
     cutout = ap_mask.cutout(data, fill_value=0.0)
     if cutout is None:
-        print("ERROR: aperture cutout is None (off image?)", file=sys.stderr)
+        print("NOTE: aperture cutout is None (off image?)"
+              " - skipping the measurement", file=sys.stderr)
         return (99.0, 99.0, "edge")
     min_y = min(ap_weights.shape[0], cutout.shape[0])
     min_x = min(ap_weights.shape[1], cutout.shape[1])
@@ -197,10 +206,12 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
                 continue
             val = cutout[iy, ix]
             if np.isnan(val) or np.isinf(val):
-                print("ERROR: NaN/Inf pixel within aperture", file=sys.stderr)
+                print("NOTE: NaN/Inf pixel within aperture"
+                      " - skipping the measurement", file=sys.stderr)
                 return (99.0, 99.0, "nan_pixel")
             if val >= satur_level:
-                print("ERROR: saturated pixel value=%.1f >= %.1f" %
+                print("NOTE: saturated pixel value=%.1f >= %.1f"
+                      " - skipping the measurement" %
                       (val, satur_level), file=sys.stderr)
                 return (99.0, 99.0, "saturated")
 
@@ -210,7 +221,8 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
     ann_weights = ann_mask.data
     ann_cutout = ann_mask.cutout(data, fill_value=0.0)
     if ann_cutout is None:
-        print("ERROR: annulus cutout is None (off image?)", file=sys.stderr)
+        print("NOTE: annulus cutout is None (off image?)"
+              " - skipping the measurement", file=sys.stderr)
         return (99.0, 99.0, "edge")
 
     ann_min_y = min(ann_weights.shape[0], ann_cutout.shape[0])
@@ -230,7 +242,8 @@ def photometry_at_position(data, satur_level, bad_regions, calib,
     n_annulus = len(annulus_vals)
 
     if n_annulus < 5:
-        print("ERROR: too few annulus pixels (%d) for background estimation" % n_annulus,
+        print("NOTE: too few annulus pixels (%d) for background estimation"
+              " - skipping the measurement" % n_annulus,
               file=sys.stderr)
         return (99.0, 99.0, "edge")
 

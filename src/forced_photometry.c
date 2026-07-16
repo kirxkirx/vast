@@ -264,7 +264,12 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
  // ------------------------------------------------------------------
  if ( center_x - annulus_outer < 1.0 || center_x + annulus_outer > (double)naxis1 ||
       center_y - annulus_outer < 1.0 || center_y + annulus_outer > (double)naxis2 ) {
-  fprintf( stderr, "ERROR: aperture/annulus extends beyond image edge\n" );
+  // The per-position skip conditions in this function (edge, bad region,
+  // NaN, saturation, too few annulus pixels) are expected data conditions,
+  // not failures: they are reported with the status token the callers act
+  // upon, and the stderr notes must not say 'ERROR' - the word would
+  // propagate into processing logs that are scanned for real errors.
+  fprintf( stderr, "NOTE: aperture/annulus extends beyond image edge - skipping the measurement\n" );
   strncpy( status_str_out, "edge", 31 );
   status_str_out[31]= '\0';
   return;
@@ -275,7 +280,7 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
  // ------------------------------------------------------------------
  if ( 0 != exclude_region( bad_X1, bad_Y1, bad_X2, bad_Y2, n_bad_regions,
                             center_x, center_y, aperture_diameter ) ) {
-  fprintf( stderr, "ERROR: position falls in a bad CCD region (bad_region.lst)\n" );
+  fprintf( stderr, "NOTE: position falls in a bad CCD region (bad_region.lst) - skipping the measurement\n" );
   strncpy( status_str_out, "bad_region", 31 );
   status_str_out[31]= '\0';
   return;
@@ -302,13 +307,13 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
    pix_idx= ( (long)iy - 1 ) * naxis1 + ( (long)ix - 1 );
    pix_val= pix[pix_idx];
    if ( isnan( pix_val ) || isinf( pix_val ) ) {
-    fprintf( stderr, "ERROR: NaN/Inf pixel at (%d, %d) within aperture\n", ix, iy );
+    fprintf( stderr, "NOTE: NaN/Inf pixel at (%d, %d) within aperture - skipping the measurement\n", ix, iy );
     strncpy( status_str_out, "nan_pixel", 31 );
     status_str_out[31]= '\0';
     return;
    }
    if ( pix_val >= satur_level ) {
-    fprintf( stderr, "ERROR: saturated pixel at (%d, %d) value=%.1f >= %.1f\n",
+    fprintf( stderr, "NOTE: saturated pixel at (%d, %d) value=%.1f >= %.1f - skipping the measurement\n",
              ix, iy, pix_val, satur_level );
     strncpy( status_str_out, "saturated", 31 );
     status_str_out[31]= '\0';
@@ -353,7 +358,7 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
  }
 
  if ( n_annulus < 5 ) {
-  fprintf( stderr, "ERROR: too few annulus pixels (%d) for background estimation\n", n_annulus );
+  fprintf( stderr, "NOTE: too few annulus pixels (%d) for background estimation - skipping the measurement\n", n_annulus );
   strncpy( status_str_out, "edge", 31 );
   status_str_out[31]= '\0';
   return;

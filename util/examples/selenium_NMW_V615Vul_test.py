@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 
 # ---------- logging -----------------------------------------------------
@@ -263,13 +264,32 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
         mpc_submit = self._find_submit(section_nodes, "Online MPChecker")
         self.assertIsNotNone(mpc_submit, "Online MPChecker button not found")
 
-        self._submit_and_check(
-            mpc_submit,
-            MPC_PAGE_TIMEOUT,
-            lambda src: "No known minor planets" in src,
-            "The MPC page does not contain 'No known minor planets'"
-        )
-        LOG.info("'No known minor planets' found in MPC page.")
+        # The MPChecker round-trip depends on minorplanetcenter.net answering a
+        # POST from the test host in time, and the MPC endpoints are already
+        # treated as flaky for plain link checks (FLAKY_LINK_PATTERNS) - so a
+        # slow or unresponsive MPChecker must not fail the whole test either.
+        # The form itself (action URL, fields, submit button) is still checked
+        # fatally by the generic form checks above.
+        main_handle = drv.current_window_handle
+        try:
+            self._submit_and_check(
+                mpc_submit,
+                MPC_PAGE_TIMEOUT,
+                lambda src: "No known minor planets" in src,
+                "The MPC page does not contain 'No known minor planets'"
+            )
+            LOG.info("'No known minor planets' found in MPC page.")
+        except (TimeoutException, WebDriverException) as exc:
+            LOG.warning(
+                "MPChecker submission failed (non-fatal, flaky MPC endpoint): %s",
+                exc.__class__.__name__)
+            # close any extra window the submission may have opened and return
+            # to the main report window so the following checks are unaffected
+            for handle in drv.window_handles:
+                if handle != main_handle:
+                    drv.switch_to.window(handle)
+                    drv.close()
+            drv.switch_to.window(main_handle)
 
     # ----- VSX submission ----------------------------------------------
     def _check_vsx_submission(self, section_nodes):
