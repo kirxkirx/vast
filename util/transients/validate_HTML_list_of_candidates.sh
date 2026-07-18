@@ -99,14 +99,31 @@ function validate_png_images() {
             continue
         fi
 
-        # 'identify' reports dimensions for both PNG and WebP; 'file' only does so
-        # for PNG, so prefer identify when it is available.
+        # 'identify' reports dimensions for both PNG and WebP; 'webpinfo'
+        # (shipped with libwebp alongside cwebp) covers WebP; 'file' prints
+        # dimensions only for PNG. Try the tools in that order.
+        png_width=""
+        png_height=""
         if command -v identify >/dev/null 2>&1; then
             png_width=$(identify -format '%w' "$full_path" 2>/dev/null)
             png_height=$(identify -format '%h' "$full_path" 2>/dev/null)
-        else
+        fi
+        if [ -z "$png_width" ] || [ -z "$png_height" ]; then
+            if echo "$png_info" | grep -qE 'Web/?P' && command -v webpinfo >/dev/null 2>&1; then
+                png_width=$(webpinfo "$full_path" 2>/dev/null | sed -n 's/.*Width[: ]*\([0-9][0-9]*\).*/\1/p' | head -n 1)
+                png_height=$(webpinfo "$full_path" 2>/dev/null | sed -n 's/.*Height[: ]*\([0-9][0-9]*\).*/\1/p' | head -n 1)
+            fi
+        fi
+        if [ -z "$png_width" ] || [ -z "$png_height" ]; then
             png_width=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/ x .*//')
             png_height=$(echo "$png_info" | sed 's/.*PNG image data, //' | sed 's/.* x //' | sed 's/,.*//' | sed 's/ .*//')
+        fi
+        # If none of the available tools produced numeric dimensions
+        # (e.g. WebP thumbnails on a system with no identify and no webpinfo),
+        # warn and skip the dimension check instead of failing on garbage values.
+        if ! echo "$png_width" | grep -qE '^[0-9][0-9]*$' || ! echo "$png_height" | grep -qE '^[0-9][0-9]*$'; then
+            echo "WARNING: cannot determine dimensions of $png_file (no identify or webpinfo available for this format) - skipping dimension check"
+            continue
         fi
 
         # Validate dimensions based on filename pattern
