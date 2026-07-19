@@ -630,10 +630,28 @@ function check_if_enough_disk_space_for_tests() {
 }
 
 
-function test_internet_connection() {
- curl --connect-timeout 5 --max-time 10 --silent --show-error -I http://tau.kirx.net 2>&1 | grep -q 'Content-Type:'
- if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to tau.kirx.net"
+# One connectivity probe pass used by test_internet_connection() below.
+# The web server check counts as online if EITHER tau.kirx.net (out-of-country)
+# or scan.sai.msu.ru (in-country mirror) replies - on a censored/unreliable
+# network one of them may be temporarily unreachable while the other works.
+# Every failed probe is logged with its curl exit code (6=DNS, 7=refused,
+# 28=timeout, 56=connection reset) to help characterize flaky networks.
+function single_internet_connection_probe() {
+ local probe_host
+ local curl_output
+ local curl_exit_code
+ local web_server_reachable=0
+ for probe_host in tau.kirx.net scan.sai.msu.ru ;do
+  curl_output=$(curl --connect-timeout 5 --max-time 10 --retry 2 --retry-delay 5 --silent --show-error -I "http://$probe_host" 2>&1)
+  curl_exit_code=$?
+  if [ $curl_exit_code -eq 0 ] && echo "$curl_output" | grep -q 'Content-Type:' ;then
+   web_server_reachable=1
+   break
+  fi
+  echo "$(date "+%Y-%m-%dT%H:%M:%S") $probe_host probe failed curl_exit=$curl_exit_code" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
+ done
+ if [ $web_server_reachable -ne 1 ];then
+  echo "ERROR in test_internet_connection(): cannot connect to tau.kirx.net or scan.sai.msu.ru"
   return 1
  fi
 
@@ -645,11 +663,35 @@ function test_internet_connection() {
  # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
  lib/choose_vizier_mirror.sh 2>&1
  if [ $? -ne 0 ];then
+  echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
   echo "ERROR in test_internet_connection(): cannot connect to VizieR"
   return 1
  fi
 
  return 0
+}
+
+function test_internet_connection() {
+ # Retry envelope: on a flaky or DPI-censored network a single dropped
+ # connection must not be mistaken for the internet being down - this
+ # function gates many test sections and its failure kills the whole run.
+ local max_attempts=4
+ local attempt=1
+ local sleep_between_attempts
+ while true ;do
+  if single_internet_connection_probe "$1" ;then
+   return 0
+  fi
+  if [ $attempt -ge $max_attempts ];then
+   break
+  fi
+  sleep_between_attempts=$(( 15 * attempt ))
+  echo "test_internet_connection(): probe attempt $attempt failed, retrying in $sleep_between_attempts sec"
+  sleep $sleep_between_attempts
+  attempt=$(( attempt + 1 ))
+ done
+ echo "ERROR in test_internet_connection(): still offline after $max_attempts probe attempts"
+ return 1
 }
 
 function check_dates_consistency_in_vast_image_details_log() {
@@ -938,7 +980,7 @@ echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_repo
 if [ ! -d ../NMW_Venus_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -1307,7 +1349,7 @@ if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
   rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -2154,7 +2196,7 @@ fi
 if [ ! -d ../test_data_photo ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/test_data_photo.tar.bz2"
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/test_data_photo.tar.bz2"
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/test_data_photo.tar.bz2"
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
   exit 1
@@ -3000,7 +3042,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -8318,7 +8360,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -8478,7 +8520,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -8630,7 +8672,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -8757,7 +8799,7 @@ remove_test_data_to_save_space
 if [ ! -d ../vast_test_ASASSN-19cq ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9015,7 +9057,7 @@ if [ ! -d ../MASTER_test ];then
   rm -f MASTER_test.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9172,7 +9214,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../M31_ISON_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9332,7 +9374,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../Gaia16aye_SN ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9481,7 +9523,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../only_few_stars ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9639,7 +9681,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../only_few_stars ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -9893,7 +9935,7 @@ if [ ! -d ../test_exclude_ref_image ];then
  fi
  # The test data archive is 331M, so 300sec may not be enough time to download it
  #$($WORKDIR/lib/find_timeout_command.sh) 900 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 900 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 900 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -10157,7 +10199,7 @@ if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
   rm -f NMW_And1_test_lightcurves_40.tar.bz2
  fi
  #$($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -10529,7 +10571,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../transient_detection_test_Ceres ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -11092,7 +11134,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_Saturn_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -12145,7 +12187,7 @@ fi
 if [ ! -d ../NMW_Venus_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -31806,7 +31848,7 @@ if [ ! -f ../vast_test_lightcurves/exclusion_list_STL.txt ];then
  fi
  cd ../vast_test_lightcurves || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/exclusion_list_STL.txt.bz2" && bunzip2 exclusion_list_STL.txt.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/exclusion_list_STL.txt.bz2" && bunzip2 exclusion_list_STL.txt.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/exclusion_list_STL.txt.bz2" && bunzip2 exclusion_list_STL.txt.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
