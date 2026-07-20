@@ -509,6 +509,13 @@ static int render_plot( const options_t *opt, const char *plot_path,
  // White background, black foreground -- matches the PNG branch in lc.c.
  cpgscr( COLOR_BG, 1.0, 1.0, 1.0 );
  cpgscr( COLOR_FG, 0.0, 0.0, 0.0 );
+ // Redefine the detection/upper-limit colors from the default pure PGPLOT
+ // red/blue to a Paul Tol inspired pair: detections #CC3311, upper limits
+ // #5588BB. The desaturated blue makes the limit symbols recede so the
+ // red detections stand out; the pair keeps strong separation under all
+ // color-vision-deficiency types and >=3:1 contrast on white.
+ cpgscr( COLOR_RED, 0.800f, 0.200f, 0.067f );  // #CC3311
+ cpgscr( COLOR_BLUE, 0.333f, 0.533f, 0.733f ); // #5588BB
  cpgpage();
  // Roman font (cpgscf == 2) draws multi-stroke glyphs that look noticeably
  // more even on PGPLOT's PNG driver than the default single-stroke font 1.
@@ -561,21 +568,18 @@ static int render_plot( const options_t *opt, const char *plot_path,
   cpgerrb( 6, n_det, jd_det_f, mag_det, err_det, 1.0 );
  }
 
- // Upper limits: blue downward triangles (outline only) drawn with cpgpoly.
+ // Upper limits: blue solid-filled downward triangles drawn with cpgpoly.
  // Size is tuned to match the apparent size of cpgpt symbol 17 (filled
  // circle) used for detections; the visible-circle diameter from cpgpt is
  // ~0.3 of character height, so the triangle bounding box should be of
  // similar order (NOT the full character size, which would draw triangles
- // ~3x bigger than the dots). The thinner cpgslw(1) keeps the outline
- // visually proportional to the filled-circle area. cpgsfs(2) makes
- // cpgpoly draw outline only. fabsf on ych because cpgqcs returns a
+ // ~3x bigger than the dots). fabsf on ych because cpgqcs returns a
  // negative ych for the inverted (mag) y-axis -- without fabsf the apex
  // would point up.
  if ( n_ul > 0 ) {
   cpgsci( COLOR_BLUE );
   cpgqcs( 4, &xch, &ych ); // 4 = world coordinates
-  cpgsfs( 2 );             // 2 = outline (default 1 = solid fill)
-  cpgslw( 1 );             // thinner outline so the symbol does not look bloated
+  cpgsfs( 1 );             // 1 = solid fill
   tri_w_half= fabsf( xch ) * 0.15f;
   tri_h_half= fabsf( ych ) * 0.15f;
   for ( i= 0; i < n_ul; i++ ) {
@@ -590,8 +594,6 @@ static int render_plot( const options_t *opt, const char *plot_path,
    tri_y[2]= mag_ul[i] + tri_h_half; // apex, fainter side (bottom on screen)
    cpgpoly( 3, tri_x, tri_y );
   }
-  cpgsfs( 1 ); // restore solid fill (defensive)
-  cpgslw( 2 ); // restore default thicker line for anything drawn after
  }
 
  cpgend();
