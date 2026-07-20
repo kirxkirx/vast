@@ -4150,7 +4150,7 @@ fi
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -4608,7 +4608,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -5083,7 +5083,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -5262,7 +5262,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -5338,7 +5338,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -5535,7 +5535,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -5983,7 +5983,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -6139,7 +6139,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -6275,7 +6275,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -6409,7 +6409,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -6546,7 +6546,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d '../sample space' ];then
@@ -6709,7 +6709,7 @@ remove_test_data_to_save_space
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d '../sample_data_compressed' ];then
@@ -6876,7 +6876,7 @@ remove_test_data_to_save_space
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -7023,7 +7023,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -7191,7 +7191,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -7356,7 +7356,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -7852,7 +7852,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../sample_data ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d '../sample space' ];then
@@ -10716,7 +10716,7 @@ $GREP_RESULT"
    if [ ! -d ../tycho2 ];then
     cd $(dirname $VASTDIR) || exit 1
     #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
-    curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
+    curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
     cd $VASTDIR || exit 1
    fi
    # Try again
@@ -11228,7 +11228,7 @@ $GREP_RESULT"
    if [ ! -d ../tycho2 ];then
     cd $(dirname $VASTDIR) || exit 1
     #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
-    curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
+    curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
     cd $VASTDIR || exit 1
    fi
    # Try again
@@ -11727,7 +11727,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_Saturn_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -12467,7 +12467,7 @@ fi
 if [ ! -d ../NMW_calibration_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -12821,7 +12821,7 @@ fi
 if [ ! -d ../NMW_find_NovaCas_august31_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_NovaCas_august31_test.tar.bz2" && tar -xvjf NMW_find_NovaCas_august31_test.tar.bz2 && rm -f NMW_find_NovaCas_august31_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_find_NovaCas_august31_test.tar.bz2" && tar -xvjf NMW_find_NovaCas_august31_test.tar.bz2 && rm -f NMW_find_NovaCas_august31_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_find_NovaCas_august31_test.tar.bz2" && tar -xvjf NMW_find_NovaCas_august31_test.tar.bz2 && rm -f NMW_find_NovaCas_august31_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -13095,7 +13095,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_nomatch_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_nomatch_test.tar.bz2" && tar -xvjf NMW_nomatch_test.tar.bz2 && rm -f NMW_nomatch_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_nomatch_test.tar.bz2" && tar -xvjf NMW_nomatch_test.tar.bz2 && rm -f NMW_nomatch_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_nomatch_test.tar.bz2" && tar -xvjf NMW_nomatch_test.tar.bz2 && rm -f NMW_nomatch_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -13370,7 +13370,7 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../STEREO-A-H1__test ];then
  cd .. || exit 1
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/STEREO-A-H1__test.tar.bz2" && tar -xvjf STEREO-A-H1__test.tar.bz2 && rm -f STEREO-A-H1__test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/STEREO-A-H1__test.tar.bz2" && tar -xvjf STEREO-A-H1__test.tar.bz2 && rm -f STEREO-A-H1__test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -13502,7 +13502,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_ATLAS_Mira_in_Ser1.tar.bz2" && tar -xvjf NMW_ATLAS_Mira_in_Ser1.tar.bz2 && rm -f NMW_ATLAS_Mira_in_Ser1.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_ATLAS_Mira_in_Ser1.tar.bz2" && tar -xvjf NMW_ATLAS_Mira_in_Ser1.tar.bz2 && rm -f NMW_ATLAS_Mira_in_Ser1.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_ATLAS_Mira_in_Ser1.tar.bz2" && tar -xvjf NMW_ATLAS_Mira_in_Ser1.tar.bz2 && rm -f NMW_ATLAS_Mira_in_Ser1.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -14003,7 +14003,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr1_NovaSgr20N4_test.tar.bz2" && tar -xvjf NMW_Sgr1_NovaSgr20N4_test.tar.bz2 && rm -f NMW_Sgr1_NovaSgr20N4_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Sgr1_NovaSgr20N4_test.tar.bz2" && tar -xvjf NMW_Sgr1_NovaSgr20N4_test.tar.bz2 && rm -f NMW_Sgr1_NovaSgr20N4_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Sgr1_NovaSgr20N4_test.tar.bz2" && tar -xvjf NMW_Sgr1_NovaSgr20N4_test.tar.bz2 && rm -f NMW_Sgr1_NovaSgr20N4_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -14363,7 +14363,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Aur-02-Q2b1x1 ];then
  cd .. || exit 1
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2" && tar -xvjf NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2 && rm -f NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2" && tar -xvjf NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2 && rm -f NMW-TexasTech__Aur-02-Q2b1x1.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -14624,7 +14624,7 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
  cd .. || exit 1
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2" && tar -xvjf NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2 && rm -f NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2" && tar -xvjf NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2 && rm -f NMW-TexasTech__Aql-03-Q1b1x1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -14819,7 +14819,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Cas-04_platesolve_failure_test ];then
  cd .. || exit 1
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2" && tar -xvjf NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2 && rm -f NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2" && tar -xvjf NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2 && rm -f NMW-TexasTech__Cas-04_platesolve_failure_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -15154,7 +15154,7 @@ if [ "$GITHUB_ACTIONS" != "true" ] && command -v solve-field &>/dev/null && [ -x
 # Download the test dataset if needed
 if [ ! -d ../NMW_Cyg5_astrometry_problem_test ];then
  cd .. || exit 1
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Cyg5_astrometry_problem_test.tar.bz2" && tar -xvjf NMW_Cyg5_astrometry_problem_test.tar.bz2 && rm -f NMW_Cyg5_astrometry_problem_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Cyg5_astrometry_problem_test.tar.bz2" && tar -xvjf NMW_Cyg5_astrometry_problem_test.tar.bz2 && rm -f NMW_Cyg5_astrometry_problem_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -15293,7 +15293,7 @@ fi # local-solve-field + non-GitHub-Actions gate -- skip is silent: no failure c
 if [ ! -d ../NMW_Sco6_NovaSgr24N1_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sco6_NovaSgr24N1_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr24N1_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr24N1_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Sco6_NovaSgr24N1_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr24N1_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr24N1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Sco6_NovaSgr24N1_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr24N1_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr24N1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -15675,7 +15675,7 @@ fi
 if [ ! -d ../NMW__NovaVul24_Stas_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -16123,7 +16123,7 @@ fi
 if [ ! -d ../NMW__NovaVul24_Stas_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # Decide whether the test can run; if not, remember why so it can be silently skipped
@@ -16235,7 +16235,7 @@ fi
 if [ ! -d ../NMW_Aql11_NovaHer21_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Aql11_NovaHer21_test.tar.bz2" && tar -xvjf NMW_Aql11_NovaHer21_test.tar.bz2 && rm -f NMW_Aql11_NovaHer21_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Aql11_NovaHer21_test.tar.bz2" && tar -xvjf NMW_Aql11_NovaHer21_test.tar.bz2 && rm -f NMW_Aql11_NovaHer21_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Aql11_NovaHer21_test.tar.bz2" && tar -xvjf NMW_Aql11_NovaHer21_test.tar.bz2 && rm -f NMW_Aql11_NovaHer21_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -18231,7 +18231,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_find_Chandra_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_Chandra_test.tar.bz2" && tar -xvjf NMW_find_Chandra_test.tar.bz2 && rm -f NMW_find_Chandra_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_find_Chandra_test.tar.bz2" && tar -xvjf NMW_find_Chandra_test.tar.bz2 && rm -f NMW_find_Chandra_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_find_Chandra_test.tar.bz2" && tar -xvjf NMW_find_Chandra_test.tar.bz2 && rm -f NMW_find_Chandra_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -18540,7 +18540,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_Sgr9_crash_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr9_crash_test.tar.bz2" && tar -xvjf NMW_Sgr9_crash_test.tar.bz2 && rm -f NMW_Sgr9_crash_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Sgr9_crash_test.tar.bz2" && tar -xvjf NMW_Sgr9_crash_test.tar.bz2 && rm -f NMW_Sgr9_crash_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Sgr9_crash_test.tar.bz2" && tar -xvjf NMW_Sgr9_crash_test.tar.bz2 && rm -f NMW_Sgr9_crash_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -19122,7 +19122,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_Vul2_magnitude_calibration_exit_code_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2" && tar -xvjf NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2 && rm -f NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2" && tar -xvjf NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2 && rm -f NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2" && tar -xvjf NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2 && rm -f NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -19299,7 +19299,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__find_Neptune_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -19729,7 +19729,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -20187,7 +20187,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__find_NovaVul24_compressed_test ];then
@@ -20645,7 +20645,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__find_NovaVul24_lacosmic_test ];then
@@ -21060,7 +21060,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW__NovaVul24_Stas_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW__NovaVul24_Stas_lacosmic_test ];then
@@ -21336,7 +21336,7 @@ fi
 if [ ! -d ../NMW__NovaOph24N1_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW__NovaOph24N1_lacosmic_test ];then
@@ -21666,7 +21666,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW_calibration_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW_calibration_lacosmic_test ];then
@@ -21807,7 +21807,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__find_Neptune_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__find_Neptune_lacosmic_test ];then
@@ -21935,7 +21935,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__RefFrameMatchFail_lacosmic_test ];then
@@ -22033,7 +22033,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ];then
@@ -22133,7 +22133,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__plate_solve_failure_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__plate_solve_failure_lacosmic_test ];then
@@ -22257,7 +22257,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__NovaOph24N1_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../NMW-STL__NovaOph24N1_lacosmic_test ];then
@@ -22390,7 +22390,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -22981,7 +22981,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -23260,7 +23260,7 @@ fi
 if [ ! -d ../TICA_TESS__find_NovaVul24_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS__find_NovaVul24_test.tar.bz2" && tar -xvjf TICA_TESS__find_NovaVul24_test.tar.bz2 && rm -f TICA_TESS__find_NovaVul24_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/TICA_TESS__find_NovaVul24_test.tar.bz2" && tar -xvjf TICA_TESS__find_NovaVul24_test.tar.bz2 && rm -f TICA_TESS__find_NovaVul24_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/TICA_TESS__find_NovaVul24_test.tar.bz2" && tar -xvjf TICA_TESS__find_NovaVul24_test.tar.bz2 && rm -f TICA_TESS__find_NovaVul24_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -23519,7 +23519,7 @@ fi
 if [ ! -d ../NMW-STL__plate_solve_failure_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -23922,7 +23922,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW-STL__NovaOph24N1_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -24265,7 +24265,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../NMW__NovaOph24N1_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -24792,7 +24792,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../TICA_TESS_mag_calibration_failure_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS_mag_calibration_failure_test.tar.bz2" && tar -xvjf TICA_TESS_mag_calibration_failure_test.tar.bz2 && rm -f TICA_TESS_mag_calibration_failure_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/TICA_TESS_mag_calibration_failure_test.tar.bz2" && tar -xvjf TICA_TESS_mag_calibration_failure_test.tar.bz2 && rm -f TICA_TESS_mag_calibration_failure_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/TICA_TESS_mag_calibration_failure_test.tar.bz2" && tar -xvjf TICA_TESS_mag_calibration_failure_test.tar.bz2 && rm -f TICA_TESS_mag_calibration_failure_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -25079,7 +25079,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../TICA_TESS__zeroRA_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS__zeroRA_test.tar.bz2" && tar -xvjf TICA_TESS__zeroRA_test.tar.bz2 && rm -f TICA_TESS__zeroRA_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/TICA_TESS__zeroRA_test.tar.bz2" && tar -xvjf TICA_TESS__zeroRA_test.tar.bz2 && rm -f TICA_TESS__zeroRA_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/TICA_TESS__zeroRA_test.tar.bz2" && tar -xvjf TICA_TESS__zeroRA_test.tar.bz2 && rm -f TICA_TESS__zeroRA_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -25600,7 +25600,7 @@ fi
 if [ ! -d ../KZ_Her_DSLR_transient_search_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/KZ_Her_DSLR_transient_search_test.tar.bz2" && tar -xvjf KZ_Her_DSLR_transient_search_test.tar.bz2 && rm -f KZ_Her_DSLR_transient_search_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/KZ_Her_DSLR_transient_search_test.tar.bz2" && tar -xvjf KZ_Her_DSLR_transient_search_test.tar.bz2 && rm -f KZ_Her_DSLR_transient_search_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/KZ_Her_DSLR_transient_search_test.tar.bz2" && tar -xvjf KZ_Her_DSLR_transient_search_test.tar.bz2 && rm -f KZ_Her_DSLR_transient_search_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -25772,7 +25772,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../KGO_RC600_NCas2021_test/ ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/KGO_RC600_NCas2021_test.tar.bz2" && tar -xvjf KGO_RC600_NCas2021_test.tar.bz2 && rm -f KGO_RC600_NCas2021_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/KGO_RC600_NCas2021_test.tar.bz2" && tar -xvjf KGO_RC600_NCas2021_test.tar.bz2 && rm -f KGO_RC600_NCas2021_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/KGO_RC600_NCas2021_test.tar.bz2" && tar -xvjf KGO_RC600_NCas2021_test.tar.bz2 && rm -f KGO_RC600_NCas2021_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 ############################################
@@ -28894,7 +28894,7 @@ fi
 if [ ! -d ../M31_ISON_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 #
@@ -29107,7 +29107,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../vast_test__dark_flat_flag ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test__dark_flat_flag.tar.bz2" && tar -xvjf vast_test__dark_flat_flag.tar.bz2 && rm -f vast_test__dark_flat_flag.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test__dark_flat_flag.tar.bz2" && tar -xvjf vast_test__dark_flat_flag.tar.bz2 && rm -f vast_test__dark_flat_flag.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test__dark_flat_flag.tar.bz2" && tar -xvjf vast_test__dark_flat_flag.tar.bz2 && rm -f vast_test__dark_flat_flag.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ -d ../vast_test__dark_flat_flag ];then
@@ -29794,7 +29794,7 @@ if [ $? -eq 0 ];then
     if [ ! -d ../vast_test_bright_stars_failed_match ];then
      cd .. || exit 1
      #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
-     curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+     curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
      cd "$WORKDIR" || exit 1
     fi
     # If the test data are found
@@ -29867,7 +29867,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2" && tar -xjf M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2 && rm -f M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2" && tar -xjf M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2 && rm -f M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2" && tar -xjf M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2 && rm -f M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 
@@ -30951,7 +30951,7 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../MASTER_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -31115,7 +31115,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../M31_ISON_test ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -31236,7 +31236,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../test_exclude_ref_image ];then
  cd .. || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
@@ -33872,7 +33872,7 @@ echo -n "Performing NMW flatfielding test: " >> vast_test_report.txt
 if [ ! -d ../NMW_corrupt_calibration_test ];then
  cd ../ || exit 1
  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_corrupt_calibration_test.tar.bz2" && tar -xf NMW_corrupt_calibration_test.tar.bz2 && rm -f NMW_corrupt_calibration_test.tar.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/NMW_corrupt_calibration_test.tar.bz2" && tar -xf NMW_corrupt_calibration_test.tar.bz2 && rm -f NMW_corrupt_calibration_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW_corrupt_calibration_test.tar.bz2" && tar -xf NMW_corrupt_calibration_test.tar.bz2 && rm -f NMW_corrupt_calibration_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 if [ -f ../NMW_corrupt_calibration_test/d_test.fit ] && [ -f ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit ];then
