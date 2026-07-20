@@ -509,12 +509,13 @@ static int render_plot( const options_t *opt, const char *plot_path,
  // White background, black foreground -- matches the PNG branch in lc.c.
  cpgscr( COLOR_BG, 1.0, 1.0, 1.0 );
  cpgscr( COLOR_FG, 0.0, 0.0, 0.0 );
- // Redefine the detection/upper-limit colors from the default pure PGPLOT
- // red/blue to a Paul Tol inspired pair: detections #CC3311, upper limits
- // #5588BB. The desaturated blue makes the limit symbols recede so the
- // red detections stand out; the pair keeps strong separation under all
+ // Detection/upper-limit colors: bright red detections (set explicitly
+ // even though it matches the PGPLOT default for index 2, so the palette
+ // is self-contained) and a Paul Tol inspired desaturated blue for the
+ // upper limits that makes the limit symbols recede so the red detections
+ // stand out. The pair keeps strong separation under all
  // color-vision-deficiency types and >=3:1 contrast on white.
- cpgscr( COLOR_RED, 0.800f, 0.200f, 0.067f );  // #CC3311
+ cpgscr( COLOR_RED, 1.0f, 0.0f, 0.0f );        // #FF0000
  cpgscr( COLOR_BLUE, 0.333f, 0.533f, 0.733f ); // #5588BB
  cpgpage();
  // Roman font (cpgscf == 2) draws multi-stroke glyphs that look noticeably
