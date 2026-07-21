@@ -171,6 +171,13 @@
 // Star matching
 #define MAX_FRACTION_OF_AMBIGUOUS_MATCHES 0.05           //  Maximum fraction of stars that match one star on the reference image
 #define MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION 5 // discard the above if there are less than the specified number of stars affected by the problem
+// Do not invalidate a match on high ambiguity when the unambiguously matched stars alone
+// cover at least this fraction of the smaller of the two catalogs: a wrong transformation
+// cannot unambiguously match the majority of stars (random coincidences top out around a
+// third of the catalog even in the densest fields), while a correct transformation in a
+// crowded low-galactic-latitude field may legitimately exceed MAX_FRACTION_OF_AMBIGUOUS_MATCHES
+// through SExtractor deblending differences between two deep near-identical frames.
+#define MIN_UNAMBIGUOUS_MATCH_FRACTION_TO_OVERRIDE_AMBIGUITY_GUARD 0.5
 
 #define MAX_MATCH_TRIALS 5                              // discard image if it was still not matched after MAX_MATCH_TRIALS attempts 
 #define MIN_FRACTION_OF_MATCHED_STARS 0.20              // let's try to allow matching frames with only small overlap - usefult for reporting large NMW camera offsets as offsets rather than generic "vast processing faield" error

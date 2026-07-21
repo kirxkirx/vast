@@ -1468,9 +1468,19 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
   fraction_of_ambiguous_matches= 0.0;
  }
  if ( fraction_of_ambiguous_matches > MAX_FRACTION_OF_AMBIGUOUS_MATCHES && number_of_ambiguous_matches > MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION ) {
-  fprintf( stderr, "ERROR: ambiguous match for too many stars!!!\n" );
-  fprintf( stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
-  number_of_matched_stars= 0;
+  // High ambiguity normally means the coordinate transformation is wrong and the "matches"
+  // are chance coincidences. But in a very crowded field two deep near-identical frames
+  // legitimately produce many ambiguous pairs (SExtractor deblends the same marginal clumps
+  // slightly differently on the two frames). The discriminator is the unambiguous match count:
+  // ambiguous pairs are already excluded from number_of_matched_stars above, and no wrong
+  // transformation can unambiguously match the majority of the smaller catalog.
+  if ( (double)number_of_matched_stars < MIN_UNAMBIGUOUS_MATCH_FRACTION_TO_OVERRIDE_AMBIGUITY_GUARD * (double)MIN( Number1, Number2 ) ) {
+   fprintf( stderr, "ERROR: ambiguous match for too many stars!!!\n" );
+   fprintf( stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
+   number_of_matched_stars= 0;
+  } else {
+   fprintf( stderr, "WARNING: high fraction of ambiguous matches (%lf, %d stars), but keeping the match as %d stars matched unambiguously\n", fraction_of_ambiguous_matches, number_of_ambiguous_matches, number_of_matched_stars );
+  }
  }
  //
  fprintf( stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
