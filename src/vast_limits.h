@@ -177,7 +177,12 @@
 // third of the catalog even in the densest fields), while a correct transformation in a
 // crowded low-galactic-latitude field may legitimately exceed MAX_FRACTION_OF_AMBIGUOUS_MATCHES
 // through SExtractor deblending differences between two deep near-identical frames.
-#define MIN_UNAMBIGUOUS_MATCH_FRACTION_TO_OVERRIDE_AMBIGUITY_GUARD 0.5
+// Calibration points for the threshold value: the legitimate dense-field case
+// (Cyg-08 same-night reference pair) has 86% of the smaller catalog matched
+// unambiguously at 7% ambiguity; the marginal small-frame case that MUST stay
+// rejected (TWOLEVELDIRREC test, worst ASASSN-19cq image) reaches only 50%
+// unambiguous at 23% ambiguity. 0.75 separates the two with margin on both sides.
+#define MIN_UNAMBIGUOUS_MATCH_FRACTION_TO_OVERRIDE_AMBIGUITY_GUARD 0.75
 
 #define MAX_MATCH_TRIALS 5                              // discard image if it was still not matched after MAX_MATCH_TRIALS attempts 
 #define MIN_FRACTION_OF_MATCHED_STARS 0.20              // let's try to allow matching frames with only small overlap - usefult for reporting large NMW camera offsets as offsets rather than generic "vast processing faield" error

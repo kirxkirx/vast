@@ -236,6 +236,13 @@ fi
 # The threshold is env-overridable so cameras with a naturally low match
 # fraction can set a per-camera value in transient_factory_test31.sh.
 : "${MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION:=1.0}"
+# Stricter companion threshold used when the matched fraction is normalized by
+# the number of catalog stars available in the frame (see below): a healthy
+# plate solution matches 4-17 percent of the AVAILABLE catalog stars, while a
+# broken one still reaches ~1.5 percent there (65 chance matches of 4411
+# catalog stars in the NMW-STL plate-solve-failure test), so the 1.0 default
+# tuned for the detected-star denominator is far too lenient for this one.
+: "${MIN_PERCENT_OF_CATALOG_STARS_MATCHED_FOR_MAG_CALIBRATION:=2.5}"
 MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
 if [ -s calib.txt ] && [ -s wcsmag.cat ];then
  N_CALIBRATION_STARS=$(wc -l < calib.txt)
@@ -248,14 +255,16 @@ if [ -s calib.txt ] && [ -s wcsmag.cat ];then
  # calibration_catalog_stars_in_frame.count; fall back to the old
  # detected-only denominator when the count file is absent (older binary).
  N_FRACTION_CHECK_DENOMINATOR="$N_DETECTED_STARS_FOR_CALIBRATION"
+ MIN_PERCENT_FOR_FRACTION_CHECK="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION"
  if [ -s calibration_catalog_stars_in_frame.count ];then
   N_CATALOG_STARS_IN_FRAME=$(head -n 1 calibration_catalog_stars_in_frame.count | awk '{print $1}')
   if [ -n "$N_CATALOG_STARS_IN_FRAME" ] && [ "$N_CATALOG_STARS_IN_FRAME" -gt 0 ] 2>/dev/null && [ "$N_CATALOG_STARS_IN_FRAME" -lt "$N_DETECTED_STARS_FOR_CALIBRATION" ];then
    N_FRACTION_CHECK_DENOMINATOR="$N_CATALOG_STARS_IN_FRAME"
+   MIN_PERCENT_FOR_FRACTION_CHECK="$MIN_PERCENT_OF_CATALOG_STARS_MATCHED_FOR_MAG_CALIBRATION"
   fi
  fi
  if [ "$N_DETECTED_STARS_FOR_CALIBRATION" -ge "$MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK" ];then
-  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_FRACTION_CHECK_DENOMINATOR" -v p="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
+  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_FRACTION_CHECK_DENOMINATOR" -v p="$MIN_PERCENT_FOR_FRACTION_CHECK" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
    MATCH_PERCENT_FOR_DISPLAY=$(awk -v n="$N_CALIBRATION_STARS" -v d="$N_FRACTION_CHECK_DENOMINATOR" 'BEGIN { printf "%.2f", 100.0 * n / d }')
    echo "ERROR: only $N_CALIBRATION_STARS of $N_FRACTION_CHECK_DENOMINATOR matchable stars ($N_DETECTED_STARS_FOR_CALIBRATION detected on the reference image) matched the Tycho-2 photometric calibration catalog ($MATCH_PERCENT_FOR_DISPLAY%) - the reference image plate solution is likely broken and the magnitude calibration is unreliable"
   fi
