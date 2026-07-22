@@ -299,6 +299,13 @@ function process_one_image {
   done
   echo "RESULT $base: best SIP order = $best_order (worst_quadrant_sigma=$best_worstq overall_sigma=$best_sigma)"
   printf "%s" "$report"
+  # Diagnostic aid: keep the per-order solve logs and the strip log when
+  # requested (set VAST_KEEP_SIP_ORDER_SELECT_LOGS=1) - they are the only
+  # record of WHY a particular order won or produced a poor solution.
+  if [ "$VAST_KEEP_SIP_ORDER_SELECT_LOGS" = "1" ]; then
+   mkdir -p "$INVOCATION_DIR/sip_order_select_logs_${base%.fits}"
+   cp -p "$master_workdir"/*.log "$INVOCATION_DIR/sip_order_select_logs_${base%.fits}/" 2>/dev/null
+  fi
   rm -rf "$master_workdir"
   return 0
  else

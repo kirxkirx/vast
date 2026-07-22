@@ -17,37 +17,56 @@ export LANGUAGE LC_ALL
 #################################
 
 function download_tycho2_from_scan {
- # Download Tycho-2 files (ReadMe, *.gz, robots.txt) from scan.sai.msu.ru.
- # Try curl first (parse the HTML directory listing); fall back to wget.
- local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
- local listing
+ # Download the Tycho-2 catalog files. The file set is fixed (a frozen
+ # catalog), so no directory listing is needed: the known file names are
+ # tried against a chain of mirrors (same logic as in
+ # lib/update_offline_catalogs.sh). A file that is already present and
+ # passes the gzip integrity test is never re-downloaded; a failed transfer
+ # keeps its partial file so '--continue-at -' resumes it from the next
+ # mirror, while a complete-but-corrupt file is discarded for a clean
+ # re-download. cdsarc.u-strasbg.fr redirects to cdsarc.cds.unistra.fr,
+ # so the latter is used directly as the authoritative upstream fallback.
+ local mirror_base_url
  local item
+ local n_missing
+ local tycho2_gz_files="tyc2.dat.00.gz tyc2.dat.01.gz tyc2.dat.02.gz tyc2.dat.03.gz tyc2.dat.04.gz tyc2.dat.05.gz tyc2.dat.06.gz tyc2.dat.07.gz tyc2.dat.08.gz tyc2.dat.09.gz tyc2.dat.10.gz tyc2.dat.11.gz tyc2.dat.12.gz tyc2.dat.13.gz tyc2.dat.14.gz tyc2.dat.15.gz tyc2.dat.16.gz tyc2.dat.17.gz tyc2.dat.18.gz tyc2.dat.19.gz"
  if command -v curl >/dev/null 2>&1 ;then
-  listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
-  if [ -n "$listing" ];then
-   for item in $listing ;do
-    case "$item" in
-     */) continue ;;
-     ReadMe|*.gz|robots.txt)
-      echo "Downloading: $item" >&2
-      curl $VAST_CURL_PROXY --silent --show-error --max-time 600 \
-           --continue-at - --retry 5 --retry-delay 2 \
-           -o "$item" "${url}${item}"
-      if [ $? -ne 0 ];then
-       echo "curl failed on $item" >&2
-       break
-      fi
-      ;;
-    esac
+  for mirror_base_url in "http://scan.sai.msu.ru/~kirx/data/tycho2/" "http://tau.kirx.net/vast_test_data/tycho2/" "https://cdsarc.cds.unistra.fr/ftp/I/259/" ;do
+   echo "Trying Tycho-2 mirror $mirror_base_url" >&2
+   # ReadMe is kept for provenance, but its absence is not fatal
+   if [ ! -s ReadMe ];then
+    curl $VAST_CURL_PROXY --silent --max-time 60 --insecure -o ReadMe "${mirror_base_url}ReadMe" 2>/dev/null
+   fi
+   n_missing=0
+   for item in $tycho2_gz_files ;do
+    # keep a complete, integrity-checked file from a previous mirror or run
+    if [ -s "$item" ] && gzip -t "$item" 2>/dev/null ;then
+     continue
+    fi
+    echo "Downloading: $item" >&2
+    curl $VAST_CURL_PROXY --silent --show-error --max-time 600 \
+         --insecure --continue-at - --retry 5 --retry-delay 2 \
+         -o "$item" "${mirror_base_url}${item}"
+    if [ $? -eq 0 ];then
+     if gzip -t "$item" 2>/dev/null ;then
+      continue
+     fi
+     echo "Warning: $item fails the gzip integrity test - discarding it" >&2
+     rm -f "$item"
+    fi
+    # transfer failed: keep the partial file for resuming from the next mirror
+    n_missing=$((n_missing+1))
    done
-   if [ -s tyc2.dat.19.gz ];then
+   if [ "$n_missing" -eq 0 ];then
+    echo "All Tycho-2 files downloaded successfully" >&2
     return 0
    fi
-  fi
+   echo "Warning: $n_missing Tycho-2 file(s) still missing after trying $mirror_base_url" >&2
+  done
   echo "curl-based download incomplete, falling back to wget" >&2
  fi
  if command -v wget >/dev/null 2>&1 ;then
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "$url"
+  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
   return $?
  fi
  echo "ERROR: neither curl nor wget is available to download Tycho-2" >&2
