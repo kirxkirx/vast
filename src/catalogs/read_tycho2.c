@@ -266,6 +266,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
 int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundaries_radec ) {
  long i= 0;
  FILE *tychofile;
+ FILE *countfile;
  int tychofilecounter;
  char tychofiles[20][32]= { "lib/catalogs/tycho2/tyc2.dat.00", "lib/catalogs/tycho2/tyc2.dat.01", "lib/catalogs/tycho2/tyc2.dat.02", "lib/catalogs/tycho2/tyc2.dat.03", "lib/catalogs/tycho2/tyc2.dat.04",
                             "lib/catalogs/tycho2/tyc2.dat.05", "lib/catalogs/tycho2/tyc2.dat.06", "lib/catalogs/tycho2/tyc2.dat.07", "lib/catalogs/tycho2/tyc2.dat.08", "lib/catalogs/tycho2/tyc2.dat.09", "lib/catalogs/tycho2/tyc2.dat.10",
@@ -315,6 +316,17 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
  fprintf( stderr, "Tycho-2 catalog search boundaries: RA %.4f to %.4f deg, Dec %.4f to %.4f deg\n",
           image_boundaries_radec[0], image_boundaries_radec[1], image_boundaries_radec[2], image_boundaries_radec[3] );
  fprintf( stderr, "Loaded %ld Tycho-2 stars within the image boundaries (VT and BT non-zero).\n", i );
+ // Record the number of catalog stars available for matching in this frame.
+ // The calibration-yield sanity check in util/magnitude_calibration.sh and
+ // util/transients/calibrate_current_field_with_tycho2.sh uses this count to
+ // normalize the matched fraction: with deep detection catalogs (hundreds of
+ // thousands of sources) the matched/detected fraction is capped by the
+ // catalog star count rather than by the plate solution quality.
+ countfile= fopen( "calibration_catalog_stars_in_frame.count", "w" );
+ if ( countfile != NULL ) {
+  fprintf( countfile, "%ld\n", i );
+  fclose( countfile );
+ }
  return 0;
 }
 

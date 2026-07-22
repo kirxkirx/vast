@@ -62,9 +62,28 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# Candidate SIP orders to try, in preference order. The first one that ties on
-# score wins, so list the conservative default (3) first.
-SIP_ORDERS="3 2"
+# Candidate SIP orders to try. The solution minimizing the WORST-quadrant
+# astrometric residual sigma wins (we want a solution that is good across the
+# whole frame, not one that fits three quadrants well and fails in the fourth);
+# on a tie (within SIP_ORDER_SELECTION_TIE_ARCSEC) the lower overall sigma wins.
+SIP_ORDERS="4 3 2"
+SIP_ORDER_SELECTION_TIE_ARCSEC=0.01
+# Validity gate: a candidate whose astrometric-match count collapses relative
+# to the best candidate is disqualified before the residual comparison. A
+# globally-warped solution can match only a small self-consistent subset of
+# stars and then show deceptively uniform per-quadrant residuals on that
+# subset (test case: Cas-05 order-4, uniform 2.4 arcsec quadrants built on a
+# collapsed match set while healthy orders match twice as many stars).
+SIP_ORDER_SELECTION_MIN_NMATCH_FRACTION=0.5
+# The WCS_QUALITY_DIAG N_match alone is NOT sufficient for the gate: its
+# generous match radius plus outlier exclusion makes a globally-warped
+# solution look as star-rich as a healthy one (Cas-05 order-4: N_match=899,
+# the largest of all candidates, yet only 311 tight-radius Tycho-2 matches
+# against thousands for the healthy orders). So when the local Tycho-2 copy
+# is available, the tight-radius Tycho-2 match count of each candidate is
+# measured with lib/catalogs/read_tycho2 and the same 0.5-of-best floor is
+# applied to it. Candidates ranked by worst-quadrant sigma among survivors.
+SIP_ORDER_SELECTION_MIN_TYCHO_FRACTION=0.5
 
 # A more portable realpath wrapper (same idiom as util/identify.sh)
 function vastrealpath {
@@ -119,7 +138,7 @@ function extract_diag_field {
 
 function print_usage {
  echo "Usage: $0 image1.fits [image2.fits ...] [--fov ARCMIN] [--iterations N]" >&2
- echo "Solves each image at SIP orders ${SIP_ORDERS// /, } and keeps the one with the best (lowest) sigma*ratio astrometric residual score." >&2
+ echo "Solves each image at SIP orders ${SIP_ORDERS// /, } and keeps the one with the lowest worst-quadrant astrometric residual sigma (ties broken by the lowest overall sigma)." >&2
  echo "The WCS is stripped from a private working copy before solving, so the original file is never modified." >&2
 }
 
@@ -128,8 +147,10 @@ function print_usage {
 function process_one_image {
  local image="$1"
  local base wcs_base abs_image workbase
- local order runlog sigma ratio score
- local best_order best_score
+ local order runlog sigma ratio worstq q1 q2 q3 q4 nmatch
+ local best_order best_worstq best_sigma
+ local -a cand_order cand_worstq cand_sigma cand_nmatch cand_tycho
+ local i max_nmatch nmatch_floor wcat tycho tycho_max tycho_floor
  local master_workdir stripped f suffix
  local report
 
@@ -168,7 +189,8 @@ function process_one_image {
  "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$stripped" > "$master_workdir/strip.log" 2>&1
 
  best_order=""
- best_score=""
+ best_worstq=""
+ best_sigma=""
  report=""
 
  for order in $SIP_ORDERS ; do
@@ -185,11 +207,20 @@ function process_one_image {
 
   sigma=$(extract_diag_field "$runlog" "$workbase" "sigma_overall_arcsec")
   ratio=$(extract_diag_field "$runlog" "$workbase" "worst_quadrant_to_overall_ratio")
-  score=$(awk -v s="$sigma" -v r="$ratio" 'BEGIN { if ( s == "" || r == "" ) exit; printf "%.6f", (s+0)*(r+0) }')
+  q1=$(extract_diag_field "$runlog" "$workbase" "sigma_q1_arcsec")
+  q2=$(extract_diag_field "$runlog" "$workbase" "sigma_q2_arcsec")
+  q3=$(extract_diag_field "$runlog" "$workbase" "sigma_q3_arcsec")
+  q4=$(extract_diag_field "$runlog" "$workbase" "sigma_q4_arcsec")
+  # The selection criterion: the worst (largest) per-quadrant residual sigma.
+  # We want a solution that is good across the WHOLE frame, so a fit that is
+  # excellent in three quadrants but fails in the fourth must lose to a fit
+  # that is uniformly acceptable everywhere.
+  worstq=$(awk -v a="$q1" -v b="$q2" -v c="$q3" -v d="$q4" 'BEGIN { if ( a == "" || b == "" || c == "" || d == "" ) exit; w=a+0; if ( b+0 > w ) w=b+0; if ( c+0 > w ) w=c+0; if ( d+0 > w ) w=d+0; printf "%.6f", w }')
+  nmatch=$(extract_diag_field "$runlog" "$workbase" "N_match")
 
-  report="${report}  order ${order}: sigma=${sigma:-N/A} ratio=${ratio:-N/A} score=${score:-N/A}"$'\n'
+  report="${report}  order ${order}: worst_quadrant_sigma=${worstq:-N/A} overall_sigma=${sigma:-N/A} quadrants=${q1:-N/A}/${q2:-N/A}/${q3:-N/A}/${q4:-N/A} N_match=${nmatch:-N/A} ratio=${ratio:-N/A}"$'\n'
 
-  if [ -n "$score" ]; then
+  if [ -n "$worstq" ] && [ -n "$sigma" ] && [ -n "$nmatch" ]; then
    # Stash this order's products, renamed from wcs_<workbase>* to the normal
    # wcs_<base>* names.
    mkdir -p "$master_workdir/order_${order}"
@@ -199,12 +230,61 @@ function process_one_image {
      cp -p "$f" "$master_workdir/order_${order}/${wcs_base}${suffix}"
     fi
    done
-   # Keep order 3 on ties: best is set on the first valid order (3), and a
-   # later order replaces it only if its score is strictly lower.
-   if [ -z "$best_score" ] || awk -v n="$score" -v b="$best_score" 'BEGIN { exit !(n < b) }' ; then
-    best_score="$score"
-    best_order="$order"
-   fi
+   cand_order+=("$order")
+   cand_worstq+=("$worstq")
+   cand_sigma+=("$sigma")
+   cand_nmatch+=("$nmatch")
+  fi
+ done
+
+ # Measure each candidate's tight-radius Tycho-2 match count (the ground-truth
+ # validity signal; see the SIP_ORDER_SELECTION_MIN_TYCHO_FRACTION comment).
+ # Empty when the local Tycho-2 copy or the candidate catalog is unavailable.
+ for i in "${!cand_order[@]}" ; do
+  tycho=""
+  wcat="$master_workdir/order_${cand_order[$i]}/${wcs_base}.wcscat"
+  if [ -s "$wcat" ] && [ -x "$VAST_PATH"lib/catalogs/read_tycho2 ] && [ -d "$VAST_PATH"lib/catalogs/tycho2 ]; then
+   cp "$wcat" "$VAST_PATH"wcsmag.cat
+   tycho=$( cd "$VAST_PATH" && lib/catalogs/read_tycho2 2>&1 | awk '/Matched with Tycho-2 /{print $4}' | tail -n 1 )
+   rm -f "$VAST_PATH"wcsmag.cat
+  fi
+  cand_tycho+=("$tycho")
+  report="${report}  order ${cand_order[$i]}: tight-radius Tycho-2 matches: ${tycho:-N/A}"$'\n'
+ done
+
+ # Candidate selection. A candidate whose match count collapsed below
+ # SIP_ORDER_SELECTION_MIN_NMATCH_FRACTION of the best candidate's count is
+ # disqualified (deceptively uniform residuals on a tiny matched subset),
+ # and likewise for the tight-radius Tycho-2 count when measured.
+ # Among the survivors: lowest worst-quadrant sigma wins; when two tie within
+ # SIP_ORDER_SELECTION_TIE_ARCSEC, the lower overall sigma wins.
+ tycho_max=0
+ for i in "${!cand_order[@]}" ; do
+  if [ -n "${cand_tycho[$i]}" ] && awk -v n="${cand_tycho[$i]}" -v m="$tycho_max" 'BEGIN { exit !( n+0 > m+0 ) }' ; then
+   tycho_max="${cand_tycho[$i]}"
+  fi
+ done
+ tycho_floor=$(awk -v m="$tycho_max" -v f="$SIP_ORDER_SELECTION_MIN_TYCHO_FRACTION" 'BEGIN { printf "%.1f", (m+0)*(f+0) }')
+ max_nmatch=0
+ for i in "${!cand_order[@]}" ; do
+  if awk -v n="${cand_nmatch[$i]}" -v m="$max_nmatch" 'BEGIN { exit !( n+0 > m+0 ) }' ; then
+   max_nmatch="${cand_nmatch[$i]}"
+  fi
+ done
+ nmatch_floor=$(awk -v m="$max_nmatch" -v f="$SIP_ORDER_SELECTION_MIN_NMATCH_FRACTION" 'BEGIN { printf "%.1f", (m+0)*(f+0) }')
+ for i in "${!cand_order[@]}" ; do
+  if awk -v n="${cand_nmatch[$i]}" -v fl="$nmatch_floor" 'BEGIN { exit !( n+0 < fl+0 ) }' ; then
+   report="${report}  order ${cand_order[$i]}: DISQUALIFIED - N_match=${cand_nmatch[$i]} is below $nmatch_floor (${SIP_ORDER_SELECTION_MIN_NMATCH_FRACTION} of the best candidate's $max_nmatch)"$'\n'
+   continue
+  fi
+  if [ -n "${cand_tycho[$i]}" ] && awk -v n="${cand_tycho[$i]}" -v fl="$tycho_floor" 'BEGIN { exit !( n+0 < fl+0 ) }' ; then
+   report="${report}  order ${cand_order[$i]}: DISQUALIFIED - tight-radius Tycho-2 match count ${cand_tycho[$i]} is below $tycho_floor (${SIP_ORDER_SELECTION_MIN_TYCHO_FRACTION} of the best candidate's $tycho_max)"$'\n'
+   continue
+  fi
+  if [ -z "$best_worstq" ] || awk -v w="${cand_worstq[$i]}" -v bw="$best_worstq" -v s="${cand_sigma[$i]}" -v bs="$best_sigma" -v t="$SIP_ORDER_SELECTION_TIE_ARCSEC" 'BEGIN { d= (w+0) - (bw+0); if ( d < -t ) exit 0; if ( d <= t && (s+0) < (bs+0) ) exit 0; exit 1 }' ; then
+   best_worstq="${cand_worstq[$i]}"
+   best_sigma="${cand_sigma[$i]}"
+   best_order="${cand_order[$i]}"
   fi
  done
 
@@ -217,7 +297,7 @@ function process_one_image {
     cp -p "$f" "$INVOCATION_DIR/"
    fi
   done
-  echo "RESULT $base: best SIP order = $best_order (score=$best_score)"
+  echo "RESULT $base: best SIP order = $best_order (worst_quadrant_sigma=$best_worstq overall_sigma=$best_sigma)"
   printf "%s" "$report"
   rm -rf "$master_workdir"
   return 0

@@ -426,10 +426,24 @@ MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK=1000
 if [ -n "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ] && [ -s "${UCAC5_REFERENCE_IMAGE_MATCH_FILE%.ucac5}" ] && [ -s calib.txt ];then
  N_CALIBRATION_STARS=$(wc -l < calib.txt)
  N_DETECTED_STARS_FOR_CALIBRATION=$(wc -l < "${UCAC5_REFERENCE_IMAGE_MATCH_FILE%.ucac5}")
+ # Normalize the matched fraction by the number of catalog stars available in
+ # the frame when that count is known (written by lib/catalogs/read_tycho2):
+ # a deep detection catalog can never match more stars than the calibration
+ # catalog holds in the field, so the detected-star denominator alone flags
+ # healthy plate solutions of deep dense-field catalogs (300k detections vs
+ # ~30k Tycho-2 stars puts even a perfect solution below a percent). Fall
+ # back to the old detected-only denominator when the count file is absent.
+ N_FRACTION_CHECK_DENOMINATOR="$N_DETECTED_STARS_FOR_CALIBRATION"
+ if [ -s calibration_catalog_stars_in_frame.count ];then
+  N_CATALOG_STARS_IN_FRAME=$(head -n 1 calibration_catalog_stars_in_frame.count | awk '{print $1}')
+  if [ -n "$N_CATALOG_STARS_IN_FRAME" ] && [ "$N_CATALOG_STARS_IN_FRAME" -gt 0 ] 2>/dev/null && [ "$N_CATALOG_STARS_IN_FRAME" -lt "$N_DETECTED_STARS_FOR_CALIBRATION" ];then
+   N_FRACTION_CHECK_DENOMINATOR="$N_CATALOG_STARS_IN_FRAME"
+  fi
+ fi
  if [ "$N_DETECTED_STARS_FOR_CALIBRATION" -ge "$MIN_DETECTED_STARS_FOR_MATCH_FRACTION_CHECK" ];then
-  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" -v p="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
-   MATCH_PERCENT_FOR_DISPLAY=$(awk -v n="$N_CALIBRATION_STARS" -v d="$N_DETECTED_STARS_FOR_CALIBRATION" 'BEGIN { printf "%.2f", 100.0 * n / d }')
-   echo "ERROR: only $N_CALIBRATION_STARS of $N_DETECTED_STARS_FOR_CALIBRATION stars detected on the reference image matched the photometric calibration catalog ($MATCH_PERCENT_FOR_DISPLAY%) - the reference image plate solution is likely broken and the magnitude calibration is unreliable"
+  if awk -v n="$N_CALIBRATION_STARS" -v d="$N_FRACTION_CHECK_DENOMINATOR" -v p="$MIN_PERCENT_OF_DETECTED_STARS_MATCHED_FOR_MAG_CALIBRATION" 'BEGIN { exit !( 100.0 * n / d < p ) }' ;then
+   MATCH_PERCENT_FOR_DISPLAY=$(awk -v n="$N_CALIBRATION_STARS" -v d="$N_FRACTION_CHECK_DENOMINATOR" 'BEGIN { printf "%.2f", 100.0 * n / d }')
+   echo "ERROR: only $N_CALIBRATION_STARS of $N_FRACTION_CHECK_DENOMINATOR matchable stars ($N_DETECTED_STARS_FOR_CALIBRATION detected on the reference image) matched the photometric calibration catalog ($MATCH_PERCENT_FOR_DISPLAY%) - the reference image plate solution is likely broken and the magnitude calibration is unreliable"
   fi
  fi
 fi
