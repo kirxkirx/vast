@@ -3,8 +3,56 @@
 # This script will update the copies of VSX and ASASSN-V catalogs for offline use
 
 # Max total time for catalog download
-# Assume the connection is fast enough for the catalog to be downlaoded in less than 
+# Assume the connection is fast enough for the catalog to be downlaoded in less than
 CATALOG_DOWNLOAD_TIMEOUT_SEC=3600
+
+# Temporary-failure tolerance: how many times to (re)start each download
+# command and how long to wait between the attempts. The curl commands use
+# '--continue-at -', so every retry RESUMES the partial file left by the
+# previous attempt instead of starting from zero - on an unstable connection
+# a large transfer (astorb.dat.gz is >100 MB) then completes incrementally
+# across the attempts even when no single attempt can pull the whole file.
+# Both values are env-overridable for hosts with especially flaky links.
+: "${CATALOG_DOWNLOAD_ATTEMPTS:=3}"
+: "${CATALOG_DOWNLOAD_RETRY_DELAY_SEC:=60}"
+
+# Run a download command up to CATALOG_DOWNLOAD_ATTEMPTS times, resuming the
+# partial output file between the attempts. For .gz targets the completed
+# file must also pass a gzip integrity test: a resumed download stitched
+# from two different versions of the remote file (the mirror may have
+# regenerated it between attempts or between script runs) produces a corrupt
+# archive, which is discarded so the next attempt starts from scratch.
+# $1 - the full download command
+# $2 - the output file that command writes
+attempt_download_with_resume() {
+ DOWNLOAD_ATTEMPT_COUNTER=1
+ while true ;do
+  $1
+  DOWNLOAD_EXIT_CODE=$?
+  if [ $DOWNLOAD_EXIT_CODE -eq 0 ];then
+   case "$2" in
+    *.gz)
+     if gzip -t "$2" 2>/dev/null ;then
+      return 0
+     fi
+     echo "WARNING: $2 fails the gzip integrity test - discarding it, the next attempt will re-download from scratch" >&2
+     rm -f "$2"
+     ;;
+    *)
+     return 0
+     ;;
+   esac
+  else
+   echo "WARNING: download attempt $DOWNLOAD_ATTEMPT_COUNTER of $CATALOG_DOWNLOAD_ATTEMPTS failed with curl exit code $DOWNLOAD_EXIT_CODE" >&2
+  fi
+  if [ "$DOWNLOAD_ATTEMPT_COUNTER" -ge "$CATALOG_DOWNLOAD_ATTEMPTS" ];then
+   return 1
+  fi
+  DOWNLOAD_ATTEMPT_COUNTER=$((DOWNLOAD_ATTEMPT_COUNTER+1))
+  echo "Waiting $CATALOG_DOWNLOAD_RETRY_DELAY_SEC seconds before download attempt $DOWNLOAD_ATTEMPT_COUNTER (a partial file, if any, will be resumed)" >&2
+  sleep "$CATALOG_DOWNLOAD_RETRY_DELAY_SEC"
+ done
+}
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -338,18 +386,21 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
    UNPACK_COMMAND="ls $TMP_OUTPUT"
+   DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
   fi
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
+   DOWNLOAD_TARGET_FILE="$TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
+   DOWNLOAD_TARGET_FILE="$TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    # The ASASSN-V catalog is only used to annotate transient candidates; the search can proceed
@@ -359,6 +410,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
+   DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
   fi
   if [ -z "$CURL_COMMAND" ];then
    echo "ERROR CURL_COMMAND is not set" >&2
@@ -374,20 +426,22 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   fi
   
   
+  # Remove a stale unpacked temporary from a previous run. A partial .gz
+  # download from a previous run is deliberately KEPT: the download commands
+  # use '--continue-at -' so this run resumes it instead of starting over,
+  # and the gzip integrity test in attempt_download_with_resume() protects
+  # against resuming a file the remote server has regenerated since.
   if [ -f "$TMP_OUTPUT" ];then
    rm -f "$TMP_OUTPUT"
-  fi
-  if [ -f "$TMP_OUTPUT".gz ];then
-   rm -f "$TMP_OUTPUT".gz
   fi
 
   # First try to download a catalog from the mirror
   echo "### CURL_LOCAL_COMMAND ###
 $PWD" >&2
   echo "$CURL_LOCAL_COMMAND" >&2
-  $CURL_LOCAL_COMMAND
+  attempt_download_with_resume "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE"
   if [ $? -ne 0 ];then
-   # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_LOCAL_COMMAND point to exact same version of the file
+   # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_COMMAND point to exact same version of the file
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
    fi
@@ -397,14 +451,14 @@ $PWD" >&2
    #
    # if that failed, try to download the catalog from the original link
    echo "Failed to download from the local link, fallig back to $CURL_COMMAND" >&2
-   $CURL_COMMAND
+   attempt_download_with_resume "$CURL_COMMAND" "$DOWNLOAD_TARGET_FILE"
    if [ $? -ne 0 ];then
     echo "ERROR running the download command" >&2
+    # Keep the partial .gz download (if any): the next update run will resume
+    # it, so even repeatedly failing runs make forward progress on a large
+    # catalog over an unstable connection.
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
-    fi
-    if [ -f "$TMP_OUTPUT".gz ];then
-     rm -f "$TMP_OUTPUT".gz
     fi
     if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
      echo "ERROR: failed to download the optional catalog $FILE_TO_UPDATE - continuing without updating it" >&2
