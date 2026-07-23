@@ -150,7 +150,7 @@ function process_one_image {
  local order runlog sigma ratio worstq q1 q2 q3 q4 nmatch
  local best_order best_worstq best_sigma
  local -a cand_order cand_worstq cand_sigma cand_nmatch cand_tycho
- local i max_nmatch nmatch_floor wcat tycho tycho_max tycho_floor
+ local i max_nmatch nmatch_floor wcat tycho tycho_max tycho_floor solved_order
  local master_workdir stripped f suffix
  local report
 
@@ -219,6 +219,17 @@ function process_one_image {
   nmatch=$(extract_diag_field "$runlog" "$workbase" "N_match")
 
   report="${report}  order ${order}: worst_quadrant_sigma=${worstq:-N/A} overall_sigma=${sigma:-N/A} quadrants=${q1:-N/A}/${q2:-N/A}/${q3:-N/A}/${q4:-N/A} N_match=${nmatch:-N/A} ratio=${ratio:-N/A}"$'\n'
+
+  # A solution whose header carries no SIP terms of the requested order means
+  # solve-field's tweak step silently failed (observed under heavy CPU load:
+  # the solver emits its untweaked TAN best-so-far when the budget runs out).
+  # Such a solution is NOT a candidate of this order - all orders would just
+  # duplicate the same TAN fit - so it is discarded here.
+  solved_order=$("$VAST_PATH"lib/bin/gethead "$VAST_PATH"wcs_"$workbase" A_ORDER 2>/dev/null | awk '{print $1}')
+  if [ -n "$worstq" ] && [ "$solved_order" != "$order" ]; then
+   report="${report}  order ${order}: DISCARDED - solved header has SIP order '${solved_order:-none}' instead of the requested $order (tweak failed, likely under CPU load)"$'\n'
+   worstq=""
+  fi
 
   if [ -n "$worstq" ] && [ -n "$sigma" ] && [ -n "$nmatch" ]; then
    # Stash this order's products, renamed from wcs_<workbase>* to the normal
