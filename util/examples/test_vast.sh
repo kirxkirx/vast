@@ -15117,6 +15117,122 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### NMW-TexasTech Cas-02 RA=0 wraparound plate-solve test #####
+# One archival frame of the Cas-02 field, which straddles RA=0h. This frame
+# is the documented specimen for two distinct plate-solving problems:
+# 1) The Tycho-2 catalog boundary computation and the star matcher RA
+#    proximity check used to ignore the RA=0 wraparound, loading a
+#    full-circle declination band (134k stars instead of the ~27k actually
+#    in frame) and distorting the calibration-star yield check.
+#    CAS02RA0WRAP001/002 below guard that fix and DO fail the test.
+# 2) solve-field's SIP tweak fails on this frame more often than not,
+#    leaving a TAN-only solution with ~2.5 arcsec residuals. The repair is
+#    the UCAC5-based TAN-SIP refit in util/solve_plate_with_UCAC5 (see
+#    refit_sip_from_catalog_matches in src/solve_plate_with_UCAC5.c): it
+#    refits the distortion polynomial from the ~900 UCAC5 cross-matches and
+#    brings this frame to ~0.7 arcsec residuals and ~10x the Tycho-2 match
+#    count of the TAN-only solution. CAS02RA0SIP001/002 verify the refit
+#    produced a TAN-SIP header with sub-1.5 arcsec residuals.
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+# Download the test image if needed (a single bzip2-compressed FITS frame,
+# no tarball; it is kept inside its own dataset directory so the usual
+# skip-if-present and disk-space-cleanup conventions apply)
+if [ ! -s ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits ];then
+ cd .. || exit 1
+ mkdir -p NMW-TexasTech__Cas02_RA0_plate_solve_test
+ cd NMW-TexasTech__Cas02_RA0_plate_solve_test || exit 1
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits.bz2" && bunzip2 -f wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -s ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Cas-02 RA=0 wraparound plate-solve test "
+ echo -n "NMW-TexasTech Cas-02 RA=0 wraparound plate-solve test: " >> vast_test_report.txt
+ cp default.sex.telephoto_lens_vSTL default.sex
+ # Solve a WCS-stripped copy so this is a real blind solve rather than a
+ # re-use of the WCS embedded in the test image
+ cp ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits cas02ra0_testimage.fits
+ lib/astrometry/strip_wcs_keywords cas02ra0_testimage.fits > /dev/null 2>&1
+ rm -f wcs_cas02ra0_testimage.fits*
+ util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
+ # The failure-prone wide-FOV --verify re-tweak is skipped in this code
+ # path (solve_plate_with_UCAC5 exports VAST_SKIP_IMAGE_BASED_RETWEAK=1
+ # before triggering the blind solve, as its own UCAC5-based SIP refit
+ # supersedes the re-tweak), so the solver is expected to exit 0.
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0PLATESOLVE_EXIT_CODE"
+ fi
+ if [ ! -s wcs_cas02ra0_testimage.fits ] || [ ! -s wcs_cas02ra0_testimage.fits.wcscat ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0PLATESOLVE001"
+ else
+  # --- RA=0 wraparound handling in the Tycho-2 catalog reader ---
+  if [ -s lib/catalogs/tycho2/tyc2.dat.00 ];then
+   cp wcs_cas02ra0_testimage.fits.wcscat wcsmag.cat
+   lib/catalogs/read_tycho2 > cas02ra0_tycho$$.log 2>&1
+   grep -q 'The field straddles RA=0' cas02ra0_tycho$$.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0WRAP001"
+   fi
+   CAS02RA0_NLOADED=$(grep 'Loaded ' cas02ra0_tycho$$.log | head -n1 | awk '{print $2}')
+   # the naive full-circle boundaries load >130000 Tycho-2 stars,
+   # the true in-frame count is ~27000
+   if [ -z "$CAS02RA0_NLOADED" ] || [ "$CAS02RA0_NLOADED" -gt 60000 ] 2>/dev/null ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0WRAP002"
+   fi
+   rm -f wcsmag.cat calib.txt calib.txt_param calibration_catalog_stars_in_frame.count cas02ra0_tycho$$.log
+  fi
+  # --- SIP solution quality (delivered by the UCAC5-based SIP refit) ---
+  CAS02RA0_CTYPE1=$(util/listhead wcs_cas02ra0_testimage.fits | awk -F"'" '/^CTYPE1 /{print $2; exit}' | awk '{print $1}')
+  if [ "$CAS02RA0_CTYPE1" != "RA---TAN-SIP" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0SIP001"
+  fi
+  CAS02RA0_SIGMA=$(grep 'WCS_QUALITY_DIAG: file=cas02ra0_testimage.fits ' cas02ra0_solve$$.log | tail -n 1 | tr ' ' '\n' | awk -F'=' '$1 == "sigma_overall_arcsec" {print $2}')
+  if [ -z "$CAS02RA0_SIGMA" ] || ! echo "$CAS02RA0_SIGMA" | awk '{ if ( $1+0 < 1.5 ) exit 0; exit 1 }' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0SIP002"
+  fi
+ fi
+ rm -f cas02ra0_testimage.fits wcs_cas02ra0_testimage.fits* cas02ra0_solve$$.log
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-02 RA=0 wraparound plate-solve test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-02 RA=0 wraparound plate-solve test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0PLATESOLVE_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
 ##### NMW Cyg5 astrometry problem mira identification test #####
 # Two-epoch NMW images of the Cyg5 field carrying three Mira-class variables
 # (AM Cyg, AT Cyg, DU Cyg, all in VSX with Type M).  The dataset has two

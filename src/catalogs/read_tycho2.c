@@ -178,6 +178,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  // long max_M=0; // for debug
  double distance;
  double best_distance;
+ double delta_ra_rough;
  int match_only_N_brightest_stars;
 
  // sort arrays in magnitude
@@ -189,7 +190,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  // for each SExtractor catalog star
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( i, j, best_distance, distance )
+#pragma omp parallel for private( i, j, best_distance, distance, delta_ra_rough )
 #endif
 #endif
  for ( i= 0; i < match_only_N_brightest_stars; i++ ) {
@@ -212,7 +213,12 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
    // if( fabs(arrStar[i].DELTA_SKY-arrCatStar[j].DELTA_catalog)>MIN( MAX_DISTANCE_DEGREES, arrStar[i].A_WORLD) )continue;
    if ( fabs( arrStar[i].DELTA_SKY - arrCatStar[j].DELTA_catalog ) > MAX_DISTANCE_DEGREES )
     continue;
-   if ( fabs( arrStar[i].ALPHA_SKY - arrCatStar[j].ALPHA_catalog ) > 1.0 )
+   // The rough RA proximity check must respect the RA=0 wraparound:
+   // |359.9 - 0.05| is 359.85 numerically but only 0.15 deg on the sky
+   delta_ra_rough= fabs( arrStar[i].ALPHA_SKY - arrCatStar[j].ALPHA_catalog );
+   if ( delta_ra_rough > 180.0 )
+    delta_ra_rough= 360.0 - delta_ra_rough;
+   if ( delta_ra_rough > 1.0 )
     continue;
    distance= 180.0 / M_PI * acos( cos( arrStar[i].DELTA_SKY * M_PI / 180.0 ) * cos( arrCatStar[j].DELTA_catalog * M_PI / 180.0 ) * cos( MAX( arrStar[i].ALPHA_SKY * M_PI / 180.0, arrCatStar[j].ALPHA_catalog * M_PI / 180.0 ) - MIN( arrStar[i].ALPHA_SKY * M_PI / 180.0, arrCatStar[j].ALPHA_catalog * M_PI / 180.0 ) ) + sin( arrStar[i].DELTA_SKY * M_PI / 180.0 ) * sin( arrCatStar[j].DELTA_catalog * M_PI / 180.0 ) );
    if ( distance < best_distance ) {
@@ -289,10 +295,16 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
    // Parse all fields in single pass
    parse_tycho2_line( tychostr, catnumber_tmp, &RA_tmp, &Dec_tmp, &BT_tmp, &VT_tmp );
    // Apply filters
-   if ( RA_tmp < image_boundaries_radec[0] )
-    continue;
-   if ( RA_tmp > image_boundaries_radec[1] )
-    continue;
+   // (boundaries[0] > boundaries[1] encodes an RA interval wrapping through 0)
+   if ( image_boundaries_radec[0] <= image_boundaries_radec[1] ) {
+    if ( RA_tmp < image_boundaries_radec[0] )
+     continue;
+    if ( RA_tmp > image_boundaries_radec[1] )
+     continue;
+   } else {
+    if ( RA_tmp < image_boundaries_radec[0] && RA_tmp > image_boundaries_radec[1] )
+     continue;
+   }
    if ( Dec_tmp < image_boundaries_radec[2] )
     continue;
    if ( Dec_tmp > image_boundaries_radec[3] )
@@ -335,6 +347,8 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  double *DEC_array;
  int N_lines_in_catalog;
  int i= 0;
+ int j;
+ double ra_shifted_min, ra_shifted_max;
  FILE *sexcatfile;
 
  N_lines_in_catalog= count_lines_in_ASCII_file( catalog_name );
@@ -402,6 +416,33 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  image_boundaries_radec[1]= gsl_stats_max( RA_array, 1, i );
  image_boundaries_radec[2]= gsl_stats_min( DEC_array, 1, i );
  image_boundaries_radec[3]= gsl_stats_max( DEC_array, 1, i );
+ // A field that straddles RA=0 makes the naive min/max span nearly the full
+ // RA circle (test case: the Cas-02 NMW field, whose naive boundaries came
+ // out as RA 0.0001 to 359.9999 deg and pulled 134k Tycho-2 stars into the
+ // match instead of the ~30k actually in frame, distorting both the match
+ // speed and the calibration-star yield check). Detect the wrap by redoing
+ // the min/max with RA shifted by 180 deg: if the shifted span is smaller,
+ // the field crosses RA=0 and the true boundaries are encoded with
+ // boundaries[0] > boundaries[1] (an interval wrapping through zero), which
+ // the catalog readers below understand.
+ if ( image_boundaries_radec[1] - image_boundaries_radec[0] > 180.0 ) {
+  for ( j= 0; j < i; j++ ) {
+   RA_array[j]= RA_array[j] + 180.0;
+   if ( RA_array[j] >= 360.0 )
+    RA_array[j]= RA_array[j] - 360.0;
+  }
+  ra_shifted_min= gsl_stats_min( RA_array, 1, i );
+  ra_shifted_max= gsl_stats_max( RA_array, 1, i );
+  if ( ra_shifted_max - ra_shifted_min < image_boundaries_radec[1] - image_boundaries_radec[0] ) {
+   image_boundaries_radec[0]= ra_shifted_min + 180.0;
+   if ( image_boundaries_radec[0] >= 360.0 )
+    image_boundaries_radec[0]= image_boundaries_radec[0] - 360.0;
+   image_boundaries_radec[1]= ra_shifted_max - 180.0;
+   if ( image_boundaries_radec[1] < 0.0 )
+    image_boundaries_radec[1]= image_boundaries_radec[1] + 360.0;
+   fprintf( stderr, "The field straddles RA=0: the RA boundaries wrap around (min > max)\n" );
+  }
+ }
  fprintf( stderr, "Read %d stars from the SExtractor catalog %s\n", i, catalog_name );
  fprintf( stderr, "Detected star coordinate range: RA %.4f to %.4f deg, Dec %+.4f to %+.4f deg\n",
           image_boundaries_radec[0], image_boundaries_radec[1], image_boundaries_radec[2], image_boundaries_radec[3] );

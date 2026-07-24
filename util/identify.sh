@@ -894,6 +894,13 @@ fi
      #
      #TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
      TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
+     # VAST_SKIP_IMAGE_BASED_RETWEAK=1 skips the solve-field --verify re-tweak
+     # below (used for experiments with alternative SIP refinement schemes;
+     # on some very dense fields the verification scores near zero and the
+     # step degenerates into a many-minute blind index search)
+     if [ "$VAST_SKIP_IMAGE_BASED_RETWEAK" = "1" ];then
+      TEST=0
+     fi
      if [ $TEST -eq 1 ];then
       #if fasle ;then
       echo "The field of view is large: we'll try to run Astromety.net code on the image itself rather than a star list"
@@ -912,7 +919,13 @@ fi
       # quoted above: use iter 2's WCS file as the starting point, skip the
       # quad-match step entirely, verify against all index files, and
       # re-tweak SIP using stars matched to the best-verifying index.
-      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --verify out$$.wcs --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order "$VAST_TWEAK_ORDER"
+      # The 120 sec timeout guards against the failure mode where the
+      # verification scores near-zero log-odds on a dense field and
+      # solve-field falls back to a many-minute blind quad search; if the
+      # re-tweak is killed we keep the iteration 2 WCS, and the UCAC5-based
+      # SIP refit in util/solve_plate_with_UCAC5 will fix the distortion
+      # terms downstream.
+      echo wcs_"$BASENAME_FITSFILE" | $TIMEOUT_COMMAND 120 solve-field --files-on-stdin --fits-image --verify out$$.wcs --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order "$VAST_TWEAK_ORDER"
       if [ $? -eq 0 ];then
        # if there is an output file - replace the original with it
        if [ -s "$AN_NEW_FITS_WITH_UPDATED_WCS" ];then
@@ -929,7 +942,15 @@ fi
      ############
     fi
     # clean up
-    rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    # Remove the local working copy of the input image, but only if it IS a
+    # copy: when the input image is already in the current directory the
+    # "copy" is the input file itself and removing it would destroy the
+    # user's image (and break the callers that read the input image again
+    # after the solve, like util/solve_plate_with_UCAC5).
+    if [ ! "$FITSFILE" -ef "$BASENAME_FITSFILE" ];then
+     rm -f "$BASENAME_FITSFILE"
+    fi
+    rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
    else
     if [ -f out$$.wcs ];then
      echo "ERROR: out$$.wcs is empty"
@@ -1128,6 +1149,10 @@ Retrying..."
      #
      # The output plate-solved image wcs_"$BASENAME_FITSFILE" will be produced by lib/astrometry/insert_wcs_header
      for FILE_TO_REMOVE in "$BASENAME_FITSFILE" out$$.wcs ;do
+      # do not remove the "local copy" if it is actually the input image itself
+      if [ "$FILE_TO_REMOVE" -ef "$FITSFILE" ];then
+       continue
+      fi
       if [ -f "$FILE_TO_REMOVE" ];then
        rm -f "$FILE_TO_REMOVE"
       else

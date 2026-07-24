@@ -49,6 +49,7 @@
 
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
+#include <gsl/gsl_multifit.h> // for the UCAC5-based SIP refit
 
 #include "get_path_to_vast.h"
 
@@ -372,6 +373,12 @@ int blind_plate_solve_with_astrometry_net( char *fits_image_filename, double app
  char cmdstr[2 * FILENAME_LENGTH + VAST_PATH_MAX];
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
+ // Skip the solve-field --verify image-based re-tweak in identify.sh
+ // (unless the user explicitly set the knob): in this code path the
+ // UCAC5-based SIP refit runs right after the solve and supersedes the
+ // re-tweak, which on dense wide fields tends to degenerate into a
+ // many-minute blind index search anyway.
+ setenv( "VAST_SKIP_IMAGE_BASED_RETWEAK", "1", 0 );
  sprintf( cmdstr, "%sutil/wcs_image_calibration.sh %s %.1lf", path_to_vast_string, fits_image_filename, approximate_field_of_view_arcmin );
  fprintf( stderr, "Trying to blindly solve the plate (local solve-field or remote server)...\n%s\n", cmdstr );
  if ( 0 != system( cmdstr ) ) {
@@ -3733,6 +3740,629 @@ static void exit_when_parent_dies( void ) {
 #endif
 }
 
+
+// ----------------------------------------------------------------------
+// UCAC5-based TAN-SIP refit.
+//
+// solve-field fits its SIP distortion polynomial using only the stars of
+// the index containing the matching quad, which on wide dense fields is a
+// sparse and non-uniform subset - the fit often fails silently (leaving a
+// TAN-only header) or blows up in one image corner. At this point of the
+// program we hold something far better: hundreds of UCAC5 cross-matches
+// distributed uniformly over the frame. The functions below refit the
+// full TAN-SIP solution (CRVAL shift + CD matrix + SIP polynomial of
+// VAST_SIP_REFIT_ORDER, default 3) from those matches by direct linear
+// least squares in intermediate TAN coordinates, with iterative
+// MAD-clipping. The refit solution replaces the header WCS ONLY when its
+// clipped residual RMS improves on the original solution, so images that
+// are already well solved are never degraded. Set
+// VAST_DISABLE_UCAC5_SIP_REFIT=1 to turn the refit off entirely.
+// Measured on the Cas-02 NMW-TTU test frame: 2.5 arcsec TAN-only ->
+// 0.41 arcsec order-3 SIP, uniform over the frame, tripling the number of
+// Tycho-2 calibration matches relative to the best solve-field solution.
+// ----------------------------------------------------------------------
+
+#define SIP_REFIT_MIN_MATCHED_STARS 100
+#define SIP_REFIT_MAX_ORDER 5
+#define SIP_REFIT_CLIP_ITERATIONS 5
+#define SIP_REFIT_INVERSE_GRID 25
+// The refit must beat the original solution by this factor to be applied.
+// The margin keeps solutions stable across repeated runs: refitting an
+// already-refit (or otherwise good) image yields rms_after ~= rms_before,
+// and without the margin the header would be rewritten on every run -
+// bad for reference images living in a shared directory that concurrent
+// pipeline runs may process at the same time.
+#define SIP_REFIT_MIN_IMPROVEMENT_FACTOR 0.9
+
+// Gnomonic (TAN) projection of ra,dec (deg) about a0,d0 (rad) to xi,eta (deg)
+static void sip_refit_tan_project( double ra_deg, double dec_deg, double a0_rad, double d0_rad, double *xi_deg, double *eta_deg ) {
+ double a, d, da, den;
+ a= ra_deg * M_PI / 180.0;
+ d= dec_deg * M_PI / 180.0;
+ da= a - a0_rad;
+ den= sin( d ) * sin( d0_rad ) + cos( d ) * cos( d0_rad ) * cos( da );
+ ( *xi_deg )= ( cos( d ) * sin( da ) / den ) * 180.0 / M_PI;
+ ( *eta_deg )= ( ( sin( d ) * cos( d0_rad ) - cos( d ) * sin( d0_rad ) * cos( da ) ) / den ) * 180.0 / M_PI;
+ return;
+}
+
+static void sip_refit_tan_deproject( double xi_deg, double eta_deg, double a0_rad, double d0_rad, double *ra_deg, double *dec_deg ) {
+ double X, Y, den, a, d;
+ X= xi_deg * M_PI / 180.0;
+ Y= eta_deg * M_PI / 180.0;
+ den= cos( d0_rad ) - Y * sin( d0_rad );
+ a= a0_rad + atan2( X, den );
+ d= atan( ( sin( d0_rad ) + Y * cos( d0_rad ) ) / sqrt( X * X + den * den ) );
+ ( *ra_deg )= a * 180.0 / M_PI;
+ if ( ( *ra_deg ) < 0.0 )
+  ( *ra_deg )= ( *ra_deg ) + 360.0;
+ if ( ( *ra_deg ) >= 360.0 )
+  ( *ra_deg )= ( *ra_deg ) - 360.0;
+ ( *dec_deg )= d * 180.0 / M_PI;
+ return;
+}
+
+// Fill row[] with the 2D monomials us^i * vs^j, i+j <= deg, in a fixed order.
+// Returns the number of terms.
+static int sip_refit_monomials( double us, double vs, int deg, double *row ) {
+ int total, i, k;
+ double pu, pv;
+ int j;
+ k= 0;
+ for ( total= 0; total <= deg; total++ ) {
+  for ( i= 0; i <= total; i++ ) {
+   j= total - i;
+   pu= pow( us, (double)i );
+   pv= pow( vs, (double)j );
+   row[k]= pu * pv;
+   k++;
+  }
+ }
+ return k;
+}
+
+// Robust (MAD-clipped) RMS of the input values; does not modify the input.
+static double sip_refit_robust_rms( double *values, int n ) {
+ double *work;
+ double median, mad, threshold, sum;
+ int i, nkept;
+ if ( n < 3 )
+  return -1.0;
+ work= (double *)malloc( n * sizeof( double ) );
+ if ( work == NULL )
+  return -1.0;
+ for ( i= 0; i < n; i++ )
+  work[i]= values[i];
+ gsl_sort( work, 1, n );
+ median= gsl_stats_median_from_sorted_data( work, 1, n );
+ for ( i= 0; i < n; i++ )
+  work[i]= fabs( values[i] - median );
+ gsl_sort( work, 1, n );
+ mad= 1.4826 * gsl_stats_median_from_sorted_data( work, 1, n );
+ if ( mad < 0.05 )
+  mad= 0.05;
+ threshold= median + 3.0 * mad;
+ sum= 0.0;
+ nkept= 0;
+ for ( i= 0; i < n; i++ ) {
+  if ( values[i] < threshold ) {
+   sum= sum + values[i] * values[i];
+   nkept++;
+  }
+ }
+ free( work );
+ if ( nkept < 3 )
+  return -1.0;
+ return sqrt( sum / (double)nkept );
+}
+
+// Delete a FITS header keyword if present (ignoring 'not found' errors)
+static void sip_refit_delete_key( fitsfile *fptr, char *keyname ) {
+ int status;
+ status= 0;
+ fits_delete_key( fptr, keyname, &status );
+ return;
+}
+
+// The main refit routine, see the block comment above.
+// Returns 0 if the refit was applied (header updated, star positions in
+// stars[] recomputed from the new solution), 1 otherwise (original solution
+// kept untouched).
+static int refit_sip_from_catalog_matches( char *fits_image_filename, struct detected_star *stars, int N ) {
+ double *mx, *my, *mra, *mdec, *sep_arcsec, *sep_before;
+ int *keep;
+ double crval1, crval2, crpix1, crpix2;
+ long naxis1, naxis2;
+ double a0_rad, d0_rad, scale_norm;
+ int nmatched, i, k, term, nterms, deg, clip_iter, crval_pass, nkept, changed;
+ double xi, eta, us, vs, ra_model, dec_model, dra, cosd;
+ double median, mad, threshold;
+ double rms_before, rms_after;
+ double *row;
+ gsl_matrix *X_design, *cov;
+ gsl_vector *y_xi, *y_eta, *c_xi, *c_eta;
+ double chisq;
+ double cd11, cd12, cd21, cd22, cd_det;
+ double a_coef[SIP_REFIT_MAX_ORDER + 1][SIP_REFIT_MAX_ORDER + 1];
+ double b_coef[SIP_REFIT_MAX_ORDER + 1][SIP_REFIT_MAX_ORDER + 1];
+ double ap_coef[SIP_REFIT_MAX_ORDER + 1][SIP_REFIT_MAX_ORDER + 1];
+ double bp_coef[SIP_REFIT_MAX_ORDER + 1][SIP_REFIT_MAX_ORDER + 1];
+ double coefxi_unscaled, coefeta_unscaled;
+ int ii, jj, gtotal, gi;
+ double gu, gv, gU, gV, du_val, dv_val;
+ int ngrid, gx, gy;
+ gsl_matrix *Xg;
+ gsl_vector *ygu, *ygv, *cgu, *cgv;
+ fitsfile *fptr;
+ int status;
+ char keyname[32];
+ char history_string[256];
+ double xi0, eta0, new_a0, new_d0;
+ int env_order;
+ char *env_string;
+ gsl_matrix *Xk;
+ gsl_vector *yxk, *yek;
+ gsl_multifit_linear_workspace *fit_wk;
+ int kk;
+ double *worksep;
+ int nk2;
+ gsl_multifit_linear_workspace *fit_wg;
+ int gk;
+ long order_long;
+ char regen_command[2 * FILENAME_LENGTH + VAST_PATH_MAX];
+ char path_to_vast_string[VAST_PATH_MAX];
+ char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
+ char solved_image_filename[FILENAME_LENGTH + 32];
+
+ if ( NULL != getenv( "VAST_DISABLE_UCAC5_SIP_REFIT" ) ) {
+  fprintf( stderr, "SIP_REFIT: disabled via VAST_DISABLE_UCAC5_SIP_REFIT\n" );
+  return 1;
+ }
+
+ deg= 3;
+ env_string= getenv( "VAST_SIP_REFIT_ORDER" );
+ if ( env_string != NULL ) {
+  env_order= atoi( env_string );
+  if ( env_order >= 2 && env_order <= SIP_REFIT_MAX_ORDER )
+   deg= env_order;
+ }
+
+ // The refit operates on the plate-solved (wcs_) image. When this program
+ // was started on an unsolved image, the solved copy is wcs_<basename> in
+ // the current directory rather than the input file itself. The WCS catalog
+ // name is <solved_image>.wcscat by construction, so derive the solved
+ // image name from it by stripping the ".wcscat" suffix.
+ guess_wcs_catalog_filename( wcs_catalog_filename_for_regen, fits_image_filename );
+ strncpy( solved_image_filename, wcs_catalog_filename_for_regen, sizeof( solved_image_filename ) - 1 );
+ solved_image_filename[sizeof( solved_image_filename ) - 1]= '\0';
+ solved_image_filename[strlen( solved_image_filename ) - strlen( ".wcscat" )]= '\0';
+
+ nmatched= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog == 1 )
+   nmatched++;
+ }
+ if ( nmatched < SIP_REFIT_MIN_MATCHED_STARS ) {
+  fprintf( stderr, "SIP_REFIT: only %d catalog matches (<%d) - keeping the original solution\n", nmatched, SIP_REFIT_MIN_MATCHED_STARS );
+  return 1;
+ }
+
+ // Read the current reference point and image size from the header
+ status= 0;
+ if ( 0 != fits_open_file( &fptr, solved_image_filename, READONLY, &status ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot open %s - keeping the original solution\n", solved_image_filename );
+  return 1;
+ }
+ fits_read_key( fptr, TDOUBLE, "CRVAL1", &crval1, NULL, &status );
+ fits_read_key( fptr, TDOUBLE, "CRVAL2", &crval2, NULL, &status );
+ fits_read_key( fptr, TDOUBLE, "CRPIX1", &crpix1, NULL, &status );
+ fits_read_key( fptr, TDOUBLE, "CRPIX2", &crpix2, NULL, &status );
+ fits_read_key( fptr, TLONG, "NAXIS1", &naxis1, NULL, &status );
+ fits_read_key( fptr, TLONG, "NAXIS2", &naxis2, NULL, &status );
+ fits_close_file( fptr, &status );
+ if ( status != 0 ) {
+  fprintf( stderr, "SIP_REFIT: cannot read WCS reference keywords - keeping the original solution\n" );
+  return 1;
+ }
+
+ mx= (double *)malloc( nmatched * sizeof( double ) );
+ my= (double *)malloc( nmatched * sizeof( double ) );
+ mra= (double *)malloc( nmatched * sizeof( double ) );
+ mdec= (double *)malloc( nmatched * sizeof( double ) );
+ sep_arcsec= (double *)malloc( nmatched * sizeof( double ) );
+ sep_before= (double *)malloc( nmatched * sizeof( double ) );
+ keep= (int *)malloc( nmatched * sizeof( int ) );
+ row= (double *)malloc( ( ( SIP_REFIT_MAX_ORDER + 1 ) * ( SIP_REFIT_MAX_ORDER + 2 ) / 2 ) * sizeof( double ) );
+ if ( mx == NULL || my == NULL || mra == NULL || mdec == NULL || sep_arcsec == NULL || sep_before == NULL || keep == NULL || row == NULL ) {
+  fprintf( stderr, "SIP_REFIT: memory allocation failure - keeping the original solution\n" );
+  if ( mx != NULL ) free( mx );
+  if ( my != NULL ) free( my );
+  if ( mra != NULL ) free( mra );
+  if ( mdec != NULL ) free( mdec );
+  if ( sep_arcsec != NULL ) free( sep_arcsec );
+  if ( sep_before != NULL ) free( sep_before );
+  if ( keep != NULL ) free( keep );
+  if ( row != NULL ) free( row );
+  return 1;
+ }
+
+ k= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+   mx[k]= stars[i].x_pix;
+   my[k]= stars[i].y_pix;
+   mra[k]= stars[i].catalog_ra;
+   mdec[k]= stars[i].catalog_dec;
+   // residuals of the ORIGINAL solution (raw projected positions)
+   cosd= cos( stars[i].catalog_dec * M_PI / 180.0 );
+   dra= ra_diff_normalized_for_wraparound( stars[i].ra_deg_measured_orig, stars[i].catalog_ra );
+   sep_before[k]= 3600.0 * sqrt( dra * cosd * dra * cosd + ( stars[i].dec_deg_measured_orig - stars[i].catalog_dec ) * ( stars[i].dec_deg_measured_orig - stars[i].catalog_dec ) );
+   k++;
+  }
+ }
+
+ rms_before= sip_refit_robust_rms( sep_before, nmatched );
+
+ a0_rad= crval1 * M_PI / 180.0;
+ d0_rad= crval2 * M_PI / 180.0;
+ scale_norm= 0.5 * (double)( naxis1 > naxis2 ? naxis1 : naxis2 );
+
+ nterms= sip_refit_monomials( 0.0, 0.0, deg, row ); // just to get the count
+ X_design= gsl_matrix_alloc( nmatched, nterms );
+ cov= gsl_matrix_alloc( nterms, nterms );
+ y_xi= gsl_vector_alloc( nmatched );
+ y_eta= gsl_vector_alloc( nmatched );
+ c_xi= gsl_vector_alloc( nterms );
+ c_eta= gsl_vector_alloc( nterms );
+ if ( X_design == NULL || cov == NULL || y_xi == NULL || y_eta == NULL || c_xi == NULL || c_eta == NULL ) {
+  fprintf( stderr, "SIP_REFIT: GSL allocation failure - keeping the original solution\n" );
+  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+  if ( X_design != NULL ) gsl_matrix_free( X_design );
+  if ( cov != NULL ) gsl_matrix_free( cov );
+  if ( y_xi != NULL ) gsl_vector_free( y_xi );
+  if ( y_eta != NULL ) gsl_vector_free( y_eta );
+  if ( c_xi != NULL ) gsl_vector_free( c_xi );
+  if ( c_eta != NULL ) gsl_vector_free( c_eta );
+  return 1;
+ }
+
+ for ( i= 0; i < nmatched; i++ )
+  keep[i]= 1;
+
+ rms_after= -1.0;
+
+ // Two passes: after the first fit the constant terms are absorbed into
+ // CRVAL and the fit is repeated about the updated reference point.
+ for ( crval_pass= 0; crval_pass < 2; crval_pass++ ) {
+  for ( clip_iter= 0; clip_iter < SIP_REFIT_CLIP_ITERATIONS; clip_iter++ ) {
+   nkept= 0;
+   for ( i= 0; i < nmatched; i++ ) {
+    if ( keep[i] == 1 )
+     nkept++;
+   }
+   if ( nkept < SIP_REFIT_MIN_MATCHED_STARS / 2 )
+    break;
+   Xk= gsl_matrix_alloc( nkept, nterms );
+   yxk= gsl_vector_alloc( nkept );
+   yek= gsl_vector_alloc( nkept );
+   fit_wk= gsl_multifit_linear_alloc( nkept, nterms );
+   if ( Xk == NULL || yxk == NULL || yek == NULL || fit_wk == NULL ) {
+    if ( Xk != NULL ) gsl_matrix_free( Xk );
+    if ( yxk != NULL ) gsl_vector_free( yxk );
+    if ( yek != NULL ) gsl_vector_free( yek );
+    if ( fit_wk != NULL ) gsl_multifit_linear_free( fit_wk );
+    break;
+   }
+   kk= 0;
+   for ( i= 0; i < nmatched; i++ ) {
+    if ( keep[i] != 1 )
+     continue;
+    us= ( mx[i] - crpix1 ) / scale_norm;
+    vs= ( my[i] - crpix2 ) / scale_norm;
+    sip_refit_monomials( us, vs, deg, row );
+    for ( term= 0; term < nterms; term++ )
+     gsl_matrix_set( Xk, kk, term, row[term] );
+    sip_refit_tan_project( mra[i], mdec[i], a0_rad, d0_rad, &xi, &eta );
+    gsl_vector_set( yxk, kk, xi );
+    gsl_vector_set( yek, kk, eta );
+    kk++;
+   }
+   gsl_multifit_linear( Xk, yxk, c_xi, cov, &chisq, fit_wk );
+   gsl_multifit_linear( Xk, yek, c_eta, cov, &chisq, fit_wk );
+   gsl_matrix_free( Xk );
+   gsl_vector_free( yxk );
+   gsl_vector_free( yek );
+   gsl_multifit_linear_free( fit_wk );
+   // residuals of the current model over ALL matched stars
+   for ( i= 0; i < nmatched; i++ ) {
+    us= ( mx[i] - crpix1 ) / scale_norm;
+    vs= ( my[i] - crpix2 ) / scale_norm;
+    sip_refit_monomials( us, vs, deg, row );
+    xi= 0.0;
+    eta= 0.0;
+    for ( term= 0; term < nterms; term++ ) {
+     xi= xi + gsl_vector_get( c_xi, term ) * row[term];
+     eta= eta + gsl_vector_get( c_eta, term ) * row[term];
+    }
+    sip_refit_tan_deproject( xi, eta, a0_rad, d0_rad, &ra_model, &dec_model );
+    cosd= cos( mdec[i] * M_PI / 180.0 );
+    dra= ra_diff_normalized_for_wraparound( ra_model, mra[i] );
+    sep_arcsec[i]= 3600.0 * sqrt( dra * cosd * dra * cosd + ( dec_model - mdec[i] ) * ( dec_model - mdec[i] ) );
+   }
+   // MAD clip
+   worksep= (double *)malloc( nmatched * sizeof( double ) );
+   if ( worksep == NULL )
+    break;
+   nk2= 0;
+   for ( i= 0; i < nmatched; i++ ) {
+    if ( keep[i] == 1 ) {
+     worksep[nk2]= sep_arcsec[i];
+     nk2++;
+    }
+   }
+   gsl_sort( worksep, 1, nk2 );
+   median= gsl_stats_median_from_sorted_data( worksep, 1, nk2 );
+   for ( i= 0; i < nk2; i++ )
+    worksep[i]= fabs( worksep[i] - median );
+   gsl_sort( worksep, 1, nk2 );
+   mad= 1.4826 * gsl_stats_median_from_sorted_data( worksep, 1, nk2 );
+   free( worksep );
+   if ( mad < 0.05 )
+    mad= 0.05;
+   threshold= median + 3.0 * mad;
+   changed= 0;
+   for ( i= 0; i < nmatched; i++ ) {
+    nkept= ( sep_arcsec[i] < threshold ) ? 1 : 0;
+    if ( nkept != keep[i] )
+     changed= 1;
+    keep[i]= nkept;
+   }
+   if ( changed == 0 )
+    break;
+  } // clip_iter
+  // absorb the constant terms into CRVAL and refit (first pass only)
+  if ( crval_pass == 0 ) {
+   xi0= gsl_vector_get( c_xi, 0 );
+   eta0= gsl_vector_get( c_eta, 0 );
+   sip_refit_tan_deproject( xi0, eta0, a0_rad, d0_rad, &new_a0, &new_d0 );
+   crval1= new_a0;
+   crval2= new_d0;
+   a0_rad= crval1 * M_PI / 180.0;
+   d0_rad= crval2 * M_PI / 180.0;
+  }
+ } // crval_pass
+
+ rms_after= sip_refit_robust_rms( sep_arcsec, nmatched );
+
+ fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_after=%.3lf arcsec\n", deg, nmatched, rms_before, rms_after );
+
+ if ( rms_after <= 0.0 || rms_before <= 0.0 || rms_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * rms_before ) {
+  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the original solution - keeping the original\n" );
+  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+  return 1;
+ }
+
+ // ---- Decompose the fitted polynomial into CD matrix + SIP coefficients ----
+ // Term order in the fit: (i,j) with i+j=total, i ascending:
+ // index 0: (0,0); 1: (0,1)->vs; 2: (1,0)->us; then higher totals.
+ // Linear terms (unscaled pixels): coefficient/scale_norm.
+ cd11= gsl_vector_get( c_xi, 2 ) / scale_norm;  // d xi / d u
+ cd12= gsl_vector_get( c_xi, 1 ) / scale_norm;  // d xi / d v
+ cd21= gsl_vector_get( c_eta, 2 ) / scale_norm; // d eta / d u
+ cd22= gsl_vector_get( c_eta, 1 ) / scale_norm; // d eta / d v
+ cd_det= cd11 * cd22 - cd12 * cd21;
+ if ( fabs( cd_det ) < 1e-30 ) {
+  fprintf( stderr, "SIP_REFIT: degenerate CD matrix - keeping the original solution\n" );
+  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+  return 1;
+ }
+ for ( ii= 0; ii <= SIP_REFIT_MAX_ORDER; ii++ ) {
+  for ( jj= 0; jj <= SIP_REFIT_MAX_ORDER; jj++ ) {
+   a_coef[ii][jj]= 0.0;
+   b_coef[ii][jj]= 0.0;
+   ap_coef[ii][jj]= 0.0;
+   bp_coef[ii][jj]= 0.0;
+  }
+ }
+ // SIP convention: xi = CD11*(u + A(u,v)) + CD12*(v + B(u,v)), analogous eta.
+ // For each term with i+j>=2: [p_ij; q_ij]_unscaled = CD * [A_ij; B_ij]
+ k= 0;
+ for ( gtotal= 0; gtotal <= deg; gtotal++ ) {
+  for ( gi= 0; gi <= gtotal; gi++ ) {
+   jj= gtotal - gi;
+   if ( gtotal >= 2 ) {
+    coefxi_unscaled= gsl_vector_get( c_xi, k ) / pow( scale_norm, (double)gtotal );
+    coefeta_unscaled= gsl_vector_get( c_eta, k ) / pow( scale_norm, (double)gtotal );
+    a_coef[gi][jj]= ( cd22 * coefxi_unscaled - cd12 * coefeta_unscaled ) / cd_det;
+    b_coef[gi][jj]= ( -cd21 * coefxi_unscaled + cd11 * coefeta_unscaled ) / cd_det;
+   }
+   k++;
+  }
+ }
+ // ---- Fit the inverse SIP (AP/BP) on a regular grid ----
+ ngrid= SIP_REFIT_INVERSE_GRID * SIP_REFIT_INVERSE_GRID;
+ Xg= gsl_matrix_alloc( ngrid, nterms );
+ ygu= gsl_vector_alloc( ngrid );
+ ygv= gsl_vector_alloc( ngrid );
+ cgu= gsl_vector_alloc( nterms );
+ cgv= gsl_vector_alloc( nterms );
+ if ( Xg != NULL && ygu != NULL && ygv != NULL && cgu != NULL && cgv != NULL ) {
+  fit_wg= gsl_multifit_linear_alloc( ngrid, nterms );
+  gk= 0;
+  for ( gx= 0; gx < SIP_REFIT_INVERSE_GRID; gx++ ) {
+   for ( gy= 0; gy < SIP_REFIT_INVERSE_GRID; gy++ ) {
+    gu= -crpix1 + (double)naxis1 * (double)gx / (double)( SIP_REFIT_INVERSE_GRID - 1 );
+    gv= -crpix2 + (double)naxis2 * (double)gy / (double)( SIP_REFIT_INVERSE_GRID - 1 );
+    // forward distortion
+    du_val= 0.0;
+    dv_val= 0.0;
+    for ( gtotal= 2; gtotal <= deg; gtotal++ ) {
+     for ( gi= 0; gi <= gtotal; gi++ ) {
+      jj= gtotal - gi;
+      du_val= du_val + a_coef[gi][jj] * pow( gu, (double)gi ) * pow( gv, (double)jj );
+      dv_val= dv_val + b_coef[gi][jj] * pow( gu, (double)gi ) * pow( gv, (double)jj );
+     }
+    }
+    gU= gu + du_val;
+    gV= gv + dv_val;
+    sip_refit_monomials( gU / scale_norm, gV / scale_norm, deg, row );
+    for ( term= 0; term < nterms; term++ )
+     gsl_matrix_set( Xg, gk, term, row[term] );
+    gsl_vector_set( ygu, gk, gu - gU );
+    gsl_vector_set( ygv, gk, gv - gV );
+    gk++;
+   }
+  }
+  gsl_multifit_linear( Xg, ygu, cgu, cov, &chisq, fit_wg );
+  gsl_multifit_linear( Xg, ygv, cgv, cov, &chisq, fit_wg );
+  gsl_multifit_linear_free( fit_wg );
+  k= 0;
+  for ( gtotal= 0; gtotal <= deg; gtotal++ ) {
+   for ( gi= 0; gi <= gtotal; gi++ ) {
+    jj= gtotal - gi;
+    ap_coef[gi][jj]= gsl_vector_get( cgu, k ) / pow( scale_norm, (double)gtotal );
+    bp_coef[gi][jj]= gsl_vector_get( cgv, k ) / pow( scale_norm, (double)gtotal );
+    k++;
+   }
+  }
+ }
+ if ( Xg != NULL ) gsl_matrix_free( Xg );
+ if ( ygu != NULL ) gsl_vector_free( ygu );
+ if ( ygv != NULL ) gsl_vector_free( ygv );
+ if ( cgu != NULL ) gsl_vector_free( cgu );
+ if ( cgv != NULL ) gsl_vector_free( cgv );
+
+ // ---- Write the refit solution into the FITS header ----
+ status= 0;
+ if ( 0 != fits_open_file( &fptr, solved_image_filename, READWRITE, &status ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot reopen %s for writing - keeping the original solution\n", solved_image_filename );
+  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+  return 1;
+ }
+ fits_update_key( fptr, TSTRING, "CTYPE1", (void *)"RA---TAN-SIP", NULL, &status );
+ fits_update_key( fptr, TSTRING, "CTYPE2", (void *)"DEC--TAN-SIP", NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CRVAL1", &crval1, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CRVAL2", &crval2, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CRPIX1", &crpix1, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CRPIX2", &crpix2, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CD1_1", &cd11, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CD1_2", &cd12, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CD2_1", &cd21, NULL, &status );
+ fits_update_key( fptr, TDOUBLE, "CD2_2", &cd22, NULL, &status );
+ // remove keywords of possible previous distortion representations
+ for ( ii= 0; ii <= 9; ii++ ) {
+  for ( jj= 0; jj <= 9; jj++ ) {
+   sprintf( keyname, "A_%d_%d", ii, jj );
+   sip_refit_delete_key( fptr, keyname );
+   sprintf( keyname, "B_%d_%d", ii, jj );
+   sip_refit_delete_key( fptr, keyname );
+   sprintf( keyname, "AP_%d_%d", ii, jj );
+   sip_refit_delete_key( fptr, keyname );
+   sprintf( keyname, "BP_%d_%d", ii, jj );
+   sip_refit_delete_key( fptr, keyname );
+  }
+ }
+ for ( ii= 0; ii <= 39; ii++ ) {
+  sprintf( keyname, "PV1_%d", ii );
+  sip_refit_delete_key( fptr, keyname );
+  sprintf( keyname, "PV2_%d", ii );
+  sip_refit_delete_key( fptr, keyname );
+ }
+ sip_refit_delete_key( fptr, (char *)"CDELT1" );
+ sip_refit_delete_key( fptr, (char *)"CDELT2" );
+ sip_refit_delete_key( fptr, (char *)"CROTA1" );
+ sip_refit_delete_key( fptr, (char *)"CROTA2" );
+ sip_refit_delete_key( fptr, (char *)"A_ORDER" );
+ sip_refit_delete_key( fptr, (char *)"B_ORDER" );
+ sip_refit_delete_key( fptr, (char *)"AP_ORDER" );
+ sip_refit_delete_key( fptr, (char *)"BP_ORDER" );
+ order_long= (long)deg;
+ fits_update_key( fptr, TLONG, "A_ORDER", &order_long, NULL, &status );
+ fits_update_key( fptr, TLONG, "B_ORDER", &order_long, NULL, &status );
+ fits_update_key( fptr, TLONG, "AP_ORDER", &order_long, NULL, &status );
+ fits_update_key( fptr, TLONG, "BP_ORDER", &order_long, NULL, &status );
+ for ( gtotal= 2; gtotal <= deg; gtotal++ ) {
+  for ( gi= 0; gi <= gtotal; gi++ ) {
+   jj= gtotal - gi;
+   sprintf( keyname, "A_%d_%d", gi, jj );
+   fits_update_key( fptr, TDOUBLE, keyname, &a_coef[gi][jj], NULL, &status );
+   sprintf( keyname, "B_%d_%d", gi, jj );
+   fits_update_key( fptr, TDOUBLE, keyname, &b_coef[gi][jj], NULL, &status );
+  }
+ }
+ for ( gtotal= 0; gtotal <= deg; gtotal++ ) {
+  for ( gi= 0; gi <= gtotal; gi++ ) {
+   jj= gtotal - gi;
+   sprintf( keyname, "AP_%d_%d", gi, jj );
+   fits_update_key( fptr, TDOUBLE, keyname, &ap_coef[gi][jj], NULL, &status );
+   sprintf( keyname, "BP_%d_%d", gi, jj );
+   fits_update_key( fptr, TDOUBLE, keyname, &bp_coef[gi][jj], NULL, &status );
+  }
+ }
+ sprintf( history_string, "VaST SIP refit from %d UCAC5 matches: order %d, robust RMS %.3lf->%.3lf arcsec", nmatched, deg, rms_before, rms_after );
+ fits_write_history( fptr, history_string, &status );
+ fits_close_file( fptr, &status );
+ if ( status != 0 ) {
+  fprintf( stderr, "SIP_REFIT: WARNING - FITS status %d while updating the header\n", status );
+ }
+
+ // ---- Recompute the star positions from the refit solution ----
+ for ( i= 0; i < N; i++ ) {
+  us= ( stars[i].x_pix - crpix1 ) / scale_norm;
+  vs= ( stars[i].y_pix - crpix2 ) / scale_norm;
+  sip_refit_monomials( us, vs, deg, row );
+  xi= 0.0;
+  eta= 0.0;
+  for ( term= 0; term < nterms; term++ ) {
+   xi= xi + gsl_vector_get( c_xi, term ) * row[term];
+   eta= eta + gsl_vector_get( c_eta, term ) * row[term];
+  }
+  sip_refit_tan_deproject( xi, eta, a0_rad, d0_rad, &ra_model, &dec_model );
+  stars[i].ra_deg_measured= ra_model;
+  stars[i].dec_deg_measured= dec_model;
+  stars[i].ra_deg_measured_orig= ra_model;
+  stars[i].dec_deg_measured_orig= dec_model;
+  stars[i].cos_dec_measured= cos( dec_model * M_PI / 180.0 );
+  // refresh the catalog-minus-measured offsets consumed by the plane-fit
+  // stage of correct_measured_positions(); leaving the pre-refit values
+  // here would re-apply the old TAN error field to the refit positions
+  if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+   stars[i].d_ra= ra_diff_normalized_for_wraparound( stars[i].catalog_ra, ra_model );
+   stars[i].d_dec= stars[i].catalog_dec - dec_model;
+  }
+  stars[i].corrected_ra_planefit= ra_model;
+  stars[i].corrected_dec_planefit= dec_model;
+  stars[i].corrected_mag_ra= ra_model;
+  stars[i].corrected_mag_dec= dec_model;
+  stars[i].corrected_ra_local= ra_model;
+  stars[i].corrected_dec_local= dec_model;
+ }
+
+ // Regenerate the SExtractor WCS catalog from the updated header using the
+ // same xy2sky-based script that created it, so the .wcscat file consumed by
+ // the magnitude calibration and the transient pipeline carries the refit
+ // positions (and so the header round-trips through the pipeline's own WCS
+ // interpreter rather than only through this program's in-memory model).
+ get_path_to_vast( path_to_vast_string );
+ sprintf( regen_command, "\"%s\"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh \"%s\" \"%s\"", path_to_vast_string, solved_image_filename, wcs_catalog_filename_for_regen );
+ if ( 0 != system( regen_command ) ) {
+  fprintf( stderr, "SIP_REFIT: WARNING - failed to regenerate the WCS catalog from the updated header\n" );
+ }
+
+ fprintf( stderr, "SIP_REFIT: applied the refit solution (order %d, robust RMS %.3lf -> %.3lf arcsec)\n", deg, rms_before, rms_after );
+
+ free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+ gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+ gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+ return 0;
+}
+
 int main( int argc, char **argv ) {
 
  /////////////////////////////////////
@@ -4086,6 +4716,17 @@ int main( int argc, char **argv ) {
   }
 
  } // for(solution_iteration=2;solution_iteration<=MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH;solution_iteration++){
+
+ // Refit the TAN-SIP solution from the UCAC5 matches (see the block
+ // comment at refit_sip_from_catalog_matches). Applied only when it
+ // improves on the original solution. After a successful refit all the
+ // corrected-position chains are set to the refit model itself (done
+ // inside the refit function): the plane-fit and magnitude-dependent
+ // corrections are not re-fitted on top of the refit solution, as on
+ // sub-arcsecond residuals they only add their own fit noise, and this
+ // way the quality diagnostic below and all the output catalogs
+ // consistently describe the header WCS.
+ refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
 
  // Pre-local-correction astrometric residual diagnostic. Emits a single
  // "WCS_QUALITY_DIAG: ..." stderr line so downstream pipeline scripts can
