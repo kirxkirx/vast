@@ -15133,8 +15133,12 @@ fi
 #    brings this frame to ~0.7 arcsec residuals and ~10x the Tycho-2 match
 #    count of the TAN-only solution. CAS02RA0SIP001/002 verify the refit
 #    produced a TAN-SIP header with sub-1.5 arcsec residuals.
-### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+# This test runs on GitHub Actions hosted runners too: they have no local
+# solve-field, UCAC5 or Tycho-2 copies, so the blind solve and the UCAC5
+# matching (feeding the SIP refit) go through the remote plate-solve and
+# remote UCAC5 services, both of which use the same 1000-brightest-stars
+# query as the local path. The Tycho-2 RA=0 wraparound checks are guarded
+# by the presence of the local Tycho-2 copy and are skipped where absent.
 # Download the test image if needed (a single bzip2-compressed FITS frame,
 # no tarball; it is kept inside its own dataset directory so the usual
 # skip-if-present and disk-space-cleanup conventions apply)
@@ -15221,8 +15225,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
-### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 test_internet_connection
 if [ $? -ne 0 ];then
  echo "Internet connection error!"
