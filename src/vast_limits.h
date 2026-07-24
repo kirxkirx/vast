@@ -16,7 +16,15 @@
 #define DEFAULT_N_FORK 5 // number of threads to be used if it cannot be properly determined at runtime
 
 //// Memory settings ////
-#define MAX_NUMBER_OF_STARS 400000
+// Upper bound on both the number of stars and the largest star NUMBER (.n).
+// Star numbers can exceed the star count on dense Milky-Way fields (reference
+// numbers come from the pre-filtering SExtractor NUMBER and every new star bumps
+// an internal counter), so this also has to cover the largest .n, which indexes
+// the star_num_to_*_idx[] reverse-lookup arrays. Raised from 400000 to 1000000
+// so dense fields (e.g. TexasTech Cyg/Aql/Lac at ~0.35 Mstar, .n up to ~0.4 M)
+// process instead of overflowing. sizeof(struct Star)=136 B, so STAR1+STAR3 use
+// ~272 MB at this limit (was ~109 MB); overall peak stays comfortably in RAM.
+#define MAX_NUMBER_OF_STARS 1000000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
 
 //////////////////////////////////////////////////////////

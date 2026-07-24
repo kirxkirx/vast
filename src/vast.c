@@ -4782,6 +4782,19 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // number_of_elements_in_Pos1++;
       //
       max_number++; // star name (ok, number)
+      // Guard the star NUMBER, not just the star COUNT (NUMBER1, guarded below).
+      // Star numbers index the star_num_to_coord_array_idx[] and
+      // star_num_to_star3_idx[] reverse-lookup arrays (sized MAX_NUMBER_OF_STARS+1).
+      // The number can outgrow the count on dense fields: reference numbers come
+      // from the pre-filtering SExtractor NUMBER and every new star bumps
+      // max_number, so max_number can reach MAX_NUMBER_OF_STARS while NUMBER1 is
+      // still well below it. Without this check the reverse-lookup write overflows
+      // the heap (mirrors the reference-frame guard on STAR1[i].n above).
+      if ( max_number >= MAX_NUMBER_OF_STARS ) {
+       fprintf( stderr, "ERROR while adding new stars: star number %d reached MAX_NUMBER_OF_STARS (%d)!\n", max_number, MAX_NUMBER_OF_STARS );
+       report_and_handle_too_many_stars_error();
+       return EXIT_FAILURE;
+      }
       STAR2[Pos2[i]].n= max_number;
       Star_Copy( STAR1 + Pos1[i], STAR2 + Pos2[i] );
       STAR1[Pos1[i]].mag= 0.0;

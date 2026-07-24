@@ -2483,24 +2483,50 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " | tee -a transient_factory_test31.txt
   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
-  if [ $? -ne 0 ];then
+  VAST_EXIT_CODE=$?
+  if [ $VAST_EXIT_CODE -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? --stdout)"
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus?)" >> transient_factory.log
-   # Display and save VaST output to the log file if the run failed
-   echo "____ VaST output ____" | tee -a transient_factory_test31.txt
-   cat vast_output_$$.tmp | tee -a transient_factory_test31.txt
-   echo "_____________________" | tee -a transient_factory_test31.txt
-   rm -f vast_output_$$.tmp
-   # drop this field and continue to the next one
-   # We want to break from the SExtractor settings files loop here
-   #break
-   # We want to continue SExtractor settings files loop here as
-   # there are examples where the bright star run fails, but faint star run works fine:
-   # NMW_Sirius_magnitude_calibration_failure_test
-   continue
+   # A non-zero exit code does not always mean the science failed. VaST prints
+   # "Done with measurements! =)" once all four images have been measured and the
+   # outNNNNN.dat lightcurves have been written to disk. If VaST exits non-zero
+   # AFTER printing that, the crash happened while freeing memory during cleanup --
+   # the measurements are complete and it is a VaST bug to be reported, NOT a wrong
+   # field / clouds / bad focus. Only a failure BEFORE that point means the data
+   # (or the pointing) is bad. Distinguish the two so we do not throw away good data
+   # and do not mislabel a code crash as a weather/focus problem.
+   if grep -q 'Done with measurements' vast_output_$$.tmp ;then
+    # Science complete: rebuild the summary the transient search needs and continue.
+    # The per-image image*.log files are still present because the crash skipped the
+    # normal exit path where lib/create_vast_image_details_log.sh consumes them.
+    if [ ! -s vast_summary.log ] || ! grep -q 'Images used for photometry' vast_summary.log ;then
+     lib/create_vast_image_details_log.sh >> transient_factory_test31.txt 2>&1
+     lib/vast_image_details_log_parser.sh > vast_summary.log 2>> transient_factory_test31.txt
+    fi
+    # Preserve the profiling info before we drop the captured output
+    grep '^TIMING ' vast_output_$$.tmp >> "$PROFILING_LOG" 2>/dev/null
+    echo "WARNING: VaST exited with code $VAST_EXIT_CODE on the field $FIELD AFTER completing the measurements. This is a memory-management crash during cleanup (a VaST bug to report), NOT a wrong field / clouds / bad focus. The lightcurves were written, so the transient search continues." | tee -a transient_factory_test31.txt
+    echo "WARNING: VaST exited with code $VAST_EXIT_CODE on the field $FIELD after completing the measurements (memory cleanup crash); the transient search continues." >> transient_factory.log
+    echo "____ VaST output (crashed during memory cleanup; the measurements above are complete) ____" >> transient_factory_test31.txt
+    cat vast_output_$$.tmp >> transient_factory_test31.txt
+    echo "_____________________" >> transient_factory_test31.txt
+    rm -f vast_output_$$.tmp
+    # Do NOT 'continue' here -- fall through and finish processing this field.
+   else
+    echo "ERROR running VaST on the field $FIELD (exit code $VAST_EXIT_CODE before the measurements were completed - wrong field? clouds? very bad focus? too few matched stars? --stdout)"
+    echo "ERROR running VaST on the field $FIELD (exit code $VAST_EXIT_CODE before the measurements were completed - wrong field? clouds? very bad focus? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
+    echo "ERROR running VaST on the field $FIELD (exit code $VAST_EXIT_CODE before the measurements were completed - wrong field? clouds? very bad focus?)" >> transient_factory.log
+    # Display and save VaST output to the log file if the run failed
+    echo "____ VaST output ____" | tee -a transient_factory_test31.txt
+    cat vast_output_$$.tmp | tee -a transient_factory_test31.txt
+    echo "_____________________" | tee -a transient_factory_test31.txt
+    rm -f vast_output_$$.tmp
+    # drop this field and continue to the next one
+    # We want to continue the SExtractor settings files loop here as there are
+    # examples where the bright star run fails, but faint star run works fine:
+    # NMW_Sirius_magnitude_calibration_failure_test
+    continue
+   fi
   fi
   #
   if [ -f vast_output_$$.tmp ];then
