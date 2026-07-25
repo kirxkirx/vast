@@ -202,7 +202,10 @@ function process_one_image {
   echo "Solving $base with VAST_TWEAK_ORDER=$order (WCS stripped, fresh solve) ..."
   # The solver must run with cwd=VAST_PATH: wcs_image_calibration.sh cd's there
   # and writes the wcs_* products, and the solver reads them back from its cwd.
-  ( cd "$VAST_PATH" && VAST_TWEAK_ORDER="$order" "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "${PASSTHROUGH[@]}" "$stripped" ) > "$runlog" 2>&1
+  # VAST_FORCE_SIP_REFIT=1 says "a refit was explicitly asked for": choosing
+  # the SIP order IS the point of this tool, so the UCAC5-based refit must
+  # run even if the image would otherwise be left alone as trusted.
+  ( cd "$VAST_PATH" && VAST_TWEAK_ORDER="$order" VAST_FORCE_SIP_REFIT=1 "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "${PASSTHROUGH[@]}" "$stripped" ) > "$runlog" 2>&1
   # Do not abort on a non-zero exit: a failed order simply yields no score.
 
   sigma=$(extract_diag_field "$runlog" "$workbase" "sigma_overall_arcsec")

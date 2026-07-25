@@ -116,7 +116,16 @@ function rename_unpacked_image {
 
 # 0 - no, unknown telescope - have to plate-solve the image in the normal way
 # 1 - yes, we trust WCS solution in images from this telescope
+#
+# On a positive answer the function also sets TRUSTED_WCS_ORIGIN to a short
+# tag naming the rule that matched. That tag is informational - it is
+# recorded in the marker file this script writes for
+# util/solve_plate_with_UCAC5 so the log says WHY the solution was trusted.
+# The policy itself does not depend on it: a trusted WCS is a trusted WCS,
+# and util/solve_plate_with_UCAC5 leaves every one of them alone unless a
+# refit is explicitly requested with VAST_FORCE_SIP_REFIT=1.
 function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image {
+ TRUSTED_WCS_ORIGIN=""
  if [ -z "$1" ];then
   return 0
  fi
@@ -151,19 +160,22 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
    echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
   else
    # Trust this image
+   TRUSTED_WCS_ORIGIN="astrometrynet"
    return 1
   fi
  fi
- 
+
  ### !!! Blindly trust WCS if it was created by SCAMP code !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q -e 'HISTORY   Astrometric solution by SCAMP version'
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="scamp"
   return 1
  fi
  
  ### !!! Blindly trust WCS if it was created by SWarp image stacking code !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "SOFTNAME= 'SWarp"
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="swarp"
   return 1
  fi
  
@@ -171,24 +183,28 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  # (actually it will have the above SCAMP keyword too)
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ORIGIN  = 'Zwicky Transient Facility'" | grep -B500 -A500 "INSTRUME= 'ZTF/MOSAIC'" |  grep -q "CTYPE1  = 'RA---TPV'"
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="ztf"
   return 1
  fi
 
  ### !!! Blindly trust TESS FFI astrometry !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "TELESCOP= 'TESS    '" | grep -B500 -A500 "INSTRUME= 'TESS Photometer'" |  grep -q "CTYPE1  = 'RA---TAN-SIP'"
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="tess"
   return 1
  fi
  
  ### !!! Blindly trust ATLAS astrometry !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ATLAS camera ID" |  grep -q "CTYPE2  = 'DEC--TPV'"
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="atlas"
   return 1
  fi
  
  ### !!! Blindly trust ASTAP astrometry !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ASTAP" |  grep -q "PLTSOLVD=                    T"
  if [ $? -eq 0 ];then
+  TRUSTED_WCS_ORIGIN="astap"
   return 1
  fi
  
@@ -535,9 +551,12 @@ if [ "$TEST_SUBSTRING" = "wcs_" ];then
  echo "Special case: the file name suggests the file has already been plate-solved with VaST"
  cp -v "$FITSFILE" .
  WCS_IMAGE_NAME="$BASENAME_FITSFILE"
+ # A marker left behind by an earlier run must never be taken for this run's decision
+ rm -f "$WCS_IMAGE_NAME".blindly_trusted_wcs
 else
  WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
  WCS_IMAGE_NAME="${WCS_IMAGE_NAME/.fz/}"
+ rm -f "$WCS_IMAGE_NAME".blindly_trusted_wcs
  # Test if the original image has a WCS header and we should just blindly trust it
  check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image "$FITSFILE"
  if [ $? -eq 1 ];then
@@ -547,8 +566,16 @@ else
    "$VAST_PATH"util/funpack -O "$WCS_IMAGE_NAME" "$FITSFILE" || exit 1
   else
    echo "The input image $FITSFILE has a WCS header - will blindly trust it is good..."
-   cp -v "$FITSFILE" "$WCS_IMAGE_NAME" 
+   cp -v "$FITSFILE" "$WCS_IMAGE_NAME"
   fi
+  # Record the decision for util/solve_plate_with_UCAC5, which reads this
+  # marker and leaves the trusted solution alone instead of refitting it.
+  # Under normal operation a trusted WCS is kept as it is; a refit has to be
+  # asked for explicitly with VAST_FORCE_SIP_REFIT=1 (which is what
+  # util/solve_plate_with_best_sip_order.sh does). The marker is removed by
+  # util/clean_data.sh together with the other wcs_* files.
+  echo "${TRUSTED_WCS_ORIGIN:-trusted}" > "$WCS_IMAGE_NAME".blindly_trusted_wcs
+  echo "This WCS solution (${TRUSTED_WCS_ORIGIN:-trusted}) will be kept as is, not refit by util/solve_plate_with_UCAC5"
  else
   echo "It's not one of the telescopes that are know to produce images with good WCS solutions - will try to re-solve!"
  fi

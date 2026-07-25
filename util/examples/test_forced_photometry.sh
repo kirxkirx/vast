@@ -154,6 +154,15 @@ if [ ! -s "$WCS_CATALOG" ];then
  exit 1
 fi
 echo "Using SExtractor catalog: $WCS_CATALOG"
+# The RA/Dec columns of that catalog describe the plate-solved copy of the
+# image in the current directory, not necessarily the input file: the UCAC5
+# SIP refit in util/solve_plate_with_UCAC5 may have improved the header of
+# the copy only. Convert sky back to pixels through the same file the
+# catalog describes, as util/forced_photometry.sh itself does.
+WCS_IMAGE_FOR_SKY2XY="${WCS_CATALOG%.wcscat}"
+if [ ! -s "$WCS_IMAGE_FOR_SKY2XY" ];then
+ WCS_IMAGE_FOR_SKY2XY="$FITSFILE"
+fi
 
 # Read calibration zeropoint from calib.txt_param
 # Format: fit_function p3 p2 p1 p0
@@ -242,7 +251,7 @@ while read -r LINE ; do
 
  # Run forced photometry C tool directly (reuse existing calibration + aperture)
  # We need pixel coordinates via sky2xy
- SKY2XY_OUT=$(lib/bin/sky2xy "$FITSFILE" $RA_HMS $DEC_DMS 2>/dev/null)
+ SKY2XY_OUT=$(lib/bin/sky2xy "$WCS_IMAGE_FOR_SKY2XY" $RA_HMS $DEC_DMS 2>/dev/null)
  if echo "$SKY2XY_OUT" | grep -q -e "off image" -e "offscale" ;then
   printf "%-6d  %8s  %8s  %9s  %8s  %8s  %s\n" "$N_TESTED" "$SEX_CAL_MAG" "---" "---" "---" "---" "off_image"
   N_FAIL=$((N_FAIL + 1))

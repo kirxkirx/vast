@@ -34,6 +34,7 @@
 
 #include <libgen.h>    // for basename()
 #include <sys/types.h> // for getpid()
+#include <sys/stat.h>  // for stat() used to tell the input image from a working copy of it
 #include <unistd.h>    // also for getpid(), unlink(), sleep() ...
 #include <math.h>
 
@@ -3773,6 +3774,26 @@ static void exit_when_parent_dies( void ) {
 // bad for reference images living in a shared directory that concurrent
 // pipeline runs may process at the same time.
 #define SIP_REFIT_MIN_IMPROVEMENT_FACTOR 0.9
+// Frame-coverage requirement. A high-order polynomial fitted on catalog
+// matches that all sit in one part of the frame interpolates well where the
+// stars are and extrapolates wildly where they are not, so the frame-wide
+// robust RMS can improve a lot while a star-poor corner gets much worse.
+// Seen on the NMW-STL plate-solve-failure test reference image: 6 and 9
+// matches in the two lower quadrants against 194 and 223 in the upper ones;
+// after the refit the lower-left residual went from 26.9 to 30.1 arcsec and
+// the lower-right one from 29.9 to 57.5 arcsec while the frame-wide robust
+// RMS improved from 5.8 to 2.2 arcsec - enough for the (spatially blind)
+// calibration-star yield check to stop reporting the broken solution.
+// Every quadrant must therefore hold at least this many matches AND at
+// least this share of the average per-quadrant count.
+#define SIP_REFIT_MIN_MATCHED_STARS_PER_QUADRANT 10
+#define SIP_REFIT_MIN_QUADRANT_SHARE 0.25
+// When the SIP order is chosen from the data, a higher order is accepted
+// only if it improves the robust residual by more than this factor. Optics
+// with little real distortion (wide-field camera lenses) fit noise into the
+// extra terms and blow up towards the frame edges, so the simpler model is
+// preferred unless the data clearly ask for the more complex one.
+#define SIP_REFIT_HIGHER_ORDER_GAIN 0.95
 
 // Gnomonic (TAN) projection of ra,dec (deg) about a0,d0 (rad) to xi,eta (deg)
 static void sip_refit_tan_project( double ra_deg, double dec_deg, double a0_rad, double d0_rad, double *xi_deg, double *eta_deg ) {
@@ -3913,6 +3934,26 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char path_to_vast_string[VAST_PATH_MAX];
  char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
  char solved_image_filename[FILENAME_LENGTH + 32];
+ double *sep_before_corrected;
+ double rms_before_corrected, rms_baseline;
+ int n_quadrant[4];
+ int q_index, min_quadrant_count, required_quadrant_count;
+ double img_center_x, img_center_y;
+ char telescop_keyword[FLEN_VALUE];
+ char instrume_keyword[FLEN_VALUE];
+ char ctype1_keyword[FLEN_VALUE];
+ int keyword_status;
+ struct stat stat_of_solved_image;
+ struct stat stat_of_input_image;
+ char blindly_trusted_wcs_marker_filename[FILENAME_LENGTH + 64];
+ char blindly_trusted_wcs_origin[FILENAME_LENGTH];
+ FILE *blindly_trusted_wcs_marker_file;
+ int force_sip_refit;
+ int order_candidates[2];
+ int n_order_candidates, order_candidate_index;
+ int best_deg;
+ double best_rms_after;
+ double original_crval1, original_crval2;
 
  if ( NULL != getenv( "VAST_DISABLE_UCAC5_SIP_REFIT" ) ) {
   fprintf( stderr, "SIP_REFIT: disabled via VAST_DISABLE_UCAC5_SIP_REFIT\n" );
@@ -3937,6 +3978,74 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  solved_image_filename[sizeof( solved_image_filename ) - 1]= '\0';
  solved_image_filename[strlen( solved_image_filename ) - strlen( ".wcscat" )]= '\0';
 
+ // ---- Should this image be refit at all? ----
+ //
+ // The rule: a plate solution that VaST considers TRUSTED is left alone.
+ // Only an image that arrived without a trusted WCS - one that VaST had to
+ // solve itself - gets its distortion polynomial refit from the UCAC5
+ // matches, and for such an image the SIP order is chosen here as well.
+ //
+ // "Trusted" is decided in one place, by
+ // check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image()
+ // in util/identify.sh, which covers solutions made by Astrometry.net,
+ // SCAMP and SWarp as well as the mission pipelines (ZTF, TESS, ATLAS,
+ // ASTAP). util/identify.sh passes that decision on by writing a marker
+ // file next to the plate-solved image, which is what we read below - the
+ // decision is never duplicated here.
+ //
+ // Set VAST_FORCE_SIP_REFIT=1 to refit anyway. That is the switch a user or
+ // a script uses to say "yes, I really do want this solution recomputed":
+ // util/solve_plate_with_best_sip_order.sh sets it. Because forcing a refit
+ // on an image VaST did not solve itself means rewriting a file the caller
+ // owns, the switch also lifts the file-safety guards below.
+ force_sip_refit= 0;
+ if ( NULL != getenv( "VAST_FORCE_SIP_REFIT" ) ) {
+  force_sip_refit= 1;
+  fprintf( stderr, "SIP_REFIT: VAST_FORCE_SIP_REFIT is set - refitting regardless of whether the input WCS is trusted\n" );
+ }
+
+ // Never write through a symbolic link, not even when a refit was asked for.
+ // util/transients/transient_factory_test31.sh links cached solved reference
+ // images into the run directory, and cfitsio follows the link straight into
+ // the shared cache - where a concurrent pipeline run may be reading the very
+ // same file. Note that the link target is NOT the image path we were given
+ // (the factory passes the original reference image), so comparing inodes
+ // with our own argument does not catch this; lstat() on the write target
+ // does. Anyone who really wants the link target refit can resolve the link
+ // and refit the real file.
+ if ( 0 == lstat( solved_image_filename, &stat_of_solved_image ) && S_ISLNK( stat_of_solved_image.st_mode ) ) {
+  fprintf( stderr, "SIP_REFIT: %s is a symbolic link - not rewriting the WCS of whatever it points to, keeping the original solution\n", solved_image_filename );
+  return 1;
+ }
+
+ if ( force_sip_refit == 0 ) {
+  // The trust decision made by util/identify.sh for this image
+  blindly_trusted_wcs_origin[0]= '\0';
+  sprintf( blindly_trusted_wcs_marker_filename, "%s.blindly_trusted_wcs", solved_image_filename );
+  blindly_trusted_wcs_marker_file= fopen( blindly_trusted_wcs_marker_filename, "r" );
+  if ( NULL != blindly_trusted_wcs_marker_file ) {
+   if ( 1 != fscanf( blindly_trusted_wcs_marker_file, "%255s", blindly_trusted_wcs_origin ) ) {
+    blindly_trusted_wcs_origin[0]= '\0';
+   }
+   fclose( blindly_trusted_wcs_marker_file );
+  }
+  if ( blindly_trusted_wcs_origin[0] != '\0' ) {
+   fprintf( stderr, "SIP_REFIT: util/identify.sh trusts the WCS of %s (%s) - keeping it, no refit (set VAST_FORCE_SIP_REFIT=1 to refit anyway)\n", solved_image_filename, blindly_trusted_wcs_origin );
+   return 1;
+  }
+
+  // File safety: the write target IS the caller's input image, which happens
+  // when an already-wcs_-named image sits in the current directory. The
+  // refit is meant to improve a working copy VaST made for itself, not to
+  // silently rewrite a file that belongs to the caller.
+  if ( 0 == stat( solved_image_filename, &stat_of_solved_image ) && 0 == stat( fits_image_filename, &stat_of_input_image ) ) {
+   if ( stat_of_solved_image.st_dev == stat_of_input_image.st_dev && stat_of_solved_image.st_ino == stat_of_input_image.st_ino ) {
+    fprintf( stderr, "SIP_REFIT: %s is the input image itself, not a working copy of it - not rewriting its WCS (set VAST_FORCE_SIP_REFIT=1 to allow that), keeping the original solution\n", solved_image_filename );
+    return 1;
+   }
+  }
+ }
+
  nmatched= 0;
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].matched_with_astrometric_catalog == 1 )
@@ -3959,10 +4068,102 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  fits_read_key( fptr, TDOUBLE, "CRPIX2", &crpix2, NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxis1, NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxis2, NULL, &status );
+ // Keywords identifying a TESS FFI carrying the mission plate solution.
+ // Read here so we do not have to open the file a second time; a missing
+ // keyword is not an error, it just means this is not a TESS FFI.
+ telescop_keyword[0]= '\0';
+ instrume_keyword[0]= '\0';
+ ctype1_keyword[0]= '\0';
+ keyword_status= 0;
+ fits_read_key( fptr, TSTRING, "TELESCOP", telescop_keyword, NULL, &keyword_status );
+ keyword_status= 0;
+ fits_read_key( fptr, TSTRING, "INSTRUME", instrume_keyword, NULL, &keyword_status );
+ keyword_status= 0;
+ fits_read_key( fptr, TSTRING, "CTYPE1", ctype1_keyword, NULL, &keyword_status );
  fits_close_file( fptr, &status );
  if ( status != 0 ) {
   fprintf( stderr, "SIP_REFIT: cannot read WCS reference keywords - keeping the original solution\n" );
   return 1;
+ }
+
+ // Never touch the plate solution of a TESS FFI (this includes the TICA
+ // FFIs, https://archive.stsci.edu/hlsp/tica). The mission solution is a
+ // TAN-SIP fit made against thousands of catalog stars, and at 21 arcsec
+ // per pixel our UCAC5 refit cannot improve on it - measured on the TICA
+ // Nova Vul 2024 test frames it made things worse (residual 2.32 -> 2.45
+ // arcsec, worst-quadrant ratio 1.10 -> 1.25). This is the same rule
+ // util/identify.sh already applies when it decides not to re-solve such
+ // an image ("Blindly trust TESS FFI astrometry"), and it is deliberately
+ // spelled the same way here: requiring CTYPE1 to be TAN-SIP leaves the
+ // escape hatch open for a TESS frame that arrives without a usable
+ // mission solution, which would still be refit as before.
+ // The check lives in the C code rather than in the calling scripts
+ // because the transient search pipeline invokes util/solve_plate_with_UCAC5
+ // as a separate process on the original image path
+ // (util/transients/transient_factory_test31.sh), so the decision
+ // util/identify.sh makes never reaches this program.
+ if ( force_sip_refit == 0 && 0 == strncmp( telescop_keyword, "TESS", 4 ) && 0 == strncmp( instrume_keyword, "TESS Photometer", 15 ) && 0 == strncmp( ctype1_keyword, "RA---TAN-SIP", 12 ) ) {
+  fprintf( stderr, "SIP_REFIT: %s is a TESS FFI with a mission TAN-SIP solution - blindly trusting it, no refit\n", solved_image_filename );
+  return 1;
+ }
+
+ // Frame-coverage guard, see SIP_REFIT_MIN_QUADRANT_SHARE above. Counted
+ // before the fit so a badly covered frame costs nothing.
+ img_center_x= (double)naxis1 / 2.0;
+ img_center_y= (double)naxis2 / 2.0;
+ for ( q_index= 0; q_index < 4; q_index++ ) {
+  n_quadrant[q_index]= 0;
+ }
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog != 1 ) {
+   continue;
+  }
+  // same quadrant convention as print_wcs_quality_diagnostic():
+  // q1 = lower-left, q2 = lower-right, q3 = upper-left, q4 = upper-right
+  if ( stars[i].x_pix < img_center_x ) {
+   q_index= ( stars[i].y_pix < img_center_y ) ? 0 : 2;
+  } else {
+   q_index= ( stars[i].y_pix < img_center_y ) ? 1 : 3;
+  }
+  n_quadrant[q_index]++;
+ }
+ min_quadrant_count= n_quadrant[0];
+ for ( q_index= 1; q_index < 4; q_index++ ) {
+  if ( n_quadrant[q_index] < min_quadrant_count ) {
+   min_quadrant_count= n_quadrant[q_index];
+  }
+ }
+ required_quadrant_count= (int)( SIP_REFIT_MIN_QUADRANT_SHARE * (double)nmatched / 4.0 );
+ if ( required_quadrant_count < SIP_REFIT_MIN_MATCHED_STARS_PER_QUADRANT ) {
+  required_quadrant_count= SIP_REFIT_MIN_MATCHED_STARS_PER_QUADRANT;
+ }
+ if ( min_quadrant_count < required_quadrant_count ) {
+  fprintf( stderr, "SIP_REFIT: the %d catalog matches do not cover the frame (%d/%d/%d/%d per quadrant, need %d in each) - keeping the original solution\n", nmatched, n_quadrant[0], n_quadrant[1], n_quadrant[2], n_quadrant[3], required_quadrant_count );
+  return 1;
+ }
+
+ // Residuals of the CORRECTED position chain - the one the refit will
+ // actually replace (corrected_ra_planefit / corrected_mag_ra /
+ // corrected_ra_local are all overwritten with the refit model below).
+ // correct_measured_positions() has always run by this point, so these
+ // positions are normally better than the raw header solution the SIP fit
+ // starts from, and a refit judged only against the raw residuals may be
+ // accepted while making the delivered positions worse. Computed in its own
+ // short-lived array so the many error paths below need no extra cleanup.
+ rms_before_corrected= -1.0;
+ sep_before_corrected= (double *)malloc( nmatched * sizeof( double ) );
+ if ( sep_before_corrected != NULL ) {
+  k= 0;
+  for ( i= 0; i < N; i++ ) {
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    cosd= cos( stars[i].catalog_dec * M_PI / 180.0 );
+    dra= ra_diff_normalized_for_wraparound( stars[i].corrected_mag_ra, stars[i].catalog_ra );
+    sep_before_corrected[k]= 3600.0 * sqrt( dra * cosd * dra * cosd + ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) * ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) );
+    k++;
+   }
+  }
+  rms_before_corrected= sip_refit_robust_rms( sep_before_corrected, nmatched );
+  free( sep_before_corrected );
  }
 
  mx= (double *)malloc( nmatched * sizeof( double ) );
@@ -4003,33 +4204,77 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
 
  rms_before= sip_refit_robust_rms( sep_before, nmatched );
 
- a0_rad= crval1 * M_PI / 180.0;
- d0_rad= crval2 * M_PI / 180.0;
  scale_norm= 0.5 * (double)( naxis1 > naxis2 ? naxis1 : naxis2 );
+ original_crval1= crval1;
+ original_crval2= crval2;
 
- nterms= sip_refit_monomials( 0.0, 0.0, deg, row ); // just to get the count
- X_design= gsl_matrix_alloc( nmatched, nterms );
- cov= gsl_matrix_alloc( nterms, nterms );
- y_xi= gsl_vector_alloc( nmatched );
- y_eta= gsl_vector_alloc( nmatched );
- c_xi= gsl_vector_alloc( nterms );
- c_eta= gsl_vector_alloc( nterms );
- if ( X_design == NULL || cov == NULL || y_xi == NULL || y_eta == NULL || c_xi == NULL || c_eta == NULL ) {
-  fprintf( stderr, "SIP_REFIT: GSL allocation failure - keeping the original solution\n" );
-  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
-  if ( X_design != NULL ) gsl_matrix_free( X_design );
-  if ( cov != NULL ) gsl_matrix_free( cov );
-  if ( y_xi != NULL ) gsl_vector_free( y_xi );
-  if ( y_eta != NULL ) gsl_vector_free( y_eta );
-  if ( c_xi != NULL ) gsl_vector_free( c_xi );
-  if ( c_eta != NULL ) gsl_vector_free( c_eta );
-  return 1;
+ // ---- Which SIP order? ----
+ // An image that reaches this point had no trusted WCS, so nothing is known
+ // in advance about its distortion and the order has to be determined from
+ // the data. Orders 2 and 3 are tried against the same UCAC5 matches and
+ // the one that actually fits better wins - but a higher order has to EARN
+ // it: order 3 is accepted only if it improves the robust residual by more
+ // than SIP_REFIT_HIGHER_ORDER_GAIN, because on optics with little real
+ // distortion (wide-field lenses) the extra terms just fit noise and blow
+ // up towards the frame edges. Candidates are tried in ascending order so
+ // the simpler model is the default. An explicit VAST_SIP_REFIT_ORDER
+ // overrides the search and pins the order.
+ // Each candidate is evaluated on its own; a final pass then re-fits with
+ // the winning order so the coefficients, CRVAL and the clipping mask that
+ // the rest of this function uses all belong to the order that won.
+ n_order_candidates= 2;
+ order_candidates[0]= 2;
+ order_candidates[1]= 3;
+ if ( env_string != NULL ) {
+  n_order_candidates= 1;
+  order_candidates[0]= deg;
  }
+ best_deg= -1;
+ best_rms_after= -1.0;
 
- for ( i= 0; i < nmatched; i++ )
-  keep[i]= 1;
+ for ( order_candidate_index= 0; order_candidate_index <= n_order_candidates; order_candidate_index++ ) {
 
- rms_after= -1.0;
+  if ( order_candidate_index < n_order_candidates ) {
+   deg= order_candidates[order_candidate_index];
+  } else {
+   // final pass with the winner
+   if ( best_deg < 0 ) {
+    fprintf( stderr, "SIP_REFIT: no usable fit at any of the tried SIP orders - keeping the original solution\n" );
+    free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+    return 1;
+   }
+   deg= best_deg;
+  }
+
+  // every candidate starts from the reference point in the original header
+  crval1= original_crval1;
+  crval2= original_crval2;
+  a0_rad= crval1 * M_PI / 180.0;
+  d0_rad= crval2 * M_PI / 180.0;
+
+  nterms= sip_refit_monomials( 0.0, 0.0, deg, row ); // just to get the count
+  X_design= gsl_matrix_alloc( nmatched, nterms );
+  cov= gsl_matrix_alloc( nterms, nterms );
+  y_xi= gsl_vector_alloc( nmatched );
+  y_eta= gsl_vector_alloc( nmatched );
+  c_xi= gsl_vector_alloc( nterms );
+  c_eta= gsl_vector_alloc( nterms );
+  if ( X_design == NULL || cov == NULL || y_xi == NULL || y_eta == NULL || c_xi == NULL || c_eta == NULL ) {
+   fprintf( stderr, "SIP_REFIT: GSL allocation failure - keeping the original solution\n" );
+   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+   if ( X_design != NULL ) gsl_matrix_free( X_design );
+   if ( cov != NULL ) gsl_matrix_free( cov );
+   if ( y_xi != NULL ) gsl_vector_free( y_xi );
+   if ( y_eta != NULL ) gsl_vector_free( y_eta );
+   if ( c_xi != NULL ) gsl_vector_free( c_xi );
+   if ( c_eta != NULL ) gsl_vector_free( c_eta );
+   return 1;
+  }
+
+  for ( i= 0; i < nmatched; i++ )
+   keep[i]= 1;
+
+  rms_after= -1.0;
 
  // Two passes: after the first fit the constant terms are absorbed into
  // CRVAL and the fit is repeated about the updated reference point.
@@ -4132,12 +4377,44 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   }
  } // crval_pass
 
- rms_after= sip_refit_robust_rms( sep_arcsec, nmatched );
+  rms_after= sip_refit_robust_rms( sep_arcsec, nmatched );
 
- fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_after=%.3lf arcsec\n", deg, nmatched, rms_before, rms_after );
+  if ( order_candidate_index >= n_order_candidates ) {
+   // Final pass: this fit is the one the rest of the function works with,
+   // so leave the loop without freeing anything.
+   if ( n_order_candidates > 1 ) {
+    fprintf( stderr, "SIP_REFIT: selected SIP order %d\n", deg );
+   }
+   break;
+  }
 
- if ( rms_after <= 0.0 || rms_before <= 0.0 || rms_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * rms_before ) {
-  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the original solution - keeping the original\n" );
+  fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec\n", deg, nmatched, rms_after );
+  if ( rms_after > 0.0 && ( best_deg < 0 || rms_after < SIP_REFIT_HIGHER_ORDER_GAIN * best_rms_after ) ) {
+   best_deg= deg;
+   best_rms_after= rms_after;
+  }
+  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+
+ } // for ( order_candidate_index ... ) -- SIP order selection
+
+ // The refit has to beat BOTH the raw header solution it is fitted against
+ // and the corrected position chain it would discard. Judging it only
+ // against the raw residuals is what degraded the TICA TESS astrometry:
+ // raw 2.86 arcsec, corrected chain 2.32 arcsec, refit 2.43 arcsec - an
+ // improvement on the raw header but a step backwards for the positions
+ // actually delivered to the pipeline.
+ rms_baseline= rms_before;
+ if ( rms_before_corrected > 0.0 ) {
+  if ( rms_baseline <= 0.0 || rms_before_corrected < rms_baseline ) {
+   rms_baseline= rms_before_corrected;
+  }
+ }
+
+ fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec\n", deg, nmatched, rms_before, rms_before_corrected, rms_after );
+
+ if ( rms_after <= 0.0 || rms_baseline <= 0.0 || rms_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * rms_baseline ) {
+  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best baseline %.3lf arcsec) - keeping the original\n", rms_baseline );
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
   gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );

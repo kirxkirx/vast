@@ -245,6 +245,26 @@ if [ ! -s "calib.txt" ];then
  exit 1
 fi
 
+# Resolve the image that the sky -> pixel conversion below has to use.
+# The calibration step above works on a plate-solved copy of the input image
+# placed in the CURRENT directory by util/identify.sh, and the UCAC5-based
+# SIP refit in util/solve_plate_with_UCAC5 rewrites the header of THAT copy
+# (and regenerates its .wcscat from the new header) while the caller's
+# original file keeps its pre-refit WCS. Converting target coordinates
+# through the original file would therefore place the aperture using a
+# solution nothing else in the run is using any more, displacing it by the
+# old solution's astrometric error. The pixel grids of the two files are
+# identical, so only the astrometry differs. This is the same idiom the
+# airmass block below already uses; fall back to the input image when no
+# solved copy is present.
+WCS_IMAGE_NAME_IN_CWD="wcs_$(basename "$FITSFILE")"
+WCS_IMAGE_NAME_IN_CWD="${WCS_IMAGE_NAME_IN_CWD/wcs_wcs_/wcs_}"
+WCS_IMAGE_NAME_IN_CWD="${WCS_IMAGE_NAME_IN_CWD/.fz/}"
+WCS_IMAGE_FOR_SKY2XY="$FITSFILE"
+if [ -s "$WCS_IMAGE_NAME_IN_CWD" ];then
+ WCS_IMAGE_FOR_SKY2XY="$WCS_IMAGE_NAME_IN_CWD"
+fi
+
 #################################
 # Step 3: Fit zeropoint
 #################################
@@ -333,8 +353,24 @@ FORCEDPHOT_PY_TMP=$(mktemp 2>/dev/null || echo "forcedphot_pytmp_$$.tmp")
 trap "rm -f '$FORCEDPHOT_PIXLIST' '$FORCEDPHOT_SKYMAP' '$FORCEDPHOT_C_TMP' '$FORCEDPHOT_PY_TMP'" EXIT
 
 if [ $LIST_MODE -eq 0 ];then
- SKY2XY_OUTPUT=$("$VAST_PATH"lib/bin/sky2xy "$FITSFILE" $TARGET_RA $TARGET_DEC 2>&1)
- if [ $? -ne 0 ];then
+ SKY2XY_OUTPUT=$("$VAST_PATH"lib/bin/sky2xy "$WCS_IMAGE_FOR_SKY2XY" $TARGET_RA $TARGET_DEC 2>&1)
+ SKY2XY_EXIT_CODE=$?
+ # A leftover wcs_ file from an earlier run is reused as is by
+ # util/identify.sh, so the solved copy picked above may turn out to carry
+ # no WCS at all, in which case sky2xy exits non-zero. Retry against the
+ # input image rather than failing on something that works today. Only a
+ # hard sky2xy failure triggers the retry: an "off image" result is a
+ # statement about the position, not about the file, and the two images
+ # differ by at most a few arcsec anyway.
+ if [ $SKY2XY_EXIT_CODE -ne 0 ];then
+  if [ "$WCS_IMAGE_FOR_SKY2XY" != "$FITSFILE" ];then
+   echo "WARNING: sky2xy on the plate-solved copy $WCS_IMAGE_FOR_SKY2XY did not work out, retrying with $FITSFILE" >&2
+   WCS_IMAGE_FOR_SKY2XY="$FITSFILE"
+   SKY2XY_OUTPUT=$("$VAST_PATH"lib/bin/sky2xy "$WCS_IMAGE_FOR_SKY2XY" $TARGET_RA $TARGET_DEC 2>&1)
+   SKY2XY_EXIT_CODE=$?
+  fi
+ fi
+ if [ $SKY2XY_EXIT_CODE -ne 0 ];then
   echo "ERROR: sky2xy failed" >&2
   echo "  Output: $SKY2XY_OUTPUT" >&2
   exit 1
@@ -372,8 +408,18 @@ else
    echo "WARNING: list line $FORCEDPHOT_LINE_IDX: cannot parse RA Dec: $FORCEDPHOT_LINE" >&2
    continue
   fi
-  FORCEDPHOT_S2X=$("$VAST_PATH"lib/bin/sky2xy "$FITSFILE" "$FORCEDPHOT_RA" "$FORCEDPHOT_DEC" 2>&1)
-  if [ $? -ne 0 ];then
+  FORCEDPHOT_S2X=$("$VAST_PATH"lib/bin/sky2xy "$WCS_IMAGE_FOR_SKY2XY" "$FORCEDPHOT_RA" "$FORCEDPHOT_DEC" 2>&1)
+  FORCEDPHOT_S2X_EXIT_CODE=$?
+  # Same fallback as in the single-target branch above: a hard sky2xy
+  # failure means the plate-solved copy is unusable, so switch back to the
+  # input image for this and all remaining positions.
+  if [ $FORCEDPHOT_S2X_EXIT_CODE -ne 0 ] && [ "$WCS_IMAGE_FOR_SKY2XY" != "$FITSFILE" ];then
+   echo "WARNING: sky2xy on the plate-solved copy $WCS_IMAGE_FOR_SKY2XY did not work out, falling back to $FITSFILE" >&2
+   WCS_IMAGE_FOR_SKY2XY="$FITSFILE"
+   FORCEDPHOT_S2X=$("$VAST_PATH"lib/bin/sky2xy "$WCS_IMAGE_FOR_SKY2XY" "$FORCEDPHOT_RA" "$FORCEDPHOT_DEC" 2>&1)
+   FORCEDPHOT_S2X_EXIT_CODE=$?
+  fi
+  if [ $FORCEDPHOT_S2X_EXIT_CODE -ne 0 ];then
    echo "WARNING: list line $FORCEDPHOT_LINE_IDX: sky2xy failed for $FORCEDPHOT_RA $FORCEDPHOT_DEC" >&2
    continue
   fi
