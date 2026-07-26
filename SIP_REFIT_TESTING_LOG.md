@@ -296,7 +296,7 @@ Forced photometry test                                 PASSED   (was FORCEDPHOT0
 Forced photometry is back to its pre-regression numbers exactly:
 `N=100 mean=-0.0038 RMS=0.0145` (it had been `mean=0.0235 RMS=0.0696`).
 
-#### BUG 5 (real, in VaST): a host whose name is a substring of a server's name loses that server
+#### BUG 5 (real, in VaST): an explicitly forced plate-solve server is refused when it is this host
 
 My earlier note recorded `tau.kirx.net_REMOTEPLATESOLVE*` as a known-environmental failure on
 this box, blamed on kirx.net storage being full. **That was wrong.** The real cause:
@@ -309,22 +309,31 @@ servers when run by hand. But the fallback loop first skips any server that look
 "ourselves":
 
 ```sh
-echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT"   # substring match!
+echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT"
 ```
 
-This machine's hostname is **`tau`**, which is a substring of **`tau.kirx.net`**, so the only
-candidate server was skipped and the run ended with `ERROR: no servers could be reached`. The
-two are definitely different machines: `tau.kirx.net` resolves to 188.226.149.203 while this
-box's external address is 129.118.254.21.
+This machine's hostname is `tau` and it **is** the host serving tau.kirx.net (confirmed by the
+user, and by the fact that
+`http://tau.kirx.net/unmw/uploads/20260726_morning_summary.html` and
+`/var/www/tau.kirx.net/cgi-bin/unmw/uploads/20260726_morning_summary.html` are byte-identical;
+the public name resolves to a reverse proxy in front of this box, which is why its address
+differs from the box's own outbound address). So the exclusion was doing exactly what it was
+written to do - the problem is what it does *next*.
 
-The heuristic cannot distinguish "I am running ON tau.kirx.net" (where skipping is right, and
-is presumably why it was written - the production server's hostname is `tau`) from "I am on a
-different machine that merely happens to be called tau". Only comparing addresses could, and
-that is not portable enough to do casually in this path.
+The test forces a single server with `FORCE_PLATE_SOLVE_SERVER=tau.kirx.net`, which reduces the
+candidate list to that one entry. Excluding it as "ourselves" left the list empty and the run
+died with `ERROR: no servers could be reached` instead of honouring the server it was explicitly
+told to use. Refusing to solve against yourself is reasonable when there is an alternative;
+refusing and then failing outright is not.
 
 Fix applied - conservative, and it cannot make the production case worse: the self-exclusion is
 now applied only while at least one *other* candidate server remains. Talking to ourselves still
 works; having no server at all does not.
+
+(Correction, 2026-07-26: an earlier version of this entry claimed this box and tau.kirx.net were
+different machines, citing 188.226.149.203 against 129.118.254.21, and framed the bug as a
+hostname-substring collision. That framing was wrong - the addresses differ because of the
+reverse proxy, not because the hosts differ. The fix and its verification below are unaffected.)
 
 Verified both directions:
 - forcing `tau.kirx.net` as the only server (what the test does) now solves:

@@ -2208,8 +2208,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:   SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE= $SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE" | tee -a transient_factory_test31.txt
    echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD" | tee -a transient_factory_test31.txt
    echo "----------------------------------------------" | tee -a transient_factory_test31.txt
-   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" | awk '{print $2/$1}') | tee -a transient_factory_test31.txt
-   SECOND_EPOCH__SD_ratio=$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; printf "%.3f", result}')
+   # Both ratios below divide by a measured image statistic that may legitimately
+   # be zero - the mean of a background-subtracted stacked reference image, or the
+   # SD of a flat/blank frame. GNU Awk treats division by zero as a FATAL error,
+   # so an unguarded division does not merely print a wrong number: awk dies, the
+   # value comes out empty and the log fills with "fatal: division by zero
+   # attempted". Guard the divisor and report the ratio as undefined instead.
+   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" | awk '{if ( $1 == 0 ) print "undefined (the reference image mean value is zero)"; else print $2/$1}') | tee -a transient_factory_test31.txt
+   SECOND_EPOCH__SD_ratio=$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; if ( B == 0 ) {printf "undefined"; exit} result=(A > B ? (A - B) : (B - A)) / B; printf "%.3f", result}')
    echo "INFO:                  SECOND_EPOCH__SD_ratio= $SECOND_EPOCH__SD_ratio" | tee -a transient_factory_test31.txt
    # Check ratio of the mean image values against the user-specified threshold.
    # This comparison assumes the reference image has a sky background comparable
@@ -2239,7 +2245,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    fi
    # Check the ratio of standard deviations of the second-epoch images (a large change may indicate passing clouds)
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
-    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
+    # A zero SD makes the ratio undefined; GNU Awk would die with a fatal
+    # division-by-zero error and its exit status 2 would read here as "the
+    # ratio exceeded the threshold", aborting the field with a bogus
+    # "passing clouds" message. Skip the test instead - a flat frame is caught
+    # by the blank-image checks, not by this one.
+    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; if ( B == 0 ) exit 0; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
      print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
      echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS)" | tee -a transient_factory_test31.txt
@@ -2248,7 +2259,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    fi
    # Same as above, but soft limit (throw error but don't stop)
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
-    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
+    # same zero-SD guard as the hard limit above
+    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" | awk '{A=$1; B=$2; C=$3; if ( B == 0 ) exit 0; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
      #print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
      echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT)" | tee -a transient_factory_test31.txt
@@ -2257,6 +2269,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     fi
    fi
    echo "----------------------------------------------" | tee -a transient_factory_test31.txt
+  else
+   # util/imstat_vast_fast has its stderr discarded above, so a reference or new
+   # image it cannot read leaves the mean value empty and silently takes ALL of
+   # the checks in this block with it - the bright-background limits and both
+   # passing-clouds tests. Say so rather than letting a field sail through
+   # unchecked; stacked reference images are new files and are exactly the kind
+   # of input worth noticing this on.
+   echo "WARNING: could not measure the mean image value (reference= '$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE' new= '$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE') - the bright-background and passing-clouds checks are ALL skipped for this field" | tee -a transient_factory_test31.txt
   fi # if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
  fi # if [ -n "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
  
