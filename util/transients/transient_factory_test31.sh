@@ -324,6 +324,15 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # The reference images for this camera may be background-subtracted stacks,
+  # whose mean level is near zero. The new-to-reference mean ratio is then
+  # meaningless and rejects every normal frame, so it is off by default here.
+  # Export DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK=no to switch it back on.
+  # The absolute MAX_NEW_IMG_MEAN_VALUE limit above and the passing-clouds
+  # checks are unaffected and still guard against genuinely bright frames.
+  if [ -z "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" ];then
+   DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK="yes"
+  fi
   # This is NOT where the camera is actually located!
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
   export MPC_CODE=V36
@@ -401,6 +410,15 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # The reference images for this camera may be background-subtracted stacks,
+  # whose mean level is near zero. The new-to-reference mean ratio is then
+  # meaningless and rejects every normal frame, so it is off by default here.
+  # Export DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK=no to switch it back on.
+  # The absolute MAX_NEW_IMG_MEAN_VALUE limit above and the passing-clouds
+  # checks are unaffected and still guard against genuinely bright frames.
+  if [ -z "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" ];then
+   DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK="yes"
+  fi
   # This is NOT where the camera is actually located!
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
   export MPC_CODE=V36
@@ -551,6 +569,13 @@ if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ];then
  if [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "YES" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "true" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "True" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "TRUE" ];then
   FPACK_FULLY_CALIBRATED_IMAGE="yes"
   export FPACK_FULLY_CALIBRATED_IMAGE
+ fi
+fi
+
+if [ -n "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" ];then
+ if [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "y" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "Y" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "yes" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "Yes" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "YES" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "true" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "True" ] || [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "TRUE" ];then
+  DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK="yes"
+  export DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK
  fi
 fi
 
@@ -1277,6 +1302,7 @@ FLAT_FIELD_DIR_OR_FILE= $FLAT_FIELD_DIR_OR_FILE
 FRAME_EDGE_OFFSET_PIX= $FRAME_EDGE_OFFSET_PIX
 GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
 MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
+DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK= $DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK
 MAX_NEW_IMG_MEAN_VALUE= $MAX_NEW_IMG_MEAN_VALUE
 MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS
 MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT
@@ -2185,8 +2211,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" | awk '{print $2/$1}') | tee -a transient_factory_test31.txt
    SECOND_EPOCH__SD_ratio=$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; printf "%.3f", result}')
    echo "INFO:                  SECOND_EPOCH__SD_ratio= $SECOND_EPOCH__SD_ratio" | tee -a transient_factory_test31.txt
-   # Check ratio of the mean image values against the user-specified threshold
-   if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
+   # Check ratio of the mean image values against the user-specified threshold.
+   # This comparison assumes the reference image has a sky background comparable
+   # to the new image. That is false for a background-subtracted reference - a
+   # stacked reference image has a mean level near zero, so ANY normal new frame
+   # looks "too bright" next to it (seen with the NMW-TexasTech stacks: new mean
+   # 2652 against reference mean 10.2, i.e. a ratio of 259 against a threshold
+   # of 100). Set DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK=yes to skip just this
+   # relative test; the absolute MAX_NEW_IMG_MEAN_VALUE limit and the
+   # passing-clouds SD checks below keep working, which is why this is a
+   # separate switch rather than simply leaving
+   # MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO unset (that would disable all of them).
+   if [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "yes" ];then
+    echo "INFO: the new-to-reference mean image value ratio check is disabled (DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK=yes) - expected with a background-subtracted reference image" | tee -a transient_factory_test31.txt
+   elif awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" | tee -a transient_factory_test31.txt
     continue
