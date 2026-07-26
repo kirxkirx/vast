@@ -33,10 +33,12 @@
 #
 # USAGE
 # -----
-#   util/examples/test_sip_refit_policy.sh
+#   util/examples/test_sip_refit_policy.sh [CAMERA_TAG]
 #
 # Runs from the VaST root directory. Exits 0 when every check passed,
 # 1 otherwise, and prints a list of failed test codes.
+# With an optional camera tag (NMW, NMWSTL, NMWTTU, TICATESS) only that
+# camera is exercised - handy while chasing down a single failure.
 #
 # The cases that need a fresh blind plate solve (the "no trusted WCS" half of
 # the policy) are skipped unless a local copy of the Astrometry.net code is
@@ -67,19 +69,32 @@ TEST_DATA_URL_LIST="http://tau.kirx.net/vast_test_data/SIP_refit_policy_test.tar
 FAILED_TEST_CODES=""
 N_CHECKS_RUN=0
 N_CHECKS_FAILED=0
+ONLY_THIS_CAMERA="$1"
 
-# The images this test is built around, one per camera, "<file>|<tag>|<max
-# residual arcsec accepted after a refit>". The tag is used in the failure
-# codes. The residual limits are generous - this test is about the policy,
-# not about squeezing the last tenth of an arcsecond.
+# The images this test is built around, one per camera:
+#   "<file>|<tag>|<max residual arcsec accepted after a refit>|<blind-solvable>"
+# The tag is used in the failure codes. The residual limits are generous -
+# this test is about the policy, not about squeezing the last tenth of an
+# arcsecond.
 #   NMW      SBIG ST-8300, 8.4"/pix telephoto lens
 #   NMWSTL   SBIG STL-11000M, ~14"/pix telephoto lens
 #   NMWTTU   QHY600M, ~6"/pix, the widest frame we handle (9576x6388)
 #   TICATESS TESS full frame image, ~21"/pix, mission TAN-SIP solution
-IMAGE_LIST="Sco6_2012-4-18_0-30-54_002.fts|NMW|4.0
-025_2022-8-27_20-27-36_002.fts|NMWSTL|8.0
-Aql-03-Q1b1x1_2026-05-15_03-45-29_20.00sec_0.00C_LIGHT_0122.fits|NMWTTU|4.0
-s0081-o2a-cam2-ccd3__hlsp_tica_tess_ffi_s0081-o2-00990938-cam2-ccd3_tess_v01_img.fits|TICATESS|25.0"
+#
+# The last field says whether the frame can be blind-solved from scratch, and
+# so whether the "no trusted WCS" case can be exercised on it. A TICA TESS
+# full frame image cannot: it spans about 12.5 degrees, and over such a field
+# the quads astrometry.net builds from the detected stars no longer match the
+# index quads well enough (verified on this machine, which does have the
+# matching index-4117 scale range - every index from 4205 down to 4113 was
+# tried and reported "Field 1 did not solve"). That is not a VaST defect, and
+# it is a neat illustration of why this policy exists at all: for a TESS FFI
+# the mission solution is the only practical astrometry there is, so it must
+# be trusted rather than recomputed.
+IMAGE_LIST="Sco6_2012-4-18_0-30-54_002.fts|NMW|4.0|yes
+025_2022-8-27_20-27-36_002.fts|NMWSTL|8.0|yes
+Aql-03-Q1b1x1_2026-05-15_03-45-29_20.00sec_0.00C_LIGHT_0122.fits|NMWTTU|4.0|yes
+s0081-o2a-cam2-ccd3__hlsp_tica_tess_ffi_s0081-o2-00990938-cam2-ccd3_tess_v01_img.fits|TICATESS|25.0|no"
 
 #################################
 # Helpers
@@ -127,6 +142,7 @@ function wcs_quality_sigma_from_log {
 # pristine dataset
 function clean_workspace {
  rm -f wcs_sippolicy_* sippolicy_* 2>/dev/null
+ rm -rf sip_refit_policy_input sip_refit_policy_shared_cache 2>/dev/null
  "$VAST_PATH"util/clean_data.sh >/dev/null 2>&1
 }
 
@@ -190,7 +206,14 @@ for IMAGE_ENTRY in $IMAGE_LIST ;do
  IMAGE_BASENAME=$(echo "$IMAGE_ENTRY" | awk -F'|' '{print $1}')
  CAMERA_TAG=$(echo "$IMAGE_ENTRY" | awk -F'|' '{print $2}')
  MAX_RESIDUAL_ARCSEC=$(echo "$IMAGE_ENTRY" | awk -F'|' '{print $3}')
+ BLIND_SOLVABLE=$(echo "$IMAGE_ENTRY" | awk -F'|' '{print $4}')
  SOURCE_IMAGE="$TEST_DATA_DIR/$IMAGE_BASENAME"
+
+ # An optional argument restricts the run to one camera, which makes a
+ # debugging loop on a single frame much shorter than the full set.
+ if [ -n "$ONLY_THIS_CAMERA" ] && [ "$ONLY_THIS_CAMERA" != "$CAMERA_TAG" ];then
+  continue
+ fi
 
  echo ""
  echo "=== $CAMERA_TAG  ($IMAGE_BASENAME) ==="
@@ -252,10 +275,25 @@ for IMAGE_ENTRY in $IMAGE_LIST ;do
  grep -q 'VAST_FORCE_SIP_REFIT is set' "$RUN_LOG"
  record_check $? "SIPPOLICY_${CAMERA_TAG}_FORCE_NOT_HONORED" "VAST_FORCE_SIP_REFIT=1 overrides the trusted-WCS rule"
 
- # The refit must at least have been attempted: the order trials are printed
- # before any accept/reject decision.
- grep -q 'SIP order . trial' "$RUN_LOG"
- record_check $? "SIPPOLICY_${CAMERA_TAG}_FORCED_REFIT_NOT_ATTEMPTED" "the forced refit is actually attempted"
+ # The trusted-WCS skip must have been bypassed...
+ if grep -q 'trusts the WCS' "$RUN_LOG" ;then
+  record_check 1 "SIPPOLICY_${CAMERA_TAG}_FORCE_DID_NOT_BYPASS_TRUST" "the trusted-WCS skip is bypassed"
+ else
+  record_check 0 "" "the trusted-WCS skip is bypassed"
+ fi
+
+ # ... and the refit must have reached a decision of its own. Reaching a
+ # decision does NOT mean the refit is applied: the frame-coverage guard and
+ # the minimum-matches guard legitimately decline a forced refit too. The
+ # NMW-STL plate-solve-failure reference image is the standing example - its
+ # UCAC5 matches sit almost entirely in the upper half of the frame, so an
+ # order-3 polynomial fitted on them would extrapolate wildly into the lower
+ # half, and the guard is right to refuse.
+ if grep -q -e 'SIP order . trial' -e 'do not cover the frame' -e 'catalog matches (<' "$RUN_LOG" ;then
+  record_check 0 "" "the forced refit reaches a refit decision"
+ else
+  record_check 1 "SIPPOLICY_${CAMERA_TAG}_FORCED_REFIT_NO_DECISION" "the forced refit reaches a refit decision"
+ fi
 
  # ... and the caller's file still must not be rewritten
  CHECKSUM_AFTER=$(file_checksum "$WORK_IMAGE")
@@ -293,20 +331,37 @@ for IMAGE_ENTRY in $IMAGE_LIST ;do
   clean_workspace
   continue
  fi
+ if [ "$BLIND_SOLVABLE" != "yes" ];then
+  echo "  SKIPPED the no-trusted-WCS cases (this frame cannot be blind-solved from scratch - see the comment on IMAGE_LIST)"
+  clean_workspace
+  continue
+ fi
 
  clean_workspace
- cp "$SOURCE_IMAGE" "$WORK_IMAGE"
- "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$WORK_IMAGE" > /dev/null 2>&1
+ # Keep the unsolved image OUTSIDE the current directory. util/identify.sh
+ # treats an input that already sits in the working directory as its own
+ # scratch copy and strips the WCS keywords out of it in place - it says so
+ # ("Not creating a local copy of the FITS image as the input image is
+ # already in the current directory. The input image will be modified!",
+ # util/identify.sh:759). That is long-standing behaviour and not what this
+ # case is about; passing the image by a path outside the working directory
+ # is also how VaST is normally used.
+ rm -rf sip_refit_policy_input
+ mkdir -p sip_refit_policy_input
+ UNTRUSTED_IMAGE="sip_refit_policy_input/$WORK_IMAGE"
+ cp "$SOURCE_IMAGE" "$UNTRUSTED_IMAGE"
+ "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$UNTRUSTED_IMAGE" > /dev/null 2>&1
  # After stripping, the image must genuinely look unsolved
- if "$VAST_PATH"util/listhead "$WORK_IMAGE" 2>/dev/null | grep -q '^CTYPE1' ;then
+ if "$VAST_PATH"util/listhead "$UNTRUSTED_IMAGE" 2>/dev/null | grep -q '^CTYPE1' ;then
   record_check 1 "SIPPOLICY_${CAMERA_TAG}_STRIP_FAILED" "the WCS keywords were stripped from the working copy"
+  rm -rf sip_refit_policy_input
   continue
  else
   record_check 0 "" "the WCS keywords were stripped from the working copy"
  fi
- CHECKSUM_BEFORE=$(file_checksum "$WORK_IMAGE")
+ CHECKSUM_BEFORE=$(file_checksum "$UNTRUSTED_IMAGE")
  RUN_LOG="sip_refit_policy_untrusted_${CAMERA_TAG}.log"
- "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "$WORK_IMAGE" > "$RUN_LOG" 2>&1
+ "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "$UNTRUSTED_IMAGE" > "$RUN_LOG" 2>&1
 
  if grep -q -e 'trusts the WCS' -e 'blindly trusting it, no refit' "$RUN_LOG" ;then
   record_check 1 "SIPPOLICY_${CAMERA_TAG}_UNTRUSTED_TREATED_AS_TRUSTED" "an image with no WCS is not treated as trusted"
@@ -350,13 +405,14 @@ for IMAGE_ENTRY in $IMAGE_LIST ;do
  fi
 
  # even here the file we were handed stays untouched
- CHECKSUM_AFTER=$(file_checksum "$WORK_IMAGE")
+ CHECKSUM_AFTER=$(file_checksum "$UNTRUSTED_IMAGE")
  if [ "$CHECKSUM_BEFORE" = "$CHECKSUM_AFTER" ];then
-  record_check 0 "" "the stripped input image is left byte-identical"
+  record_check 0 "" "the unsolved input image is left byte-identical"
  else
-  record_check 1 "SIPPOLICY_${CAMERA_TAG}_STRIPPED_INPUT_MODIFIED" "the stripped input image is left byte-identical"
+  record_check 1 "SIPPOLICY_${CAMERA_TAG}_UNSOLVED_INPUT_MODIFIED" "the unsolved input image is left byte-identical"
  fi
 
+ rm -rf sip_refit_policy_input
  clean_workspace
 
 done

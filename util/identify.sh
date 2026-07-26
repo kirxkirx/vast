@@ -322,9 +322,29 @@ function setup_remote_astrometry {
    break
   fi
   # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
+  # How many of the candidate servers are not us? The "don't connect to
+  # ourselves" test below is a substring match of the local hostname against
+  # the server name, which cannot tell "I am running ON tau.kirx.net" from
+  # "I am running on a different machine that merely happens to be called
+  # tau". The second case is real: this development box has hostname 'tau'
+  # while tau.kirx.net is a different host entirely, so the guard silently
+  # removed a perfectly good server. When excluding "ourselves" would leave
+  # nothing at all to talk to, it is better to try the server than to fail
+  # with "no servers could be reached" - talking to ourselves still works,
+  # whereas having no server at all does not.
+  N_PLATE_SOLVE_SERVERS_THAT_ARE_NOT_US=0
   for i in $PLATE_SOLVE_SERVERS ;do
-   # make sure we'll not remotely connect to ourselves
    if [ -n "$HOST_WE_ARE_RUNNING_AT" ];then
+    if echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT" ;then
+     continue
+    fi
+   fi
+   N_PLATE_SOLVE_SERVERS_THAT_ARE_NOT_US=$((N_PLATE_SOLVE_SERVERS_THAT_ARE_NOT_US + 1))
+  done
+  for i in $PLATE_SOLVE_SERVERS ;do
+   # make sure we'll not remotely connect to ourselves - but only for as long
+   # as we still have some other server left to use (see the comment above)
+   if [ -n "$HOST_WE_ARE_RUNNING_AT" ] && [ "$N_PLATE_SOLVE_SERVERS_THAT_ARE_NOT_US" -gt 0 ];then
     echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT"
     if [ $? -eq 0 ];then
      continue
