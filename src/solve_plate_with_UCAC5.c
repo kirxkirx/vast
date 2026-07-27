@@ -4,6 +4,14 @@
 
 #define MAX_STARS_IN_VIZQUERY 1000
 #define MAX_STARS_IN_LOCAL_CAT_QUERY MAX_STARS_IN_VIZQUERY
+// Default star limit for the LOCAL UCAC5 catalog match (the remote/vizquery
+// paths keep MAX_STARS_IN_VIZQUERY). The larger pool mainly feeds the
+// higher-order SIP refit: with several thousand matches the order-5 fit is
+// well constrained across the whole frame (measured on NMW-TTU Cas-02:
+// DIAG sigma 0.42 -> 0.29 arcsec vs the 1000-star order-3 fit) at the
+// price of roughly doubling the UCAC5 matching time. Tunable at runtime
+// via VAST_UCAC5_LOCAL_QUERY_LIMIT (set 1000 to get the old behavior).
+#define DEFAULT_UCAC5_LOCAL_QUERY_LIMIT 5000
 
 #define MAX_DEVIATION_AT_FIRST_STEP 6.0 / 3600.0 // 5.0/3600.0 //1.8/3600.0
 #define REFERENCE_LOCAL_SOLUTION_RADIUS_DEG 1.0
@@ -1526,6 +1534,9 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
 int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
  double faintest_mag, brightest_mag;
+ int local_cat_query_limit;
+ char *env_local_query_limit_string;
+ double faintest_mag_extension_mag;
 
  double observing_epoch_jy, dt;
 
@@ -1626,6 +1637,34 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  //
  faintest_mag= catalog_search_parameters->faintest_mag;
  brightest_mag= catalog_search_parameters->brightest_mag;
+
+ // Star limit for this local-catalog match: default
+ // DEFAULT_UCAC5_LOCAL_QUERY_LIMIT (see the comment at its definition),
+ // tunable via VAST_UCAC5_LOCAL_QUERY_LIMIT (set 1000 to get the old
+ // 1000-brightest-stars behavior). Affects ONLY this local search: the
+ // remote UCAC5/vizquery paths keep the 1000-star cap. Since the 1000
+ // brightest detected stars already reach the default faintest_mag, the
+ // UCAC5 magnitude window is deepened to keep pace with the fainter
+ // detected stars a larger limit admits: cumulative star counts grow
+ // roughly as 10^(0.35 m), so dm = log10(limit/1000)/0.35 (capped at
+ // +3 mag; UCAC5 itself is complete to about R=16).
+ local_cat_query_limit= DEFAULT_UCAC5_LOCAL_QUERY_LIMIT;
+ env_local_query_limit_string= getenv( "VAST_UCAC5_LOCAL_QUERY_LIMIT" );
+ if ( env_local_query_limit_string != NULL ) {
+  local_cat_query_limit= atoi( env_local_query_limit_string );
+  if ( local_cat_query_limit < 100 || local_cat_query_limit > 50000 ) {
+   fprintf( stderr, "WARNING: ignoring out-of-range VAST_UCAC5_LOCAL_QUERY_LIMIT=%s (allowed 100..50000)\n", env_local_query_limit_string );
+   local_cat_query_limit= DEFAULT_UCAC5_LOCAL_QUERY_LIMIT;
+  }
+ }
+ if ( local_cat_query_limit > MAX_STARS_IN_LOCAL_CAT_QUERY ) {
+  faintest_mag_extension_mag= log10( (double)local_cat_query_limit / (double)MAX_STARS_IN_LOCAL_CAT_QUERY ) / 0.35;
+  if ( faintest_mag_extension_mag > 3.0 ) {
+   faintest_mag_extension_mag= 3.0;
+  }
+  faintest_mag= faintest_mag + faintest_mag_extension_mag;
+  fprintf( stderr, "UCAC5 local query limit %d: matching up to %d detected stars, deepening the UCAC5 window to mag %.2lf\n", local_cat_query_limit, local_cat_query_limit, faintest_mag );
+ }
 
  fprintf( stderr, "Reading UCAC5 zone files...\n" );
 
@@ -1786,7 +1825,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
     if ( stars[detected_star_counter].good_star != 1 ) {
      continue;
     }
-    if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
+    if ( search_stars_counter == local_cat_query_limit ) {
      break;
     }
     search_stars_counter++;
@@ -3794,6 +3833,10 @@ static void exit_when_parent_dies( void ) {
 // extra terms and blow up towards the frame edges, so the simpler model is
 // preferred unless the data clearly ask for the more complex one.
 #define SIP_REFIT_HIGHER_ORDER_GAIN 0.95
+// Order 5 joins the order scan only when at least this many UCAC5 matches
+// constrain its 2x21 coefficients (order 4 is deliberately never tried: on
+// the NMW-TTU optics it never measurably beats order 3, while order 5 does)
+#define SIP_REFIT_MIN_MATCHES_FOR_ORDER5 1000
 
 // Gnomonic (TAN) projection of ra,dec (deg) about a0,d0 (rad) to xi,eta (deg)
 static void sip_refit_tan_project( double ra_deg, double dec_deg, double a0_rad, double d0_rad, double *xi_deg, double *eta_deg ) {
@@ -3949,7 +3992,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char blindly_trusted_wcs_origin[FILENAME_LENGTH];
  FILE *blindly_trusted_wcs_marker_file;
  int force_sip_refit;
- int order_candidates[2];
+ int order_candidates[3];
  int n_order_candidates, order_candidate_index;
  int best_deg;
  double best_rms_after;
@@ -4211,13 +4254,18 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  // ---- Which SIP order? ----
  // An image that reaches this point had no trusted WCS, so nothing is known
  // in advance about its distortion and the order has to be determined from
- // the data. Orders 2 and 3 are tried against the same UCAC5 matches and
+ // the data. Orders 2, 3 and 5 are tried against the same UCAC5 matches and
  // the one that actually fits better wins - but a higher order has to EARN
- // it: order 3 is accepted only if it improves the robust residual by more
+ // it: it is accepted only if it improves the robust residual by more
  // than SIP_REFIT_HIGHER_ORDER_GAIN, because on optics with little real
  // distortion (wide-field lenses) the extra terms just fit noise and blow
- // up towards the frame edges. Candidates are tried in ascending order so
- // the simpler model is the default. An explicit VAST_SIP_REFIT_ORDER
+ // up towards the frame edges. Order 4 is deliberately not tried (see
+ // SIP_REFIT_MIN_MATCHES_FOR_ORDER5 above), and order 5 with its 2x21
+ // coefficients enters the scan only when more than
+ // SIP_REFIT_MIN_MATCHES_FOR_ORDER5 matches constrain it - typically when
+ // the local UCAC5 copy is available and VAST_UCAC5_LOCAL_QUERY_LIMIT
+ // admits several thousand stars. Candidates are tried in ascending order
+ // so the simpler model is the default. An explicit VAST_SIP_REFIT_ORDER
  // overrides the search and pins the order.
  // Each candidate is evaluated on its own; a final pass then re-fits with
  // the winning order so the coefficients, CRVAL and the clipping mask that
@@ -4225,6 +4273,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  n_order_candidates= 2;
  order_candidates[0]= 2;
  order_candidates[1]= 3;
+ if ( nmatched > SIP_REFIT_MIN_MATCHES_FOR_ORDER5 ) {
+  order_candidates[n_order_candidates]= 5;
+  n_order_candidates= n_order_candidates + 1;
+ }
  if ( env_string != NULL ) {
   n_order_candidates= 1;
   order_candidates[0]= deg;

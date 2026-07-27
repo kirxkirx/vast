@@ -15,7 +15,8 @@
 #    <plate-solved image>.blindly_trusted_wcs marker file.
 # 2. If the input image has no trusted WCS, VaST solves it and then figures
 #    out the best-fit distortion model from the UCAC5 cross-matches: the SIP
-#    order is chosen from the data (orders 2 and 3 are tried, the higher one
+#    order is chosen from the data (orders 2, 3 and - given enough
+#    matches - 5 are tried, the higher one
 #    has to earn its extra terms) together with the coefficients.
 # 3. A refit of a trusted solution happens only when it is explicitly asked
 #    for with VAST_FORCE_SIP_REFIT=1 - which is what

@@ -66,7 +66,10 @@ export LANGUAGE LC_ALL
 # astrometric residual sigma wins (we want a solution that is good across the
 # whole frame, not one that fits three quadrants well and fails in the fourth);
 # on a tie (within SIP_ORDER_SELECTION_TIE_ARCSEC) the lower overall sigma wins.
-SIP_ORDERS="4 3 2"
+# Order 4 is deliberately not tried: on the NMW-TTU optics it never
+# measurably beats order 3, while order 5 does (the same 2/3/5 ladder the
+# in-binary UCAC5 SIP refit scans).
+SIP_ORDERS="5 3 2"
 SIP_ORDER_SELECTION_TIE_ARCSEC=0.01
 # Validity gate: a candidate whose astrometric-match count collapses relative
 # to the best candidate is disqualified before the residual comparison. A

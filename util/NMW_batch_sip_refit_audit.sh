@@ -40,6 +40,13 @@
 #   failed_list.txt   : images where the solver exited nonzero
 #   worker_NN/        : per-worker VaST copies (reusable across restarts)
 #
+# As of the VAST_UCAC5_LOCAL_QUERY_LIMIT=5000 default the underlying
+# solver matches up to 5000 UCAC5 stars and auto-scans SIP orders 2/3/5
+# (order 5 gated on >1000 matches), so each image gets the best solution
+# the data supports in a single pass - budget roughly 150 s per image
+# (export VAST_UCAC5_LOCAL_QUERY_LIMIT=1000 before running to get the
+# faster old behavior, roughly 75 s per image, order ladder 2/3 only).
+#
 # The default.sex used is default.sex.telephoto_lens_onlybrightstars_v1:
 # its higher detection threshold makes the SExtractor runs (the dominant
 # per-image cost on the 61 Mpix NMW frames) much faster while still
