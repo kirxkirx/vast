@@ -15136,29 +15136,18 @@ fi
 # The Tycho-2 RA=0 wraparound checks are additionally guarded by the presence
 # of the local Tycho-2 copy and are skipped where absent.
 #
-# This test needs a LOCAL copy of the Astrometry.net code and is skipped
-# without one (silently: no failure code). The reason is that the remote
-# plate-solve path cannot currently reach the accuracy CAS02RA0SIP002
-# asserts, and that is a property of the remote service, not of this frame:
-#   * util/identify.sh solves locally in two passes - a blind solve
-#     (iteration01) followed by a second solve-field run hinted with the
-#     position found by the first one, which is the pass that produces the
-#     good solution. The remote branch submits the star list once and stops
-#     after iteration01; there is no hinted second pass and the client-side
-#     --verify re-tweak needs a local solve-field, so it is unavailable too.
-#   * On this 15.7x10.5 degree frame the single blind pass leaves roughly
-#     47 arcsec residuals. That is comparable to the UCAC5 match radius
-#     (~46 arcsec here), so only ~210 of the 1000 queried stars find a
-#     counterpart instead of ~900, and those few are spatially biased.
-#   * The UCAC5 SIP refit then has too little to work with and only reaches
-#     ~30 arcsec, versus ~0.44 arcsec via the local path.
-# So on a host without local Astrometry.net this frame ends up with ~30
-# arcsec astrometry that VaST still reports as a successfully solved
-# TAN-SIP image. That is a real defect worth fixing in the remote branch of
-# util/identify.sh (give it the same position-hinted second pass), but it is
-# a separate problem from what this test is written to guard, and failing
-# here on every host without local solve-field only hides the RA=0
-# wraparound regression this test exists to catch.
+# This test runs both with a LOCAL Astrometry.net installation and through
+# the remote plate-solve service (GitHub Actions hosted runners have no
+# local solve-field). The remote service used to be unusable here: it ran
+# only the blind first solve-field pass, leaving ~47 arcsec residuals on
+# this 15.7x10.5 degree frame that starved the UCAC5 SIP refit of correct
+# matches (~30 arcsec final). The plate-solve server CGI
+# (process_sextractor_list.py) now runs the same position-hinted second
+# solve-field pass as the local branch of util/identify.sh, so remote
+# solves reach local-path quality. tau.kirx.net carries the updated CGI;
+# scan.sai.msu.ru may not yet, so on hosts without local solve-field the
+# solve below is pinned to tau via FORCE_PLATE_SOLVE_SERVER. Remove the
+# pin once scan runs the updated CGI.
 #
 # Mirror util/identify.sh:209-222: prepend the standard Astrometry.net
 # install bin directories to PATH before checking for solve-field, so the
@@ -15170,7 +15159,10 @@ fi
 if [ -d /usr/share/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/share/astrometry/bin' ;then
  export PATH="$PATH:/usr/share/astrometry/bin"
 fi
-if command -v solve-field &>/dev/null && [ -x "$(command -v solve-field)" ];then
+CAS02RA0_FORCE_PLATE_SOLVE_SERVER=""
+if ! command -v solve-field &>/dev/null || [ ! -x "$(command -v solve-field)" ];then
+ CAS02RA0_FORCE_PLATE_SOLVE_SERVER="tau.kirx.net"
+fi
 
 # Download the test image if needed (a single bzip2-compressed FITS frame,
 # no tarball; it is kept inside its own dataset directory so the usual
@@ -15195,7 +15187,11 @@ if [ -s ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-0
  cp ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits cas02ra0_testimage.fits
  lib/astrometry/strip_wcs_keywords cas02ra0_testimage.fits > /dev/null 2>&1
  rm -f wcs_cas02ra0_testimage.fits*
- util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
+ if [ -n "$CAS02RA0_FORCE_PLATE_SOLVE_SERVER" ];then
+  FORCE_PLATE_SOLVE_SERVER="$CAS02RA0_FORCE_PLATE_SOLVE_SERVER" util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
+ else
+  util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
+ fi
  # The failure-prone wide-FOV --verify re-tweak is skipped in this code
  # path (solve_plate_with_UCAC5 exports VAST_SKIP_IMAGE_BASED_RETWEAK=1
  # before triggering the blind solve, as its own UCAC5-based SIP refit
@@ -15266,8 +15262,6 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  fail_early "Internet connection error"
 fi
-
-fi # local-solve-field gate -- skip is silent: no failure code emitted when local Astrometry.net is unavailable
 
 
 ##### NMW Cyg5 astrometry problem mira identification test #####

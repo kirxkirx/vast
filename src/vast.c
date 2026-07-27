@@ -2866,6 +2866,18 @@ int main( int argc, char **argv ) {
    continue;
   }
   //
+  // Guard both the star COUNT and the star NUMBER before storing this row:
+  // STAR1/STAR3 are sized MAX_NUMBER_OF_STARS, and the SExtractor NUMBER
+  // (star_number_in_sextractor_catalog) indexes the star_num_to_star3_idx[]
+  // reverse-lookup array (sized MAX_NUMBER_OF_STARS+1). A reference catalog
+  // with more than MAX_NUMBER_OF_STARS accepted rows would overflow the heap
+  // right here at read time, long before the post-read STAR1[i].n check.
+  if ( NUMBER1 >= MAX_NUMBER_OF_STARS || star_number_in_sextractor_catalog >= MAX_NUMBER_OF_STARS ) {
+   fprintf( stderr, "ERROR reading the reference image catalog: star count %d / star number %d reached MAX_NUMBER_OF_STARS (%d)!\n", NUMBER1, star_number_in_sextractor_catalog, MAX_NUMBER_OF_STARS );
+   report_and_handle_too_many_stars_error();
+   fclose( file );
+   return EXIT_FAILURE;
+  }
   NUMBER1++;
   NUMBER3++;
   STAR1[NUMBER1 - 1].vast_flag= 0;
