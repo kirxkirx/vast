@@ -746,7 +746,20 @@ fi
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  out$$.xyls
+  # VAST_REUSE_ITER1_WCS: path to a saved iteration-1 (blind solve) WCS of
+  # THIS SAME star list from a previous run. The blind quad-match solve is
+  # deterministic for a given star list and does not depend on
+  # VAST_TWEAK_ORDER, so callers that solve the same image several times
+  # with different tweak orders (util/solve_plate_with_best_sip_order.sh)
+  # can skip re-running it. The companion VAST_SAVE_ITER1_WCS knob below
+  # saves the file this one consumes. The caller is responsible for only
+  # reusing a WCS that belongs to the same image.
+  if [ -n "$VAST_REUSE_ITER1_WCS" ] && [ -s "$VAST_REUSE_ITER1_WCS" ];then
+   echo "Reusing the saved iteration-1 WCS $VAST_REUSE_ITER1_WCS (skipping the blind solve)"
+   cp "$VAST_REUSE_ITER1_WCS" out$$.wcs && touch out$$.solved
+  else
+   $TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  out$$.xyls
+  fi
   #$TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # the command below sometimes fails on STL images, so we try the above version that works at scab and also set SCALE_HIGH
   #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
@@ -774,6 +787,11 @@ fi
     #exit 1
    fi
    if [ -s out$$.wcs ];then
+    # Save the iteration-1 WCS for reuse by subsequent same-image solves
+    # (see the VAST_REUSE_ITER1_WCS comment above)
+    if [ -n "$VAST_SAVE_ITER1_WCS" ];then
+     cp out$$.wcs "$VAST_SAVE_ITER1_WCS"
+    fi
     echo -n "Inserting WCS header...  "
     if [[ "$FITSFILE" -ef "$BASENAME_FITSFILE" ]];then
      echo "Not creating a local copy of the FITS image as the input image is already in the current directory. The input image will be modified!"

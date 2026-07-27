@@ -153,8 +153,8 @@ function process_one_image {
  local order runlog sigma ratio worstq q1 q2 q3 q4 nmatch
  local best_order best_worstq best_sigma
  local -a cand_order cand_worstq cand_sigma cand_nmatch cand_tycho
- local i max_nmatch nmatch_floor wcat tycho tycho_max tycho_floor solved_order
- local master_workdir stripped f suffix
+ local i max_nmatch nmatch_floor wcat tycho tycho_max tycho_floor solved_order refit_applied_order expected_order
+ local master_workdir stripped f suffix iter1_wcs_file ITER1_KNOB
  local report
 
  base=$(basename "$image")
@@ -203,12 +203,23 @@ function process_one_image {
 
   runlog="$master_workdir/solve_order_${order}.log"
   echo "Solving $base with VAST_TWEAK_ORDER=$order (WCS stripped, fresh solve) ..."
+  # The blind (iteration-1) solve does not depend on the tweak order: the
+  # first candidate saves its iteration-1 WCS and the remaining candidates
+  # reuse it, skipping their own blind quad search (see the
+  # VAST_REUSE_ITER1_WCS knob in util/identify.sh). The SExtractor catalog
+  # is likewise reused automatically via vast_images_catalogs.log.
+  iter1_wcs_file="$master_workdir/iter1_saved.wcs"
+  if [ -s "$iter1_wcs_file" ]; then
+   ITER1_KNOB="VAST_REUSE_ITER1_WCS"
+  else
+   ITER1_KNOB="VAST_SAVE_ITER1_WCS"
+  fi
   # The solver must run with cwd=VAST_PATH: wcs_image_calibration.sh cd's there
   # and writes the wcs_* products, and the solver reads them back from its cwd.
   # VAST_FORCE_SIP_REFIT=1 says "a refit was explicitly asked for": choosing
   # the SIP order IS the point of this tool, so the UCAC5-based refit must
   # run even if the image would otherwise be left alone as trusted.
-  ( cd "$VAST_PATH" && VAST_TWEAK_ORDER="$order" VAST_FORCE_SIP_REFIT=1 "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "${PASSTHROUGH[@]}" "$stripped" ) > "$runlog" 2>&1
+  ( cd "$VAST_PATH" && env VAST_TWEAK_ORDER="$order" VAST_FORCE_SIP_REFIT=1 "$ITER1_KNOB"="$iter1_wcs_file" "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog "${PASSTHROUGH[@]}" "$stripped" ) > "$runlog" 2>&1
   # Do not abort on a non-zero exit: a failed order simply yields no score.
 
   sigma=$(extract_diag_field "$runlog" "$workbase" "sigma_overall_arcsec")
@@ -226,15 +237,44 @@ function process_one_image {
 
   report="${report}  order ${order}: worst_quadrant_sigma=${worstq:-N/A} overall_sigma=${sigma:-N/A} quadrants=${q1:-N/A}/${q2:-N/A}/${q3:-N/A}/${q4:-N/A} N_match=${nmatch:-N/A} ratio=${ratio:-N/A}"$'\n'
 
-  # A solution whose header carries no SIP terms of the requested order means
-  # solve-field's tweak step silently failed (observed under heavy CPU load:
-  # the solver emits its untweaked TAN best-so-far when the budget runs out).
-  # Such a solution is NOT a candidate of this order - all orders would just
-  # duplicate the same TAN fit - so it is discarded here.
+  # A solution whose header carries no SIP terms of the EXPECTED order is
+  # discarded. What order to expect depends on what happened downstream:
+  # when the UCAC5-based SIP refit applied, it legitimately rewrote the
+  # header with the order IT selected (its own 2/3/5 scan), so the header
+  # must carry the refit's order regardless of the tweak order requested
+  # here. When the refit did NOT apply, the shipped solution is the
+  # solve-field tweak itself and the header must carry the requested order
+  # - anything else means the tweak step silently failed (observed under
+  # heavy CPU load: the solver emits its untweaked TAN best-so-far when
+  # the budget runs out) and all orders would just duplicate the same TAN
+  # fit.
   solved_order=$("$VAST_PATH"lib/bin/gethead "$VAST_PATH"wcs_"$workbase" A_ORDER 2>/dev/null | awk '{print $1}')
-  if [ -n "$worstq" ] && [ "$solved_order" != "$order" ]; then
-   report="${report}  order ${order}: DISCARDED - solved header has SIP order '${solved_order:-none}' instead of the requested $order (tweak failed, likely under CPU load)"$'\n'
-   worstq=""
+  refit_applied_order=$(grep 'SIP_REFIT: applied the refit solution (order ' "$runlog" | tail -n 1 | sed 's/.*(order //' | awk -F',' '{print $1}')
+  if [ -n "$refit_applied_order" ]; then
+   # The refit applied and rewrote the header with the order IT selected;
+   # anything else in the header means an inconsistent product.
+   if [ -n "$worstq" ] && [ "$solved_order" != "$refit_applied_order" ]; then
+    report="${report}  order ${order}: DISCARDED - header order '${solved_order:-none}' does not match the applied refit order $refit_applied_order"$'\n'
+    worstq=""
+   fi
+  else
+   # The refit did not apply, so the shipped solution is the solve-field
+   # tweak. A header with NO SIP terms at all is the known TAN-impostor
+   # pathology (under CPU load solve-field emits its untweaked TAN
+   # best-so-far): all such candidates would just duplicate the same TAN
+   # fit, so it is discarded. A header with a DIFFERENT (lower) SIP order
+   # means solve-field downgraded the tweak internally; that is still a
+   # genuine, independently scored SIP solution which the N_match/Tycho-2
+   # gates and the worst-quadrant selection can vet on equal terms - keep
+   # it and report the actual order (observed on a dense NMW Sgr field: a
+   # tweak-5 run downgraded to an order-3 header yet scored 2x better
+   # than the direct tweak-3 candidate).
+   if [ -n "$worstq" ] && [ -z "$solved_order" ]; then
+    report="${report}  order ${order}: DISCARDED - solved header carries no SIP terms (tweak failed, TAN impostor)"$'\n'
+    worstq=""
+   elif [ -n "$worstq" ] && [ "$solved_order" != "$order" ]; then
+    report="${report}  order ${order}: note - header carries SIP order ${solved_order} (solve-field downgraded from the requested ${order}); kept as a candidate"$'\n'
+   fi
   fi
 
   if [ -n "$worstq" ] && [ -n "$sigma" ] && [ -n "$nmatch" ]; then

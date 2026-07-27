@@ -1542,6 +1542,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
 
  double measured_ra, measured_dec, catalog_ra, catalog_dec, catalog_mag;
  double distance;
+ double delta_ra_rough;
  double catalog_ra_original, catalog_dec_original;
  double cos_delta;
  int N_stars_matched_with_astrometric_catalog= 0;
@@ -1832,6 +1833,23 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
     //
     measured_ra= stars[detected_star_counter].ra_deg_measured;
     measured_dec= stars[detected_star_counter].dec_deg_measured;
+    // Cheap prechecks before the expensive spherical-trigonometry distance:
+    // |delta_Dec| is an exact lower bound on the great-circle distance, so
+    // stars rejected on it are provably outside the search radius. The RA
+    // arc precheck uses the small-angle approximation, hence the 1.2
+    // safety factor. With a ~50 arcsec radius on a degrees-wide field
+    // these two lines skip the trig for >99.9% of the pairs, which is
+    // what makes the 5000-star default query limit affordable.
+    if ( fabs( ucac_dec_deg - measured_dec ) > catalog_search_parameters->search_radius_deg ) {
+     continue;
+    }
+    delta_ra_rough= fabs( ucac_ra_deg - measured_ra );
+    if ( delta_ra_rough > 180.0 ) {
+     delta_ra_rough= 360.0 - delta_ra_rough;
+    }
+    if ( delta_ra_rough * stars[detected_star_counter].cos_dec_measured > 1.2 * catalog_search_parameters->search_radius_deg ) {
+     continue;
+    }
     distance= compute_distance_on_sphere( ucac_ra_deg, ucac_dec_deg, measured_ra, measured_dec );
     if ( distance < catalog_search_parameters->search_radius_deg ) {
      if ( ( ucac_mag < stars[detected_star_counter].catalog_mag && stars[detected_star_counter].matched_with_astrometric_catalog == 1 ) || stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
