@@ -15144,10 +15144,9 @@ fi
 # matches (~30 arcsec final). The plate-solve server CGI
 # (process_sextractor_list.py) now runs the same position-hinted second
 # solve-field pass as the local branch of util/identify.sh, so remote
-# solves reach local-path quality. tau.kirx.net carries the updated CGI;
-# scan.sai.msu.ru may not yet, so on hosts without local solve-field the
-# solve below is pinned to tau via FORCE_PLATE_SOLVE_SERVER. Remove the
-# pin once scan runs the updated CGI.
+# solves reach local-path quality. Both tau.kirx.net and scan.sai.msu.ru
+# run the updated CGI (validated 2026-07-27), so no server pinning is
+# needed and the client's usual server selection applies.
 #
 # Mirror util/identify.sh:209-222: prepend the standard Astrometry.net
 # install bin directories to PATH before checking for solve-field, so the
@@ -15158,10 +15157,6 @@ if [ -d /usr/local/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/local/astr
 fi
 if [ -d /usr/share/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/share/astrometry/bin' ;then
  export PATH="$PATH:/usr/share/astrometry/bin"
-fi
-CAS02RA0_FORCE_PLATE_SOLVE_SERVER=""
-if ! command -v solve-field &>/dev/null || [ ! -x "$(command -v solve-field)" ];then
- CAS02RA0_FORCE_PLATE_SOLVE_SERVER="tau.kirx.net"
 fi
 
 # Download the test image if needed (a single bzip2-compressed FITS frame,
@@ -15187,11 +15182,7 @@ if [ -s ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-0
  cp ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-01-20_19-34-13_20.00sec_-14.90C_LIGHT_0015.fits cas02ra0_testimage.fits
  lib/astrometry/strip_wcs_keywords cas02ra0_testimage.fits > /dev/null 2>&1
  rm -f wcs_cas02ra0_testimage.fits*
- if [ -n "$CAS02RA0_FORCE_PLATE_SOLVE_SERVER" ];then
-  FORCE_PLATE_SOLVE_SERVER="$CAS02RA0_FORCE_PLATE_SOLVE_SERVER" util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
- else
-  util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
- fi
+ util/solve_plate_with_UCAC5 --no_photometric_catalog cas02ra0_testimage.fits > cas02ra0_solve$$.log 2>&1
  # The failure-prone wide-FOV --verify re-tweak is skipped in this code
  # path (solve_plate_with_UCAC5 exports VAST_SKIP_IMAGE_BASED_RETWEAK=1
  # before triggering the blind solve, as its own UCAC5-based SIP refit
