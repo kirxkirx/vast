@@ -5165,6 +5165,58 @@ static double sip_refit_robust_rms( double *values, int n ) {
  return sqrt( sum / (double)nkept );
 }
 
+// Worst-quadrant robust RMS of the residuals: the same MAD-clipped RMS as
+// sip_refit_robust_rms(), computed per image quadrant (same quadrant
+// convention as print_wcs_quality_diagnostic()) and maximized over the
+// quadrants with enough stars. This is the minimax quality metric the SIP
+// order selection and the keep-if-better guard judge on: a fit that is
+// excellent in three quadrants but blows up in the fourth must lose to a
+// uniformly acceptable one. The overall MAD-clipped RMS alone is blind to
+// exactly that failure - on the Cyg-08 single-frame reference an order-5
+// fit reached 0.53 arcsec clipped overall while one quadrant sat at 145
+// arcsec (the clipping silently discarded the bad quadrant's stars).
+// Quadrants with fewer than 5 stars are skipped; if no quadrant has
+// enough, the overall robust RMS is returned as a fallback.
+static double sip_refit_worst_quadrant_robust_rms( double *sep_values, double *x_pix_values, double *y_pix_values, int n, double img_cx, double img_cy ) {
+ double *quadrant_scratch;
+ double worst, quadrant_rms;
+ int q, i, n_in_quadrant, q_of_star;
+
+ if ( n < 1 )
+  return -1.0;
+ quadrant_scratch= (double *)malloc( (size_t)n * sizeof( double ) );
+ if ( quadrant_scratch == NULL )
+  return -1.0;
+ worst= -1.0;
+ for ( q= 0; q < 4; q++ ) {
+  n_in_quadrant= 0;
+  for ( i= 0; i < n; i++ ) {
+   if ( x_pix_values[i] < img_cx ) {
+    q_of_star= ( y_pix_values[i] < img_cy ) ? 0 : 2;
+   } else {
+    q_of_star= ( y_pix_values[i] < img_cy ) ? 1 : 3;
+   }
+   if ( q_of_star != q ) {
+    continue;
+   }
+   quadrant_scratch[n_in_quadrant]= sep_values[i];
+   n_in_quadrant++;
+  }
+  if ( n_in_quadrant < 5 ) {
+   continue;
+  }
+  quadrant_rms= sip_refit_robust_rms( quadrant_scratch, n_in_quadrant );
+  if ( quadrant_rms > worst ) {
+   worst= quadrant_rms;
+  }
+ }
+ free( quadrant_scratch );
+ if ( worst <= 0.0 ) {
+  return sip_refit_robust_rms( sep_values, n );
+ }
+ return worst;
+}
+
 // Delete a FITS header keyword if present (ignoring 'not found' errors)
 static void sip_refit_delete_key( fitsfile *fptr, char *keyname ) {
  int status;
@@ -5223,7 +5275,11 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
  char solved_image_filename[FILENAME_LENGTH + 32];
  double *sep_before_corrected;
+ double *sep_before_corrected_x;
+ double *sep_before_corrected_y;
  double rms_before_corrected, rms_baseline;
+ double worstq_after, best_worstq_after;
+ double worstq_before, worstq_before_corrected, worstq_baseline;
  int n_quadrant[4];
  int q_index, min_quadrant_count, required_quadrant_count;
  double img_center_x, img_center_y;
@@ -5439,20 +5495,31 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  // accepted while making the delivered positions worse. Computed in its own
  // short-lived array so the many error paths below need no extra cleanup.
  rms_before_corrected= -1.0;
+ worstq_before_corrected= -1.0;
  sep_before_corrected= (double *)malloc( nmatched * sizeof( double ) );
- if ( sep_before_corrected != NULL ) {
+ sep_before_corrected_x= (double *)malloc( nmatched * sizeof( double ) );
+ sep_before_corrected_y= (double *)malloc( nmatched * sizeof( double ) );
+ if ( sep_before_corrected != NULL && sep_before_corrected_x != NULL && sep_before_corrected_y != NULL ) {
   k= 0;
   for ( i= 0; i < N; i++ ) {
    if ( stars[i].matched_with_astrometric_catalog == 1 ) {
     cosd= cos( stars[i].catalog_dec * M_PI / 180.0 );
     dra= ra_diff_normalized_for_wraparound( stars[i].corrected_mag_ra, stars[i].catalog_ra );
     sep_before_corrected[k]= 3600.0 * sqrt( dra * cosd * dra * cosd + ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) * ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) );
+    sep_before_corrected_x[k]= stars[i].x_pix;
+    sep_before_corrected_y[k]= stars[i].y_pix;
     k++;
    }
   }
   rms_before_corrected= sip_refit_robust_rms( sep_before_corrected, nmatched );
-  free( sep_before_corrected );
+  worstq_before_corrected= sip_refit_worst_quadrant_robust_rms( sep_before_corrected, sep_before_corrected_x, sep_before_corrected_y, nmatched, img_center_x, img_center_y );
  }
+ if ( sep_before_corrected != NULL )
+  free( sep_before_corrected );
+ if ( sep_before_corrected_x != NULL )
+  free( sep_before_corrected_x );
+ if ( sep_before_corrected_y != NULL )
+  free( sep_before_corrected_y );
 
  mx= (double *)malloc( nmatched * sizeof( double ) );
  my= (double *)malloc( nmatched * sizeof( double ) );
@@ -5491,6 +5558,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  }
 
  rms_before= sip_refit_robust_rms( sep_before, nmatched );
+ worstq_before= sip_refit_worst_quadrant_robust_rms( sep_before, mx, my, nmatched, img_center_x, img_center_y );
 
  scale_norm= 0.5 * (double)( naxis1 > naxis2 ? naxis1 : naxis2 );
  original_crval1= crval1;
@@ -5528,6 +5596,8 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  }
  best_deg= -1;
  best_rms_after= -1.0;
+ best_worstq_after= -1.0;
+ (void)best_rms_after; // candidates are now ranked on best_worstq_after
 
  for ( order_candidate_index= 0; order_candidate_index <= n_order_candidates; order_candidate_index++ ) {
 
@@ -5675,6 +5745,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  } // crval_pass
 
   rms_after= sip_refit_robust_rms( sep_arcsec, nmatched );
+  // Minimax quality metric: candidates are ranked (and the final solution
+  // judged) on the WORST-quadrant robust RMS, not the overall one - see
+  // the comment at sip_refit_worst_quadrant_robust_rms()
+  worstq_after= sip_refit_worst_quadrant_robust_rms( sep_arcsec, mx, my, nmatched, img_center_x, img_center_y );
 
   if ( order_candidate_index >= n_order_candidates ) {
    // Final pass: this fit is the one the rest of the function works with,
@@ -5685,10 +5759,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    break;
   }
 
-  fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec\n", deg, nmatched, rms_after );
-  if ( rms_after > 0.0 && ( best_deg < 0 || rms_after < SIP_REFIT_HIGHER_ORDER_GAIN * best_rms_after ) ) {
+  fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec worst_quadrant_rms=%.3lf arcsec\n", deg, nmatched, rms_after, worstq_after );
+  if ( rms_after > 0.0 && worstq_after > 0.0 && ( best_deg < 0 || worstq_after < SIP_REFIT_HIGHER_ORDER_GAIN * best_worstq_after ) ) {
    best_deg= deg;
-   best_rms_after= rms_after;
+   best_worstq_after= worstq_after;
   }
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
   gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
@@ -5707,11 +5781,22 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    rms_baseline= rms_before_corrected;
   }
  }
+ // The accept/keep decision is minimax: the refit's WORST-quadrant robust
+ // RMS has to beat the better of the raw-header and corrected-chain
+ // worst-quadrant baselines by the usual >10% margin. The overall RMS
+ // values are still computed and printed for the logs, but a fit that
+ // wins overall while losing a quadrant is rejected here.
+ worstq_baseline= worstq_before;
+ if ( worstq_before_corrected > 0.0 ) {
+  if ( worstq_baseline <= 0.0 || worstq_before_corrected < worstq_baseline ) {
+   worstq_baseline= worstq_before_corrected;
+  }
+ }
 
- fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec\n", deg, nmatched, rms_before, rms_before_corrected, rms_after );
+ fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec worst_quadrant_rms_before=%.3lf worst_quadrant_rms_after=%.3lf\n", deg, nmatched, rms_before, rms_before_corrected, rms_after, worstq_baseline, worstq_after );
 
- if ( rms_after <= 0.0 || rms_baseline <= 0.0 || rms_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * rms_baseline ) {
-  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best baseline %.3lf arcsec) - keeping the original\n", rms_baseline );
+ if ( rms_after <= 0.0 || worstq_after <= 0.0 || worstq_baseline <= 0.0 || worstq_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * worstq_baseline ) {
+  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-quadrant baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
   gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
