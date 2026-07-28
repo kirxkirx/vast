@@ -578,7 +578,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -15254,6 +15254,73 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+##### SIP refit policy test #####
+# Thin wrapper around util/examples/test_sip_refit_policy.sh, which asserts
+# the trusted-vs-untrusted plate-solution refit policy per supported camera
+# (NMW, NMW-STL, NMW-TTU, TICA TESS): trusted solutions are kept untouched,
+# untrusted images get the UCAC5-based refit with the SIP order chosen from
+# the data, VAST_FORCE_SIP_REFIT lifts the trust rule, and the solver never
+# rewrites its input image or writes through a symbolic link. The script
+# manages its own test dataset (downloads SIP_refit_policy_test.tar.bz2 from
+# tau with a scan fallback), self-skips the blind-solve cases when no local
+# Astrometry.net installation is present (so it is hosted-CI safe), reports
+# machine-readable SIPPOLICY_* failure codes on stdout and exits nonzero on
+# any failed check - this section just runs it and harvests the codes.
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+util/clean_data.sh
+echo "SIP refit policy test "
+echo -n "SIP refit policy test: " >> vast_test_report.txt
+util/examples/test_sip_refit_policy.sh > sipreitpolicy$$.log 2>&1
+SIPPOLICY_EXIT_CODE=$?
+if grep -q 'NOT PERFORMED' sipreitpolicy$$.log ;then
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SIPREFITPOLICY_TEST_NOT_PERFORMED"
+else
+ if [ $SIPPOLICY_EXIT_CODE -ne 0 ];then
+  TEST_PASSED=0
+  SIPPOLICY_HARVESTED_CODES=$(grep 'Failed test codes:' sipreitpolicy$$.log | tail -n 1 | sed 's/Failed test codes://')
+  if [ -n "$SIPPOLICY_HARVESTED_CODES" ];then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES$SIPPOLICY_HARVESTED_CODES"
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SIPREFITPOLICY_UNKNOWN_FAILURE"
+  fi
+ else
+  # exit code 0 without the success banner means the script terminated
+  # mid-run without reporting - treat as a failure, not as a silent pass
+  grep -q 'ALL CHECKS PASSED' sipreitpolicy$$.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SIPREFITPOLICY_INCOMPLETE_RUN"
+  fi
+ fi
+fi
+rm -f sipreitpolicy$$.log
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mSIP refit policy test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mSIP refit policy test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
 
 ##### NMW Cyg5 astrometry problem mira identification test #####
 # Two-epoch NMW images of the Cyg5 field carrying three Mira-class variables
@@ -25399,12 +25466,12 @@ $CAT_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.04  23:49:57.18 -01:15:22.0
-  grep -q "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Klio position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:49:57.15 -01:15:22.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix

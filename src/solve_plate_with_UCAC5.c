@@ -5113,7 +5113,12 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    if ( distance < best_search_radius ) {
     if ( distance == 0.0 )
      continue; //
-    z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+    // Wrap-normalized, like the first scan above: a raw difference across
+    // the RA=0/360 seam contributes ~+-360 deg to the correction MEAN and
+    // wrecks the corrected positions of every target near the seam (found
+    // via the TICA TESS zero-RA test: the deepened 5000-star matched pool
+    // made cross-seam pairs common enough to lose a real asteroid there)
+    z1_local[N_good]= ra_diff_normalized_for_wraparound( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
     z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
     N_good++;
     if ( N_good > 501 )
@@ -5177,6 +5182,11 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  for ( j= 0; j < N; j++ ) {
   // Apply previously determined local corrections to each star
   stars[j].corrected_ra_local= stars[j].corrected_mag_ra + stars[j].local_correction_ra;
+  // keep RA in [0,360) for stars right at the RA=0/360 seam
+  if ( stars[j].corrected_ra_local < 0.0 )
+   stars[j].corrected_ra_local= stars[j].corrected_ra_local + 360.0;
+  if ( stars[j].corrected_ra_local >= 360.0 )
+   stars[j].corrected_ra_local= stars[j].corrected_ra_local - 360.0;
   stars[j].corrected_dec_local= stars[j].corrected_mag_dec + stars[j].local_correction_dec;
   // Clean-up outliers
   if ( stars[j].matched_with_astrometric_catalog == 1 ) {
@@ -5502,7 +5512,12 @@ int correct_measured_positions_bruteforce( struct detected_star *stars, int N, d
    if ( distance < best_search_radius ) {
     if ( distance == 0.0 )
      continue; //
-    z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+    // Wrap-normalized, like the first scan above: a raw difference across
+    // the RA=0/360 seam contributes ~+-360 deg to the correction MEAN and
+    // wrecks the corrected positions of every target near the seam (found
+    // via the TICA TESS zero-RA test: the deepened 5000-star matched pool
+    // made cross-seam pairs common enough to lose a real asteroid there)
+    z1_local[N_good]= ra_diff_normalized_for_wraparound( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
     z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
     N_good++;
     if ( N_good > 501 )
@@ -5563,6 +5578,11 @@ int correct_measured_positions_bruteforce( struct detected_star *stars, int N, d
  for ( j= 0; j < N; j++ ) {
   // Apply previously determined local corrections to each star
   stars[j].corrected_ra_local= stars[j].corrected_mag_ra + stars[j].local_correction_ra;
+  // keep RA in [0,360) for stars right at the RA=0/360 seam
+  if ( stars[j].corrected_ra_local < 0.0 )
+   stars[j].corrected_ra_local= stars[j].corrected_ra_local + 360.0;
+  if ( stars[j].corrected_ra_local >= 360.0 )
+   stars[j].corrected_ra_local= stars[j].corrected_ra_local - 360.0;
   stars[j].corrected_dec_local= stars[j].corrected_mag_dec + stars[j].local_correction_dec;
   // Clean-up outliers
   if ( stars[j].matched_with_astrometric_catalog == 1 ) {

@@ -241,6 +241,33 @@ RA_MAX=$MAX
 RA_MAX=${RA_MAX//"+"/}
 RA_MIN=$MIN
 RA_MIN=${RA_MIN//"+"/}
+# The transient may sit right at the RA=0/360 seam, with one detection
+# reporting RA ~359.999 and the other ~0.001. A naive column mean then
+# lands near RA=180 - the opposite side of the sky - and every downstream
+# catalog lookup (astcheck asteroids, exclusion lists, VSX, TNS links...)
+# quietly queries the wrong position (found via the TICA TESS zero RA
+# test: asteroid Whittemora at RA=00:00:00 was silently lost this way).
+# Detect the seam by the absurd RA spread, recompute the statistics with
+# the low-side RA values unwrapped by +360, and bring the mean back into
+# [0,360). RA_MAX/RA_MIN keep the unwrapped values: they are only used as
+# floats (span/validity checks), where the unwrapped frame is the
+# meaningful one. The raw per-detection RA file is left untouched - the
+# pairwise angular distances below are computed with
+# lib/put_two_sources_in_one_field, which handles the wrap correctly.
+TEST=$(awk -v a="$RA_MAX" -v b="$RA_MIN" 'BEGIN {print (a-b > 180.0) ? 1 : 0}')
+if [ "$TEST" -eq 1 ];then
+ awk '{if ($1 < 180.0) print $1+360.0; else print $1}' "$REPORT_TRANSIENT_TMPFILE_RA" > "$REPORT_TRANSIENT_TMPFILE_RA".unwrap
+ util/colstat < "$REPORT_TRANSIENT_TMPFILE_RA".unwrap 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
+ rm -f "$REPORT_TRANSIENT_TMPFILE_RA".unwrap
+ . "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
+ RA_MEAN=$MEAN
+ RA_MEAN=${RA_MEAN//"+"/}
+ RA_MAX=$MAX
+ RA_MAX=${RA_MAX//"+"/}
+ RA_MIN=$MIN
+ RA_MIN=${RA_MIN//"+"/}
+ RA_MEAN=$(awk -v a="$RA_MEAN" 'BEGIN {printf "%.7f", (a >= 360.0) ? a-360.0 : a}')
+fi
 
 util/colstat < "$REPORT_TRANSIENT_TMPFILE_DEC" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
