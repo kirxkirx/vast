@@ -998,7 +998,480 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  return 0;
 }
 
+// ----------------------------------------------------------------------
+// Spatial index over the detected stars for UCAC5 catalog matching.
+//
+// The catalog matchers below used to scan the whole detected-star list for
+// every catalog record - an O(N_catalog * N_detected) loop dominated by
+// spherical-distance evaluations. This index cuts that to O(1) expected
+// candidates per catalog record. The design follows the pixel-grid star
+// matcher in src/ident_lib.c (build the index once over the fixed list,
+// stream the other list as queries, scan the 3x3 cell neighborhood),
+// adapted to the celestial sphere:
+//  * Dec bands of height equal to the search radius; within each band, RA
+//    columns of width radius/cos(Dec) so cells stay roughly square in true
+//    angle. |Delta Dec| <= great-circle distance and the column width
+//    covers the RA reach of the search circle at any Dec inside the band,
+//    so the 3-band x 3-column neighborhood provably contains every star
+//    within the search radius.
+//  * The RA axis is bounded to the occupied arc instead of the full
+//    circle. Fields straddling RA=0 are handled by the same shift-by-180
+//    framing test as in src/catalogs/read_tycho2.c: RA spans are computed
+//    in both the native and the 180-deg-shifted frame and the tighter
+//    framing wins, so the occupied arc is always contiguous in the frame
+//    the grid uses.
+//  * Cells store detected-star indices in ascending order (flat CSR
+//    layout, no per-query allocations - a lesson from ident_lib.c where
+//    the per-query linked-list copying is pure overhead), and collected
+//    candidates are returned in ascending index order. The ordering is
+//    load-bearing: the matchers take the FIRST qualifying star in index
+//    order, so candidate enumeration must reproduce the brute-force scan
+//    order for the results to stay identical.
+// The pre-index implementations are kept compiled as *_bruteforce()
+// backups; set VAST_UCAC5_MATCH_BRUTEFORCE=1 to use them (A/B testing).
+// ----------------------------------------------------------------------
+
+#define SPATIAL_GRID_MIN_COS_DEC 0.02
+
+struct detected_star_spatial_grid {
+ double radius_deg;
+ double ra_shift_deg;    // 0.0 or 180.0: frame shift applied to RA before computing offsets (RA=0 wrap)
+ double ra_origin_deg;   // origin of the RA offset axis in the shifted frame
+ double ra_span_deg;     // extent of the populated RA offset range
+ double dec_origin_deg;
+ int n_bands;
+ int *band_ncols;
+ double *band_col_width_deg;
+ long *band_cell_offset; // index of each band's first cell in the flat cell arrays
+ long n_cells;
+ long *cell_start;       // CSR: items of cell c are item_idx[cell_start[c]..cell_start[c+1])
+ int *item_idx;
+ long n_items;
+ int *scratch;           // candidate buffer sized n_items, so collection can never overflow
+};
+
+static void free_detected_star_spatial_grid( struct detected_star_spatial_grid *g ) {
+ if ( g == NULL )
+  return;
+ if ( g->band_ncols != NULL )
+  free( g->band_ncols );
+ if ( g->band_col_width_deg != NULL )
+  free( g->band_col_width_deg );
+ if ( g->band_cell_offset != NULL )
+  free( g->band_cell_offset );
+ if ( g->cell_start != NULL )
+  free( g->cell_start );
+ if ( g->item_idx != NULL )
+  free( g->item_idx );
+ if ( g->scratch != NULL )
+  free( g->scratch );
+ free( g );
+ return;
+}
+
+// Build the index over the detected stars. If use_good_star_limit != 0 only
+// the first 'limit' stars with good_star==1 are indexed (in index order),
+// reproducing the eligibility set of the brute-force local-UCAC5 scan;
+// otherwise all N stars are indexed (the remote-path re-match loops scan
+// every star). Returns NULL on allocation failure or an empty eligible set;
+// the callers fall back to the brute-force implementations in that case.
+static struct detected_star_spatial_grid *build_detected_star_spatial_grid( struct detected_star *stars, int N, int use_good_star_limit, int limit, double radius_deg ) {
+ struct detected_star_spatial_grid *g;
+ int *eligible;
+ long n_eligible;
+ long i;
+ int star_index;
+ double ra, dec, ras;
+ double ra_min_native, ra_max_native, ra_min_shifted, ra_max_shifted;
+ double dec_min, dec_max;
+ double span_native, span_shifted;
+ double dec_lo, dec_hi, cos_edge, cos_lo, cos_hi;
+ int band, col;
+ long cell, total_cells;
+ long *fill_cursor;
+
+ if ( N < 1 || radius_deg <= 0.0 ) {
+  return NULL;
+ }
+ eligible= (int *)malloc( (size_t)N * sizeof( int ) );
+ if ( eligible == NULL ) {
+  return NULL;
+ }
+ n_eligible= 0;
+ for ( star_index= 0; star_index < N; star_index++ ) {
+  if ( use_good_star_limit != 0 ) {
+   if ( stars[star_index].good_star != 1 ) {
+    continue;
+   }
+   if ( n_eligible == (long)limit ) {
+    break;
+   }
+  }
+  eligible[n_eligible]= star_index;
+  n_eligible++;
+ }
+ if ( n_eligible < 1 ) {
+  free( eligible );
+  return NULL;
+ }
+
+ g= (struct detected_star_spatial_grid *)malloc( sizeof( struct detected_star_spatial_grid ) );
+ if ( g == NULL ) {
+  free( eligible );
+  return NULL;
+ }
+ g->band_ncols= NULL;
+ g->band_col_width_deg= NULL;
+ g->band_cell_offset= NULL;
+ g->cell_start= NULL;
+ g->item_idx= NULL;
+ g->scratch= NULL;
+ g->radius_deg= radius_deg;
+ g->n_items= n_eligible;
+
+ // RA framing: native vs shifted by 180 deg - the tighter span wins, so a
+ // field straddling RA=0 is contiguous in the frame the grid uses
+ ra_min_native= 360.0;
+ ra_max_native= 0.0;
+ ra_min_shifted= 360.0;
+ ra_max_shifted= 0.0;
+ dec_min= 90.0;
+ dec_max= -90.0;
+ for ( i= 0; i < n_eligible; i++ ) {
+  ra= stars[eligible[i]].ra_deg_measured;
+  dec= stars[eligible[i]].dec_deg_measured;
+  if ( ra < ra_min_native )
+   ra_min_native= ra;
+  if ( ra > ra_max_native )
+   ra_max_native= ra;
+  ras= ra + 180.0;
+  if ( ras >= 360.0 )
+   ras= ras - 360.0;
+  if ( ras < ra_min_shifted )
+   ra_min_shifted= ras;
+  if ( ras > ra_max_shifted )
+   ra_max_shifted= ras;
+  if ( dec < dec_min )
+   dec_min= dec;
+  if ( dec > dec_max )
+   dec_max= dec;
+ }
+ span_native= ra_max_native - ra_min_native;
+ span_shifted= ra_max_shifted - ra_min_shifted;
+ if ( span_shifted < span_native ) {
+  g->ra_shift_deg= 180.0;
+  g->ra_origin_deg= ra_min_shifted - radius_deg;
+  g->ra_span_deg= span_shifted + 2.0 * radius_deg;
+ } else {
+  g->ra_shift_deg= 0.0;
+  g->ra_origin_deg= ra_min_native - radius_deg;
+  g->ra_span_deg= span_native + 2.0 * radius_deg;
+ }
+ g->dec_origin_deg= dec_min - radius_deg;
+ g->n_bands= (int)( ( dec_max + radius_deg - g->dec_origin_deg ) / radius_deg ) + 1;
+
+ g->band_ncols= (int *)malloc( (size_t)g->n_bands * sizeof( int ) );
+ g->band_col_width_deg= (double *)malloc( (size_t)g->n_bands * sizeof( double ) );
+ g->band_cell_offset= (long *)malloc( (size_t)( g->n_bands + 1 ) * sizeof( long ) );
+ if ( g->band_ncols == NULL || g->band_col_width_deg == NULL || g->band_cell_offset == NULL ) {
+  free( eligible );
+  free_detected_star_spatial_grid( g );
+  return NULL;
+ }
+ total_cells= 0;
+ for ( band= 0; band < g->n_bands; band++ ) {
+  dec_lo= g->dec_origin_deg + (double)band * radius_deg;
+  dec_hi= dec_lo + radius_deg;
+  if ( dec_lo < -90.0 )
+   dec_lo= -90.0;
+  if ( dec_hi > 90.0 )
+   dec_hi= 90.0;
+  cos_lo= cos( dec_lo * M_PI / 180.0 );
+  cos_hi= cos( dec_hi * M_PI / 180.0 );
+  cos_edge= ( cos_lo < cos_hi ) ? cos_lo : cos_hi;
+  if ( cos_edge < SPATIAL_GRID_MIN_COS_DEC )
+   cos_edge= SPATIAL_GRID_MIN_COS_DEC;
+  g->band_col_width_deg[band]= radius_deg / cos_edge;
+  g->band_ncols[band]= (int)( g->ra_span_deg / g->band_col_width_deg[band] ) + 1;
+  g->band_cell_offset[band]= total_cells;
+  total_cells= total_cells + (long)g->band_ncols[band];
+ }
+ g->band_cell_offset[g->n_bands]= total_cells;
+ g->n_cells= total_cells;
+
+ g->cell_start= (long *)malloc( (size_t)( g->n_cells + 1 ) * sizeof( long ) );
+ g->item_idx= (int *)malloc( (size_t)n_eligible * sizeof( int ) );
+ g->scratch= (int *)malloc( (size_t)n_eligible * sizeof( int ) );
+ fill_cursor= (long *)malloc( (size_t)g->n_cells * sizeof( long ) );
+ if ( g->cell_start == NULL || g->item_idx == NULL || g->scratch == NULL || fill_cursor == NULL ) {
+  if ( fill_cursor != NULL )
+   free( fill_cursor );
+  free( eligible );
+  free_detected_star_spatial_grid( g );
+  return NULL;
+ }
+ for ( cell= 0; cell <= g->n_cells; cell++ ) {
+  g->cell_start[cell]= 0;
+ }
+ // counting pass
+ for ( i= 0; i < n_eligible; i++ ) {
+  ra= stars[eligible[i]].ra_deg_measured;
+  dec= stars[eligible[i]].dec_deg_measured;
+  ras= ra + g->ra_shift_deg;
+  if ( ras >= 360.0 )
+   ras= ras - 360.0;
+  band= (int)( ( dec - g->dec_origin_deg ) / radius_deg );
+  if ( band < 0 )
+   band= 0;
+  if ( band >= g->n_bands )
+   band= g->n_bands - 1;
+  col= (int)( ( ras - g->ra_origin_deg ) / g->band_col_width_deg[band] );
+  if ( col < 0 )
+   col= 0;
+  if ( col >= g->band_ncols[band] )
+   col= g->band_ncols[band] - 1;
+  cell= g->band_cell_offset[band] + (long)col;
+  g->cell_start[cell + 1]= g->cell_start[cell + 1] + 1;
+ }
+ for ( cell= 0; cell < g->n_cells; cell++ ) {
+  g->cell_start[cell + 1]= g->cell_start[cell + 1] + g->cell_start[cell];
+ }
+ for ( cell= 0; cell < g->n_cells; cell++ ) {
+  fill_cursor[cell]= g->cell_start[cell];
+ }
+ // fill pass: eligible[] is in ascending star-index order, so each cell's
+ // item list comes out ascending - required for the first-match semantics
+ for ( i= 0; i < n_eligible; i++ ) {
+  ra= stars[eligible[i]].ra_deg_measured;
+  dec= stars[eligible[i]].dec_deg_measured;
+  ras= ra + g->ra_shift_deg;
+  if ( ras >= 360.0 )
+   ras= ras - 360.0;
+  band= (int)( ( dec - g->dec_origin_deg ) / radius_deg );
+  if ( band < 0 )
+   band= 0;
+  if ( band >= g->n_bands )
+   band= g->n_bands - 1;
+  col= (int)( ( ras - g->ra_origin_deg ) / g->band_col_width_deg[band] );
+  if ( col < 0 )
+   col= 0;
+  if ( col >= g->band_ncols[band] )
+   col= g->band_ncols[band] - 1;
+  cell= g->band_cell_offset[band] + (long)col;
+  g->item_idx[fill_cursor[cell]]= eligible[i];
+  fill_cursor[cell]= fill_cursor[cell] + 1;
+ }
+ free( fill_cursor );
+ free( eligible );
+ return g;
+}
+
+// Collect the indices of all indexed stars that could match (ra_deg, dec_deg)
+// into g->scratch, in ascending index order. Returns the number of candidates
+// (never exceeds g->n_items). The column span is +-2 rather than +-1: the
+// local matcher accepts on the true angular distance (a circle, for which
+// +-1 column suffices), but the remote-path re-match loops accept on a BOX
+// test (|dDec| < r AND dRA*cos(Dec) < r) whose RA extreme reaches a full
+// column width from the query; with the query near a column boundary such a
+// star lands two columns away. +-2 columns cover the box for any query
+// position; the extra candidates are harmlessly rejected by the per-pair
+// tests, which are unchanged from the brute-force implementations.
+static long spatial_grid_collect_candidates( struct detected_star_spatial_grid *g, double ra_deg, double dec_deg ) {
+ double ras, off_dec;
+ int band_center, band, db;
+ int col_center, col, dc;
+ long cell, item;
+ long n_collected;
+ long sort_i, sort_j;
+ int sort_tmp;
+
+ ras= ra_deg + g->ra_shift_deg;
+ if ( ras >= 360.0 )
+  ras= ras - 360.0;
+ off_dec= dec_deg - g->dec_origin_deg;
+ band_center= (int)floor( off_dec / g->radius_deg );
+ n_collected= 0;
+ for ( db= -1; db <= 1; db++ ) {
+  band= band_center + db;
+  if ( band < 0 || band >= g->n_bands ) {
+   continue;
+  }
+  col_center= (int)floor( ( ras - g->ra_origin_deg ) / g->band_col_width_deg[band] );
+  for ( dc= -2; dc <= 2; dc++ ) {
+   col= col_center + dc;
+   if ( col < 0 || col >= g->band_ncols[band] ) {
+    continue;
+   }
+   cell= g->band_cell_offset[band] + (long)col;
+   for ( item= g->cell_start[cell]; item < g->cell_start[cell + 1]; item++ ) {
+    g->scratch[n_collected]= g->item_idx[item];
+    n_collected++;
+   }
+  }
+ }
+ // restore global ascending index order across the visited cells
+ // (insertion sort - the candidate list is tiny)
+ for ( sort_i= 1; sort_i < n_collected; sort_i++ ) {
+  sort_tmp= g->scratch[sort_i];
+  sort_j= sort_i - 1;
+  while ( sort_j >= 0 && g->scratch[sort_j] > sort_tmp ) {
+   g->scratch[sort_j + 1]= g->scratch[sort_j];
+   sort_j= sort_j - 1;
+  }
+  g->scratch[sort_j + 1]= sort_tmp;
+ }
+ return n_collected;
+}
+
+// Pre-spatial-index implementations kept as compiled runtime-selectable
+// backups (set VAST_UCAC5_MATCH_BRUTEFORCE=1 to use them)
+int read_UCAC5_from_vizquery_bruteforce( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters );
+int search_UCAC5_localcopy_bruteforce( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters );
+int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters );
+
 int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
+ struct detected_star_spatial_grid *spatial_grid;
+ long n_spatial_grid_candidates;
+ long candidate_counter;
+ FILE *f;
+ char string[1024];
+ int i;
+ double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag; //,catalog_mag_err;
+ double catalog_ra_original, catalog_dec_original;
+ double cos_delta;
+ double ra_diff_rematch;
+ int N_stars_matched_with_astrometric_catalog= 0;
+
+ double epoch, pmRA, e_pmRA, pmDE, e_pmDE;
+
+ double observing_epoch_jy, dt;
+
+ if ( NULL != getenv( "VAST_UCAC5_MATCH_BRUTEFORCE" ) ) {
+  return read_UCAC5_from_vizquery_bruteforce( stars, N, vizquery_output_filename, catalog_search_parameters );
+ }
+ f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading in read_UCAC5_from_vizquery()\n", vizquery_output_filename );
+  return 1;
+ }
+ spatial_grid= build_detected_star_spatial_grid( stars, N, 0, 0, catalog_search_parameters->search_radius_deg );
+ if ( spatial_grid == NULL ) {
+  fprintf( stderr, "WARNING: cannot build the spatial index - falling back to the brute-force match\n" );
+  fclose( f );
+  return read_UCAC5_from_vizquery_bruteforce( stars, N, vizquery_output_filename, catalog_search_parameters );
+ }
+ while ( NULL != fgets( string, 1024, f ) ) {
+  if ( string[0] == '#' )
+   continue;
+  if ( string[0] == '\n' )
+   continue;
+  if ( string[0] == '-' )
+   continue;
+  if ( string[0] == '_' )
+   continue;
+  if ( string[0] == ' ' )
+   continue;
+  if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
+   continue;
+
+  // This returns only stars with measured PM
+  // if( 8>sscanf(string,"%lf %lf %lf  %lf %lf %lf  %lf %lf %lf %lf %lf",&measured_ra,&measured_dec,&distance, &catalog_ra,&catalog_dec,&catalog_mag,&epoch, &pmRA,&e_pmRA,&pmDE,&e_pmDE) )continue;
+  epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  if ( 8 > sscanf( string, "%lf %lf %lf  %lf %lf %lf  %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &e_pmRA, &pmDE, &e_pmDE ) ) {
+   if ( 6 > sscanf( string, "%lf %lf %lf  %lf %lf %lf  %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &e_pmRA, &pmDE, &e_pmDE ) ) {
+    continue;
+   }
+   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  }
+
+  cos_delta= cos( catalog_dec * M_PI / 180.0 );
+
+  ///////////////// Account for proper motion /////////////////
+  catalog_ra_original= catalog_ra;
+  catalog_dec_original= catalog_dec;
+  //  assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
+  //  assuming observing_epoch_jd is the same for all stars!
+  observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+  dt= observing_epoch_jy - epoch;
+  // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
+  // pmRA is UCAC/Gaia proper motion in RA*cosDE
+  // Guard against division by zero near celestial poles
+  if ( fabs( cos_delta ) > 1e-6 ) {
+   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  }
+  catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+  /////////////////////////////////////////////////////////////
+
+  // Now find which input star that was
+  n_spatial_grid_candidates= spatial_grid_collect_candidates( spatial_grid, measured_ra, measured_dec );
+  for ( candidate_counter= 0; candidate_counter < n_spatial_grid_candidates; candidate_counter++ ) {
+   i= spatial_grid->scratch[candidate_counter];
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    continue;
+   }
+   if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
+    // Handle RA wrapping near the 0/360 boundary
+    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
+    if ( ra_diff_rematch > 180.0 ) {
+     ra_diff_rematch= 360.0 - ra_diff_rematch;
+    }
+    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
+     if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
+      continue;
+     }
+
+     // if we are here - this is a match
+     stars[i].matched_with_astrometric_catalog= 1;
+     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
+     stars[i].d_dec= catalog_dec - measured_dec;
+     stars[i].catalog_ra= catalog_ra;
+     stars[i].catalog_dec= catalog_dec;
+     stars[i].catalog_mag= catalog_mag;
+     // stars[i].catalog_mag_err=catalog_mag_err;
+     stars[i].catalog_mag_err= 0.0;
+     stars[i].catalog_ra_original= catalog_ra_original;
+     stars[i].catalog_dec_original= catalog_dec_original;
+     // strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
+     //
+     stars[i].match_distance_astrometric_catalog_arcsec= distance;
+
+     // reset photometric info
+     stars[i].APASS_B= 0.0;
+     stars[i].APASS_B_err= 0.0;
+     stars[i].APASS_V= 0.0;
+     stars[i].APASS_V_err= 0.0;
+     stars[i].APASS_r= 0.0;
+     stars[i].APASS_r_err= 0.0;
+     stars[i].APASS_i= 0.0;
+     stars[i].APASS_i_err= 0.0;
+     stars[i].Rc_computed_from_APASS_ri= 0.0;
+     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
+     stars[i].Ic_computed_from_APASS_ri= 0.0;
+     stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+     stars[i].APASS_g= 0.0;
+     stars[i].APASS_g_err= 0.0;
+     //     }
+
+     N_stars_matched_with_astrometric_catalog++;
+     // fprintf(stderr,"DEBUG MATCHED: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
+     break; // like if we assume there will be only one match within distance - why not?
+    }
+   }
+  } // for(i=0;i<N;i++)
+ }
+ fclose( f );
+ free_detected_star_spatial_grid( spatial_grid );
+ fprintf( stderr, "Matched %d stars with UCAC5 using vizquery.\n", N_stars_matched_with_astrometric_catalog );
+ if ( N_stars_matched_with_astrometric_catalog < 5 ) {
+  fprintf( stderr, "ERROR: too few stars matched (%d, need at least 5) with the UCAC5 astrometric catalog via VizieR vizquery!\n", N_stars_matched_with_astrometric_catalog );
+  return 1;
+ }
+ return 0;
+}
+
+// Pre-spatial-index implementation of read_UCAC5_from_vizquery(), kept compiled as a
+// runtime-selectable backup: set VAST_UCAC5_MATCH_BRUTEFORCE=1 to use it.
+int read_UCAC5_from_vizquery_bruteforce( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
  FILE *f;
  char string[1024];
  int i;
@@ -1532,6 +2005,426 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
 }
 
 int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+
+ double faintest_mag, brightest_mag;
+ int local_cat_query_limit;
+ char *env_local_query_limit_string;
+ double faintest_mag_extension_mag;
+ struct detected_star_spatial_grid *spatial_grid;
+ long n_spatial_grid_candidates;
+ long candidate_counter;
+
+ double observing_epoch_jy, dt;
+
+ double measured_ra, measured_dec, catalog_ra, catalog_dec, catalog_mag;
+ double distance;
+ double delta_ra_rough;
+ double catalog_ra_original, catalog_dec_original;
+ double cos_delta;
+ int N_stars_matched_with_astrometric_catalog= 0;
+
+ int search_stars_counter;
+
+ double epoch, pmRA, pmDE;
+ // double e_pmRA, e_pmDE;
+
+ double search_ra_min_deg, search_ra_max_deg; //, search_ra_maxmin_deg, search_ra_mean_deg;
+ double search_dec_min_deg, search_dec_max_deg, search_dec_maxmin_deg, search_dec_mean_deg;
+ int ra_wraps; // 1 if the field straddles RA=0/360 boundary
+ double ra_gap_start, ra_gap_end; // boundaries of the gap region when RA wraps
+ int detected_star_counter;
+ unsigned int zone_start, zone_end;
+
+ // based on https://stackoverflow.com/questions/17598572/read-and-write-to-binary-files-in-c
+ // and http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt
+ unsigned int zone_counter;
+ char zonefilename[24]; // should match the length of sprintf string below
+ int n_zone_files_with_read_errors= 0;
+
+ // double gaia_ra_deg, garia_dec_deg;
+ double ucac_ra_deg, ucac_dec_deg;
+ double ucac_mag;
+ double ucac_epoch;
+
+ double ucac_pm_ra_masy;  //, ucac_pm_ra_err_masy;
+ double ucac_pm_dec_masy; //, ucac_pm_dec_err_masy;
+
+ int64_t srcid;                                                                    // long
+ int32_t ira, idc, rag, dcg;                                                       // int
+ int16_t epi, pmir, pmid, pmer, pmed, phgm, im1, rmag, jmag, hmag, kmag, erg, edg; // short
+ int8_t flg, nu1;                                                                  // char
+
+ // unsigned char buffer[52];
+ FILE *ptr;
+
+ if ( NULL != getenv( "VAST_UCAC5_MATCH_BRUTEFORCE" ) ) {
+  return search_UCAC5_localcopy_bruteforce( stars, N, catalog_search_parameters );
+ }
+
+ // Check if a local copy of UCAC5 is found
+ sprintf( zonefilename, "lib/catalogs/ucac5/z%03d", 1 );
+ ptr= fopen( zonefilename, "rb" ); // r for read, b for binary
+ if ( NULL == ptr ) {
+  fprintf( stderr, "No local copy of UCAC5 is found\n" );
+  return 1;
+ } else {
+  fprintf( stderr, "Found a local copy of UCAC5\n" );
+ }
+ fclose( ptr );
+
+ // set zone search parameters
+ search_ra_min_deg= 360.0;
+ search_ra_max_deg= 0.0;
+ search_dec_min_deg= 90.0;
+ search_dec_max_deg= -90.0;
+ for ( detected_star_counter= 0; detected_star_counter < N; detected_star_counter++ ) {
+  if ( stars[detected_star_counter].ra_deg_measured < search_ra_min_deg )
+   search_ra_min_deg= stars[detected_star_counter].ra_deg_measured;
+  if ( stars[detected_star_counter].ra_deg_measured > search_ra_max_deg )
+   search_ra_max_deg= stars[detected_star_counter].ra_deg_measured;
+  if ( stars[detected_star_counter].dec_deg_measured < search_dec_min_deg )
+   search_dec_min_deg= stars[detected_star_counter].dec_deg_measured;
+  if ( stars[detected_star_counter].dec_deg_measured > search_dec_max_deg )
+   search_dec_max_deg= stars[detected_star_counter].dec_deg_measured;
+ }
+ // search_ra_maxmin_deg=search_ra_max_deg-search_ra_min_deg;
+ // search_ra_mean_deg=(search_ra_max_deg+search_ra_min_deg)/2.0;
+ search_dec_maxmin_deg= search_dec_max_deg - search_dec_min_deg;
+ search_dec_mean_deg= ( search_dec_max_deg + search_dec_min_deg ) / 2.0;
+ // Detect RA wrapping: if the RA range is > 180 degrees, the field straddles the RA=0/360 boundary
+ ra_wraps= 0;
+ ra_gap_start= 0.0;
+ ra_gap_end= 0.0;
+ if ( search_ra_max_deg - search_ra_min_deg > 180.0 ) {
+  ra_wraps= 1;
+  // Compute the gap boundaries: the gap is the RA range NOT covered by the field
+  // ra_gap_start = max RA among stars with RA < 180 (upper edge of the low-RA group)
+  // ra_gap_end = min RA among stars with RA >= 180 (lower edge of the high-RA group)
+  ra_gap_start= 0.0;
+  ra_gap_end= 360.0;
+  for ( detected_star_counter= 0; detected_star_counter < N; detected_star_counter++ ) {
+   if ( stars[detected_star_counter].ra_deg_measured < 180.0 ) {
+    if ( stars[detected_star_counter].ra_deg_measured > ra_gap_start ) {
+     ra_gap_start= stars[detected_star_counter].ra_deg_measured;
+    }
+   } else {
+    if ( stars[detected_star_counter].ra_deg_measured < ra_gap_end ) {
+     ra_gap_end= stars[detected_star_counter].ra_deg_measured;
+    }
+   }
+  }
+  fprintf( stderr, "RA wraps around 0/360 boundary: field RA %.4f through 0 to %.4f, gap %.4f to %.4f\n", ra_gap_end, ra_gap_start, ra_gap_start, ra_gap_end );
+ }
+ //
+ faintest_mag= catalog_search_parameters->faintest_mag;
+ brightest_mag= catalog_search_parameters->brightest_mag;
+
+ // Star limit for this local-catalog match: default
+ // DEFAULT_UCAC5_LOCAL_QUERY_LIMIT (see the comment at its definition),
+ // tunable via VAST_UCAC5_LOCAL_QUERY_LIMIT (set 1000 to get the old
+ // 1000-brightest-stars behavior). Affects ONLY this local search: the
+ // remote UCAC5/vizquery paths keep the 1000-star cap. Since the 1000
+ // brightest detected stars already reach the default faintest_mag, the
+ // UCAC5 magnitude window is deepened to keep pace with the fainter
+ // detected stars a larger limit admits: cumulative star counts grow
+ // roughly as 10^(0.35 m), so dm = log10(limit/1000)/0.35 (capped at
+ // +3 mag; UCAC5 itself is complete to about R=16).
+ local_cat_query_limit= DEFAULT_UCAC5_LOCAL_QUERY_LIMIT;
+ env_local_query_limit_string= getenv( "VAST_UCAC5_LOCAL_QUERY_LIMIT" );
+ if ( env_local_query_limit_string != NULL ) {
+  local_cat_query_limit= atoi( env_local_query_limit_string );
+  if ( local_cat_query_limit < 100 || local_cat_query_limit > 50000 ) {
+   fprintf( stderr, "WARNING: ignoring out-of-range VAST_UCAC5_LOCAL_QUERY_LIMIT=%s (allowed 100..50000)\n", env_local_query_limit_string );
+   local_cat_query_limit= DEFAULT_UCAC5_LOCAL_QUERY_LIMIT;
+  }
+ }
+ if ( local_cat_query_limit > MAX_STARS_IN_LOCAL_CAT_QUERY ) {
+  faintest_mag_extension_mag= log10( (double)local_cat_query_limit / (double)MAX_STARS_IN_LOCAL_CAT_QUERY ) / 0.35;
+  if ( faintest_mag_extension_mag > 3.0 ) {
+   faintest_mag_extension_mag= 3.0;
+  }
+  faintest_mag= faintest_mag + faintest_mag_extension_mag;
+  fprintf( stderr, "UCAC5 local query limit %d: matching up to %d detected stars, deepening the UCAC5 window to mag %.2lf\n", local_cat_query_limit, local_cat_query_limit, faintest_mag );
+ }
+
+ fprintf( stderr, "Reading UCAC5 zone files...\n" );
+
+ // Select only the relevant zone files based on declination
+ // Each zone covers 0.2 degrees: zone 1 = Dec -90.0 to -89.8, zone 900 = Dec +89.8 to +90.0
+ zone_start= (unsigned int)( ( search_dec_min_deg + 90.0 ) / 0.2 ) + 1;
+ zone_end= (unsigned int)( ( search_dec_max_deg + 90.0 ) / 0.2 ) + 1;
+ // Add padding for safety
+ if ( zone_start > 1 ) {
+  zone_start--;
+ }
+ zone_end++;
+ if ( zone_start < 1 ) {
+  zone_start= 1;
+ }
+ if ( zone_end > 900 ) {
+  zone_end= 900;
+ }
+ fprintf( stderr, "Searching UCAC5 zones %u to %u (Dec %.1f to %.1f)\n", zone_start, zone_end, search_dec_min_deg, search_dec_max_deg );
+
+ // Read each zone file
+ // Build the spatial index over the eligible detected stars - the same
+ // first-local_cat_query_limit good-star set the brute-force scan honors
+ spatial_grid= build_detected_star_spatial_grid( stars, N, 1, local_cat_query_limit, catalog_search_parameters->search_radius_deg );
+ if ( spatial_grid == NULL ) {
+  fprintf( stderr, "WARNING: cannot build the spatial index - falling back to the brute-force UCAC5 match\n" );
+  return search_UCAC5_localcopy_bruteforce( stars, N, catalog_search_parameters );
+ }
+
+ for ( zone_counter= zone_start; zone_counter <= zone_end; zone_counter++ ) {
+
+  sprintf( zonefilename, "lib/catalogs/ucac5/z%03d", zone_counter );
+
+  // fprintf(stderr,"%s\n",zonefilename);
+
+  ptr= fopen( zonefilename, "rb" ); // r for read, b for binary
+  if ( NULL == ptr ) {
+   fprintf( stderr, "ERROR opening zone file %s\n", zonefilename );
+   // assume this is just one missing file, but do we want crash on it?
+   continue;
+  }
+
+  // fprintf(stderr,"DEBUG: reading %s\n",zonefilename);
+
+  // Read all stars in the zone file
+  while ( 1 == 1 ) {
+   if ( 0 == fread( &srcid, sizeof( srcid ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &rag, sizeof( rag ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &dcg, sizeof( dcg ), 1, ptr ) ) {
+    break;
+   }
+   //
+   // gaia_ra_deg=(double)rag/3600000.0;
+   // garia_dec_deg=(double)dcg/3600000.0;
+   //
+   if ( 0 == fread( &erg, sizeof( erg ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &edg, sizeof( edg ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &flg, sizeof( flg ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &nu1, sizeof( nu1 ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &epi, sizeof( epi ), 1, ptr ) ) {
+    break;
+   }
+   //
+   ucac_epoch= (double)epi / 1000.0 + 1997.0;
+   epoch= ucac_epoch;
+   //
+   if ( 0 == fread( &ira, sizeof( ira ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &idc, sizeof( idc ), 1, ptr ) ) {
+    break;
+   }
+   //
+   ucac_ra_deg= (double)ira / 3600000.0;
+   ucac_dec_deg= (double)idc / 3600000.0;
+   //
+   if ( fabs( search_dec_mean_deg - ucac_dec_deg ) > search_dec_maxmin_deg / 2.0 + 0.2 ) {
+    break;
+   }
+   //
+   if ( 0 == fread( &pmir, sizeof( pmir ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &pmid, sizeof( pmid ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &pmer, sizeof( pmer ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &pmed, sizeof( pmed ), 1, ptr ) ) {
+    break;
+   }
+   //
+   ucac_pm_ra_masy= 0.1 * (double)pmir;
+   // ucac_pm_ra_err_masy=0.1*(double)pmer;
+   ucac_pm_dec_masy= 0.1 * (double)pmid;
+   // ucac_pm_dec_err_masy=0.1*(double)pmed;
+
+   //
+   if ( 0 == fread( &phgm, sizeof( phgm ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &im1, sizeof( im1 ), 1, ptr ) ) {
+    break;
+   }
+   //
+   ucac_mag= (double)im1 / 1000.0;
+   //
+   if ( 0 == fread( &rmag, sizeof( rmag ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &jmag, sizeof( jmag ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &hmag, sizeof( hmag ), 1, ptr ) ) {
+    break;
+   }
+   if ( 0 == fread( &kmag, sizeof( kmag ), 1, ptr ) ) {
+    break;
+   }
+
+   // Check the search parameters
+   if ( ucac_mag > faintest_mag ) {
+    continue;
+   } // continue to the next star
+   if ( ucac_mag < brightest_mag ) {
+    continue;
+   } // continue to the next star
+   //
+   if ( ra_wraps ) {
+    // Field straddles RA=0/360: reject stars in the gap (between ra_gap_start and ra_gap_end)
+    if ( ucac_ra_deg > ra_gap_start && ucac_ra_deg < ra_gap_end ) {
+     continue;
+    }
+   } else {
+    if ( ucac_ra_deg < search_ra_min_deg ) {
+     continue;
+    }
+    if ( ucac_ra_deg > search_ra_max_deg ) {
+     continue;
+    }
+   }
+   if ( ucac_dec_deg < search_dec_min_deg ) {
+    continue;
+   }
+   if ( ucac_dec_deg > search_dec_max_deg ) {
+    continue;
+   }
+   //
+   // Query the spatial index instead of scanning all detected stars: the
+   // candidate list contains only the eligible stars, in ascending index
+   // order - the order the brute-force scan would have visited them in
+   n_spatial_grid_candidates= spatial_grid_collect_candidates( spatial_grid, ucac_ra_deg, ucac_dec_deg );
+   for ( candidate_counter= 0; candidate_counter < n_spatial_grid_candidates; candidate_counter++ ) {
+    detected_star_counter= spatial_grid->scratch[candidate_counter];
+    //
+    measured_ra= stars[detected_star_counter].ra_deg_measured;
+    measured_dec= stars[detected_star_counter].dec_deg_measured;
+    // Cheap prechecks before the expensive spherical-trigonometry distance:
+    // |delta_Dec| is an exact lower bound on the great-circle distance, so
+    // stars rejected on it are provably outside the search radius. The RA
+    // arc precheck uses the small-angle approximation, hence the 1.2
+    // safety factor. With a ~50 arcsec radius on a degrees-wide field
+    // these two lines skip the trig for >99.9% of the pairs, which is
+    // what makes the 5000-star default query limit affordable.
+    if ( fabs( ucac_dec_deg - measured_dec ) > catalog_search_parameters->search_radius_deg ) {
+     continue;
+    }
+    delta_ra_rough= fabs( ucac_ra_deg - measured_ra );
+    if ( delta_ra_rough > 180.0 ) {
+     delta_ra_rough= 360.0 - delta_ra_rough;
+    }
+    if ( delta_ra_rough * stars[detected_star_counter].cos_dec_measured > 1.2 * catalog_search_parameters->search_radius_deg ) {
+     continue;
+    }
+    distance= compute_distance_on_sphere( ucac_ra_deg, ucac_dec_deg, measured_ra, measured_dec );
+    if ( distance < catalog_search_parameters->search_radius_deg ) {
+     if ( ( ucac_mag < stars[detected_star_counter].catalog_mag && stars[detected_star_counter].matched_with_astrometric_catalog == 1 ) || stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
+      //
+      // fprintf(stderr,"DEBUG: we've got a match!\n");
+      //
+      if ( stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
+       N_stars_matched_with_astrometric_catalog++;
+      }
+      //
+      catalog_ra= ucac_ra_deg;
+      catalog_dec= ucac_dec_deg;
+      pmRA= ucac_pm_ra_masy;
+      pmDE= ucac_pm_dec_masy;
+      catalog_mag= ucac_mag;
+      ///////////////// Account for proper motion /////////////////
+      cos_delta= cos( catalog_dec * M_PI / 180.0 );
+      catalog_ra_original= catalog_ra;
+      catalog_dec_original= catalog_dec;
+      observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+      dt= observing_epoch_jy - epoch;
+      if ( fabs( cos_delta ) > 1e-6 ) {
+       catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+      }
+      // catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
+      catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+      //
+      stars[detected_star_counter].matched_with_astrometric_catalog= 1;
+      stars[detected_star_counter].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
+      stars[detected_star_counter].d_dec= catalog_dec - measured_dec;
+      stars[detected_star_counter].catalog_ra= catalog_ra;
+      stars[detected_star_counter].catalog_dec= catalog_dec;
+      stars[detected_star_counter].catalog_mag= catalog_mag;
+      stars[detected_star_counter].catalog_mag_err= 0.0;
+      stars[detected_star_counter].catalog_ra_original= catalog_ra_original;
+      stars[detected_star_counter].catalog_dec_original= catalog_dec_original;
+      //
+      stars[detected_star_counter].match_distance_astrometric_catalog_arcsec= distance;
+      // reset photometric info
+      stars[detected_star_counter].APASS_B= 0.0;
+      stars[detected_star_counter].APASS_B_err= 0.0;
+      stars[detected_star_counter].APASS_V= 0.0;
+      stars[detected_star_counter].APASS_V_err= 0.0;
+      stars[detected_star_counter].APASS_r= 0.0;
+      stars[detected_star_counter].APASS_r_err= 0.0;
+      stars[detected_star_counter].APASS_i= 0.0;
+      stars[detected_star_counter].APASS_i_err= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri_err= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri_err= 0.0;
+      stars[detected_star_counter].Ic_computed_from_APASS_ri= 0.0;
+      stars[detected_star_counter].Ic_computed_from_APASS_ri_err= 0.0;
+      //
+      break; // assume we have only one match
+      //
+     }
+    }
+   }
+   //
+
+   // fprintf(stderr, "%li  %.7lf %.7lf  %.3lf %.3lf  %.1lf %.1lf %.1lf %.1lf\n", srcid, ucac_ra_deg, ucac_dec_deg, ucac_epoch, ucac_mag,  ucac_pm_ra_masy, ucac_pm_ra_err_masy, ucac_pm_dec_masy, ucac_pm_dec_err_masy );
+  } // while( 1 == 1 ) { // Read all stars in the zone file
+
+  // A failing storage device makes fread() return 0 (looking like a normal
+  // end-of-file to the reading loop above) while fopen() still succeeds, so
+  // a zone silently reads as empty. Report it: this is how an unreadable
+  // local UCAC5 copy manifests as the mysterious 'Matched 0 stars'.
+  if ( 0 != ferror( ptr ) ) {
+   n_zone_files_with_read_errors++;
+  }
+
+  fclose( ptr );
+ } // for( zone_counter==0; zone_counter<900; zone_counter++ ) { // Read each zone file
+
+ fprintf( stderr, "Done reading UCAC5 zone files...\n" );
+ if ( n_zone_files_with_read_errors > 0 ) {
+  fprintf( stderr, "ERROR: input/output errors while reading %d of %u UCAC5 zone files - the storage device hosting lib/catalogs/ucac5 may be failing or disconnected!\n", n_zone_files_with_read_errors, zone_end - zone_start + 1 );
+ }
+
+ free_detected_star_spatial_grid( spatial_grid );
+ fprintf( stderr, "Matched %d stars with the local copy of UCAC5.\n", N_stars_matched_with_astrometric_catalog );
+ if ( N_stars_matched_with_astrometric_catalog < 5 ) {
+  fprintf( stderr, "ERROR: too few stars matched (%d, need at least 5) with the local copy of UCAC5 - will fall back to the remote UCAC5 servers!\n", N_stars_matched_with_astrometric_catalog );
+  return 1;
+ }
+
+ return 0;
+}
+
+// Pre-spatial-index implementation of search_UCAC5_localcopy(), kept compiled as a
+// runtime-selectable backup: set VAST_UCAC5_MATCH_BRUTEFORCE=1 to use it.
+int search_UCAC5_localcopy_bruteforce( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
  double faintest_mag, brightest_mag;
  int local_cat_query_limit;
@@ -2445,6 +3338,340 @@ int obscure_proxy_credentials( char *str ) {
  * Modified search_UCAC5_at_scan function that uses safer command construction.
  */
 int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+ struct detected_star_spatial_grid *spatial_grid;
+ long n_spatial_grid_candidates;
+ long candidate_counter;
+ double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
+ int N_stars_matched_with_astrometric_catalog= 0;
+ double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
+ double cos_delta;
+ double ra_diff_rematch;
+ char string[1024];
+ // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ char base_command[BASE_COMMAND_LENGTH];
+ FILE *vizquery_input;
+ FILE *f;
+ int i;
+ int pid= getpid();
+ char vizquery_input_filename[FILENAME_LENGTH];
+ char vizquery_output_filename[FILENAME_LENGTH];
+ int vizquery_run_success;
+ int search_stars_counter;
+ int zero_radec_counter;
+ char *proxy_settings;
+ const char *ucac5_servers[3];
+ int server_order[3];
+ int server_idx;
+ int srv;
+ int ucac5_success;
+ FILE *ucac5_server_log;
+ int log_idx;
+ int sscanf_return_code;
+ FILE *country_code_file;
+ char country_code[8];
+ char country_code_path[VAST_PATH_MAX];
+ int num_ucac5_servers;
+
+ char path_to_vast_string[VAST_PATH_MAX];
+#ifdef DEBUGFILES
+ FILE *scan_ucac5_debug_ds9_region;
+#endif
+ if ( NULL != getenv( "VAST_UCAC5_MATCH_BRUTEFORCE" ) ) {
+  return search_UCAC5_at_scan_bruteforce( stars, N, catalog_search_parameters );
+ }
+ get_path_to_vast( path_to_vast_string );
+
+ // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
+ // return 1;
+
+#ifdef DEBUGFILES
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
+
+ // Initialize the allocated memory to null characters
+ memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
+ snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.output", pid );
+ vizquery_input= fopen( vizquery_input_filename, "w" );
+ if ( NULL == vizquery_input ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
+  return 1;
+ }
+ search_stars_counter= 0;
+ zero_radec_counter= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].good_star == 1 ) {
+   // check for a specific problem
+   if ( stars[i].ra_deg_measured == 0.0 && stars[i].dec_deg_measured == 0.0 ) {
+    zero_radec_counter++;
+    if ( zero_radec_counter > 10 ) {
+     fprintf( stderr, "ERROR in search_UCAC5_at_scan(): too many input positions are '0.000000 0.000000'\nWe cannot go to VizieR with that!\n" );
+     exit( EXIT_FAILURE ); // terminate everything
+    }
+   }
+   //
+   fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
+#ifdef DEBUGFILES
+   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0 * 21 / 3600 );
+#endif
+   search_stars_counter++;
+   if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+    break;
+   }
+  }
+ }
+ fclose( vizquery_input );
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
+ if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
+  return 1;
+ }
+
+ // Print search stat
+ fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
+
+ // Get proxy settings if available
+ proxy_settings= get_sanitized_curl_proxy();
+
+ // Astrometric catalog search
+
+ // Read country code from cache file to determine which servers to use
+ memset( country_code, '\0', sizeof( country_code ) );
+ snprintf( country_code_path, VAST_PATH_MAX, "%s.vast_country_code", path_to_vast_string );
+ country_code_file= fopen( country_code_path, "r" );
+ if ( country_code_file != NULL ) {
+  if ( fgets( country_code, sizeof( country_code ), country_code_file ) != NULL ) {
+   // Remove trailing newline/whitespace
+   country_code[strcspn( country_code, " \t\n\r" )]= '\0';
+  }
+  fclose( country_code_file );
+ }
+
+ // Set up server list based on country code
+ ucac5_servers[0]= "scan.sai.msu.ru";
+ ucac5_servers[1]= "vast.sai.msu.ru";
+ ucac5_servers[2]= "tau.kirx.net";
+
+ if ( strcmp( country_code, "RU" ) == 0 ) {
+  // Russian users: random selection among scan and vast only (skip tau.kirx.net due to DPI blocking)
+  num_ucac5_servers= 2;
+  fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast, country=RU)...\n" );
+ } else {
+  // Other users: random selection among all three servers
+  num_ucac5_servers= 3;
+  fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast/tau)...\n" );
+ }
+
+ // Seed the random number generator and pick a random starting server
+ srand( time( NULL ) );
+ server_order[0]= rand() % num_ucac5_servers;
+ server_order[1]= ( server_order[0] + 1 ) % num_ucac5_servers;
+ server_order[2]= ( server_order[0] + 2 ) % num_ucac5_servers;
+
+ ucac5_success= 0;
+ for ( server_idx= 0; server_idx < num_ucac5_servers; server_idx++ ) {
+  srv= server_order[server_idx];
+  if ( server_idx == 0 ) {
+   fprintf( stderr, "Trying UCAC5 server: %s\n", ucac5_servers[srv] );
+  } else {
+   fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
+  }
+  memset( base_command, '\0', BASE_COMMAND_LENGTH );
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
+            vizquery_input_filename, catalog_search_parameters->brightest_mag,
+            catalog_search_parameters->faintest_mag,
+            catalog_search_parameters->search_radius_deg * 3600,
+            vizquery_output_filename,
+            ucac5_servers[srv] );
+  base_command[BASE_COMMAND_LENGTH - 1]= '\0';
+
+  fprintf( stderr, "Running curl to query UCAC5...\n" );
+  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
+
+  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+   ucac5_success= 1;
+   if ( server_idx > 0 ) {
+    fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
+   }
+   break;
+  }
+  fprintf( stderr, "UCAC5 server %s FAILED (attempt %d of %d)\n", ucac5_servers[srv], server_idx + 1, num_ucac5_servers );
+ }
+
+ // Write server status summary to a log file (append mode, safe for parallel runs)
+ ucac5_server_log= fopen( "ucac5_server_status.log", "a" );
+ if ( ucac5_server_log != NULL ) {
+  for ( log_idx= 0; log_idx < num_ucac5_servers; log_idx++ ) {
+   srv= server_order[log_idx];
+   if ( log_idx < server_idx ) {
+    fprintf( ucac5_server_log, "pid=%d server=%s status=FAILED\n", pid, ucac5_servers[srv] );
+   } else if ( log_idx == server_idx && ucac5_success ) {
+    fprintf( ucac5_server_log, "pid=%d server=%s status=OK\n", pid, ucac5_servers[srv] );
+   }
+  }
+  if ( !ucac5_success ) {
+   fprintf( ucac5_server_log, "pid=%d result=ALL_FAILED\n", pid );
+  }
+  fclose( ucac5_server_log );
+ }
+
+ if ( !ucac5_success ) {
+  fprintf( stderr, "ERROR: All three UCAC5 server attempts failed\n" );
+  if ( proxy_settings != NULL ) {
+   free( proxy_settings );
+  }
+  return 1;
+ }
+
+ // Free proxy settings if allocated
+ if ( proxy_settings != NULL ) {
+  free( proxy_settings );
+ }
+
+#ifdef DEBUGFILES
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=red font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
+
+ f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading\n", vizquery_output_filename );
+  return 1;
+ }
+ spatial_grid= build_detected_star_spatial_grid( stars, N, 0, 0, catalog_search_parameters->search_radius_deg );
+ if ( spatial_grid == NULL ) {
+  fprintf( stderr, "WARNING: cannot build the spatial index - falling back to the brute-force match\n" );
+  fclose( f );
+  return search_UCAC5_at_scan_bruteforce( stars, N, catalog_search_parameters );
+ }
+ while ( NULL != fgets( string, 1024, f ) ) {
+  if ( string[0] == '#' )
+   continue;
+
+  if ( string[0] == '\n' )
+   continue;
+
+  epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  if ( 6 > sscanf_return_code ) {
+   continue;
+  }
+  if ( 9 > sscanf_return_code ) {
+   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  }
+
+  cos_delta= cos( catalog_dec * M_PI / 180.0 );
+
+  ///////////////// Account for proper motion /////////////////
+  catalog_ra_original= catalog_ra;
+  catalog_dec_original= catalog_dec;
+  // assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
+  // assuming observing_epoch_jd is the same for all stars!
+  observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+  dt= observing_epoch_jy - epoch;
+  // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
+  // pmRA is UCAC/Gaia proper motion in RA*cosDE
+  if ( fabs( cos_delta ) > 1e-6 ) {
+   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  }
+  catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+  /////////////////////////////////////////////////////////////
+
+  // Now find which input star that was - via the spatial index
+  n_spatial_grid_candidates= spatial_grid_collect_candidates( spatial_grid, measured_ra, measured_dec );
+  for ( candidate_counter= 0; candidate_counter < n_spatial_grid_candidates; candidate_counter++ ) {
+   i= spatial_grid->scratch[candidate_counter];
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    continue;
+   }
+   if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
+    // Handle RA wrapping near the 0/360 boundary
+    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
+    if ( ra_diff_rematch > 180.0 ) {
+     ra_diff_rematch= 360.0 - ra_diff_rematch;
+    }
+    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
+     if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
+      continue;
+     }
+
+#ifdef DEBUGFILES
+     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0 * 21 / 3600 );
+#endif
+
+     // if we are here - this is a match
+     stars[i].matched_with_astrometric_catalog= 1;
+     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
+     stars[i].d_dec= catalog_dec - measured_dec;
+     stars[i].catalog_ra= catalog_ra;
+     stars[i].catalog_dec= catalog_dec;
+     stars[i].catalog_mag= catalog_mag;
+     stars[i].catalog_mag_err= 0.0;
+     stars[i].catalog_ra_original= catalog_ra_original;
+     stars[i].catalog_dec_original= catalog_dec_original;
+
+     //
+     stars[i].match_distance_astrometric_catalog_arcsec= distance / 3600;
+
+     // reset photometric info
+     stars[i].APASS_B= 0.0;
+     stars[i].APASS_B_err= 0.0;
+     stars[i].APASS_V= 0.0;
+     stars[i].APASS_V_err= 0.0;
+     stars[i].APASS_r= 0.0;
+     stars[i].APASS_r_err= 0.0;
+     stars[i].APASS_i= 0.0;
+     stars[i].APASS_i_err= 0.0;
+     stars[i].Rc_computed_from_APASS_ri= 0.0;
+     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
+     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
+     stars[i].Ic_computed_from_APASS_ri= 0.0;
+     stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+     stars[i].APASS_g= 0.0;
+     stars[i].APASS_g_err= 0.0;
+
+     N_stars_matched_with_astrometric_catalog++;
+     break; // like if we assume there will be only one match within distance - why not?
+    }
+   }
+  } // for(i=0;i<N;i++)
+ }
+ fclose( f );
+ free_detected_star_spatial_grid( spatial_grid );
+ fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ if ( N_stars_matched_with_astrometric_catalog < 5 ) {
+  fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
+  return 1;
+ }
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
+ // delete temporary files only on success
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+
+ return 0;
+}
+
+// Pre-spatial-index implementation of search_UCAC5_at_scan(), kept compiled as a
+// runtime-selectable backup: set VAST_UCAC5_MATCH_BRUTEFORCE=1 to use it.
+int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
  int N_stars_matched_with_astrometric_catalog= 0;
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
