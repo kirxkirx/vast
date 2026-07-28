@@ -60,6 +60,10 @@
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_multifit.h> // for the UCAC5-based SIP refit
 
+#ifdef _OPENMP
+#include <omp.h> // omp_get_max_threads / omp_get_thread_num for the local-correction candidate buffers
+#endif
+
 #include "get_path_to_vast.h"
 
 #include "fit_plane_lin.h"
@@ -4603,7 +4607,641 @@ static int compare_star_on_mag_solve( const void *a1, const void *a2 ) {
 */
 }
 
+// ----------------------------------------------------------------------
+// Pixel-coordinate bucket grid over the matched-star pool used by the
+// local-correction loops in correct_measured_positions(). Mirrors the
+// pixel grid of src/ident_lib.c (build once over the fixed list, stream
+// queries, scan the 3x3 cell neighborhood) in a flat CSR layout. The cell
+// size equals the fixed 500-pixel search box of the local-correction
+// scans, so the 3x3 neighborhood provably contains every pool star the
+// brute-force |dx|,|dy| < 500 prechecks could accept (floor-based cell
+// mapping: |dx| <= cellSize implies a cell index difference of at most 1).
+// Candidates are returned in DESCENDING pool-index order - the exact order
+// the brute-force "for ( i= N_only_good; i--; )" scans visit them in,
+// which matters when the 501-star cap trips in the second scan (the local
+// correction is the mean of whichever stars entered before the cap).
+// Unlike the sky-grid used by the catalog matchers, the query here writes
+// into a CALLER-SUPPLIED buffer: the local-correction loop is
+// OpenMP-parallel, so each thread passes its own buffer.
+// The pre-index implementation is kept compiled as
+// correct_measured_positions_bruteforce(); set
+// VAST_LOCAL_CORRECTION_BRUTEFORCE=1 to use it (A/B testing).
+// ----------------------------------------------------------------------
+
+#define LOCAL_CORRECTION_SEARCH_BOX_PIX 500.0
+
+struct matched_pool_pixel_grid {
+ double cell_size_pix;
+ double x_origin_pix;
+ double y_origin_pix;
+ int n_cols;
+ int n_rows;
+ long n_cells;
+ long *cell_start; // CSR: items of cell c are item_idx[cell_start[c]..cell_start[c+1])
+ int *item_idx;    // pool indices, DESCENDING within each cell
+ long n_items;
+};
+
+static void free_matched_pool_pixel_grid( struct matched_pool_pixel_grid *g ) {
+ if ( g == NULL )
+  return;
+ if ( g->cell_start != NULL )
+  free( g->cell_start );
+ if ( g->item_idx != NULL )
+  free( g->item_idx );
+ free( g );
+ return;
+}
+
+static struct matched_pool_pixel_grid *build_matched_pool_pixel_grid( struct detected_star *pool, int n_pool ) {
+ struct matched_pool_pixel_grid *g;
+ double x_min, x_max, y_min, y_max;
+ int i, col, row;
+ long cell;
+ long *fill_cursor;
+
+ if ( n_pool < 1 ) {
+  return NULL;
+ }
+ g= (struct matched_pool_pixel_grid *)malloc( sizeof( struct matched_pool_pixel_grid ) );
+ if ( g == NULL ) {
+  return NULL;
+ }
+ g->cell_start= NULL;
+ g->item_idx= NULL;
+ g->cell_size_pix= LOCAL_CORRECTION_SEARCH_BOX_PIX;
+ g->n_items= (long)n_pool;
+
+ x_min= x_max= pool[0].x_pix;
+ y_min= y_max= pool[0].y_pix;
+ for ( i= 1; i < n_pool; i++ ) {
+  if ( pool[i].x_pix < x_min )
+   x_min= pool[i].x_pix;
+  if ( pool[i].x_pix > x_max )
+   x_max= pool[i].x_pix;
+  if ( pool[i].y_pix < y_min )
+   y_min= pool[i].y_pix;
+  if ( pool[i].y_pix > y_max )
+   y_max= pool[i].y_pix;
+ }
+ g->x_origin_pix= x_min - g->cell_size_pix;
+ g->y_origin_pix= y_min - g->cell_size_pix;
+ g->n_cols= (int)( ( x_max - g->x_origin_pix ) / g->cell_size_pix ) + 2;
+ g->n_rows= (int)( ( y_max - g->y_origin_pix ) / g->cell_size_pix ) + 2;
+ g->n_cells= (long)g->n_cols * (long)g->n_rows;
+
+ g->cell_start= (long *)malloc( (size_t)( g->n_cells + 1 ) * sizeof( long ) );
+ g->item_idx= (int *)malloc( (size_t)n_pool * sizeof( int ) );
+ fill_cursor= (long *)malloc( (size_t)g->n_cells * sizeof( long ) );
+ if ( g->cell_start == NULL || g->item_idx == NULL || fill_cursor == NULL ) {
+  if ( fill_cursor != NULL )
+   free( fill_cursor );
+  free_matched_pool_pixel_grid( g );
+  return NULL;
+ }
+ for ( cell= 0; cell <= g->n_cells; cell++ ) {
+  g->cell_start[cell]= 0;
+ }
+ for ( i= 0; i < n_pool; i++ ) {
+  col= (int)floor( ( pool[i].x_pix - g->x_origin_pix ) / g->cell_size_pix );
+  row= (int)floor( ( pool[i].y_pix - g->y_origin_pix ) / g->cell_size_pix );
+  if ( col < 0 )
+   col= 0;
+  if ( col >= g->n_cols )
+   col= g->n_cols - 1;
+  if ( row < 0 )
+   row= 0;
+  if ( row >= g->n_rows )
+   row= g->n_rows - 1;
+  cell= (long)row * (long)g->n_cols + (long)col;
+  g->cell_start[cell + 1]= g->cell_start[cell + 1] + 1;
+ }
+ for ( cell= 0; cell < g->n_cells; cell++ ) {
+  g->cell_start[cell + 1]= g->cell_start[cell + 1] + g->cell_start[cell];
+ }
+ for ( cell= 0; cell < g->n_cells; cell++ ) {
+  fill_cursor[cell]= g->cell_start[cell];
+ }
+ // fill in DESCENDING pool-index order so each cell's list is descending
+ for ( i= n_pool; i--; ) {
+  col= (int)floor( ( pool[i].x_pix - g->x_origin_pix ) / g->cell_size_pix );
+  row= (int)floor( ( pool[i].y_pix - g->y_origin_pix ) / g->cell_size_pix );
+  if ( col < 0 )
+   col= 0;
+  if ( col >= g->n_cols )
+   col= g->n_cols - 1;
+  if ( row < 0 )
+   row= 0;
+  if ( row >= g->n_rows )
+   row= g->n_rows - 1;
+  cell= (long)row * (long)g->n_cols + (long)col;
+  g->item_idx[fill_cursor[cell]]= i;
+  fill_cursor[cell]= fill_cursor[cell] + 1;
+ }
+ free( fill_cursor );
+ return g;
+}
+
+// Collect the pool indices of all stars within the 3x3 cell neighborhood of
+// (x_pix, y_pix) into out_buffer (which must hold at least g->n_items
+// entries), in globally DESCENDING pool-index order via a 9-way merge of
+// the per-cell descending lists. Returns the number of candidates.
+static long matched_pool_pixel_grid_collect( struct matched_pool_pixel_grid *g, double x_pix, double y_pix, int *out_buffer ) {
+ int col_center, row_center, col, row;
+ long cell;
+ long heads[9], ends[9];
+ int n_lists, list_index, best_list;
+ int best_value;
+ long n_collected;
+
+ col_center= (int)floor( ( x_pix - g->x_origin_pix ) / g->cell_size_pix );
+ row_center= (int)floor( ( y_pix - g->y_origin_pix ) / g->cell_size_pix );
+ n_lists= 0;
+ for ( row= row_center - 1; row <= row_center + 1; row++ ) {
+  if ( row < 0 || row >= g->n_rows ) {
+   continue;
+  }
+  for ( col= col_center - 1; col <= col_center + 1; col++ ) {
+   if ( col < 0 || col >= g->n_cols ) {
+    continue;
+   }
+   cell= (long)row * (long)g->n_cols + (long)col;
+   if ( g->cell_start[cell] == g->cell_start[cell + 1] ) {
+    continue;
+   }
+   heads[n_lists]= g->cell_start[cell];
+   ends[n_lists]= g->cell_start[cell + 1];
+   n_lists++;
+  }
+ }
+ n_collected= 0;
+ while ( 1 ) {
+  best_list= -1;
+  best_value= -1;
+  for ( list_index= 0; list_index < n_lists; list_index++ ) {
+   if ( heads[list_index] >= ends[list_index] ) {
+    continue;
+   }
+   if ( g->item_idx[heads[list_index]] > best_value ) {
+    best_value= g->item_idx[heads[list_index]];
+    best_list= list_index;
+   }
+  }
+  if ( best_list < 0 ) {
+   break;
+  }
+  out_buffer[n_collected]= best_value;
+  n_collected++;
+  heads[best_list]= heads[best_list] + 1;
+ }
+ return n_collected;
+}
+
+int correct_measured_positions_bruteforce( struct detected_star *stars, int N, double search_radius, int process_only_stars_matched_with_catalog, struct str_catalog_search_parameters *catalog_search_parameters );
+
 int correct_measured_positions( struct detected_star *stars, int N, double search_radius, int process_only_stars_matched_with_catalog, struct str_catalog_search_parameters *catalog_search_parameters ) {
+
+ double estimated_output_accuracy_of_the_plate_solution_arcsec;
+
+ int i, j, N_good;
+ int n_matched_entering;
+
+ double A1, B1, C1, A2, B2, C2;
+
+ double *x;
+ double *y;
+ double *z1;
+ double *z2;
+
+ double distance;
+
+ struct detected_star *only_good_starsmatched_with_catalog;
+ int N_only_good; // counter for the structures array above
+
+ double poly_coeff[10];
+
+ double local_correction_ra;
+ double local_correction_dec;
+ // double target_mag;
+ double target_ra;
+ double target_dec;
+ double target_x_pix;
+ double target_y_pix;
+ double current_accuracy, current_accuracy_ra, current_accuracy_dec;
+ double best_accuracy;
+ double current_search_radius;
+ double best_search_radius;
+ double best_local_correction_ra;
+ double best_local_correction_dec;
+ double cos_delta;
+ double z1_local[502];
+ double z2_local[502];
+ struct matched_pool_pixel_grid *correction_pool_grid;
+ int *correction_candidate_buffers;
+ int *my_candidate_buffer;
+ long n_candidates_for_target;
+ long candidate_scan;
+ int n_correction_threads;
+ int thread_index;
+
+ // debug_dump_star_struct( stars, N ); exit(1); // !!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ if ( NULL != getenv( "VAST_LOCAL_CORRECTION_BRUTEFORCE" ) ) {
+  return correct_measured_positions_bruteforce( stars, N, search_radius, process_only_stars_matched_with_catalog, catalog_search_parameters );
+ }
+
+ x= malloc( N * sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for x(solve_plate_with_UCAC5.c)\n" );
+  exit( EXIT_FAILURE );
+ };
+ y= malloc( N * sizeof( double ) );
+ if ( y == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for y(solve_plate_with_UCAC5.c)\n" );
+  exit( EXIT_FAILURE );
+ };
+ z1= malloc( N * sizeof( double ) );
+ if ( z1 == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for z1(solve_plate_with_UCAC5.c)\n" );
+  exit( EXIT_FAILURE );
+ };
+ z2= malloc( N * sizeof( double ) );
+ if ( z2 == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for z2(solve_plate_with_UCAC5.c)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ // *** Find global linear solution  ***
+ for ( i= 0, N_good= 0; i < N; i++ ) {
+  if ( stars[i].good_star != 1 )
+   continue;
+  // if( stars[i].good_star==1 && stars[i].matched_with_catalog==1 ){
+  if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+   x[N_good]= stars[i].x_pix;
+   y[N_good]= stars[i].y_pix;
+   z1[N_good]= stars[i].d_ra;
+   z2[N_good]= stars[i].d_dec;
+   N_good++;
+  }
+ }
+
+ // for(i=0;i<N_good;i++)
+ //  fprintf(stderr,"%lf %lf %lf OGAOGA\n",x[i],y[i],z2[i]);
+
+ fit_plane_lin( x, y, z1, (unsigned int)N_good, &A1, &B1, &C1 );
+ fit_plane_lin( x, y, z2, (unsigned int)N_good, &A2, &B2, &C2 );
+
+// apply the linear correction
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( i )
+#endif
+#endif
+ for ( i= 0; i < N; i++ ) {
+  stars[i].computed_d_ra= A1 * stars[i].x_pix + B1 * stars[i].y_pix + C1;
+  stars[i].computed_d_dec= A2 * stars[i].x_pix + B2 * stars[i].y_pix + C2;
+  stars[i].corrected_ra_planefit= stars[i].ra_deg_measured + stars[i].computed_d_ra;
+  stars[i].corrected_dec_planefit= stars[i].dec_deg_measured + stars[i].computed_d_dec;
+  // clean-up outliers after the linear fit
+  if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+   if ( compute_distance_on_sphere( stars[i].catalog_ra, stars[i].catalog_dec, stars[i].corrected_ra_planefit, stars[i].corrected_dec_planefit ) > catalog_search_parameters->search_radius_second_step_deg ) {
+    stars[i].matched_with_astrometric_catalog= 0;
+   }
+  }
+ }
+
+ // *** Find astrometric correction as a function of magnitude  ***
+
+ for ( N_good= 0, i= 0; i < N; i++ ) {
+  if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
+   x[N_good]= stars[i].mag;
+   y[N_good]= 0.1; // fake error, same for all stars since we want an unweighted fit
+   z1[N_good]= ra_diff_normalized_for_wraparound( stars[i].catalog_ra, stars[i].corrected_ra_planefit );
+   z2[N_good]= stars[i].catalog_dec - stars[i].corrected_dec_planefit;
+   N_good++;
+  }
+ }
+
+ wlinearfit( x, z1, y, N_good, poly_coeff, NULL );
+ C1= poly_coeff[0];
+ A1= poly_coeff[1];
+ wlinearfit( x, z2, y, N_good, poly_coeff, NULL );
+ C2= poly_coeff[0];
+ A2= poly_coeff[1];
+//
+// A1=A2=C1=C2=0.0;
+// apply the correction
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( i )
+#endif
+#endif
+ for ( i= 0; i < N; i++ ) {
+  // for(i=N;i--;){
+  stars[i].corrected_mag_ra= stars[i].corrected_ra_planefit + ( A1 * stars[i].mag + C1 );
+  stars[i].corrected_mag_dec= stars[i].corrected_dec_planefit + ( A2 * stars[i].mag + C2 );
+ }
+
+ // *** Find local corrections  ***
+
+ // Create a copy of the star catalog containing only the good ones matched with catalog
+ only_good_starsmatched_with_catalog= malloc( N * sizeof( struct detected_star ) );
+ if ( only_good_starsmatched_with_catalog == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for x(solve_plate_with_UCAC5.c)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ N_only_good= 0;
+ for ( i= N; i--; ) {
+  if ( stars[i].matched_with_astrometric_catalog != 1 )
+   continue;
+  if ( stars[i].good_star != 1 )
+   continue;
+  only_good_starsmatched_with_catalog[N_only_good]= stars[i];
+  N_only_good++;
+ }
+
+ // Spatial index over the matched-star pool (see the comment at
+ // build_matched_pool_pixel_grid above): built once here, queried once per
+ // target star below, so the radius-annealing ladder rescans a ~100-star
+ // candidate list instead of the whole pool ~40 times per target.
+ n_correction_threads= 1;
+#ifdef _OPENMP
+ n_correction_threads= omp_get_max_threads();
+#endif
+ correction_pool_grid= NULL;
+ correction_candidate_buffers= NULL;
+ if ( N_only_good > 0 ) {
+  correction_pool_grid= build_matched_pool_pixel_grid( only_good_starsmatched_with_catalog, N_only_good );
+  correction_candidate_buffers= (int *)malloc( (size_t)n_correction_threads * (size_t)N_only_good * sizeof( int ) );
+ }
+ if ( N_only_good > 0 && ( correction_pool_grid == NULL || correction_candidate_buffers == NULL ) ) {
+  fprintf( stderr, "WARNING: cannot build the local-correction spatial index - falling back to the brute-force implementation\n" );
+  free_matched_pool_pixel_grid( correction_pool_grid );
+  if ( correction_candidate_buffers != NULL )
+   free( correction_candidate_buffers );
+  free( only_good_starsmatched_with_catalog );
+  free( x );
+  free( y );
+  free( z1 );
+  free( z2 );
+  return correct_measured_positions_bruteforce( stars, N, search_radius, process_only_stars_matched_with_catalog, catalog_search_parameters );
+ }
+
+// Parallelize the local corrections loop - each iteration is independent
+// Each thread uses its own stack-allocated z1_local/z2_local arrays (max 502 elements needed)
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( j, i, N_good, target_x_pix, target_y_pix, target_ra, target_dec, cos_delta, \
+                                  best_accuracy, best_search_radius, current_search_radius, distance, \
+                                  current_accuracy_ra, current_accuracy_dec, current_accuracy, \
+                                  best_local_correction_ra, best_local_correction_dec, \
+                                  local_correction_ra, local_correction_dec, z1_local, z2_local, \
+                                  thread_index, my_candidate_buffer, n_candidates_for_target, candidate_scan )
+#endif
+#endif
+ for ( j= 0; j < N; j++ ) {
+
+  if ( process_only_stars_matched_with_catalog == 1 && stars[j].matched_with_astrometric_catalog != 1 )
+   continue;
+  // set target star
+  // target_mag=stars[j].mag;
+  target_x_pix= stars[j].x_pix;
+  target_y_pix= stars[j].y_pix;
+  target_ra= stars[j].ra_deg_measured;
+  target_dec= stars[j].dec_deg_measured;
+  cos_delta= stars[j].cos_dec_measured; // use precomputed value
+
+  // try various corrections
+  best_accuracy= 9980.0;    // 99.9*99.9;
+  best_search_radius= 99.9; // just so we can distinguish if the value comes from a previous star or not
+  N_good= 0;                // just in case
+  // for(current_search_radius=search_radius;current_search_radius>0.05*search_radius;current_search_radius=current_search_radius-0.1*current_search_radius){
+  // One spatial-index query per target: the 500-pixel search box of the
+  // scans below does not depend on the annealing radius, so the candidate
+  // list is valid for every ladder step and for the final scan
+  thread_index= 0;
+#ifdef _OPENMP
+  thread_index= omp_get_thread_num();
+#endif
+  my_candidate_buffer= correction_candidate_buffers + (long)thread_index * (long)N_only_good;
+  n_candidates_for_target= 0;
+  if ( correction_pool_grid != NULL ) {
+   n_candidates_for_target= matched_pool_pixel_grid_collect( correction_pool_grid, target_x_pix, target_y_pix, my_candidate_buffer );
+  }
+  for ( current_search_radius= search_radius; current_search_radius > 0.01 * search_radius; current_search_radius= current_search_radius - 0.1 * current_search_radius ) {
+   // determine the best search radius for local correction
+   // for(i=0,N_good=0;i<N;i++){
+   N_good= 0;
+   for ( candidate_scan= 0; candidate_scan < n_candidates_for_target; candidate_scan++ ) {
+    i= my_candidate_buffer[candidate_scan];
+    // if( stars[i].matched_with_catalog!=1 )continue;
+    // if( stars[i].good_star!=1 )continue;
+    //  It turns out we should not make the serach box smaller than 500 pix, test on ../M31_ISON_test/M31-1-001-001_dupe-1.fts
+    if ( fabs( target_x_pix - only_good_starsmatched_with_catalog[i].x_pix ) > 500 )
+     continue; // a miserable attempt to optimize
+    if ( fabs( target_y_pix - only_good_starsmatched_with_catalog[i].y_pix ) > 500 )
+     continue; // a miserable attempt to optimize
+    if ( fabs( target_dec - only_good_starsmatched_with_catalog[i].dec_deg_measured ) > current_search_radius )
+     continue; // a miserable attempt to optimize
+    //
+    // if( target_mag<stars[i].mag-1.5 )continue;
+    ///
+    distance= compute_distance_on_sphere( only_good_starsmatched_with_catalog[i].ra_deg_measured, only_good_starsmatched_with_catalog[i].dec_deg_measured, target_ra, target_dec );
+    if ( distance < current_search_radius ) {
+     if ( distance == 0.0 )
+      continue; //
+     z1_local[N_good]= ra_diff_normalized_for_wraparound( only_good_starsmatched_with_catalog[i].catalog_ra, only_good_starsmatched_with_catalog[i].corrected_mag_ra );
+     z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
+     N_good++;
+     if ( N_good > 501 )
+      break; // too many stars
+     //}
+    }
+   }
+   if ( N_good > 500 )
+    continue; // too many stars
+   ///
+   /// EXPERIMENTAL attempt to avoid the situation that the initial value for the search radius is too small
+   // if this is the first iteration
+   if ( current_search_radius == search_radius && best_search_radius == 99.9 ) {
+    if ( N_good < 10 )
+     current_search_radius= 3.0 * current_search_radius;
+   }
+   ///
+   // if( N_good<5 )break; // too few stars
+   // remove_outliers_from_a_pair_of_arrays( z1_local, z2_local, &N_good);
+   ///
+   if ( N_good < 5 )
+    break; // too few stars
+   // if( N_good<10 )break; // too few stars
+   current_accuracy_ra= gsl_stats_variance( z1_local, 1, N_good );
+   // current_accuracy_ra=gsl_stats_sd(z1_local,1,N_good);
+   // current_accuracy_ra=esimate_sigma_from_MAD_of_unsorted_data( z1_local, N_good);
+   current_accuracy_dec= gsl_stats_variance( z2_local, 1, N_good );
+   // current_accuracy_dec=gsl_stats_sd(z2_local,1,N_good);
+   // current_accuracy_dec=esimate_sigma_from_MAD_of_unsorted_data( z2_local, N_good);
+   // current_accuracy=sqrt(current_accuracy_ra*cos_delta*current_accuracy_ra*cos_delta+current_accuracy_dec*current_accuracy_dec);
+   // current_accuracy=current_accuracy_ra*cos_delta*current_accuracy_ra*cos_delta+current_accuracy_dec*current_accuracy_dec;
+   current_accuracy= current_accuracy_ra * cos_delta * cos_delta + current_accuracy_dec; // for gsl_stats_variance()
+   if ( current_accuracy < best_accuracy ) {
+    best_accuracy= current_accuracy;
+    best_search_radius= current_search_radius;
+   }
+  }
+
+  // fprintf(stderr,"############### DEBUG ###############\n");
+  // fprintf(stderr,"%lf %lf\n",target_ra, target_dec);
+
+  // determine the local correction using the best search radius
+  N_good= 0;
+  for ( candidate_scan= 0; candidate_scan < n_candidates_for_target; candidate_scan++ ) {
+   i= my_candidate_buffer[candidate_scan];
+   // for(i=0,N_good=0;i<N;i++){
+   //  if( stars[i].matched_with_catalog!=1 )continue;
+   //  if( stars[i].good_star!=1 )continue;
+   if ( fabs( target_x_pix - only_good_starsmatched_with_catalog[i].x_pix ) > 500 )
+    continue; // a miserable attempt to optimize
+   if ( fabs( target_y_pix - only_good_starsmatched_with_catalog[i].y_pix ) > 500 )
+    continue; // a miserable attempt to optimize
+   if ( fabs( target_dec - only_good_starsmatched_with_catalog[i].dec_deg_measured ) > best_search_radius )
+    continue; // a miserable attempt to optimize
+   //
+   // if( target_mag<stars[i].mag-1.5 )continue;
+   //
+   distance= compute_distance_on_sphere( only_good_starsmatched_with_catalog[i].ra_deg_measured, only_good_starsmatched_with_catalog[i].dec_deg_measured, target_ra, target_dec );
+   if ( distance < best_search_radius ) {
+    if ( distance == 0.0 )
+     continue; //
+    z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+    z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
+    N_good++;
+    if ( N_good > 501 )
+     break; // too many stars
+    // fprintf(stderr,"%lf %lf\n",only_good_starsmatched_with_catalog[i].ra_deg_measured,only_good_starsmatched_with_catalog[i].dec_deg_measured);
+   }
+  }
+  // exit(1);
+
+  /// Somehow this seems very dangerous
+  // remove_outliers_from_a_pair_of_arrays( z1_local, z2_local, &N_good);
+  ///
+
+  if ( N_good >= 3 ) {
+
+   best_local_correction_ra= gsl_stats_mean( z1_local, 1, N_good );
+   best_local_correction_dec= gsl_stats_mean( z2_local, 1, N_good );
+
+   /*
+   gsl_sort(z1_local,1,N_good);
+   gsl_sort(z2_local,1,N_good);
+   best_local_correction_ra=gsl_stats_median_from_sorted_data(z1_local,1,N_good);
+   best_local_correction_dec=gsl_stats_median_from_sorted_data(z2_local,1,N_good);
+*/
+  } else {
+   // fprintf(stderr,"DEBUG: best_accuracy=%lf best_search_radius=%lf (arcmin)\n",best_accuracy,best_search_radius*60);
+   best_local_correction_ra= 0.0;
+   best_local_correction_dec= 0.0;
+   best_accuracy= 9998.0;
+  }
+
+  // fprintf(stderr,"DEBUG: best_accuracy=%lf best_search_radius=%lf stars[j].matched_with_catalog=%d best_local_correction_ra=%lf best_local_correction_dec=%lf\n",best_accuracy*3600,best_search_radius,stars[j].matched_with_catalog,best_local_correction_ra*3600,best_local_correction_dec*3600);
+
+  local_correction_ra= best_local_correction_ra;
+  local_correction_dec= best_local_correction_dec;
+
+  // save the determined value of the local correction for this star
+  stars[j].local_correction_ra= local_correction_ra;
+  stars[j].local_correction_dec= local_correction_dec;
+  //  If no correction was applied
+  if ( best_accuracy > 9000 ) {
+   stars[j].estimated_local_correction_accuracy= 0.0;
+   // Emergency! No correction computed!
+  } else {
+   stars[j].estimated_local_correction_accuracy= sqrt( best_accuracy ) / c4( N_good );
+  }
+
+ } // for(j=0;j<N;j++){
+ //}
+ free_matched_pool_pixel_grid( correction_pool_grid );
+ if ( correction_candidate_buffers != NULL )
+  free( correction_candidate_buffers );
+ free( only_good_starsmatched_with_catalog );
+
+// Taken out of the above for cycle so we can parallelize these actions
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( j )
+#endif
+#endif
+ for ( j= 0; j < N; j++ ) {
+  // Apply previously determined local corrections to each star
+  stars[j].corrected_ra_local= stars[j].corrected_mag_ra + stars[j].local_correction_ra;
+  stars[j].corrected_dec_local= stars[j].corrected_mag_dec + stars[j].local_correction_dec;
+  // Clean-up outliers
+  if ( stars[j].matched_with_astrometric_catalog == 1 ) {
+   distance= compute_distance_on_sphere( stars[j].corrected_ra_local, stars[j].corrected_dec_local, stars[j].catalog_ra, stars[j].catalog_dec );
+   if ( distance > catalog_search_parameters->search_radius_second_step_deg )
+    stars[j].matched_with_astrometric_catalog= 0;
+  }
+  //
+ }
+
+ // Estimate accuracy
+ n_matched_entering= 0;
+ for ( j= 0; j < N; j++ ) {
+  if ( stars[j].matched_with_astrometric_catalog == 1 ) {
+   n_matched_entering++;
+  }
+ }
+ for ( i= 0, j= 0; j < N; j++ ) {
+  if ( stars[j].estimated_local_correction_accuracy != 0.0 ) {
+   z1[i]= stars[j].estimated_local_correction_accuracy;
+   i++;
+  }
+ }
+ fprintf( stderr, "Accuracy estimation diagnostic: %d matched stars entering correct_measured_positions(), %d with non-zero local correction accuracy\n", n_matched_entering, i );
+ if ( i == 0 ) {
+  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small! No stars (out of %d matched) have non-zero estimated_local_correction_accuracy.\n", n_matched_entering );
+  free( x );
+  free( y );
+  free( z1 );
+  free( z2 );
+  return 1;
+ }
+#if USE_GSL_MEDIAN
+ // O(n log n) sort-based median
+ gsl_sort( z1, 1, i );
+ estimated_output_accuracy_of_the_plate_solution_arcsec= 3600 * gsl_stats_median_from_sorted_data( z1, 1, i );
+#else
+ // O(n) quickselect-based median
+ estimated_output_accuracy_of_the_plate_solution_arcsec= 3600 * quickselect_median_double( z1, i );
+#endif
+ fprintf( stderr, "Estimated accuracy of the plate solution: %.2lf\" \n", estimated_output_accuracy_of_the_plate_solution_arcsec );
+
+ free( x );
+ free( y );
+ free( z1 );
+ free( z2 );
+
+ // Check if the estimated accuracy is unreallistically large
+ if ( estimated_output_accuracy_of_the_plate_solution_arcsec > 60.0 ) {
+  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically large!\nSomething is very wrong!\nDoes the image have *many* hot pixels that are incorrectly identified as stats?\n" );
+  return 1;
+ }
+ // Check if the estimated accuracy is unreallistically small
+ if ( estimated_output_accuracy_of_the_plate_solution_arcsec <= 0.0 ) {
+  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small!\nSomething is very wrong!\n" );
+  return 1;
+ }
+
+ return 0;
+}
+
+// Pre-spatial-index implementation of correct_measured_positions(), kept
+// compiled as a runtime-selectable backup: set
+// VAST_LOCAL_CORRECTION_BRUTEFORCE=1 to use it.
+int correct_measured_positions_bruteforce( struct detected_star *stars, int N, double search_radius, int process_only_stars_matched_with_catalog, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
  double estimated_output_accuracy_of_the_plate_solution_arcsec;
 
@@ -5565,6 +6203,26 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  original_crval2= crval2;
 
  // ---- Which SIP order? ----
+ //
+ // Why order selection exists BOTH here and at the astrometry.net level
+ // (the VAST_TWEAK_ORDER scan in util/solve_plate_with_best_sip_order.sh):
+ // the two selections protect against different failure modes and cannot
+ // replace each other. The refit below can only work with the star pairs
+ // the UCAC5 matching produced, and that matching starts from the
+ // astrometry.net solution. If THAT solution is bad (wrong-order tweak
+ // gone degenerate, a corner off by arcminutes), the stars in the bad
+ // region find no catalog counterparts at all - the match set is silently
+ // censored to the well-solved part of the frame, every statistic this
+ // function computes is computed on that censored set, and no choice of
+ // polynomial order here can resurrect a region it has no pairs in. Only
+ // re-solving at a different astrometry.net tweak order (and judging the
+ // candidates on a frame-wide statistic like the tight-radius Tycho-2
+ // yield, as the wrapper script does) can recover such an image. The
+ // order scan HERE is the cheap complement: given a usable starting
+ // solution and a healthy match set, it picks the distortion order the
+ // data actually support - in milliseconds, with no extra solve-field
+ // runs.
+ //
  // An image that reaches this point had no trusted WCS, so nothing is known
  // in advance about its distortion and the order has to be determined from
  // the data. Orders 2, 3 and 5 are tried against the same UCAC5 matches and
