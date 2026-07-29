@@ -109,7 +109,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -145,7 +150,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -181,7 +191,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -217,7 +232,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -253,7 +273,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -289,7 +314,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -325,7 +355,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
@@ -361,7 +396,12 @@ else
     continue
    fi
    # strict variability check only if we have many comparison stars
-   if [ $N_COMP_STARS -gt 100 ];then
+   # The likely-constant-star list is written by lib/index_vs_mag, which
+   # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);
+   # apply the strict constant-star vetting only when the list exists -
+   # the vast_autocandidates.log and vast_lightcurve_statistics.log checks
+   # below plus the robust zero-point fit still guard the calibration.
+   if [ $N_COMP_STARS -gt 100 ] && [ -s vast_list_of_likely_constant_stars.log ];then
     # Check if this star is constant
     grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then

@@ -246,6 +246,12 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list_STL.txt"
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
+  # Skip the expensive lib/index_vs_mag variability-index fitting inside
+  # util/nopgplot.sh: the transient search does not use its output and this
+  # camera runs with SYSREM_ITERATIONS=0 (SysRem workflows need the
+  # variability-index selection, so the skip would be incompatible there).
+  # Pre-set the variable to an empty string to re-enable the fitting.
+  export VAST_SKIP_INDEX_VS_MAG="${VAST_SKIP_INDEX_VS_MAG-1}"
   UCAC5_PLATESOLVE_ITERATIONS=2
   #STARMATCH_RADIUS_PIX=4 # testing new values
   # The funny ghost image seems to be no more than 80pix away from frame edge
@@ -272,6 +278,12 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # We do want flag images to be created for TICA TESS images, so disable --noflagimage option
   VAST_OPTION_NOFLAGIMAGE=" "
   SYSREM_ITERATIONS=0
+  # Skip the expensive lib/index_vs_mag variability-index fitting inside
+  # util/nopgplot.sh: the transient search does not use its output and this
+  # camera runs with SYSREM_ITERATIONS=0 (SysRem workflows need the
+  # variability-index selection, so the skip would be incompatible there).
+  # Pre-set the variable to an empty string to re-enable the fitting.
+  export VAST_SKIP_INDEX_VS_MAG="${VAST_SKIP_INDEX_VS_MAG-1}"
   UCAC5_PLATESOLVE_ITERATIONS=1
   PHOTOMETRIC_CALIBRATION="APASS_I"
   export GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="RPmag"
@@ -384,6 +396,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list_TTUQ1.txt"
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
+  # Skip the expensive lib/index_vs_mag variability-index fitting inside
+  # util/nopgplot.sh: the transient search does not use its output (the
+  # candidate list and the lightcurve statistics are written before it
+  # runs) and on dense TTU fields it dominates the whole VaST run wall
+  # time. Only safe while SYSREM_ITERATIONS=0 above - SysRem workflows
+  # need the variability-index selection. Pre-set the variable to an
+  # empty string in the environment to re-enable the fitting.
+  export VAST_SKIP_INDEX_VS_MAG="${VAST_SKIP_INDEX_VS_MAG-1}"
   UCAC5_PLATESOLVE_ITERATIONS=2
   # Widened from the 3.5 pix default: at very low altitude (airmass >4) the
   # differential-refraction distortion between the reference and second-epoch
@@ -466,6 +486,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list_TTUQ2.txt"
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
+  # Skip the expensive lib/index_vs_mag variability-index fitting inside
+  # util/nopgplot.sh: the transient search does not use its output (the
+  # candidate list and the lightcurve statistics are written before it
+  # runs) and on dense TTU fields it dominates the whole VaST run wall
+  # time. Only safe while SYSREM_ITERATIONS=0 above - SysRem workflows
+  # need the variability-index selection. Pre-set the variable to an
+  # empty string in the environment to re-enable the fitting.
+  export VAST_SKIP_INDEX_VS_MAG="${VAST_SKIP_INDEX_VS_MAG-1}"
   UCAC5_PLATESOLVE_ITERATIONS=2
   # Widened to 5 pix consistent with TTUQ1b1x1 (see the comment in that camera
   # block: low-altitude differential-refraction distortion at the frame corners)

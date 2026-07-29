@@ -22,7 +22,20 @@ lib/create_data
 export LANG="POSIX"
 sort -n data | awk '{printf "%10.6f %.6f %9.3f %9.3f %s\n", $1, $2, $3, $4, $5}' > data.tmp
 mv data.tmp data.m_sigma
-lib/index_vs_mag > /dev/null # to supress the variable threshould output
+# Fitting the expected-variability-index-vs-magnitude curves is the most
+# expensive step of this script on rich star fields (it re-reads all the
+# lightcurves for 11 indexes over a 4-iteration 1000-point magnitude grid)
+# and its output feeds VARIABLE-STAR candidate selection only - the
+# transient-detection pipeline consumes the candidate list and
+# vast_lightcurve_statistics.log, both of which are complete before this
+# point. The transient factory therefore sets VAST_SKIP_INDEX_VS_MAG=1
+# (on by default for the NMW-TTU cameras). Do NOT skip this when a SysRem
+# workflow is in use: SysRem relies on the variability-index selection.
+if [ -z "$VAST_SKIP_INDEX_VS_MAG" ];then
+ lib/index_vs_mag > /dev/null # to supress the variable threshould output
+else
+ echo "VAST_SKIP_INDEX_VS_MAG is set - skipping the lib/index_vs_mag variability-index fitting"
+fi
 
 # Generate (a very optimistic) list of stars with large rms
 lib/m_sigma_bin > m_sigma_bin.tmp
