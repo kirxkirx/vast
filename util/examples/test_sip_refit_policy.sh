@@ -378,16 +378,36 @@ for IMAGE_ENTRY in $IMAGE_LIST ;do
  grep -q 'selected SIP order' "$RUN_LOG"
  record_check $? "SIPPOLICY_${CAMERA_TAG}_NO_ORDER_SELECTED" "one of the orders is selected"
 
- grep -q 'applied the refit solution' "$RUN_LOG"
- record_check $? "SIPPOLICY_${CAMERA_TAG}_REFIT_NOT_APPLIED" "the refit solution is applied"
+ # The refit has to run to a DECISION on the untrusted image: it either
+ # applies its solution or - just as legitimately - keeps the fresh
+ # solve-field solution when that one is already within the keep-if-better
+ # margin. Which way it goes depends on how good the blind solve happened
+ # to be (under heavy CPU load solve-field works with a different time
+ # budget and its tweak quality varies run to run - observed when this
+ # test ran inside test_vast.sh next to other load), so BOTH outcomes are
+ # accepted; the TAN-SIP and residual checks below must hold either way.
+ grep -q -e 'applied the refit solution' -e 'does not sufficiently improve' "$RUN_LOG"
+ record_check $? "SIPPOLICY_${CAMERA_TAG}_REFIT_NO_DECISION" "the refit reached an apply-or-keep decision"
+ REFIT_WAS_APPLIED=0
+ grep -q 'applied the refit solution' "$RUN_LOG" && REFIT_WAS_APPLIED=1
 
- # The header of the solved copy has to describe the selected order
+ # The header of the solved copy has to describe the selected order when
+ # the refit applied; when the original was kept, the header carries
+ # whatever order solve-field fitted, which merely has to be present
  SELECTED_ORDER=$(grep 'selected SIP order' "$RUN_LOG" | tail -n1 | awk '{print $NF}')
  HEADER_ORDER=$(sip_order_of_image "wcs_$WORK_IMAGE")
- if [ -n "$SELECTED_ORDER" ] && [ "$SELECTED_ORDER" = "$HEADER_ORDER" ];then
-  record_check 0 "" "the solved image header carries the selected SIP order ($SELECTED_ORDER)"
+ if [ "$REFIT_WAS_APPLIED" -eq 1 ];then
+  if [ -n "$SELECTED_ORDER" ] && [ "$SELECTED_ORDER" = "$HEADER_ORDER" ];then
+   record_check 0 "" "the solved image header carries the selected SIP order ($SELECTED_ORDER)"
+  else
+   record_check 1 "SIPPOLICY_${CAMERA_TAG}_ORDER_MISMATCH_${SELECTED_ORDER}_vs_${HEADER_ORDER}" "the solved image header carries the selected SIP order"
+  fi
  else
-  record_check 1 "SIPPOLICY_${CAMERA_TAG}_ORDER_MISMATCH_${SELECTED_ORDER}_vs_${HEADER_ORDER}" "the solved image header carries the selected SIP order"
+  if [ -n "$HEADER_ORDER" ];then
+   record_check 0 "" "the kept solve-field solution carries a SIP order ($HEADER_ORDER)"
+  else
+   record_check 1 "SIPPOLICY_${CAMERA_TAG}_KEPT_SOLUTION_NO_SIP_ORDER" "the kept solve-field solution carries a SIP order"
+  fi
  fi
 
  CTYPE1_AFTER=$("$VAST_PATH"util/listhead "wcs_$WORK_IMAGE" 2>/dev/null | awk -F"'" '/^CTYPE1 /{print $2; exit}' | awk '{print $1}')

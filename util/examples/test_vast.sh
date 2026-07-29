@@ -15294,6 +15294,11 @@ else
   fi
  fi
 fi
+# keep the detailed log when the section failed - the harvested codes alone
+# proved insufficient to diagnose an in-suite failure of this section
+if [ $TEST_PASSED -eq 0 ];then
+ cp sipreitpolicy$$.log sipreitpolicy_failed.log 2>/dev/null
+fi
 rm -f sipreitpolicy$$.log
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
