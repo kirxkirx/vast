@@ -3280,7 +3280,26 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
         echo "<br><b>Single-image forced-photometry magnitude calibration plot for $FORCED_PHOT_WCS_REF:</b><br><img src=\"$PER_REF_PNG_NAME\"><br>" >> transient_factory_test31.txt
        fi
       fi
-      if [ -s "${FORCED_PHOT_WCS_REF}.cat.aperture" ];then
+      # Reuse the aperture auto-selected by this pass's VaST run for the
+      # original reference image instead of re-extracting the plate-solved
+      # copy: wcs_<basename>.fits differs from the original only in the FITS
+      # header, so the pixel-derived aperture is identical. The aperture is
+      # default.sex-specific, so the imageNNNNN.cat.aperture file is accepted
+      # only if it is newer than default.sex (the factory installs a fresh
+      # default.sex at the start of each config pass, and the VaST run and the
+      # SExtractor cache restore both leave the aperture file newer than it) -
+      # the same staleness convention find_catalog_in_vast_images_catalogs_log()
+      # uses in the C code. Any lookup failure falls through to the original
+      # extraction of the wcs_ image, so this is a pure fast path.
+      FORCED_PHOT_APERTURE_FROM_VAST_RUN=""
+      FORCED_PHOT_VASTRUN_CAT=$(awk -v img="$FORCED_PHOT_REF_IMAGE_PATH" '$2 == img {print $1; exit}' vast_images_catalogs.log 2>/dev/null)
+      if [ -n "$FORCED_PHOT_VASTRUN_CAT" ] && [ -s "${FORCED_PHOT_VASTRUN_CAT}.aperture" ] && [ "${FORCED_PHOT_VASTRUN_CAT}.aperture" -nt default.sex ];then
+       FORCED_PHOT_APERTURE_FROM_VAST_RUN=$(awk 'NR==1 && $1+0 > 0 {print $1; exit}' "${FORCED_PHOT_VASTRUN_CAT}.aperture")
+      fi
+      if [ -n "$FORCED_PHOT_APERTURE_FROM_VAST_RUN" ];then
+       echo "$FORCED_PHOT_APERTURE_FROM_VAST_RUN" > "${FORCED_PHOT_CALIB_OUT}.aperture"
+       echo "Forced-photometry filter: reusing the VaST-run aperture from ${FORCED_PHOT_VASTRUN_CAT}.aperture for $FORCED_PHOT_WCS_REF" >> transient_factory_test31.txt
+      elif [ -s "${FORCED_PHOT_WCS_REF}.cat.aperture" ];then
        awk 'NR==1 {print $1; exit}' "${FORCED_PHOT_WCS_REF}.cat.aperture" > "${FORCED_PHOT_CALIB_OUT}.aperture"
       else
        lib/sextract_single_image_noninteractive "$FORCED_PHOT_WCS_REF" 2>/dev/null > "${FORCED_PHOT_CALIB_OUT}.aperture"
