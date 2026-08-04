@@ -263,7 +263,9 @@
                                                                                   // on it, a linear CCD-position-dependent magnitude correctin will be computed.                    
                                                                                   // You can be override this with command line options -J or -j
 //#define MAX_LIN_CORR_MAG 0.5                // Maximum CCD-position-dependent magnitude correctin/
-#define MAX_LIN_CORR_MAG 1.0 // If the estimated correction is larger at frame's corners, the magnitude calibration will be failed
+#define MAX_LIN_CORR_MAG 1.2 // If the estimated correction is larger at frame's corners, the magnitude calibration will be failed
+                             // (1.2 accommodates wide-field imaging at low altitudes where differential extinction
+                             // across the frame legitimately requires a large position-dependent correction)
 
 // Differential atmospheric extinction (airmass) pixel flux correction defaults for util/pixel_flux_airmass_correction
 #define DEFAULT_EXTINCTION_MAG_PER_AIRMASS 0.25 // assumed broadband extinction coefficient (mag per unit airmass) if not specified on the command line
