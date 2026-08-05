@@ -109,6 +109,13 @@ static int convert_and_print( const char *ra_str, const char *dec_str, int is_ua
   hh+= 1;
   mm= 0.0;
  }
+ // Complete the carry chain with the 24h wrap: RA just below 360 deg rounds
+ // through 23:59:60 up to 24:00:00 (and RA exactly 360.0 passes the range
+ // check above), but hour 24 is not a valid sexagesimal RA - downstream
+ // parsers like lib/hms2deg and lib/put_two_sources_in_one_field reject it.
+ if ( hh == 24 ) {
+  hh= 0;
+ }
  if ( is_uas_mode ) {
   // print results with sub-mas precision
   fprintf( stdout, "%02d:%02d:%09.6lf ", hh, mm, ss );

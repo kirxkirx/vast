@@ -31773,6 +31773,25 @@ if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION004"
  fi
+ # 24h wrap regression checks: RA just below 360 deg used to round through
+ # 23:59:60 up to the invalid '24:00:00.00' that downstream parsers
+ # (lib/hms2deg, lib/put_two_sources_in_one_field) reject, breaking the
+ # exclusion-list checks for transient candidates at the RA=0 seam
+ DEG2HMS_WRAP_OUTPUT=$(lib/deg2hms 359.9999999 54.0 2>/dev/null)
+ if [ "$DEG2HMS_WRAP_OUTPUT" != "00:00:00.00 +54:00:00.0" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_RA_WRAP_24H"
+ fi
+ DEG2HMS_WRAP_OUTPUT=$(lib/deg2hms 360.0 54.0 2>/dev/null)
+ if [ "$DEG2HMS_WRAP_OUTPUT" != "00:00:00.00 +54:00:00.0" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_RA_WRAP_360DEG"
+ fi
+ DEG2HMS_WRAP_OUTPUT=$(lib/deg2hms_uas 359.9999999999 54.0 2>/dev/null)
+ if [ "$DEG2HMS_WRAP_OUTPUT" != "00:00:00.000000 +54:00:00.00000" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_RA_WRAP_24H_UAS"
+ fi
  for POSITION_DEG in "172.9707500 +29.9958611" "172.9707500 -29.9958611" ;do
   POSITION_HMS_VAST=`lib/deg2hms $POSITION_DEG`
   POSITION_HMS_SKYCOOR=`lib/bin/skycoor -j $POSITION_DEG J2000 | awk '{print $1" "$2}'`
