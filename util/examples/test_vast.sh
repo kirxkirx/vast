@@ -14544,31 +14544,16 @@ $GREP_RESULT"
    fi
   fi
 
-  # NSVS 4490482  (VSX: 05:59:44.17 +47:37:01.3)
-  grep -q "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_NOT_FOUND"
-   GREP_RESULT=$(grep "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html)
-   DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### AUR02_NSVS4490482_NOT_FOUND ######
-$GREP_RESULT"
-  fi
-  RADECPOSITION_TO_TEST=$(grep "2026 04 23.1944  2461153.6944  .*05:59:..\... +47:37:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}')
-  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:59:44.17 +47:37:01.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
-  TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES AUR02_NSVS4490482_TOO_FAR_$DISTANCE_ARCSEC"
-   fi
-  fi
+  # NSVS 4490482 (VSX: 05:59:44.17 +47:37:01.3) was checked here, but its
+  # recovery is inherently marginal and the check was removed 2026-08-06:
+  # the star (~14.8 mag quiescent) is at the SExtractor detection limit on
+  # reference frame 0227 where the plate solution is locally poor (forced
+  # photometry with a misplaced aperture yields a 16.09 upper limit), so the
+  # lightcurve flips between 4 points (Gaia cataloged-source check skipped,
+  # star reported) and 3 points (check fires and appropriately rejects the
+  # candidate as a same-brightness Gaia DR2 match) depending on run-to-run
+  # photometric and astrometric details, notably on hosts that rely on
+  # remote plate solving (ariel).
 
  else
   TEST_PASSED=0
