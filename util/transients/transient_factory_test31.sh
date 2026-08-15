@@ -2821,20 +2821,12 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
     echo 'UNSOLVED_PLATE'
    else
     echo "$WCS_IMAGE_NAME_FOR_CHECKS exists and is non-empty" | tee -a transient_factory_test31.txt
-    if [ ! -d local_wcs_cache/ ];then
-     mkdir local_wcs_cache
-    fi
-    if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-     ### ===> SExtractor config file <===
-     #if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
-     if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
-      # save the solved plate to local cache, but only if it's not already a symlink
-      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" | tee -a transient_factory_test31.txt
-      cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-     else
-      echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
-     fi
-    fi
+    # The solved plate is cached to local_wcs_cache/ ONLY after the
+    # background util/solve_plate_with_UCAC5 jobs are drained (see the
+    # "Saving the final (post-refit)" block below): at this point the
+    # asynchronous SIP refit may still be running and the header here is
+    # the pre-refit astrometry.net solution - caching it now would hand a
+    # stale header to the next SExtractor pass.
    fi
   done | grep -q 'UNSOLVED_PLATE'
   if [ $? -eq 0 ];then
@@ -3667,6 +3659,30 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
+
+   # Save the solved plates to the local WCS cache - this is the ONE place
+   # that writes local_wcs_cache/. It deliberately runs only after the
+   # background util/solve_plate_with_UCAC5 jobs have been drained above,
+   # so the cached header is the FINAL one including the SIP refit.
+   # Caching any earlier (e.g. in the plate-verify block) would store the
+   # pre-refit astrometry.net solution, and the next SExtractor pass would
+   # symlink that stale header back in - every sky position computed from
+   # it then inherits its corner errors (the 2026-08-13 Cyg-05 NP Lyr
+   # 65-arcsec misplacement).
+   if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
+    if [ ! -d local_wcs_cache/ ];then
+     mkdir local_wcs_cache
+    fi
+    for WCS_CACHE_SAVE_IMAGE in $(awk '{print $17}' vast_image_details.log) ;do
+     WCS_CACHE_SAVE_NAME=wcs_"$(basename "$WCS_CACHE_SAVE_IMAGE")"
+     WCS_CACHE_SAVE_NAME=${WCS_CACHE_SAVE_NAME/wcs_wcs_/wcs_}
+     WCS_CACHE_SAVE_NAME="${WCS_CACHE_SAVE_NAME/.fz/}"
+     if [ -s "$WCS_CACHE_SAVE_NAME" ] && [ ! -L "$WCS_CACHE_SAVE_NAME" ];then
+      echo "Saving the final (post-refit) $WCS_CACHE_SAVE_NAME to local_wcs_cache/" | tee -a transient_factory_test31.txt
+      cp -v "$WCS_CACHE_SAVE_NAME" local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     fi
+    done
+   fi
 
    ###################################
    # Pre-local-correction WCS quality comparison.

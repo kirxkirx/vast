@@ -5951,6 +5951,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char blindly_trusted_wcs_origin[FILENAME_LENGTH];
  FILE *blindly_trusted_wcs_marker_file;
  int force_sip_refit;
+ int header_write_blocked_symlink;
  int order_candidates[3];
  int n_order_candidates, order_candidate_index;
  int best_deg;
@@ -6015,9 +6016,17 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  // with our own argument does not catch this; lstat() on the write target
  // does. Anyone who really wants the link target refit can resolve the link
  // and refit the real file.
+ // A symbolic link blocks only the HEADER rewrite: the refit itself still
+ // runs and, if it wins, the recomputed star positions still go into the
+ // output .ucac5 catalog written by this run. Without this the stale header
+ // behind the link (e.g. a pre-refit TAN solution cached by the transient
+ // factory before the asynchronous refit finished) poisons the catalog
+ // positions with no way to repair them - the exact failure that put the
+ // Mira NP Lyr 65 arcsec off in the 2026-08-13 Cyg-05 report.
+ header_write_blocked_symlink= 0;
  if ( 0 == lstat( solved_image_filename, &stat_of_solved_image ) && S_ISLNK( stat_of_solved_image.st_mode ) ) {
-  fprintf( stderr, "SIP_REFIT: %s is a symbolic link - not rewriting the WCS of whatever it points to, keeping the original solution\n", solved_image_filename );
-  return 1;
+  fprintf( stderr, "SIP_REFIT: %s is a symbolic link - will not rewrite the WCS of whatever it points to, but will still refit the output catalog positions\n", solved_image_filename );
+  header_write_blocked_symlink= 1;
  }
 
  if ( force_sip_refit == 0 ) {
@@ -6574,6 +6583,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  if ( cgv != NULL ) gsl_vector_free( cgv );
 
  // ---- Write the refit solution into the FITS header ----
+ // (skipped when the solved image is a symbolic link - see the
+ // header_write_blocked_symlink comment above; the in-memory star position
+ // recompute below still runs so the output catalog carries the refit)
+ if ( header_write_blocked_symlink == 0 ) {
  status= 0;
  if ( 0 != fits_open_file( &fptr, solved_image_filename, READWRITE, &status ) ) {
   fprintf( stderr, "SIP_REFIT: cannot reopen %s for writing - keeping the original solution\n", solved_image_filename );
@@ -6648,6 +6661,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  if ( status != 0 ) {
   fprintf( stderr, "SIP_REFIT: WARNING - FITS status %d while updating the header\n", status );
  }
+ } // if ( header_write_blocked_symlink == 0 ) - end of the FITS header write
 
  // ---- Recompute the star positions from the refit solution ----
  for ( i= 0; i < N; i++ ) {
@@ -6686,13 +6700,18 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  // the magnitude calibration and the transient pipeline carries the refit
  // positions (and so the header round-trips through the pipeline's own WCS
  // interpreter rather than only through this program's in-memory model).
- get_path_to_vast( path_to_vast_string );
- sprintf( regen_command, "\"%s\"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh \"%s\" \"%s\"", path_to_vast_string, solved_image_filename, wcs_catalog_filename_for_regen );
- if ( 0 != system( regen_command ) ) {
-  fprintf( stderr, "SIP_REFIT: WARNING - failed to regenerate the WCS catalog from the updated header\n" );
+ // Skipped when the header write was blocked (symbolic link): regenerating
+ // from the stale header behind the link would poison the .wcscat instead.
+ if ( header_write_blocked_symlink == 0 ) {
+  get_path_to_vast( path_to_vast_string );
+  sprintf( regen_command, "\"%s\"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh \"%s\" \"%s\"", path_to_vast_string, solved_image_filename, wcs_catalog_filename_for_regen );
+  if ( 0 != system( regen_command ) ) {
+   fprintf( stderr, "SIP_REFIT: WARNING - failed to regenerate the WCS catalog from the updated header\n" );
+  }
+  fprintf( stderr, "SIP_REFIT: applied the refit solution (order %d, robust RMS %.3lf -> %.3lf arcsec)\n", deg, rms_before, rms_after );
+ } else {
+  fprintf( stderr, "SIP_REFIT: applied the refit solution to the output catalog positions only (order %d, robust RMS %.3lf -> %.3lf arcsec); the image header was NOT rewritten as %s is a symbolic link\n", deg, rms_before, rms_after, solved_image_filename );
  }
-
- fprintf( stderr, "SIP_REFIT: applied the refit solution (order %d, robust RMS %.3lf -> %.3lf arcsec)\n", deg, rms_before, rms_after );
 
  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
