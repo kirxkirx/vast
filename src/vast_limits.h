@@ -443,6 +443,16 @@
 
 #define MIN_NUMBER_OF_STARS_FOR_UCAC5_MATCH 20      // Warn the user that match with external catalog probably dind't go well
 #define MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH 10 // perform that many iterations of local correction+catalog matching
+// Below this number of catalog-matched stars on a frame there is not enough
+// local density to compute a position-dependent (local) astrometric
+// correction: each target star needs at least 5 matched neighbours within a
+// 500 px box, which a sparse field cannot provide. In that case the local
+// correction stage is skipped and the global (plane-fit + magnitude) plate
+// solution is used as-is, with the reported accuracy taken from the
+// matched-star residuals against the catalog. Local correction only starts
+// to engage well above this count (roughly 100+ matched stars on a typical
+// frame), so this threshold does not disturb fields where it actually helps.
+#define MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION 30
 
 //////// Settings that control VaST end here ////////
 

@@ -4988,6 +4988,14 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   return correct_measured_positions_bruteforce( stars, N, search_radius, process_only_stars_matched_with_catalog, catalog_search_parameters );
  }
 
+// Option C (see MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION): only
+// attempt the local, position-dependent correction when the frame carries
+// enough catalog-matched stars to support it. A sparse field cannot give each
+// target the >=5 matched neighbours the local correction needs, so we skip the
+// whole stage and keep the global (plane-fit + magnitude) solution (the else
+// branch below zeroes the local corrections).
+ if ( N_only_good >= MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION ) {
+
 // Parallelize the local corrections loop - each iteration is independent
 // Each thread uses its own stack-allocated z1_local/z2_local arrays (max 502 elements needed)
 #ifdef VAST_ENABLE_OPENMP
@@ -5168,6 +5176,17 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
 
  } // for(j=0;j<N;j++){
  //}
+ } else {
+  // Field too sparse for a local correction: zero it so the positions fall
+  // back to the global (plane-fit + magnitude) solution, and let the accuracy
+  // estimation below report the plate accuracy from the matched-star residuals.
+  fprintf( stderr, "Local astrometric correction skipped: only %d catalog-matched stars on the frame (need >= %d for a position-dependent correction); using the global (plane-fit + magnitude) plate solution.\n", N_only_good, MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION );
+  for ( j= 0; j < N; j++ ) {
+   stars[j].local_correction_ra= 0.0;
+   stars[j].local_correction_dec= 0.0;
+   stars[j].estimated_local_correction_accuracy= 0.0;
+  }
+ } // if ( N_only_good >= MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION )
  free_matched_pool_pixel_grid( correction_pool_grid );
  if ( correction_candidate_buffers != NULL )
   free( correction_candidate_buffers );
@@ -5212,12 +5231,29 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  }
  fprintf( stderr, "Accuracy estimation diagnostic: %d matched stars entering correct_measured_positions(), %d with non-zero local correction accuracy\n", n_matched_entering, i );
  if ( i == 0 ) {
-  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small! No stars (out of %d matched) have non-zero estimated_local_correction_accuracy.\n", n_matched_entering );
-  free( x );
-  free( y );
-  free( z1 );
-  free( z2 );
-  return 1;
+  // Option A: no local correction accuracy is available - either the field was
+  // too sparse and the local correction stage was skipped above (Option C), or
+  // the annealing loop found no target with enough neighbours. The positions
+  // have gracefully fallen back to the global (plane-fit + magnitude) solution
+  // (corrected_?_local == corrected_mag_?). A sparse-but-clean solution is
+  // perfectly usable, so instead of failing, report the plate accuracy from the
+  // residuals of the matched stars against the catalog. The >60" upper sanity
+  // gate below still rejects a genuinely broken solution.
+  for ( i= 0, j= 0; j < N; j++ ) {
+   if ( stars[j].matched_with_astrometric_catalog == 1 ) {
+    z1[i]= compute_distance_on_sphere( stars[j].corrected_ra_local, stars[j].corrected_dec_local, stars[j].catalog_ra, stars[j].catalog_dec );
+    i++;
+   }
+  }
+  if ( i == 0 ) {
+   fprintf( stderr, "ERROR: no catalog-matched stars remain after the correction - cannot estimate the plate solution accuracy.\n" );
+   free( x );
+   free( y );
+   free( z1 );
+   free( z2 );
+   return 1;
+  }
+  fprintf( stderr, "Local correction unavailable for this sparse field - reporting the plate solution accuracy from the residuals of %d matched stars against the catalog.\n", i );
  }
 #if USE_GSL_MEDIAN
  // O(n log n) sort-based median
@@ -5402,6 +5438,14 @@ int correct_measured_positions_bruteforce( struct detected_star *stars, int N, d
   N_only_good++;
  }
 
+// Option C (see MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION): only
+// attempt the local, position-dependent correction when the frame carries
+// enough catalog-matched stars to support it. A sparse field cannot give each
+// target the >=5 matched neighbours the local correction needs, so we skip the
+// whole stage and keep the global (plane-fit + magnitude) solution (the else
+// branch below zeroes the local corrections).
+ if ( N_only_good >= MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION ) {
+
 // Parallelize the local corrections loop - each iteration is independent
 // Each thread uses its own stack-allocated z1_local/z2_local arrays (max 502 elements needed)
 #ifdef VAST_ENABLE_OPENMP
@@ -5567,6 +5611,17 @@ int correct_measured_positions_bruteforce( struct detected_star *stars, int N, d
 
  } // for(j=0;j<N;j++){
  //}
+ } else {
+  // Field too sparse for a local correction: zero it so the positions fall
+  // back to the global (plane-fit + magnitude) solution, and let the accuracy
+  // estimation below report the plate accuracy from the matched-star residuals.
+  fprintf( stderr, "Local astrometric correction skipped: only %d catalog-matched stars on the frame (need >= %d for a position-dependent correction); using the global (plane-fit + magnitude) plate solution.\n", N_only_good, MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION );
+  for ( j= 0; j < N; j++ ) {
+   stars[j].local_correction_ra= 0.0;
+   stars[j].local_correction_dec= 0.0;
+   stars[j].estimated_local_correction_accuracy= 0.0;
+  }
+ } // if ( N_only_good >= MIN_MATCHED_STARS_FOR_LOCAL_ASTROMETRIC_CORRECTION )
  free( only_good_starsmatched_with_catalog );
 
 // Taken out of the above for cycle so we can parallelize these actions
@@ -5608,12 +5663,29 @@ int correct_measured_positions_bruteforce( struct detected_star *stars, int N, d
  }
  fprintf( stderr, "Accuracy estimation diagnostic: %d matched stars entering correct_measured_positions(), %d with non-zero local correction accuracy\n", n_matched_entering, i );
  if ( i == 0 ) {
-  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small! No stars (out of %d matched) have non-zero estimated_local_correction_accuracy.\n", n_matched_entering );
-  free( x );
-  free( y );
-  free( z1 );
-  free( z2 );
-  return 1;
+  // Option A: no local correction accuracy is available - either the field was
+  // too sparse and the local correction stage was skipped above (Option C), or
+  // the annealing loop found no target with enough neighbours. The positions
+  // have gracefully fallen back to the global (plane-fit + magnitude) solution
+  // (corrected_?_local == corrected_mag_?). A sparse-but-clean solution is
+  // perfectly usable, so instead of failing, report the plate accuracy from the
+  // residuals of the matched stars against the catalog. The >60" upper sanity
+  // gate below still rejects a genuinely broken solution.
+  for ( i= 0, j= 0; j < N; j++ ) {
+   if ( stars[j].matched_with_astrometric_catalog == 1 ) {
+    z1[i]= compute_distance_on_sphere( stars[j].corrected_ra_local, stars[j].corrected_dec_local, stars[j].catalog_ra, stars[j].catalog_dec );
+    i++;
+   }
+  }
+  if ( i == 0 ) {
+   fprintf( stderr, "ERROR: no catalog-matched stars remain after the correction - cannot estimate the plate solution accuracy.\n" );
+   free( x );
+   free( y );
+   free( z1 );
+   free( z2 );
+   return 1;
+  }
+  fprintf( stderr, "Local correction unavailable for this sparse field - reporting the plate solution accuracy from the residuals of %d matched stars against the catalog.\n", i );
  }
 #if USE_GSL_MEDIAN
  // O(n log n) sort-based median

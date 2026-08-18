@@ -930,6 +930,77 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  return 0
 }
 
+function report_pointing_of_unmatched_second_epoch_image {
+ # When VaST cannot match the second-epoch images to the reference image,
+ # blind plate solve one second-epoch image and compare its center with the
+ # reference image center. A successful solve with a large offset means a
+ # telescope pointing problem, while a failed solve points to clouds or very
+ # bad focus. The 'Angular distance between the image centers' line is picked
+ # up by the unmw summary page generator for the pointing offset column.
+ local UNMATCHED_WCS_IMAGE_NAME
+ local FOV_SCRIPT_OUTPUT
+ local UNMATCHED_IMAGE_CENTER
+ local UNMATCHED_IMAGE_FOV_ARCMIN
+ local REFERENCE_IMAGE_CENTER
+ local UNMATCHED_IMAGE_OFFSET_DEG
+ local POINTING_DIAG_LIMIT_DEG
+ # The blind plate solve is slow - run this diagnostic only once per field,
+ # not once per SExtractor config file
+ if [ "$POINTING_CHECK_FOR_UNMATCHED_FIELD_DONE" = "yes" ];then
+  return 0
+ fi
+ POINTING_CHECK_FOR_UNMATCHED_FIELD_DONE="yes"
+ if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ] || [ ! -s "$SECOND_EPOCH__FIRST_IMAGE" ];then
+  return 0
+ fi
+ echo "Blind plate solve of the unmatched second-epoch image $(basename "$SECOND_EPOCH__FIRST_IMAGE") to check the telescope pointing" | tee -a transient_factory_test31.txt
+ util/wcs_image_calibration.sh "$SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt 2>&1
+ UNMATCHED_WCS_IMAGE_NAME=wcs_"$(basename "$SECOND_EPOCH__FIRST_IMAGE")"
+ # make sure we do not have wcs_wcs_
+ UNMATCHED_WCS_IMAGE_NAME="${UNMATCHED_WCS_IMAGE_NAME/wcs_wcs_/wcs_}"
+ UNMATCHED_WCS_IMAGE_NAME="${UNMATCHED_WCS_IMAGE_NAME/.fz/}"
+ if [ ! -s "$UNMATCHED_WCS_IMAGE_NAME" ];then
+  echo "The blind plate solve of the second-epoch image failed - cannot check the telescope pointing (clouds? very bad focus?)" | tee -a transient_factory_test31.txt
+  return 0
+ fi
+ FOV_SCRIPT_OUTPUT=$(util/fov_of_wcs_calibrated_image.sh "$UNMATCHED_WCS_IMAGE_NAME" 2>/dev/null)
+ UNMATCHED_IMAGE_CENTER=$(echo "$FOV_SCRIPT_OUTPUT" | grep 'Image center:' | awk '{print $3" "$4}')
+ UNMATCHED_IMAGE_FOV_ARCMIN=$(echo "$FOV_SCRIPT_OUTPUT" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
+ # The reference image is not plate-solved by the pipeline at this point,
+ # but the reference images normally carry a WCS solution in their headers
+ REFERENCE_IMAGE_CENTER=$(util/fov_of_wcs_calibrated_image.sh "$REFERENCE_EPOCH__FIRST_IMAGE" 2>/dev/null | grep 'Image center:' | awk '{print $3" "$4}')
+ if [ -z "$UNMATCHED_IMAGE_CENTER" ] || [ -z "$REFERENCE_IMAGE_CENTER" ];then
+  echo "Cannot determine the reference and second-epoch image centers for the pointing check" | tee -a transient_factory_test31.txt
+  return 0
+ fi
+ UNMATCHED_IMAGE_OFFSET_DEG=$(lib/put_two_sources_in_one_field $REFERENCE_IMAGE_CENTER $UNMATCHED_IMAGE_CENTER 2>/dev/null | grep 'Angular distance' | awk '{printf "%.4f", $5}')
+ if [ -z "$UNMATCHED_IMAGE_OFFSET_DEG" ];then
+  echo "Cannot compute the angular distance between the reference and second-epoch image centers for the pointing check" | tee -a transient_factory_test31.txt
+  return 0
+ fi
+ echo "###################################
+# Check the image center offset between the reference and the blindly solved unmatched second-epoch image (pointing accuracy)
+Reference image center $REFERENCE_IMAGE_CENTER
+Second-epoch image center $UNMATCHED_IMAGE_CENTER
+Angular distance between the image centers $UNMATCHED_IMAGE_OFFSET_DEG deg.
+###################################" | tee -a transient_factory_test31.txt
+ # Same hard limit formula as the pointing accuracy check in the normal processing path
+ POINTING_DIAG_LIMIT_DEG="$POINTING_ACCURACY_LIMIT_DEG_HARD"
+ if [ -z "$POINTING_DIAG_LIMIT_DEG" ];then
+  POINTING_DIAG_LIMIT_DEG=$(echo "$UNMATCHED_IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*1.0; if (val < 0.2) val = 0.2; else if (val > 1.0) val = 1.0; printf "%.2f", val}')
+ fi
+ if [ -z "$POINTING_DIAG_LIMIT_DEG" ];then
+  POINTING_DIAG_LIMIT_DEG=1.0
+ fi
+ if awk -v x="$UNMATCHED_IMAGE_OFFSET_DEG" -v y="$POINTING_DIAG_LIMIT_DEG" 'BEGIN {exit !(x>y)}'; then
+  echo "ERROR: the blindly solved second-epoch image is pointed $UNMATCHED_IMAGE_OFFSET_DEG deg. away from the reference image center of the field $FIELD - telescope pointing problem?" | tee -a transient_factory_test31.txt
+  echo "ERROR: the blindly solved second-epoch image is pointed $UNMATCHED_IMAGE_OFFSET_DEG deg. away from the reference image center of the field $FIELD - telescope pointing problem?" >> transient_factory.log
+ else
+  echo "The second-epoch image center is consistent with the reference image center (offset $UNMATCHED_IMAGE_OFFSET_DEG deg.) - the star matching failure is probably not a pointing problem" | tee -a transient_factory_test31.txt
+ fi
+ return 0
+}
+
 function record_timing {
  local SECTION_NAME="$1"
  local START_TIME="$2"
@@ -2525,7 +2596,10 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  # But is this actually the desired behavior? (Some SE runs may or may not have better photometry than others)
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
- fi 
+ fi
+
+ # Allow the pointing check for unmatched second-epoch images to run once per field
+ POINTING_CHECK_FOR_UNMATCHED_FIELD_DONE=""
 
  # Make multiple VaST runs with different SExtractor config files
  ### ===> SExtractor config file <===
@@ -2581,7 +2655,32 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    # field / clouds / bad focus. Only a failure BEFORE that point means the data
    # (or the pointing) is bad. Distinguish the two so we do not throw away good data
    # and do not mislabel a code crash as a weather/focus problem.
-   if grep -q 'Done with measurements' vast_output_$$.tmp ;then
+   # The one exception: VaST prints 'Low percentage of matched images' right before
+   # deliberately exiting with code 1 when fewer than 75 percent of the input images
+   # were matched to the reference image (see the end of main() in src/vast.c).
+   # 'Done with measurements' is also present in the output in that case, so check
+   # the marker of the deliberate exit first: it is a genuine star matching failure
+   # (wrong pointing? clouds? very bad focus?), not a memory cleanup crash.
+   if grep -q 'Low percentage of matched images' vast_output_$$.tmp ;then
+    echo "WARNING: VaST exited with code $VAST_EXIT_CODE on the field $FIELD as too few input images were matched to the reference image - wrong pointing? clouds? very bad focus?" | tee -a transient_factory_test31.txt
+    # A blind plate solve of one second-epoch image tells a telescope pointing problem from clouds
+    report_pointing_of_unmatched_second_epoch_image
+    # Preserve the profiling info before we drop the captured output
+    grep '^TIMING ' vast_output_$$.tmp >> "$PROFILING_LOG" 2>/dev/null
+    # Display and save VaST output to the log file
+    echo "____ VaST output ____" | tee -a transient_factory_test31.txt
+    cat vast_output_$$.tmp | tee -a transient_factory_test31.txt
+    echo "_____________________" | tee -a transient_factory_test31.txt
+    rm -f vast_output_$$.tmp
+    # Report the failed field the same way as the 'Images used for photometry 4' check below
+    echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
+    echo "############################################################" >> transient_factory.log
+    echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" | tee -a transient_factory_test31.txt
+    cat vast_image_details.log >> transient_factory_test31.txt
+    # Move on to the next SExtractor config file - there are examples where the
+    # bright star run fails, but the faint star run works fine
+    continue
+   elif grep -q 'Done with measurements' vast_output_$$.tmp ;then
     # Science complete: rebuild the summary the transient search needs and continue.
     # The per-image image*.log files are still present because the crash skipped the
     # normal exit path where lib/create_vast_image_details_log.sh consumes them.
