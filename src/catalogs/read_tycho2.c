@@ -224,7 +224,6 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
    if ( distance < best_distance ) {
     best_distance= distance;
     // If the distance is acceptable - remember star parameters
-    // if( distance<MAX( MAX_DISTANCE_DEGREES, arrStar[i].A_WORLD) ){
     if ( distance < MAX_DISTANCE_DEGREES ) {
      arrStar[i].matched_with_catalog= 1;
      arrStar[i].distance_from_catalog_position= distance;
@@ -232,20 +231,15 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
      arrStar[i].DELTA_catalog= arrCatStar[j].DELTA_catalog;
      arrStar[i].BT= arrCatStar[j].BT;
      arrStar[i].VT= arrCatStar[j].VT;
+     // Convert BT and VT magnitudes to V following Note (7) in the catalog description
+     // https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/I/259?format=html&tex=true
      arrStar[i].V= arrStar[i].VT - 0.090 * ( arrStar[i].BT - arrStar[i].VT );
      arrStar[i].B_V= 0.850 * ( arrStar[i].BT - arrStar[i].VT );
-     // strcpy(arrStar[i].catnumber,arrCatStar[i].catnumber);
      memset( arrStar[i].catnumber, 0, TYCHONUMBER ); // just in case
      strncpy( arrStar[i].catnumber, arrCatStar[j].catnumber, TYCHONUMBER );
-     // fprintf(stderr,"arrStar[i].catnumber=_%s_ arrCatStar[i].catnumber=_%s_\n",arrStar[i].catnumber,arrCatStar[i].catnumber);
-     //  The positional coincidence is so good that we accept this mathc with no further consideration
-     //     if( distance < ACCEPT_DISTANCE_DEGREES ) {
-     //      break;
-     //     }
     }
    }
   }
-  //  fprintf(stderr,"max_M=%ld\n",max_M);
  }
  // So, how many stars we have matched?
  // And write the output file BTW...
