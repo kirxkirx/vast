@@ -4112,6 +4112,27 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
       echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
       continue
      fi
+     # Round-trip verification of the sky-to-pixel conversion: map the pixel
+     # position back to the sky with the forward transformation and require
+     # it to land within 30 arcsec of the target. The inverse SIP distortion
+     # polynomial, evaluated for a position far outside the frame, can fold
+     # that position onto valid-looking pixel coordinates and the aperture
+     # would silently measure blank sky (GK Per got fake upper limits from
+     # Lac-01 frames 50 deg away this way; the forward direction is safe).
+     MONITORING_X2S=$(lib/bin/xy2sky -d "$MONITORING_WCS" "$MONITORING_PX" "$MONITORING_PY" 2>/dev/null)
+     MONITORING_X2S_RA=$(echo "$MONITORING_X2S" | awk '{print $1}')
+     MONITORING_X2S_DEC=$(echo "$MONITORING_X2S" | awk '{print $2}')
+     MONITORING_ROUNDTRIP_SEP_ARCSEC=""
+     if [ -n "$MONITORING_X2S_RA" ] && [ -n "$MONITORING_X2S_DEC" ];then
+      MONITORING_ROUNDTRIP_SEP_ARCSEC=$(lib/bin/skycoor -r "$MONITORING_RA" "$MONITORING_DEC" "$MONITORING_X2S_RA" "$MONITORING_X2S_DEC" 2>/dev/null)
+     fi
+     # (an empty separation means the verification tooling itself failed -
+     # fail open and keep the position, preserving the old behavior)
+     if [ -n "$MONITORING_ROUNDTRIP_SEP_ARCSEC" ] && ! awk -v s="$MONITORING_ROUNDTRIP_SEP_ARCSEC" 'BEGIN{exit !(s+0<30.0)}' ;then
+      echo "Source monitoring: $MONITORING_ID failed the sky-to-pixel round-trip verification on $MONITORING_WCS (the computed pixel position maps back $MONITORING_ROUNDTRIP_SEP_ARCSEC arcsec away from the target) - recording as edge" | tee -a transient_factory_test31.txt
+      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
+      continue
+     fi
      echo "$MONITORING_PX $MONITORING_PY $MONITORING_ID" >> "$MONITORING_PIXLIST"
     done < "$MONITORING_POSITIONS_FILE"
     if [ ! -s "$MONITORING_PIXLIST" ];then

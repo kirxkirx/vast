@@ -163,6 +163,36 @@ for TOOL in "${VAST_PATH}lib/bin/sky2xy" \
  fi
 done
 
+# Round-trip verification of a sky-to-pixel conversion: map the pixel
+# position back to the sky with the forward transformation (xy2sky) and
+# require it to land within 30 arcsec of the target position. The inverse
+# SIP distortion polynomial, evaluated for a sky position far outside the
+# frame, can numerically fold that position onto valid-looking pixel
+# coordinates - the aperture would then silently measure blank sky
+# (GK Per got fake monitoring upper limits from Lac-01 frames 50 deg away
+# this way). The forward pixel-to-sky direction is safe inside the frame.
+# Arguments: WCS-solved image, target RA, target Dec, pixel X, pixel Y.
+# Returns 0 when the round trip is consistent (or could not be verified
+# because the WCS tools themselves failed - fail open, preserving the old
+# behavior), 1 when the round trip is inconsistent; the measured
+# separation (arcsec) is left in ROUNDTRIP_SEP_ARCSEC for the caller's
+# diagnostic message.
+check_sky2xy_roundtrip() {
+ ROUNDTRIP_SEP_ARCSEC=""
+ ROUNDTRIP_X2S=$("${VAST_PATH}lib/bin/xy2sky" -d "$1" "$4" "$5" 2>/dev/null)
+ ROUNDTRIP_RA=$(echo "$ROUNDTRIP_X2S" | awk '{print $1}')
+ ROUNDTRIP_DEC=$(echo "$ROUNDTRIP_X2S" | awk '{print $2}')
+ if [ -z "$ROUNDTRIP_RA" ] || [ -z "$ROUNDTRIP_DEC" ];then
+  return 0
+ fi
+ ROUNDTRIP_SEP_ARCSEC=$("${VAST_PATH}lib/bin/skycoor" -r "$2" "$3" "$ROUNDTRIP_RA" "$ROUNDTRIP_DEC" 2>/dev/null)
+ if [ -z "$ROUNDTRIP_SEP_ARCSEC" ];then
+  return 0
+ fi
+ awk -v s="$ROUNDTRIP_SEP_ARCSEC" 'BEGIN{exit !(s+0<30.0)}'
+ return $?
+}
+
 #################################
 # Validate input image
 #################################
@@ -387,6 +417,10 @@ if [ $LIST_MODE -eq 0 ];then
   echo "  sky2xy output: $SKY2XY_OUTPUT" >&2
   exit 1
  fi
+ if ! check_sky2xy_roundtrip "$WCS_IMAGE_FOR_SKY2XY" "$TARGET_RA" "$TARGET_DEC" "$PIXEL_X" "$PIXEL_Y" ;then
+  echo "ERROR: target coordinates are off the image (the pixel position from sky2xy maps back ${ROUNDTRIP_SEP_ARCSEC:-unknown} arcsec away from the target - inverse distortion polynomial breakdown, the position is not really on this frame)" >&2
+  exit 1
+ fi
  echo "  Pixel position: $PIXEL_X $PIXEL_Y" >&2
 else
  # List mode: read sky_listfile line by line, call sky2xy once per position,
@@ -431,6 +465,10 @@ else
   FORCEDPHOT_PY=$(echo "$FORCEDPHOT_S2X" | awk '{print $6}')
   if [ -z "$FORCEDPHOT_PX" ] || [ -z "$FORCEDPHOT_PY" ];then
    echo "WARNING: list line $FORCEDPHOT_LINE_IDX: could not parse pixel coords" >&2
+   continue
+  fi
+  if ! check_sky2xy_roundtrip "$WCS_IMAGE_FOR_SKY2XY" "$FORCEDPHOT_RA" "$FORCEDPHOT_DEC" "$FORCEDPHOT_PX" "$FORCEDPHOT_PY" ;then
+   echo "WARNING: list line $FORCEDPHOT_LINE_IDX: $FORCEDPHOT_RA $FORCEDPHOT_DEC is off the image (the pixel position from sky2xy maps back ${ROUNDTRIP_SEP_ARCSEC:-unknown} arcsec away from the target - inverse distortion polynomial breakdown)" >&2
    continue
   fi
   echo "$FORCEDPHOT_PX $FORCEDPHOT_PY $FORCEDPHOT_LABEL" >> "$FORCEDPHOT_PIXLIST"
