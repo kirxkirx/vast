@@ -6796,6 +6796,7 @@ int main( int argc, char **argv ) {
  /////////////////////////////////////
  // Options for getopt()
  char *cvalue= NULL;
+ char *env_forced_phot_calib_method= NULL;
  const char *const shortopt= "ni:f:";
  const struct option longopt[]= {
      { "no_photometric_catalog", 0, NULL, 'n' }, { "iterations", 1, NULL, 'i' }, { "fov", 1, NULL, 'f' }, { NULL, 0, NULL, 0 } }; // NULL string must be in the end
@@ -6880,6 +6881,19 @@ int main( int argc, char **argv ) {
   case -1:
    fprintf( stderr, "Done parsing the options\n" );
    break;
+  }
+ }
+
+ // A deployment that calibrates magnitudes with the local Tycho-2 catalog
+ // (util/calibrate_single_image_with_tycho2.sh keys on the same environment
+ // variable) never reads the APASS columns of the output catalog, so skip
+ // the slow remote APASS/Pan-STARRS VizieR queries in that configuration.
+ // The explicit --no_photometric_catalog command line option does the same.
+ env_forced_phot_calib_method= getenv( "FORCED_PHOTOMETRY_CALIBRATION_METHOD" );
+ if ( NULL != env_forced_phot_calib_method ) {
+  if ( 0 == strcmp( env_forced_phot_calib_method, "tycho2" ) ) {
+   fprintf( stdout, "FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 - not using remote photometric catalogs, just stick with astrometry\n" );
+   use_photometric_catalog= 0;
   }
  }
 
