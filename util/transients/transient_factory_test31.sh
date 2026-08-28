@@ -1183,6 +1183,9 @@ function retry_wcs_with_lower_tweak_order {
   fi
   rm -rf "$backup_dir"
  else
+  if [ -n "$new_sigma" ] && [ "$new_sigma" = "$current_sigma" ] && [ "$new_ratio" = "$current_ratio" ];then
+   echo "WCS_QUALITY_RETRY: the retry reproduced the identical solution for $image_label ($diag_basename) - the plate solve is deterministic for this image and the tweak order is not the problem (suspect a marginal quad match; see the silently-failed-tweak guard in util/wcs_image_calibration.sh)" | tee -a transient_factory_test31.txt
+  fi
   echo "WCS_QUALITY_RETRY: --tweak-order 2 did NOT improve $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma:-N/A}, ratio ${current_ratio}->${new_ratio:-N/A}; reverting to order 3" | tee -a transient_factory_test31.txt
   for f in "$wcs_basename" "$wcs_basename".wcscat "$wcs_basename".wcscat.ucac5 "$wcs_basename".wcscat.ds9.reg "$wcs_basename".wcscat.astrometric_residuals ; do
    if [ -f "$backup_dir/$(basename "$f")" ]; then

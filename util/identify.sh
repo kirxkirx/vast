@@ -1006,6 +1006,27 @@ fi
      fi
      ############
     fi
+    # Silently-failed-tweak guard: when solve-field matches only a marginal
+    # quad (few verified index stars clustered in one spot), the SIP tweak
+    # of the requested --tweak-order quietly fails and the solution stays a
+    # rigid TAN anchored at the matched quad - accurate there, but off by
+    # tens of arcseconds across the rest of a wide field. The downstream
+    # UCAC5-based refit cannot recover such a solution, because catalog
+    # matching against it is dominated by spurious pairs. A missing SIP
+    # polynomial in the final header is the telltale sign. Only wide fields
+    # are affected (narrow-field TAN-only solutions are fine), so reuse the
+    # same >5 deg threshold as the verify re-tweak above. Test case:
+    # NMW-TexasTech Cas-04-Q2b1x1 frames of 2026-08-24 and 2026-08-27.
+    TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ] && [ -s wcs_"$BASENAME_FITSFILE" ];then
+     if [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
+      echo "WARNING: the local solve-field solution for $BASENAME_FITSFILE carries no SIP distortion terms while --tweak-order $VAST_TWEAK_ORDER was requested: the tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad. Discarding it and retrying with a remote plate-solve server."
+      rm -f wcs_"$BASENAME_FITSFILE"
+      ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+      # need the awk post-processing for curl request to work
+      IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
+     fi
+    fi
     # clean up
     # Remove the local working copy of the input image, but only if it IS a
     # copy: when the input image is already in the current directory the
