@@ -35,9 +35,13 @@
 # Environment overrides:
 #   SEESTAR_APERTURES           comma-separated aperture diameters in binned
 #                               (superpixel) pixels, default "1.5,2,2.5,3,4,5,6,8"
-#   SEESTAR_FIXED_APERTURE      aperture for the free-slope fits and the target
-#                               report (default: the aperture with the smallest
-#                               V-band calibration scatter)
+#   SEESTAR_FIXED_APERTURE      aperture diameter for the free-slope fits and
+#                               the target report (default: the aperture with
+#                               the smallest V-band calibration scatter)
+#   SEESTAR_BRIGHT_APERTURE     large aperture diameter offered to targets
+#                               that show a significant wing flux excess in
+#                               the G channel (default: the list entry
+#                               closest to twice the fixed aperture)
 #   SEESTAR_MATCH_RADIUS_ARCSEC APASS cross-match radius, default 6
 #   SEESTAR_MAG_BRIGHT/_FAINT   APASS V range for the query, default 8.0/16.5
 #   SEESTAR_MAX_MAGERR          max instrumental mag error for calibration
@@ -198,7 +202,7 @@ WORKDIR=$(vastrealpath "$SEESTAR_WORKDIR")
 # so a band that gets skipped in the current run cannot silently pick up stale
 # calibration files (the channel images, plate-solve logs and the cached APASS
 # query are kept)
-rm -f "$WORKDIR"/calib_* "$WORKDIR"/fitdata_* "$WORKDIR"/param_* "$WORKDIR"/aperture_curve_* "$WORKDIR"/sample_* "$WORKDIR"/matched_* "$WORKDIR"/det_* "$WORKDIR"/colorterms.txt "$WORKDIR"/*.png 2>/dev/null
+rm -f "$WORKDIR"/calib_* "$WORKDIR"/fitdata_* "$WORKDIR"/param_* "$WORKDIR"/aperture_curve_* "$WORKDIR"/sample_* "$WORKDIR"/matched_* "$WORKDIR"/det_* "$WORKDIR"/target_ladder_* "$WORKDIR"/colorterms.txt "$WORKDIR"/*.png 2>/dev/null
 
 echo "###############################################################"
 echo "# Seestar/Bayer photometry prototype"
@@ -666,9 +670,26 @@ if [ -z "$FIXED_APERTURE_INDEX" ];then
 fi
 FIXED_APERTURE_ARCSEC=$(echo "$FIXED_APERTURE $SCALE_ARCSEC_PIX" | awk '{printf "%.2f", $1*$2}')
 echo " "
-echo "### Fixed aperture for the free-slope comparison: $FIXED_APERTURE pix = $FIXED_APERTURE_ARCSEC arcsec ###"
+echo "### Fixed aperture diameter for the free-slope comparison: $FIXED_APERTURE pix = $FIXED_APERTURE_ARCSEC arcsec ###"
 echo "Note: scatter differences between neighboring apertures are comparable to the MAD-estimator uncertainty at these star counts;"
 echo "      treat the minimum as a plateau rather than a sharp optimum, and expect the per-channel optimum to differ slightly."
+
+# The large aperture offered to bright targets whose wings spill out of the
+# fixed aperture (empirically, on the Seestar S50 test frame the bright-star
+# effective PSF is broader and 5-8 superpixel apertures minimize the residual
+# scatter for stars in the top ~2 magnitudes below saturation)
+if [ -n "$SEESTAR_BRIGHT_APERTURE" ];then
+ BRIGHT_APERTURE=$(echo "$APERTURE_LIST_SPACE" | awk -v a="$SEESTAR_BRIGHT_APERTURE" '{for(i=1;i<=NF;i++) if ($i==a) {print a; exit}}')
+ if [ -z "$BRIGHT_APERTURE" ];then
+  echo "WARNING: SEESTAR_BRIGHT_APERTURE=$SEESTAR_BRIGHT_APERTURE is not in the aperture list $SEESTAR_APERTURES -- choosing automatically"
+ fi
+fi
+if [ -z "$BRIGHT_APERTURE" ];then
+ BRIGHT_APERTURE=$(echo "$APERTURE_LIST_SPACE" | awk -v f="$FIXED_APERTURE" '{bd=1e30; best=""; for(i=1;i<=NF;i++){if ($i>f) {d=$i-2*f; if(d<0)d=-d; if(d<bd){bd=d; best=$i}}} print best}')
+fi
+if [ -n "$BRIGHT_APERTURE" ];then
+ echo "Large aperture diameter for targets with a wing flux excess: $BRIGHT_APERTURE pix"
+fi
 
 #################################
 # Zero-point-only vs free-slope calibration at the fixed aperture
@@ -897,7 +918,7 @@ if command -v gnuplot > /dev/null 2>&1 ;then
    eval ZP_VALUE=\$ZP_${CHANNEL_NAME}_${BAND_NAME}
    eval RB_VALUE=\$ROBUSTB_${CHANNEL_NAME}_${BAND_NAME}
    eval RC_VALUE=\$ROBUSTC_${CHANNEL_NAME}_${BAND_NAME}
-   echo "set xlabel 'instrumental ${CHANNEL_NAME}-channel magnitude (aperture $FIXED_APERTURE pix)'"
+   echo "set xlabel 'instrumental ${CHANNEL_NAME}-channel magnitude (aperture diameter $FIXED_APERTURE pix)'"
    echo "set ylabel 'APASS $BAND_NAME magnitude'"
    echo "set output '$WORKDIR/calibration_${CHANNEL_NAME}_${BAND_NAME}.png'"
    echo "plot '$FITDATA_FILE' u 1:2 pt 7 ps 0.6 t 'calibration stars', x+$ZP_VALUE t 'zero-point fit (slope 1)', $RB_VALUE*x+$RC_VALUE t 'robust linear fit'"
@@ -956,6 +977,8 @@ if [ "$TARGET_MODE" != "none" ];then
 
  # Identity calibration to extract the instrumental magnitude from util/forced_photometry
  printf "0.0 0.0 0.0 1.0 0.0\n" > "$WORKDIR/param_identity.txt"
+ TARGET_X_G=""
+ TARGET_Y_G=""
  # util/forced_photometry reads SATUR_LEVEL from a default.sex in its working
  # directory; provide one so it agrees with the calibration-star measurements
  echo "SATUR_LEVEL     $SEESTAR_SATUR_LEVEL" > "$WORKDIR/default.sex"
@@ -1037,9 +1060,114 @@ if [ "$TARGET_MODE" != "none" ];then
     echo "               no SExtractor detection within 3 pix of the target position"
    fi
   fi
+
+  # Measure the target through the whole aperture ladder, calibrating each
+  # aperture with its own zero point. The per-aperture zero point acts as a
+  # built-in aperture correction, so mixing apertures between targets keeps
+  # the magnitudes on a consistent scale.
+  LADDER_FILE="$WORKDIR/target_ladder_${CHANNEL_NAME}_${BAND_NAME}.txt"
+  : > "$LADDER_FILE"
+  CURVE_FILE="$WORKDIR/aperture_curve_${CHANNEL_NAME}_${BAND_NAME}.txt"
+  echo "               aperture ladder (diameters; each aperture calibrated with its own zero point):"
+  for APERTURE_DIAMETER in $APERTURE_LIST_SPACE ;do
+   ZP_SCATTER_K=$(awk -v a="$APERTURE_DIAMETER" '$1==a {print $4" "$5; exit}' "$CURVE_FILE" 2>/dev/null)
+   if [ -z "$ZP_SCATTER_K" ];then
+    continue
+   fi
+   FORCED_K=$(cd "$WORKDIR" && "${VAST_PATH}"util/forced_photometry "$WCS_IMAGE" "$TARGET_X" "$TARGET_Y" "$APERTURE_DIAMETER" --calib "$WORKDIR/param_identity.txt" 2>/dev/null | tail -n1)
+   INSTRUMENTAL_MAG_K=$(echo "$FORCED_K" | awk '{print $1}')
+   INSTRUMENTAL_ERR_K=$(echo "$FORCED_K" | awk '{print $2}')
+   if [ -z "$INSTRUMENTAL_MAG_K" ] || [ "$INSTRUMENTAL_MAG_K" = "99.0000" ] || echo "$INSTRUMENTAL_ERR_K" | awk '{exit !($1+0>=90)}' ;then
+    echo "                 ap $APERTURE_DIAMETER pix: measurement invalid"
+    continue
+   fi
+   echo "$APERTURE_DIAMETER $ZP_SCATTER_K $INSTRUMENTAL_MAG_K $INSTRUMENTAL_ERR_K" | \
+    awk -v s="$SCALE_ARCSEC_PIX" '{printf "                 ap %4s pix (%5.1f arcsec): instr %9.4f +- %.4f   cal %8.4f +- %.4f\n", $1, $1*s, $4, $5, $4+$2, sqrt($5*$5+$3*$3)}'
+   echo "$APERTURE_DIAMETER $ZP_SCATTER_K $INSTRUMENTAL_MAG_K $INSTRUMENTAL_ERR_K" >> "$LADDER_FILE"
+  done
+  # ladder file columns: 1 aperture_diameter 2 ZP 3 calib_scatter 4 instmag 5 instmagerr
+
+  # remember the G-channel pixel position for the aperture selection below
+  if [ "$CHANNEL_NAME" = "G" ];then
+   TARGET_X_G="$TARGET_X"
+   TARGET_Y_G="$TARGET_Y"
+  fi
  done
- echo "Note: the recommended value is the ZP-cal magnitude. The slope-cal column is a diagnostic only:"
- echo "      slope != 1 usually reflects catalog bright-end systematics and faint-end selection bias, not detector nonlinearity."
+
+ # Aperture selection, made ONCE from the G channel and applied to ALL bands
+ # so that color indices are formed from measurements through the same
+ # aperture. Keep the fixed (small) aperture unless the target shows a
+ # statistically significant flux excess in the large aperture of the G
+ # channel (bright-star wings spilling out of the small one); the large
+ # aperture is vetoed when another G detection sits within it.
+ CHOSEN_APERTURE="$FIXED_APERTURE"
+ SELECTION_REASON="no significant wing excess in G, fixed aperture kept"
+ G_LADDER_FILE="$WORKDIR/target_ladder_G_V.txt"
+ if [ ! -s "$G_LADDER_FILE" ] || [ -z "$TARGET_X_G" ];then
+  SELECTION_REASON="no G-channel measurement available, fixed aperture used"
+ elif [ -n "$BRIGHT_APERTURE" ];then
+  FIXED_LADDER_ROW=$(awk -v a="$FIXED_APERTURE" '$1==a {print; exit}' "$G_LADDER_FILE")
+  BRIGHT_LADDER_ROW=$(awk -v a="$BRIGHT_APERTURE" '$1==a {print; exit}' "$G_LADDER_FILE")
+  if [ -n "$FIXED_LADDER_ROW" ] && [ -n "$BRIGHT_LADDER_ROW" ];then
+   NEIGHBOR_VETO_RADIUS_PIX=$(echo "$BRIGHT_APERTURE" | awk '{printf "%.2f", 0.5*$1+1.0}')
+   N_NEIGHBOR_DETECTIONS=$(awk -v tx="$TARGET_X_G" -v ty="$TARGET_Y_G" -v r="$NEIGHBOR_VETO_RADIUS_PIX" '
+    {dx=$3-tx; dy=$4-ty; d=sqrt(dx*dx+dy*dy); if (d<r && d>1.5) n++} END{print n+0}' "$WORKDIR/det_G.sky")
+   if [ "$N_NEIGHBOR_DETECTIONS" -gt 0 ];then
+    SELECTION_REASON="large aperture vetoed by $N_NEIGHBOR_DETECTIONS G-channel neighbor detection(s) within $NEIGHBOR_VETO_RADIUS_PIX pix of the target"
+   else
+    # wing excess = (calibrated mag in the fixed aperture) - (calibrated mag
+    # in the large aperture); a well-behaved star follows the mean curve of
+    # growth already absorbed in the per-aperture zero points, so the excess
+    # is consistent with zero. Require >0.05 mag at >2 sigma (instrumental
+    # errors only) to switch to the large aperture.
+    WING_TEST=$(echo "$FIXED_LADDER_ROW $BRIGHT_LADDER_ROW" | awk '{
+     excess= ($4+$2)-($9+$7)
+     sigma= sqrt($5*$5+$10*$10)
+     if (sigma<0.0001) sigma=0.0001
+     if (excess>0.05 && excess>2.0*sigma) verdict="bright"; else verdict="fixed"
+     printf "%s %+.4f %.1f", verdict, excess, excess/sigma
+    }')
+    WING_VERDICT=$(echo "$WING_TEST" | awk '{print $1}')
+    WING_EXCESS=$(echo "$WING_TEST" | awk '{print $2}')
+    WING_SIGMA=$(echo "$WING_TEST" | awk '{print $3}')
+    if [ "$WING_VERDICT" = "bright" ];then
+     CHOSEN_APERTURE="$BRIGHT_APERTURE"
+     SELECTION_REASON="wing excess $WING_EXCESS mag (${WING_SIGMA} sigma) in G, large aperture used"
+    else
+     SELECTION_REASON="wing excess $WING_EXCESS mag (${WING_SIGMA} sigma) in G not significant, fixed aperture kept"
+    fi
+   fi
+  fi
+ fi
+ echo "Aperture selection from the G channel: diameter $CHOSEN_APERTURE pix ($SELECTION_REASON)"
+ echo "The same aperture diameter is used for all bands so that color indices are formed consistently."
+ for BAND_DEFINITION in $BAND_DEFINITIONS ;do
+  CHANNEL_NAME="${BAND_DEFINITION%%:*}"
+  REST="${BAND_DEFINITION#*:}"
+  BAND_NAME="${REST%%:*}"
+  LADDER_FILE="$WORKDIR/target_ladder_${CHANNEL_NAME}_${BAND_NAME}.txt"
+  if [ ! -s "$LADDER_FILE" ];then
+   continue
+  fi
+  BAND_NOTE=""
+  CHOSEN_LADDER_ROW=$(awk -v a="$CHOSEN_APERTURE" '$1==a {print; exit}' "$LADDER_FILE")
+  if [ -z "$CHOSEN_LADDER_ROW" ];then
+   # the chosen-aperture measurement failed in this band: fall back to the
+   # smallest combined error among its valid ladder rows
+   CHOSEN_LADDER_ROW=$(awk 'BEGIN{best=1e30} {e=sqrt($5*$5+$3*$3); if (e<best) {best=e; row=$0}} END{print row}' "$LADDER_FILE")
+   BAND_NOTE=" [chosen aperture invalid in this band, smallest-error ladder entry used instead]"
+  fi
+  if [ -n "$CHOSEN_LADDER_ROW" ];then
+   echo "$CHOSEN_LADDER_ROW" | awk -v band="${CHANNEL_NAME}/${BAND_NAME}" -v note="$BAND_NOTE" \
+    '{printf "RECOMMENDED %6s = %8.4f +- %.4f (aperture diameter %s pix)%s\n", band, $4+$2, sqrt($5*$5+$3*$3), $1, note}'
+  fi
+ done
+ echo "Note: the RECOMMENDED values use one aperture diameter for all bands, chosen from the G channel: the large"
+ echo "      aperture is used only when the target shows a significant wing flux excess in G and no neighbor"
+ echo "      detection falls inside it; each aperture is calibrated with its own zero point per band, so"
+ echo "      switching apertures between targets keeps the magnitudes on a consistent scale."
+ echo "Note: the slope-cal column is a diagnostic only: slope != 1 usually reflects catalog bright-end"
+ echo "      systematics and faint-end selection bias, not detector nonlinearity."
  echo "Note: the quoted error combines the instrumental error and the field calibration scatter;"
  echo "      an APASS zero-point systematic of ~0.03 mag is not included."
  echo "###############################################################"
