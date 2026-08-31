@@ -1036,7 +1036,13 @@ fi
     if [ ! "$FITSFILE" -ef "$BASENAME_FITSFILE" ];then
      rm -f "$BASENAME_FITSFILE"
     fi
-    rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
+    # Keep the star list out$$.xyls when the silently-failed-tweak guard
+    # above escalated to a remote plate-solve server - the remote solve
+    # below uploads exactly this file
+    if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" != "remote" ];then
+     rm -f out$$.xyls
+    fi
    else
     if [ -f out$$.wcs ];then
      echo "ERROR: out$$.wcs is empty"
@@ -1046,7 +1052,12 @@ fi
     ERROR_STATUS=2
    fi
    # Clean-up
-   rm -f out$$.axy out$$.xyls
+   rm -f out$$.axy
+   # Keep the star list for the remote solve when the silently-failed-tweak
+   # guard escalated (see above)
+   if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" != "remote" ];then
+    rm -f out$$.xyls
+   fi
    # end of clean-up
   fi # solve-field didn't crash
  fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then

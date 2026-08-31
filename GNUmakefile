@@ -551,11 +551,13 @@ libident.o: $(SOURCE_IDENT_PATH)ident_lib.c $(SOURCE_IDENT_PATH)ident.h
 	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c -I$(GSL_INCLUDE)
 	cp $(SRC_PATH)ident_lib.o libident.o # file name kept for historical reasons
 
-ccd: util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic
+ccd: util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic util/ccd/split_bayer
 
 util/ccd/imgbin2x2: $(SRC_PATH)ccd/imgbin2x2.c $(SRC_PATH)ccd/imgbin2x2.py
 	$(CC) $(OPTFLAGS) -o util/ccd/imgbin2x2 $(SRC_PATH)ccd/imgbin2x2.c $(CFITSIO_LIB) -lm
 	cp $(SRC_PATH)ccd/imgbin2x2.py util/ccd/imgbin2x2.py
+util/ccd/split_bayer: $(SRC_PATH)ccd/split_bayer.c
+	$(CC) $(OPTFLAGS) -o util/ccd/split_bayer $(SRC_PATH)ccd/split_bayer.c $(CFITSIO_LIB) -lm
 util/ccd/mk: $(SRC_PATH)ccd/mk.c
 	$(CC) $(OPTFLAGS) -o util/ccd/mk $(SRC_PATH)ccd/mk.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ccd/ && ln -sf mk mk_notempchecks && ln -sf mk mk_noscaling && cd -
@@ -576,7 +578,7 @@ ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
 	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls
-	rm -f util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic util/ccd/mk_notempchecks util/ccd/mk_noscaling util/ccd/mk_fast_noscaling util/ccd/ms_notempchecks util/ccd/imgbin2x2.py
+	rm -f util/ccd/mk util/ccd/mk_fast util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic util/ccd/split_bayer util/ccd/mk_notempchecks util/ccd/mk_noscaling util/ccd/mk_fast_noscaling util/ccd/ms_notempchecks util/ccd/imgbin2x2.py
 	rm -f lib/libcfitsio.a lib/libz.a
 	rm -f util/fitscopy util/funpack util/fpack src/cfitsio/fitscopy src/fitsio.h src/longnam.h
 	rm -f lib/fitsverify
