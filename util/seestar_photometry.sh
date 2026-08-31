@@ -2,25 +2,32 @@
 
 #
 # Prototype: aperture photometry on a raw Bayer-mosaic frame from a Seestar S50
-# (or a similar one-shot-color camera) with APASS-based magnitude calibration.
+# (or a similar one-shot-color camera) with magnitude calibration against
+# Gaia DR3 synthetic photometry.
 #
 # The Bayer mosaic is split into half-resolution R, G, B superpixel images
 # (util/ccd/split_bayer), each channel image is plate-solved independently
 # (util/wcs_image_calibration.sh), SExtractor measures every star through a
-# ladder of aperture diameters, the field is cross-matched with the APASS DR9
-# catalog (VizieR II/336) and the following calibration relations are explored,
+# ladder of aperture diameters, the field is cross-matched with the Gaia DR3
+# synthetic photometry catalog (GSPC, VizieR I/360/syntphot - homogeneous
+# from G ~ 4 to G ~ 17.65, so it covers the bright and the faint end with
+# one catalog) and the following calibration relations are explored,
 # matching the AAVSO tricolor (TB/TG/TR) convention of calibrating the Bayer
-# channels against Johnson B, Johnson V and Cousins Rc comparison magnitudes:
-#   - B  channel instrumental mags vs APASS Johnson B
-#   - G  channel instrumental mags vs APASS Johnson V
-#   - R  channel instrumental mags vs Cousins Rc derived from APASS r',i'
-#     via the Lupton (2005) transformation Rc = r' - 0.2936*(r'-i') - 0.1439
+# channels against Johnson B, Johnson V and Cousins R comparison magnitudes:
+#   - B  channel instrumental mags vs Gaia synthetic Johnson B
+#   - G  channel instrumental mags vs Gaia synthetic Johnson V
+#   - R  channel instrumental mags vs Gaia synthetic Cousins R
 #     (see the note at BAND_DEFINITIONS below on why Sloan r' would actually
 #     fit the red channel better when an IR-cut filter is present)
 # For every aperture a zero-point-only fit (lib/fit_zeropoint: slope fixed to 1,
 # median for n>=11) is performed; for the chosen fixed aperture, fits with a free
 # slope (lib/fit_robust_linear and weighted lib/fit_linear) are compared with the
-# zero-point-only fit.
+# zero-point-only fit. Calibration quality per aperture is reported as a pair:
+# the DETRENDED robust scatter (star-to-star precision about a running-median
+# residual-vs-magnitude trend - the quantity the aperture actually controls)
+# and the trend amplitude (the magnitude-dependent calibration bias, kept
+# separate because it is a smooth correctable function). The fixed aperture is
+# chosen by the smallest detrended G-channel scatter.
 #
 # Usage:
 #   util/seestar_photometry.sh image.fit
@@ -37,13 +44,14 @@
 #                               (superpixel) pixels, default "1.5,2,2.5,3,4,5,6,8"
 #   SEESTAR_FIXED_APERTURE      aperture diameter for the free-slope fits and
 #                               the target report (default: the aperture with
-#                               the smallest V-band calibration scatter)
+#                               the smallest detrended G-channel calibration
+#                               scatter)
 #   SEESTAR_BRIGHT_APERTURE     large aperture diameter offered to targets
 #                               that show a significant wing flux excess in
 #                               the G channel (default: the list entry
 #                               closest to twice the fixed aperture)
-#   SEESTAR_MATCH_RADIUS_ARCSEC APASS cross-match radius, default 6
-#   SEESTAR_MAG_BRIGHT/_FAINT   APASS V range for the query, default 8.0/16.5
+#   SEESTAR_MATCH_RADIUS_ARCSEC catalog cross-match radius, default 6
+#   SEESTAR_MAG_BRIGHT/_FAINT   catalog V range for the Gaia query, default 6.0/16.5
 #   SEESTAR_MAX_MAGERR          max instrumental mag error for calibration
 #                               stars (in every aperture), default 0.5
 #   SEESTAR_BAYER_PATTERN       override the BAYERPAT header keyword
@@ -171,7 +179,7 @@ fi
 #################################
 : "${SEESTAR_APERTURES:=1.5,2,2.5,3,4,5,6,8}"
 : "${SEESTAR_MATCH_RADIUS_ARCSEC:=6.0}"
-: "${SEESTAR_MAG_BRIGHT:=8.0}"
+: "${SEESTAR_MAG_BRIGHT:=6.0}"
 : "${SEESTAR_MAG_FAINT:=16.5}"
 : "${SEESTAR_MAX_MAGERR:=0.5}"
 : "${SEESTAR_SATUR_LEVEL:=65000}"
@@ -200,8 +208,8 @@ WORKDIR=$(vastrealpath "$SEESTAR_WORKDIR")
 
 # Remove the analysis products of any previous run in this working directory,
 # so a band that gets skipped in the current run cannot silently pick up stale
-# calibration files (the channel images, plate-solve logs and the cached APASS
-# query are kept)
+# calibration files (the channel images, plate-solve logs and the cached
+# catalog query are kept)
 rm -f "$WORKDIR"/calib_* "$WORKDIR"/fitdata_* "$WORKDIR"/param_* "$WORKDIR"/aperture_curve_* "$WORKDIR"/sample_* "$WORKDIR"/matched_* "$WORKDIR"/det_* "$WORKDIR"/target_ladder_* "$WORKDIR"/colorterms.txt "$WORKDIR"/*.png 2>/dev/null
 
 echo "###############################################################"
@@ -294,7 +302,7 @@ for CHANNEL_NAME in R G B ;do
 done
 
 # If the header did not provide the image scale, derive it from the plate
-# solution: everything downstream (APASS search radius, isolation radius,
+# solution: everything downstream (catalog search radius, isolation radius,
 # arcsec aperture sizes) depends on it
 if [ -z "$SCALE_ARCSEC_PIX" ];then
  CORNER1_RADEC=$("${VAST_PATH}"lib/bin/xy2sky -j -d "$WCS_IMAGE_G" 1 1 | head -n1)
@@ -422,10 +430,18 @@ done
 # det_*.sky columns: 1 RA 2 Dec 3 X 4 Y 5 FLAGS 6 FWHM 7..6+N mags 7+N..6+2N magerrs
 
 #################################
-# Query APASS DR9 around the field center
+# Query Gaia DR3 synthetic photometry (GSPC, VizieR I/360/syntphot) around
+# the field center. This is the ONLY calibration catalog: its Johnson B, V
+# and Cousins R magnitudes (synthesized from the BP/RP spectra and
+# standardized to the JKC system) are homogeneous from G ~ 4 to G ~ 17.65,
+# covering the bright and the faint end alike - unlike APASS DR9, which is
+# saturated brighter than V ~ 10 (verified on the 2026-08-28 test frame:
+# APASS, Tycho-2 and Gaia synthetic V agree to 0.04 mag in zero point, and
+# the bright-end residual trend of the G channel is the same against all
+# three, i.e. instrumental).
 #################################
 echo " "
-echo "### Querying APASS DR9 (VizieR II/336) ###"
+echo "### Querying Gaia DR3 synthetic photometry (GSPC, VizieR I/360) ###"
 CENTER_XY_X=$(echo "$NAXIS1_BIN" | awk '{printf "%.1f",($1+1.0)/2.0}')
 CENTER_XY_Y=$(echo "$NAXIS2_BIN" | awk '{printf "%.1f",($1+1.0)/2.0}')
 CENTER_RADEC=$("${VAST_PATH}"lib/bin/xy2sky -j -d "$WCS_IMAGE_G" "$CENTER_XY_X" "$CENTER_XY_Y" | head -n1)
@@ -435,80 +451,102 @@ CENTER_HMS=$("${VAST_PATH}"lib/deg2hms "$CENTER_RA_DEG" "$CENTER_DEC_DEG")
 SEARCH_RADIUS_ARCMIN=$(echo "$SCALE_ARCSEC_PIX $NAXIS1_BIN $NAXIS2_BIN" | awk '{printf "%.0f", 0.5*sqrt(($2*$1)^2+($3*$1)^2)/60.0 + 2.0}')
 echo "Field center: $CENTER_HMS ($CENTER_RA_DEG $CENTER_DEC_DEG), search radius $SEARCH_RADIUS_ARCMIN arcmin"
 
-APASS_RAW="$WORKDIR/apass_raw.tsv"
-if [ -s "$APASS_RAW" ];then
- echo "Re-using the cached APASS query result $APASS_RAW"
-else
- VIZIER_SITE=$("${VAST_PATH}"lib/choose_vizier_mirror.sh APASS 2>/dev/null)
+# Pick a VizieR mirror only when a query is actually needed (the catalog
+# download is cached in the working directory)
+VIZIER_SITE=""
+ensure_vizier_site() {
  if [ -z "$VIZIER_SITE" ];then
-  VIZIER_SITE="vizier.cds.unistra.fr"
+  VIZIER_SITE=$("${VAST_PATH}"lib/choose_vizier_mirror.sh APASS 2>/dev/null)
+  if [ -z "$VIZIER_SITE" ];then
+   VIZIER_SITE="vizier.cds.unistra.fr"
+  fi
+  echo "VizieR mirror: $VIZIER_SITE"
+  TIMEOUT_COMMAND=$("${VAST_PATH}"lib/find_timeout_command.sh 2>/dev/null)
  fi
- echo "VizieR mirror: $VIZIER_SITE"
- TIMEOUT_COMMAND=$("${VAST_PATH}"lib/find_timeout_command.sh 2>/dev/null)
+}
+
+GAIA_SYNTH_RAW="$WORKDIR/gaia_synth_raw.tsv"
+if [ -s "$GAIA_SYNTH_RAW" ];then
+ echo "Re-using the cached Gaia DR3 synthetic photometry query result $GAIA_SYNTH_RAW"
+else
+ ensure_vizier_site
  # Download to a temporary file first so an interrupted or timed-out query
  # cannot poison the cache with a truncated catalog
  # shellcheck disable=SC2086
- $TIMEOUT_COMMAND 300 "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=tsv -source=II/336/apass9 -out.max=100000 -out="RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,g'mag,e_g'mag,r'mag,e_r'mag,i'mag,e_i'mag" Vmag="${SEESTAR_MAG_BRIGHT}..${SEESTAR_MAG_FAINT}" -sort=Vmag -c="$CENTER_HMS" -c.rm="$SEARCH_RADIUS_ARCMIN" > "$APASS_RAW.tmp" 2> "$WORKDIR/vizquery.log"
+ $TIMEOUT_COMMAND 300 "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=tsv -source=I/360/syntphot -out.max=200000 -out="RA_ICRS,DE_ICRS,Bmag,FB,e_FB,Vmag,FV,e_FV,Rmag,FR,e_FR" Vmag="$(echo "$SEESTAR_MAG_BRIGHT" | awk '{print $1-1.0}')..$(echo "$SEESTAR_MAG_FAINT" | awk '{print $1+0.5}')" -c="$CENTER_HMS" -c.rm="$SEARCH_RADIUS_ARCMIN" > "$GAIA_SYNTH_RAW.tmp" 2> "$WORKDIR/vizquery_gaia_synth.log"
  VIZQUERY_EXIT_CODE=$?
- if [ $VIZQUERY_EXIT_CODE -ne 0 ] || [ ! -s "$APASS_RAW.tmp" ];then
-  rm -f "$APASS_RAW.tmp"
-  echo "ERROR: the APASS VizieR query failed (exit code $VIZQUERY_EXIT_CODE) -- see $WORKDIR/vizquery.log" >&2
+ if [ $VIZQUERY_EXIT_CODE -ne 0 ] || [ ! -s "$GAIA_SYNTH_RAW.tmp" ];then
+  rm -f "$GAIA_SYNTH_RAW.tmp"
+  echo "ERROR: the Gaia DR3 synthetic photometry VizieR query failed (exit code $VIZQUERY_EXIT_CODE) -- see $WORKDIR/vizquery_gaia_synth.log" >&2
   exit 1
  fi
- mv -f "$APASS_RAW.tmp" "$APASS_RAW"
+ mv -f "$GAIA_SYNTH_RAW.tmp" "$GAIA_SYNTH_RAW"
 fi
 
-# Parse the tab-separated VizieR output into a clean whitespace-separated table.
-# Missing values become 99. Rc and its error are derived from r' and i' via
-# the Lupton (2005) transformation Rc = r' - 0.2936*(r'-i') - 0.1439.
+# Parse the tab-separated VizieR output into a clean whitespace-separated
+# table: RA Dec B eB V eV R eR. Missing values become 99. Positions are ICRS
+# epoch 2016.0 without proper motions: the ~10 yr drift to the observation
+# epoch is negligible for the cross-matching except for rare
+# high-proper-motion stars. Magnitude errors are derived from the synthetic
+# flux errors as 1.0857*e_F/F.
 awk -F'\t' '
- function num(v) { gsub(/ /,"",v); if (v=="" || v !~ /^[-+]?[0-9.]+$/) return 99; return v+0 }
+ function num(v) { gsub(/ /,"",v); if (v=="" || v !~ /^[-+]?[0-9.eE-]+$/) return 99; return v+0 }
+ function magerr(f, ef) { if (f==99 || ef==99 || f<=0) return 0.03; e= 1.0857*ef/f; if (e<0.01) e=0.01; return e }
  {
   if ($0 ~ /^#/) next
   if ($1 !~ /^[ ]*[0-9]/) next
-  if (NF < 12) next
+  if (NF < 11) next
   ra=num($1); dec=num($2)
-  if (ra==99) next
-  b=num($3); eb=num($4); v=num($5); ev=num($6); g=num($7); eg=num($8); r=num($9); er=num($10); i=num($11); ei=num($12)
-  rc=99; erc=99
-  if (r<90 && i<90) {
-   rc= r - 0.2936*(r-i) - 0.1439
-   # error propagation: Rc = 0.7064*r + 0.2936*i - 0.1439,
-   # plus the 0.0072 mag intrinsic scatter of the Lupton transformation
-   if (er<90 && ei<90) erc= sqrt((0.7064*er)^2 + (0.2936*ei)^2 + 0.0072^2)
-  }
-  printf "%.7f %.7f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n", ra, dec, b, eb, v, ev, g, eg, r, er, i, ei, rc, erc
- }' "$APASS_RAW" > "$WORKDIR/apass_clean.txt"
-N_APASS=$(wc -l < "$WORKDIR/apass_clean.txt")
-echo "APASS stars in the field: $N_APASS"
-if [ "$N_APASS" -lt 10 ];then
- echo "ERROR: too few APASS stars -- VizieR query failed? See $WORKDIR/vizquery.log and $APASS_RAW (delete $APASS_RAW to force a fresh query)" >&2
+  if (ra==99 || dec==99) next
+  b=num($3); v=num($6); r=num($9)
+  if (v>90) next
+  eb= (b<90) ? magerr(num($4), num($5)) : 99
+  ev= magerr(num($7), num($8))
+  er= (r<90) ? magerr(num($10), num($11)) : 99
+  printf "%.7f %.7f %.3f %.3f %.3f %.3f %.3f %.3f\n", ra, dec, b, eb, v, ev, r, er
+ }' "$GAIA_SYNTH_RAW" > "$WORKDIR/catalog_clean.txt"
+N_CATALOG=$(wc -l < "$WORKDIR/catalog_clean.txt")
+echo "Gaia DR3 synthetic photometry stars in the field: $N_CATALOG"
+if [ "$N_CATALOG" -lt 10 ];then
+ echo "ERROR: too few catalog stars -- VizieR query failed? See $WORKDIR/vizquery_gaia_synth.log and $GAIA_SYNTH_RAW (delete $GAIA_SYNTH_RAW to force a fresh query)" >&2
  exit 1
 fi
 
-# Nearest-neighbor distance (arcsec) between APASS stars for the isolation filter
+# Nearest-relevant-neighbor distance (arcsec) between catalog stars for the
+# isolation filter. Since the Gaia catalog is deep, a neighbor is counted
+# only when it is no more than 4 V magnitudes fainter than the star itself
+# (a fainter one contributes negligible flux to the aperture). Stars are
+# binned by declination to keep the search fast on this large catalog.
 awk '
- { ra[NR]=$1; dec[NR]=$2; line[NR]=$0 }
+ { ra[NR]=$1; dec[NR]=$2; v[NR]=$5; line[NR]=$0; b=int($2*100); blist[b]=blist[b]" "NR }
  END {
   d2r= 3.14159265358979/180.0
   for (j=1;j<=NR;j++) {
    best= 1e30; cd= cos(dec[j]*d2r)
-   for (k=1;k<=NR;k++) {
-    if (k==j) continue
-    dx= (ra[k]-ra[j])*cd; dy= dec[k]-dec[j]
-    d2= dx*dx+dy*dy
-    if (d2<best) best=d2
+   b0= int(dec[j]*100)
+   for (bb=b0-2;bb<=b0+2;bb++) {
+    if (!(bb in blist)) continue
+    n=split(blist[bb],idx," ")
+    for (m=1;m<=n;m++) {
+     k=idx[m]
+     if (k==j) continue
+     if (v[k] > v[j]+4.0) continue
+     dx= (ra[k]-ra[j])*cd; dy= dec[k]-dec[j]
+     d2= dx*dx+dy*dy
+     if (d2<best) best=d2
+    }
    }
-   printf "%s %.2f\n", line[j], sqrt(best)*3600.0
+   nn= (best<1e29) ? sqrt(best)*3600.0 : 999.0
+   printf "%s %.2f\n", line[j], nn
   }
- }' "$WORKDIR/apass_clean.txt" > "$WORKDIR/apass_nn.txt"
-# apass_nn.txt columns: 1 RA 2 Dec 3 B 4 eB 5 V 6 eV 7 g 8 eg 9 r 10 er 11 i 12 ei 13 Rc 14 eRc 15 nn_arcsec
+ }' "$WORKDIR/catalog_clean.txt" > "$WORKDIR/catalog_nn.txt"
+# catalog_nn.txt columns: 1 RA 2 Dec 3 B 4 eB 5 V 6 eV 7 R 8 eR 9 nn_arcsec
 
 #################################
-# Cross-match APASS with the detections in each channel
+# Cross-match the catalog with the detections in each channel
 #################################
 echo " "
-echo "### Cross-matching APASS with the detections ###"
+echo "### Cross-matching the catalog with the detections ###"
 for CHANNEL_NAME in R G B ;do
  awk -v mr="$SEESTAR_MATCH_RADIUS_ARCSEC" '
   NR==FNR { dra[FNR]=$1; ddec[FNR]=$2; dline[FNR]=$0; nd=FNR; next }
@@ -528,17 +566,17 @@ for CHANNEL_NAME in R G B ;do
     for (i=3;i<=n;i++) printf " %s", df[i]
     printf "\n"
    }
-  }' "$WORKDIR/det_$CHANNEL_NAME.sky" "$WORKDIR/apass_nn.txt" > "$WORKDIR/matched_$CHANNEL_NAME.txt"
- echo "$CHANNEL_NAME channel: $(wc -l < "$WORKDIR/matched_$CHANNEL_NAME.txt") APASS stars matched within $SEESTAR_MATCH_RADIUS_ARCSEC arcsec"
+  }' "$WORKDIR/det_$CHANNEL_NAME.sky" "$WORKDIR/catalog_nn.txt" > "$WORKDIR/matched_$CHANNEL_NAME.txt"
+ echo "$CHANNEL_NAME channel: $(wc -l < "$WORKDIR/matched_$CHANNEL_NAME.txt") catalog stars matched within $SEESTAR_MATCH_RADIUS_ARCSEC arcsec"
 done
-# matched_*.txt columns: 1-15 as apass_nn, 16 sep_arcsec, 17 X 18 Y 19 FLAGS 20 FWHM, 21..20+N mags, 21+N..20+2N magerrs
+# matched_*.txt columns: 1-9 as catalog_nn, 10 sep_arcsec, 11 X 12 Y 13 FLAGS 14 FWHM, 15..14+N mags, 15+N..14+2N magerrs
 
 #################################
 # Select the calibration star sample (common for all apertures):
 #  - clean SExtractor FLAGS
 #  - valid measurement in EVERY aperture
 #  - away from the frame edges
-#  - no APASS neighbor within the isolation radius
+#  - no catalog neighbor (at most 4 mag fainter) within the isolation radius
 #################################
 ISOLATION_RADIUS_ARCSEC=$(echo "$APMAX $SCALE_ARCSEC_PIX" | awk '{printf "%.1f", 0.5*$1*$2 + 5.0}')
 EDGE_MARGIN_PIX=$(echo "$APMAX" | awk '{printf "%.0f", 0.5*$1 + 3.0}')
@@ -546,18 +584,24 @@ echo " "
 echo "### Selecting calibration stars (isolation radius $ISOLATION_RADIUS_ARCSEC arcsec, edge margin $EDGE_MARGIN_PIX pix, max mag err $SEESTAR_MAX_MAGERR) ###"
 
 # band definitions: channel : band name : catalog mag column : catalog err column
-# The channels are calibrated following the AAVSO tricolor (TB/TG/TR)
-# convention: blue vs Johnson B, green vs Johnson V, red vs Cousins Rc
-# comparison-star magnitudes. Rc is derived from APASS r',i' via the
-# Lupton (2005) transformation because APASS DR9 has no direct Rc column.
-# NOTE: empirically the red channel of an IR-cut-filtered one-shot-color
-# camera is a CLOSER match to Sloan r' than to Cousins Rc (Seestar S50,
-# 2026-08-30: color term -0.045 vs -0.215 mag per mag of B-V, calibration
-# scatter 0.100 vs 0.125 mag) because the IR-cut filter removes the
-# 700-800 nm tail that distinguishes Rc from r'. Rc is used nevertheless,
-# as the AAVSO recommends R-band comparison magnitudes for TR photometry;
-# to explore an r' calibration, add "R:rmag:9:10" back to the list below.
-BAND_DEFINITIONS="B:B:3:4 G:V:5:6 R:Rc:13:14"
+# All three channels are calibrated against Gaia DR3 synthetic photometry
+# (GSPC, JKC system), following the AAVSO tricolor (TB/TG/TR) convention of
+# blue vs Johnson B, green vs Johnson V, red vs Cousins R comparison-star
+# magnitudes.
+# NOTE on the red channel: empirically the red channel of an
+# IR-cut-filtered one-shot-color camera is a CLOSER match to Sloan r' than
+# to Cousins Rc (Seestar S50, 2026-08-30: color term -0.045 vs -0.215 mag
+# per mag of B-V) because the IR-cut filter removes the 700-800 nm tail
+# that distinguishes Rc from r'. Cousins R is used nevertheless, as the
+# AAVSO recommends R-band comparison magnitudes for TR photometry; Gaia
+# synthetic SDSS r is available in I/360/syntphot (rmag,Fr,e_Fr) should an
+# r' calibration be wanted.
+# NOTE on the bright end: APASS DR9 (the previous calibration catalog) is
+# saturated brighter than V ~ 10; cross-checks against Tycho-2 and Gaia
+# synthetic V on the 2026-08-28 test frame showed all three zero points
+# agree to 0.04 mag and the bright-end residual trend of the G channel is
+# instrumental (star wings), not a catalog artifact.
+BAND_DEFINITIONS="B:GaiaB:3:4 G:GaiaV:5:6 R:GaiaR:7:8"
 
 for BAND_DEFINITION in $BAND_DEFINITIONS ;do
  CHANNEL_NAME="${BAND_DEFINITION%%:*}"
@@ -569,25 +613,25 @@ for BAND_DEFINITION in $BAND_DEFINITIONS ;do
  awk -v naper="$NAPER" -v catcol="$CATALOG_MAG_COLUMN" -v iso="$ISOLATION_RADIUS_ARCSEC" \
      -v margin="$EDGE_MARGIN_PIX" -v nx="$NAXIS1_BIN" -v ny="$NAXIS2_BIN" -v maxerr="$SEESTAR_MAX_MAGERR" '
   {
-   if ($19 != 0) next                     # SExtractor FLAGS
+   if ($13 != 0) next                     # SExtractor FLAGS
    if ($(catcol) > 90) next               # no catalog magnitude in this band
-   if ($15 < iso) next                    # APASS neighbor too close
-   if ($17 < margin || $17 > nx-margin) next
-   if ($18 < margin || $18 > ny-margin) next
-   if ($20 < 0.5 || $20 > 10.0) next      # FWHM sanity
+   if ($9 < iso) next                     # catalog neighbor too close
+   if ($11 < margin || $11 > nx-margin) next
+   if ($12 < margin || $12 > ny-margin) next
+   if ($14 < 0.5 || $14 > 10.0) next      # FWHM sanity
    good=1
    for (i=1;i<=naper;i++) {
-    if ($(20+i) > 90) good=0
-    if ($(20+naper+i) > maxerr) good=0
+    if ($(14+i) > 90) good=0
+    if ($(14+naper+i) > maxerr) good=0
    }
    if (good) print
   }' "$WORKDIR/matched_$CHANNEL_NAME.txt" > "$WORKDIR/sample_${CHANNEL_NAME}_${BAND_NAME}.txt"
  echo "$CHANNEL_NAME channel vs $BAND_NAME: $(wc -l < "$WORKDIR/sample_${CHANNEL_NAME}_${BAND_NAME}.txt") calibration stars"
- # An APASS error of exactly 0.000 is the catalog's own bad-photometry
- # signature (single observation or bright-end saturation, common at V<10)
+ # A catalog error of exactly 0.000 would flag suspect photometry
+ # (never expected from the flux-derived Gaia synthetic errors)
  N_ZERO_CATALOG_ERR=$(awk -v ec=$((CATALOG_MAG_COLUMN+1)) '$(ec)==0 {n++} END{print n+0}' "$WORKDIR/sample_${CHANNEL_NAME}_${BAND_NAME}.txt")
  if [ "$N_ZERO_CATALOG_ERR" -gt 0 ];then
-  echo "WARNING: $N_ZERO_CATALOG_ERR of them have APASS error 0.000 in this band (bright-end saturation or single-observation photometry in APASS DR9)"
+  echo "WARNING: $N_ZERO_CATALOG_ERR of them have catalog error 0.000 in this band"
  fi
 done
 
@@ -615,40 +659,77 @@ for BAND_DEFINITION in $BAND_DEFINITIONS ;do
 
  echo " "
  echo "$CHANNEL_NAME channel vs $BAND_NAME ($N_SAMPLE stars):"
- printf "%12s %14s %8s %12s %12s\n" "aper[pix]" "aper[arcsec]" "Nstars" "ZP[mag]" "scatter[mag]"
+ printf "%12s %14s %8s %12s %12s %12s %12s\n" "aper[pix]" "aper[arcsec]" "Nstars" "ZP[mag]" "scatter[mag]" "detrend[mag]" "trend_pp[mag]"
  APERTURE_INDEX=0
  for APERTURE_DIAMETER in $APERTURE_LIST_SPACE ;do
   APERTURE_INDEX=$((APERTURE_INDEX+1))
   CALIB_FILE="$WORKDIR/calib_${CHANNEL_NAME}_${BAND_NAME}_ap${APERTURE_INDEX}.txt"
   awk -v naper="$NAPER" -v ai="$APERTURE_INDEX" -v catcol="$CATALOG_MAG_COLUMN" \
-   '{printf "%.4f %.3f %.4f\n", $(20+ai), $(catcol), $(20+naper+ai)}' "$SAMPLE_FILE" > "$CALIB_FILE"
+   '{printf "%.4f %.3f %.4f\n", $(14+ai), $(catcol), $(14+naper+ai)}' "$SAMPLE_FILE" > "$CALIB_FILE"
   FIT_OUTPUT=$(cd "$WORKDIR" && "${VAST_PATH}"lib/fit_zeropoint "$CALIB_FILE" 2>/dev/null)
   ZERO_POINT=$(echo "$FIT_OUTPUT" | awk '{print $3}')
   if [ -z "$ZERO_POINT" ];then
    echo "WARNING: zero-point fit failed for $CHANNEL_NAME $BAND_NAME aperture $APERTURE_DIAMETER"
    continue
   fi
-  # Robust scatter of the residuals: 1.4826*MAD around the fitted zero point
+  # Calibration quality is quantified as a PAIR of numbers:
+  #  - the DETRENDED robust scatter: 1.4826*MAD of the residuals about a
+  #    running-median trend of residual vs catalog magnitude (11-point
+  #    window). This is the star-to-star precision the aperture actually
+  #    controls, free of the faint-majority bias of a plain global scatter.
+  #  - the TREND AMPLITUDE: peak-to-peak span of that running median, i.e.
+  #    the magnitude-dependent calibration bias (mostly bright-star wing
+  #    losses), reported separately because it is a smooth correctable
+  #    function rather than random noise.
+  # The plain global 1.4826*MAD is kept for reference.
   STATS=$(awk -v zp="$ZERO_POINT" '
-   { r[NR]= $2-$1-zp }
+   function median_of(a, n,  j,k,t) {
+    for (j=1;j<n;j++) for (k=j+1;k<=n;k++) if (a[k]<a[j]) {t=a[j];a[j]=a[k];a[k]=t}
+    return (n%2==1) ? a[(n+1)/2] : 0.5*(a[n/2]+a[n/2+1])
+   }
+   { r[NR]= $2-$1-zp; cm[NR]= $2 }
    END {
     n=NR
-    # median of residuals
+    if (n<1) exit
+    # plain robust scatter about the median residual
     for (j=1;j<=n;j++) s[j]=r[j]
-    for (j=1;j<n;j++) for (k=j+1;k<=n;k++) if (s[k]<s[j]) {t=s[j];s[j]=s[k];s[k]=t}
-    med= (n%2==1) ? s[(n+1)/2] : 0.5*(s[n/2]+s[n/2+1])
-    for (j=1;j<=n;j++) { d[j]= r[j]-med; if (d[j]<0) d[j]=-d[j] }
-    for (j=1;j<n;j++) for (k=j+1;k<=n;k++) if (d[k]<d[j]) {t=d[j];d[j]=d[k];d[k]=t}
-    mad= (n%2==1) ? d[(n+1)/2] : 0.5*(d[n/2]+d[n/2+1])
-    printf "%d %.4f", n, 1.4826*mad
+    med= median_of(s, n)
+    for (j=1;j<=n;j++) d[j]= (r[j]>med) ? r[j]-med : med-r[j]
+    mad= median_of(d, n)
+    # running-median trend of residual vs catalog magnitude
+    for (j=1;j<=n;j++) idx[j]=j
+    for (j=1;j<n;j++) for (k=j+1;k<=n;k++) if (cm[idx[k]]<cm[idx[j]]) {t=idx[j];idx[j]=idx[k];idx[k]=t}
+    half= 5
+    if (n<11) half= int((n-1)/2)
+    tmin= 1e30; tmax= -1e30
+    for (j=1;j<=n;j++) {
+     lo= j-half; hi= j+half
+     if (lo<1) lo=1
+     if (hi>n) hi=n
+     m=0
+     for (k=lo;k<=hi;k++) { m++; w[m]= r[idx[k]] }
+     tr= median_of(w, m)
+     trend[idx[j]]= tr
+     if (tr<tmin) tmin=tr
+     if (tr>tmax) tmax=tr
+    }
+    # robust scatter of the detrended residuals
+    for (j=1;j<=n;j++) s2[j]= r[j]-trend[j]
+    med2= median_of(s2, n)
+    for (j=1;j<=n;j++) { v= r[j]-trend[j]; d2[j]= (v>med2) ? v-med2 : med2-v }
+    mad2= median_of(d2, n)
+    printf "%d %.4f %.4f %.4f", n, 1.4826*mad, 1.4826*mad2, tmax-tmin
    }' "$CALIB_FILE")
   N_USED=$(echo "$STATS" | awk '{print $1}')
   SCATTER=$(echo "$STATS" | awk '{print $2}')
+  SCATTER_DETRENDED=$(echo "$STATS" | awk '{print $3}')
+  TREND_AMPLITUDE=$(echo "$STATS" | awk '{print $4}')
   APERTURE_ARCSEC=$(echo "$APERTURE_DIAMETER $SCALE_ARCSEC_PIX" | awk '{printf "%.2f", $1*$2}')
-  printf "%12s %14s %8d %12.4f %12.4f\n" "$APERTURE_DIAMETER" "$APERTURE_ARCSEC" "$N_USED" "$ZERO_POINT" "$SCATTER"
-  echo "$APERTURE_DIAMETER $APERTURE_ARCSEC $N_USED $ZERO_POINT $SCATTER" >> "$CURVE_FILE"
+  printf "%12s %14s %8d %12.4f %12.4f %12.4f %12.4f\n" "$APERTURE_DIAMETER" "$APERTURE_ARCSEC" "$N_USED" "$ZERO_POINT" "$SCATTER" "$SCATTER_DETRENDED" "$TREND_AMPLITUDE"
+  echo "$APERTURE_DIAMETER $APERTURE_ARCSEC $N_USED $ZERO_POINT $SCATTER $SCATTER_DETRENDED $TREND_AMPLITUDE" >> "$CURVE_FILE"
  done
 done
+# aperture_curve_* columns: 1 ap_diam_pix 2 ap_diam_arcsec 3 N 4 ZP 5 global_MAD_scatter 6 detrended_scatter 7 trend_amplitude
 
 #################################
 # Choose the fixed aperture for the free-slope comparison and the target report
@@ -656,7 +737,7 @@ done
 if [ -n "$SEESTAR_FIXED_APERTURE" ];then
  FIXED_APERTURE="$SEESTAR_FIXED_APERTURE"
 else
- FIXED_APERTURE=$(awk 'BEGIN{best=1e30} {if ($5<best){best=$5; a=$1}} END{print a}' "$WORKDIR/aperture_curve_G_V.txt" 2>/dev/null)
+ FIXED_APERTURE=$(awk 'BEGIN{best=1e30} {if ($6<best){best=$6; a=$1}} END{print a}' "$WORKDIR/aperture_curve_G_GaiaV.txt" 2>/dev/null)
  if [ -z "$FIXED_APERTURE" ];then
   # fall back to the middle of the aperture list
   FIXED_APERTURE=$(echo "$APERTURE_LIST_SPACE" | awk '{print $(int((NF+1)/2))}')
@@ -671,8 +752,9 @@ fi
 FIXED_APERTURE_ARCSEC=$(echo "$FIXED_APERTURE $SCALE_ARCSEC_PIX" | awk '{printf "%.2f", $1*$2}')
 echo " "
 echo "### Fixed aperture diameter for the free-slope comparison: $FIXED_APERTURE pix = $FIXED_APERTURE_ARCSEC arcsec ###"
-echo "Note: scatter differences between neighboring apertures are comparable to the MAD-estimator uncertainty at these star counts;"
-echo "      treat the minimum as a plateau rather than a sharp optimum, and expect the per-channel optimum to differ slightly."
+echo "Note: the fixed aperture is chosen by the smallest DETRENDED G-channel calibration scatter (star-to-star scatter"
+echo "      about a running-median residual-vs-magnitude trend); the trend_pp column quantifies the magnitude-dependent"
+echo "      calibration bias separately. Differences between neighboring apertures are comparable to the estimator noise."
 
 # The large aperture offered to bright targets whose wings spill out of the
 # fixed aperture (empirically, on the Seestar S50 test frame the bright-star
@@ -774,9 +856,14 @@ for BAND_DEFINITION in $BAND_DEFINITIONS ;do
  printf "%14s %10d | ZP=%8.4f s=%6.4f | slope=%7.4f+/-%6.4f s=%6.4f | slope=%7.4f ZP=%8.4f s=%6.4f\n" \
   "${CHANNEL_NAME}/${BAND_NAME}" "$N_SAMPLE" "$ZP_C" "$SCATTER_ZP" "$ROBUST_B" "$SLOPE_STDERR" "$SCATTER_ROBUST" "$LINEAR_B" "$LINEAR_C" "$SCATTER_LINEAR"
 
- # store for later use
+ # store for later use; the target error bar uses the DETRENDED scatter at
+ # the fixed aperture (the trend is a separate systematic, not random noise)
+ DETRENDED_AT_FIXED=$(awk -v a="$FIXED_APERTURE" '$1==a {print $6; exit}' "$WORKDIR/aperture_curve_${CHANNEL_NAME}_${BAND_NAME}.txt" 2>/dev/null)
+ if [ -z "$DETRENDED_AT_FIXED" ];then
+  DETRENDED_AT_FIXED="$SCATTER_ZP"
+ fi
  eval "ZP_${CHANNEL_NAME}_${BAND_NAME}=\$ZP_C"
- eval "SCATTER_${CHANNEL_NAME}_${BAND_NAME}=\$SCATTER_ZP"
+ eval "SCATTER_${CHANNEL_NAME}_${BAND_NAME}=\$DETRENDED_AT_FIXED"
  eval "ROBUSTB_${CHANNEL_NAME}_${BAND_NAME}=\$ROBUST_B"
  eval "ROBUSTC_${CHANNEL_NAME}_${BAND_NAME}=\$ROBUST_C"
 
@@ -785,7 +872,7 @@ for BAND_DEFINITION in $BAND_DEFINITIONS ;do
      -v zpc="$ZP_C" -v rb="$ROBUST_B" -v rc="$ROBUST_C" '
   {
    bv= ($3<90 && $5<90) ? $3-$5 : 99
-   inst= $(20+ai); cat= $(catcol); err= $(20+naper+ai)
+   inst= $(14+ai); cat= $(catcol); err= $(14+naper+ai)
    printf "%.4f %.3f %.4f %.4f %.4f %.3f\n", inst, cat, err, cat-inst-zpc, cat-rb*inst-rc, bv
   }' "$WORKDIR/sample_${CHANNEL_NAME}_${BAND_NAME}.txt" > "$WORKDIR/fitdata_${CHANNEL_NAME}_${BAND_NAME}.txt"
 done
@@ -794,7 +881,7 @@ done
 # Color-term diagnostics: residual of the ZP-only calibration vs B-V color
 #################################
 echo " "
-echo "### Color terms: ZP-only residual (catalog - instrumental - ZP) vs APASS B-V ###"
+echo "### Color terms: ZP-only residual (catalog - instrumental - ZP) vs catalog B-V ###"
 for BAND_DEFINITION in $BAND_DEFINITIONS ;do
  CHANNEL_NAME="${BAND_DEFINITION%%:*}"
  REST="${BAND_DEFINITION#*:}"
@@ -857,15 +944,15 @@ echo " "
 echo "### Bayer R/B channel assignment check ###"
 awk -v naper="$NAPER" -v ai="$FIXED_APERTURE_INDEX" '
  function key(r,d) { return sprintf("%.5f_%.5f", r, d) }
- FILENAME ~ /matched_B\.txt$/ { if ($19==0 && $(20+ai)<90) binst[key($1,$2)]=$(20+ai); next }
- FILENAME ~ /matched_R\.txt$/ { if ($19==0 && $(20+ai)<90) rinst[key($1,$2)]=$(20+ai); next }
+ FILENAME ~ /matched_B\.txt$/ { if ($13==0 && $(14+ai)<90) binst[key($1,$2)]=$(14+ai); next }
+ FILENAME ~ /matched_R\.txt$/ { if ($13==0 && $(14+ai)<90) rinst[key($1,$2)]=$(14+ai); next }
  {
-  if ($19!=0 || $(20+ai)>90) next
+  if ($13!=0 || $(14+ai)>90) next
   if ($3>90 || $5>90) next
   k= key($1,$2)
   bv= $3-$5
-  if (k in binst) { nb++; bx[nb]=bv; by[nb]= binst[k]-$(20+ai) }
-  if (k in rinst) { nr++; rx[nr]=bv; ry[nr]= rinst[k]-$(20+ai) }
+  if (k in binst) { nb++; bx[nb]=bv; by[nb]= binst[k]-$(14+ai) }
+  if (k in rinst) { nr++; rx[nr]=bv; ry[nr]= rinst[k]-$(14+ai) }
  }
  END {
   if (nb>=5) {
@@ -903,10 +990,10 @@ if command -v gnuplot > /dev/null 2>&1 ;then
   echo "set ylabel 'zero point [mag]'"
   echo "set key top right"
   echo "set output '$WORKDIR/aperture_zeropoint.png'"
-  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:4 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:4 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:4 w lp pt 7 t 'R channel vs Rc'"
-  echo "set ylabel 'calibration scatter 1.48*MAD [mag]'"
+  echo "plot '$WORKDIR/aperture_curve_B_GaiaB.txt' u 2:4 w lp pt 7 t 'B channel vs Gaia B', '$WORKDIR/aperture_curve_G_GaiaV.txt' u 2:4 w lp pt 7 t 'G channel vs Gaia V', '$WORKDIR/aperture_curve_R_GaiaR.txt' u 2:4 w lp pt 7 t 'R channel vs Gaia R'"
+  echo "set ylabel 'detrended calibration scatter 1.48*MAD [mag]'"
   echo "set output '$WORKDIR/aperture_scatter.png'"
-  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:5 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:5 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:5 w lp pt 7 t 'R channel vs Rc'"
+  echo "plot '$WORKDIR/aperture_curve_B_GaiaB.txt' u 2:6 w lp pt 7 t 'B channel vs Gaia B', '$WORKDIR/aperture_curve_G_GaiaV.txt' u 2:6 w lp pt 7 t 'G channel vs Gaia V', '$WORKDIR/aperture_curve_R_GaiaR.txt' u 2:6 w lp pt 7 t 'R channel vs Gaia R'"
   for BAND_DEFINITION in $BAND_DEFINITIONS ;do
    CHANNEL_NAME="${BAND_DEFINITION%%:*}"
    REST="${BAND_DEFINITION#*:}"
@@ -918,11 +1005,21 @@ if command -v gnuplot > /dev/null 2>&1 ;then
    eval ZP_VALUE=\$ZP_${CHANNEL_NAME}_${BAND_NAME}
    eval RB_VALUE=\$ROBUSTB_${CHANNEL_NAME}_${BAND_NAME}
    eval RC_VALUE=\$ROBUSTC_${CHANNEL_NAME}_${BAND_NAME}
+   # Magnitude-magnitude plots are drawn square with the SAME range along
+   # both axes (the larger of the two data spans, 10 percent padding), so
+   # a slope-1 relation always runs at 45 degrees
+   MAGMAG_RANGES=$(awk 'NR==1{xmin=$1;xmax=$1;ymin=$2;ymax=$2} {if($1<xmin)xmin=$1; if($1>xmax)xmax=$1; if($2<ymin)ymin=$2; if($2>ymax)ymax=$2} END{xs=xmax-xmin; ys=ymax-ymin; s=(xs>ys?xs:ys)*1.1; if(s<=0)s=1; xm=(xmin+xmax)/2; ym=(ymin+ymax)/2; printf "%.3f %.3f %.3f %.3f", xm-s/2, xm+s/2, ym-s/2, ym+s/2}' "$FITDATA_FILE")
+   echo "set size square"
+   echo "set xrange [$(echo "$MAGMAG_RANGES" | awk '{print $1":"$2}')]"
+   echo "set yrange [$(echo "$MAGMAG_RANGES" | awk '{print $3":"$4}')]"
    echo "set xlabel 'instrumental ${CHANNEL_NAME}-channel magnitude (aperture diameter $FIXED_APERTURE pix)'"
-   echo "set ylabel 'APASS $BAND_NAME magnitude'"
+   echo "set ylabel 'catalog $BAND_NAME magnitude'"
    echo "set output '$WORKDIR/calibration_${CHANNEL_NAME}_${BAND_NAME}.png'"
    echo "plot '$FITDATA_FILE' u 1:2 pt 7 ps 0.6 t 'calibration stars', x+$ZP_VALUE t 'zero-point fit (slope 1)', $RB_VALUE*x+$RC_VALUE t 'robust linear fit'"
-   echo "set xlabel 'APASS B-V [mag]'"
+   echo "set size nosquare"
+   echo "set xrange [*:*]"
+   echo "set yrange [*:*]"
+   echo "set xlabel 'catalog B-V [mag]'"
    echo "set ylabel 'ZP-only calibration residual [mag]'"
    echo "set output '$WORKDIR/residual_color_${CHANNEL_NAME}_${BAND_NAME}.png'"
    echo "plot '$FITDATA_FILE' u (\$6<90?\$6:1/0):4 pt 7 ps 0.6 t '${CHANNEL_NAME} vs ${BAND_NAME}', 0 lc 'black' dt 2 notitle"
@@ -1070,7 +1167,7 @@ if [ "$TARGET_MODE" != "none" ];then
   CURVE_FILE="$WORKDIR/aperture_curve_${CHANNEL_NAME}_${BAND_NAME}.txt"
   echo "               aperture ladder (diameters; each aperture calibrated with its own zero point):"
   for APERTURE_DIAMETER in $APERTURE_LIST_SPACE ;do
-   ZP_SCATTER_K=$(awk -v a="$APERTURE_DIAMETER" '$1==a {print $4" "$5; exit}' "$CURVE_FILE" 2>/dev/null)
+   ZP_SCATTER_K=$(awk -v a="$APERTURE_DIAMETER" '$1==a {print $4" "$6; exit}' "$CURVE_FILE" 2>/dev/null)
    if [ -z "$ZP_SCATTER_K" ];then
     continue
    fi
@@ -1085,7 +1182,7 @@ if [ "$TARGET_MODE" != "none" ];then
     awk -v s="$SCALE_ARCSEC_PIX" '{printf "                 ap %4s pix (%5.1f arcsec): instr %9.4f +- %.4f   cal %8.4f +- %.4f\n", $1, $1*s, $4, $5, $4+$2, sqrt($5*$5+$3*$3)}'
    echo "$APERTURE_DIAMETER $ZP_SCATTER_K $INSTRUMENTAL_MAG_K $INSTRUMENTAL_ERR_K" >> "$LADDER_FILE"
   done
-  # ladder file columns: 1 aperture_diameter 2 ZP 3 calib_scatter 4 instmag 5 instmagerr
+  # ladder file columns: 1 aperture_diameter 2 ZP 3 detrended_calib_scatter 4 instmag 5 instmagerr
 
   # remember the G-channel pixel position for the aperture selection below
   if [ "$CHANNEL_NAME" = "G" ];then
@@ -1102,7 +1199,7 @@ if [ "$TARGET_MODE" != "none" ];then
  # aperture is vetoed when another G detection sits within it.
  CHOSEN_APERTURE="$FIXED_APERTURE"
  SELECTION_REASON="no significant wing excess in G, fixed aperture kept"
- G_LADDER_FILE="$WORKDIR/target_ladder_G_V.txt"
+ G_LADDER_FILE="$WORKDIR/target_ladder_G_GaiaV.txt"
  if [ ! -s "$G_LADDER_FILE" ] || [ -z "$TARGET_X_G" ];then
   SELECTION_REASON="no G-channel measurement available, fixed aperture used"
  elif [ -n "$BRIGHT_APERTURE" ];then
@@ -1166,10 +1263,12 @@ if [ "$TARGET_MODE" != "none" ];then
  echo "      aperture is used only when the target shows a significant wing flux excess in G and no neighbor"
  echo "      detection falls inside it; each aperture is calibrated with its own zero point per band, so"
  echo "      switching apertures between targets keeps the magnitudes on a consistent scale."
- echo "Note: the slope-cal column is a diagnostic only: slope != 1 usually reflects catalog bright-end"
- echo "      systematics and faint-end selection bias, not detector nonlinearity."
- echo "Note: the quoted error combines the instrumental error and the field calibration scatter;"
- echo "      an APASS zero-point systematic of ~0.03 mag is not included."
+ echo "Note: the slope-cal column is a diagnostic only: slope != 1 usually reflects bright-end aperture"
+ echo "      losses (star wings) and faint-end selection bias rather than detector nonlinearity"
+ echo "      (verified against APASS, Tycho-2 and Gaia synthetic V on the 2026-08-28 test frame)."
+ echo "Note: the quoted error combines the instrumental error and the DETRENDED field calibration scatter;"
+ echo "      the magnitude-dependent calibration trend (trend_pp in the aperture tables, mostly bright-star wing"
+ echo "      losses) and a catalog zero-point systematic (~0.02-0.03 mag) are not included in the error bar."
  echo "###############################################################"
 fi
 
