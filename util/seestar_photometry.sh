@@ -8,12 +8,15 @@
 # (util/ccd/split_bayer), each channel image is plate-solved independently
 # (util/wcs_image_calibration.sh), SExtractor measures every star through a
 # ladder of aperture diameters, the field is cross-matched with the APASS DR9
-# catalog (VizieR II/336) and the following calibration relations are explored:
+# catalog (VizieR II/336) and the following calibration relations are explored,
+# matching the AAVSO tricolor (TB/TG/TR) convention of calibrating the Bayer
+# channels against Johnson B, Johnson V and Cousins Rc comparison magnitudes:
 #   - B  channel instrumental mags vs APASS Johnson B
 #   - G  channel instrumental mags vs APASS Johnson V
-#   - R  channel instrumental mags vs APASS Sloan r' AND vs Cousins Rc derived
-#     from APASS r',i' via the Lupton (2005) transformation
-#     Rc = r' - 0.2936*(r'-i') - 0.1439
+#   - R  channel instrumental mags vs Cousins Rc derived from APASS r',i'
+#     via the Lupton (2005) transformation Rc = r' - 0.2936*(r'-i') - 0.1439
+#     (see the note at BAND_DEFINITIONS below on why Sloan r' would actually
+#     fit the red channel better when an IR-cut filter is present)
 # For every aperture a zero-point-only fit (lib/fit_zeropoint: slope fixed to 1,
 # median for n>=11) is performed; for the chosen fixed aperture, fits with a free
 # slope (lib/fit_robust_linear and weighted lib/fit_linear) are compared with the
@@ -539,7 +542,18 @@ echo " "
 echo "### Selecting calibration stars (isolation radius $ISOLATION_RADIUS_ARCSEC arcsec, edge margin $EDGE_MARGIN_PIX pix, max mag err $SEESTAR_MAX_MAGERR) ###"
 
 # band definitions: channel : band name : catalog mag column : catalog err column
-BAND_DEFINITIONS="B:B:3:4 G:V:5:6 R:rmag:9:10 R:Rc:13:14"
+# The channels are calibrated following the AAVSO tricolor (TB/TG/TR)
+# convention: blue vs Johnson B, green vs Johnson V, red vs Cousins Rc
+# comparison-star magnitudes. Rc is derived from APASS r',i' via the
+# Lupton (2005) transformation because APASS DR9 has no direct Rc column.
+# NOTE: empirically the red channel of an IR-cut-filtered one-shot-color
+# camera is a CLOSER match to Sloan r' than to Cousins Rc (Seestar S50,
+# 2026-08-30: color term -0.045 vs -0.215 mag per mag of B-V, calibration
+# scatter 0.100 vs 0.125 mag) because the IR-cut filter removes the
+# 700-800 nm tail that distinguishes Rc from r'. Rc is used nevertheless,
+# as the AAVSO recommends R-band comparison magnitudes for TR photometry;
+# to explore an r' calibration, add "R:rmag:9:10" back to the list below.
+BAND_DEFINITIONS="B:B:3:4 G:V:5:6 R:Rc:13:14"
 
 for BAND_DEFINITION in $BAND_DEFINITIONS ;do
  CHANNEL_NAME="${BAND_DEFINITION%%:*}"
@@ -856,32 +870,6 @@ awk -v naper="$NAPER" -v ai="$FIXED_APERTURE_INDEX" '
  }' "$WORKDIR/matched_B.txt" "$WORKDIR/matched_R.txt" "$WORKDIR/matched_G.txt"
 
 #################################
-# Which red calibration is better: Sloan r' or derived Cousins Rc?
-#################################
-echo " "
-echo "### Red channel: r' vs Rc comparison at the fixed aperture ###"
-SCATTER_R_RMAG=""
-SCATTER_R_RC=""
-eval SCATTER_R_RMAG=\$SCATTER_R_rmag
-eval SCATTER_R_RC=\$SCATTER_R_Rc
-if [ -n "$SCATTER_R_RMAG" ] && [ -n "$SCATTER_R_RC" ];then
- echo "Calibration scatter vs Sloan r': $SCATTER_R_RMAG mag"
- echo "Calibration scatter vs Cousins Rc (from r',i'): $SCATTER_R_RC mag"
- echo "Note: the derived Rc inherits the noise of both r' and i' plus the transformation scatter, which inflates"
- echo "      its calibration scatter; the color term is the fairer criterion of which bandpass matches the channel."
- RED_COLOR_TERM_RMAG=$(awk '$1=="R" && $2=="rmag" {print $3}' "$WORKDIR/colorterms.txt" 2>/dev/null)
- RED_COLOR_TERM_RC=$(awk '$1=="R" && $2=="Rc" {print $3}' "$WORKDIR/colorterms.txt" 2>/dev/null)
- if [ -n "$RED_COLOR_TERM_RMAG" ] && [ -n "$RED_COLOR_TERM_RC" ];then
-  echo "Color terms: $RED_COLOR_TERM_RMAG mag per mag of B-V vs r', $RED_COLOR_TERM_RC vs Rc"
-  echo "$RED_COLOR_TERM_RMAG $RED_COLOR_TERM_RC" | awk '{
-   a=$1; if(a<0)a=-a; b=$2; if(b<0)b=-b
-   if (a < b) printf "The R channel bandpass is closer to Sloan r (color term %+.3f vs %+.3f for Rc) - calibrate the red channel against r\n", $1, $2
-   else printf "The R channel bandpass is closer to Cousins Rc (color term %+.3f vs %+.3f for r) - calibrate the red channel against Rc\n", $2, $1
-  }'
- fi
-fi
-
-#################################
 # Diagnostic plots (no background grids)
 #################################
 if command -v gnuplot > /dev/null 2>&1 ;then
@@ -894,10 +882,10 @@ if command -v gnuplot > /dev/null 2>&1 ;then
   echo "set ylabel 'zero point [mag]'"
   echo "set key top right"
   echo "set output '$WORKDIR/aperture_zeropoint.png'"
-  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:4 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:4 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_rmag.txt' u 2:4 w lp pt 7 t 'R channel vs r', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:4 w lp pt 7 t 'R channel vs Rc'"
+  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:4 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:4 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:4 w lp pt 7 t 'R channel vs Rc'"
   echo "set ylabel 'calibration scatter 1.48*MAD [mag]'"
   echo "set output '$WORKDIR/aperture_scatter.png'"
-  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:5 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:5 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_rmag.txt' u 2:5 w lp pt 7 t 'R channel vs r', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:5 w lp pt 7 t 'R channel vs Rc'"
+  echo "plot '$WORKDIR/aperture_curve_B_B.txt' u 2:5 w lp pt 7 t 'B channel vs B', '$WORKDIR/aperture_curve_G_V.txt' u 2:5 w lp pt 7 t 'G channel vs V', '$WORKDIR/aperture_curve_R_Rc.txt' u 2:5 w lp pt 7 t 'R channel vs Rc'"
   for BAND_DEFINITION in $BAND_DEFINITIONS ;do
    CHANNEL_NAME="${BAND_DEFINITION%%:*}"
    REST="${BAND_DEFINITION#*:}"
