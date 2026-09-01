@@ -515,6 +515,44 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    fi
    exit 1
   fi
+  # Size sanity check for plain (non-gzip) catalog downloads. The .gz
+  # catalogs are protected by the gzip integrity test in
+  # attempt_download_with_resume(), but a plain-file download can be
+  # truncated with curl still reporting success: the live ASAS-SN endpoint
+  # streams the CSV with no Content-Length, so a stream that ends early but
+  # cleanly looks like a complete download (this replaced a good asassnv.csv
+  # with a truncated one on ariel in Aug 2026). Refuse to replace an
+  # existing catalog with a new file smaller than 80 percent of the old one:
+  # real catalog releases never shrink that much. To override a false alarm
+  # (a genuinely much smaller new catalog version), remove the old file and
+  # re-run the update.
+  case "$DOWNLOAD_TARGET_FILE" in
+   *.gz)
+    ;;
+   *)
+    if [ -s "$FILE_TO_UPDATE" ];then
+     OLD_CATALOG_SIZE_BYTES=`stat -c '%s' "$FILE_TO_UPDATE" 2>/dev/null`
+     if [ -z "$OLD_CATALOG_SIZE_BYTES" ];then
+      OLD_CATALOG_SIZE_BYTES=`stat -f '%z' "$FILE_TO_UPDATE" 2>/dev/null`
+     fi
+     NEW_CATALOG_SIZE_BYTES=`stat -c '%s' "$TMP_OUTPUT" 2>/dev/null`
+     if [ -z "$NEW_CATALOG_SIZE_BYTES" ];then
+      NEW_CATALOG_SIZE_BYTES=`stat -f '%z' "$TMP_OUTPUT" 2>/dev/null`
+     fi
+     # If the sizes cannot be determined, skip the check (fail open)
+     if [ -n "$OLD_CATALOG_SIZE_BYTES" ] && [ -n "$NEW_CATALOG_SIZE_BYTES" ];then
+      if ! echo "$NEW_CATALOG_SIZE_BYTES $OLD_CATALOG_SIZE_BYTES" | awk '{exit !($1+0 >= 0.8*$2)}' ;then
+       echo "ERROR: the downloaded $TMP_OUTPUT ($NEW_CATALOG_SIZE_BYTES bytes) is suspiciously smaller than the current $FILE_TO_UPDATE ($OLD_CATALOG_SIZE_BYTES bytes) - looks like a truncated download, keeping the old file (remove $FILE_TO_UPDATE and re-run the update to override)" >&2
+       rm -f "$TMP_OUTPUT"
+       if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+        continue
+       fi
+       exit 1
+      fi
+     fi
+    fi
+    ;;
+  esac
   mv "$TMP_OUTPUT" "$FILE_TO_UPDATE" && touch "$FILE_TO_UPDATE" && echo "Moved $TMP_OUTPUT to $FILE_TO_UPDATE" >&2
   echo "Successfully updated $FILE_TO_UPDATE" >&2
  fi
