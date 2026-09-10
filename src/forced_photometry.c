@@ -10,6 +10,9 @@
 // If label is missing, the 1-based line index is used.
 //
 // Reads calib.txt_param, bad_region.lst, and default.sex from current directory.
+// Environment: FORCED_PHOTOMETRY_EDGE_MARGIN_PIX (optional) = minimum distance
+// in pixels from any frame edge for a position to be measured; closer
+// positions get the 'edge' status (default 0: only the annulus must fit).
 // Output (single, stdout): cal_mag mag_err status
 // Output (list,   stdout): label center_x center_y cal_mag mag_err status
 //
@@ -36,6 +39,13 @@
 // From exclude_region.c (linked as exclude_region.o)
 int read_bad_CCD_regions_lst( double *X1, double *Y1, double *X2, double *Y2, int *N );
 int exclude_region( double *X1, double *Y1, double *X2, double *Y2, int N, double X, double Y, double aperture );
+
+// Minimum distance (pixels) from any frame edge for a position to be
+// measured, on top of the annulus-must-fit rule. Set in main() from the
+// FORCED_PHOTOMETRY_EDGE_MARGIN_PIX environment variable; the source
+// monitoring callers use 100 so that sources near the frame boundary (worst
+// distortion and vignetting) get the 'edge' status instead of a measurement.
+static double forced_photometry_edge_margin_pix= 0.0;
 
 // ------------------------------------------------------------------
 // Buie/DAOPHOT exact circle-rectangle overlap (scalar C port)
@@ -229,6 +239,7 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
                                     char *status_str_out ) {
 
  double aperture_radius, annulus_inner, annulus_outer;
+ double edge_margin;
  int ix, iy;
  int ix_min, ix_max, iy_min, iy_max;
  double weight, pix_val;
@@ -251,25 +262,33 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
  aperture_radius= aperture_diameter / 2.0;
  annulus_inner= 4.0 * aperture_radius;
  annulus_outer= 10.0 * aperture_radius;
+ // The position must be at least edge_margin pixels away from every frame
+ // edge: the annulus must fit, and the caller may demand more through
+ // FORCED_PHOTOMETRY_EDGE_MARGIN_PIX (see forced_photometry_edge_margin_pix)
+ edge_margin= annulus_outer;
+ if ( forced_photometry_edge_margin_pix > edge_margin ) {
+  edge_margin= forced_photometry_edge_margin_pix;
+ }
 
  *cal_mag_out= 99.0;
  *mag_err_out= 99.0;
 
  fprintf( stderr, "Forced photometry: center=(%.2f, %.2f) aperture=%.1f\n",
           center_x, center_y, aperture_diameter );
- fprintf( stderr, "Annulus: inner=%.2f outer=%.2f\n", annulus_inner, annulus_outer );
+ fprintf( stderr, "Annulus: inner=%.2f outer=%.2f edge margin=%.2f\n", annulus_inner, annulus_outer, edge_margin );
 
  // ------------------------------------------------------------------
- // Edge check: entire annulus must fit within image
+ // Edge check: the position must be edge_margin pixels away from the
+ // frame edges (at least the annulus must fit within the image)
  // ------------------------------------------------------------------
- if ( center_x - annulus_outer < 1.0 || center_x + annulus_outer > (double)naxis1 ||
-      center_y - annulus_outer < 1.0 || center_y + annulus_outer > (double)naxis2 ) {
+ if ( center_x - edge_margin < 1.0 || center_x + edge_margin > (double)naxis1 ||
+      center_y - edge_margin < 1.0 || center_y + edge_margin > (double)naxis2 ) {
   // The per-position skip conditions in this function (edge, bad region,
   // NaN, saturation, too few annulus pixels) are expected data conditions,
   // not failures: they are reported with the status token the callers act
   // upon, and the stderr notes must not say 'ERROR' - the word would
   // propagate into processing logs that are scanned for real errors.
-  fprintf( stderr, "NOTE: aperture/annulus extends beyond image edge - skipping the measurement\n" );
+  fprintf( stderr, "NOTE: the position is closer than %.1f pix to the image edge (aperture/annulus or the configured margin) - skipping the measurement\n", edge_margin );
   strncpy( status_str_out, "edge", 31 );
   status_str_out[31]= '\0';
   return;
@@ -610,6 +629,9 @@ int main( int argc, char **argv ) {
  // Optional calibration-file path (NULL = default "calib.txt_param")
  const char *calib_filename;
 
+ // Optional edge margin from the environment
+ char *edge_margin_env;
+
  // ------------------------------------------------------------------
  // Parse arguments
  // ------------------------------------------------------------------
@@ -621,6 +643,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "  aperture_diameter: in pixels\n" );
   fprintf( stderr, "  listfile: one line per position \"center_x center_y [label]\"\n" );
   fprintf( stderr, "  --calib PATH: read calibration parameters from PATH instead of calib.txt_param\n" );
+  fprintf( stderr, "  environment FORCED_PHOTOMETRY_EDGE_MARGIN_PIX=N: report positions closer than N pix to a frame edge as 'edge'\n" );
   return 1;
  }
 
@@ -653,6 +676,17 @@ int main( int argc, char **argv ) {
  if ( aperture_diameter <= 0.0 ) {
   fprintf( stderr, "ERROR: aperture_diameter must be positive\n" );
   return 1;
+ }
+
+ // Optional minimum distance from the frame edges (pixels); a negative or
+ // unparsable value means the default (only the annulus must fit)
+ edge_margin_env= getenv( "FORCED_PHOTOMETRY_EDGE_MARGIN_PIX" );
+ if ( edge_margin_env != NULL && edge_margin_env[0] != '\0' ) {
+  forced_photometry_edge_margin_pix= atof( edge_margin_env );
+  if ( forced_photometry_edge_margin_pix < 0.0 ) {
+   forced_photometry_edge_margin_pix= 0.0;
+  }
+  fprintf( stderr, "Edge margin: %.1f pix (FORCED_PHOTOMETRY_EDGE_MARGIN_PIX)\n", forced_photometry_edge_margin_pix );
  }
 
  aperture_radius= aperture_diameter / 2.0;

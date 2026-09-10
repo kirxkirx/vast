@@ -4051,6 +4051,12 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
  elif [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
   echo "Source monitoring: measuring positions from $MONITORING_POSITIONS_FILE" | tee -a transient_factory_test31.txt
   MONITORING_RAW_OUTPUT="transient_report/monitoring_raw_measurements.txt"
+  # Minimum distance (pixels) from any frame edge for a monitored position to
+  # be measured: util/forced_photometry reports closer positions as 'edge'
+  # (never published, never re-measured). Override per camera block or from
+  # the environment; the unmw backfill applies the same default.
+  : "${MONITORING_EDGE_MARGIN_PIX:=100}"
+  echo "Source monitoring: positions closer than $MONITORING_EDGE_MARGIN_PIX pix to a frame edge are recorded as edge" | tee -a transient_factory_test31.txt
   # Map PHOTOMETRIC_CALIBRATION to the single-image calibration method
   # (same mapping as the forced-photometry reference filter above)
   MONITORING_CALIB_METHOD=""
@@ -4165,7 +4171,7 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     fi
     # Measure all monitored positions on this image in one list-mode call
     MONITORING_MEAS_TMP="monitoring_meas$$.tmp"
-    util/forced_photometry "$MONITORING_WCS" --list "$MONITORING_PIXLIST" "$MONITORING_AP" --calib calib.txt_param_monitoring > "$MONITORING_MEAS_TMP" 2>> transient_factory_test31.txt
+    FORCED_PHOTOMETRY_EDGE_MARGIN_PIX="$MONITORING_EDGE_MARGIN_PIX" util/forced_photometry "$MONITORING_WCS" --list "$MONITORING_PIXLIST" "$MONITORING_AP" --calib calib.txt_param_monitoring > "$MONITORING_MEAS_TMP" 2>> transient_factory_test31.txt
     # Apply the airmass zero-point term (clamped to the fitted airmass span)
     if [ "$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $1}')" = "OK" ] && [ -s "$MONITORING_MEAS_TMP" ];then
      MONITORING_AMASS_TMP="monitoring_amass$$.tmp"
