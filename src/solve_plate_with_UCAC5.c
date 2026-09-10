@@ -348,7 +348,8 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
  }
  if ( approximate_field_of_view_arcmin < 60.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP; // * approximate_field_of_view_arcmin / 60.0;
-  catalog_search_parameters->brightest_mag= 10.0;                            // let's keep it low becasue of the photographic plates
+  //catalog_search_parameters->brightest_mag= 10.0;                            // let's keep it low becasue of the photographic plates
+  catalog_search_parameters->brightest_mag= 6.0;
   catalog_search_parameters->faintest_mag= 17.0;
  }
  if ( approximate_field_of_view_arcmin < 30.0 ) {
@@ -5959,7 +5960,13 @@ static void sip_refit_delete_key( fitsfile *fptr, char *keyname ) {
 // Returns 0 if the refit was applied (header updated, star positions in
 // stars[] recomputed from the new solution), 1 otherwise (original solution
 // kept untouched).
-static int refit_sip_from_catalog_matches( char *fits_image_filename, struct detected_star *stars, int N ) {
+// accept_if_not_worse: 0 = the refit must beat the solution it replaces by
+// the usual margin (SIP_REFIT_MIN_IMPROVEMENT_FACTOR); 1 = the post-re-match
+// pass, accepted whenever it is not worse (the pairs it is fitted to are the
+// corrected ones, so a fit with more anchors is preferred at equal quality).
+// rms_after_out (may be NULL): the robust RMS of the applied solution in
+// arcsec, -1.0 when the refit was not applied.
+static int refit_sip_from_catalog_matches( char *fits_image_filename, struct detected_star *stars, int N, int accept_if_not_worse, double *rms_after_out ) {
  double *mx, *my, *mra, *mdec, *sep_arcsec, *sep_before;
  int *keep;
  double crval1, crval2, crpix1, crpix2;
@@ -6029,6 +6036,11 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  int best_deg;
  double best_rms_after;
  double original_crval1, original_crval2;
+ int refit_rejected;
+
+ if ( rms_after_out != NULL ) {
+  *rms_after_out= -1.0;
+ }
 
  if ( NULL != getenv( "VAST_DISABLE_UCAC5_SIP_REFIT" ) ) {
   fprintf( stderr, "SIP_REFIT: disabled via VAST_DISABLE_UCAC5_SIP_REFIT\n" );
@@ -6554,8 +6566,28 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
 
  fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec worst_quadrant_rms_before=%.3lf worst_quadrant_rms_after=%.3lf\n", deg, nmatched, rms_before, rms_before_corrected, rms_after, worstq_baseline, worstq_after );
 
- if ( rms_after <= 0.0 || worstq_after <= 0.0 || worstq_baseline <= 0.0 || worstq_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * worstq_baseline ) {
-  fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-quadrant baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
+ refit_rejected= 0;
+ if ( rms_after <= 0.0 || worstq_after <= 0.0 || worstq_baseline <= 0.0 ) {
+  refit_rejected= 1;
+ } else {
+  if ( accept_if_not_worse == 1 ) {
+   // post-re-match pass: taken over unless it is worse than the solution
+   // it would replace
+   if ( worstq_after > worstq_baseline ) {
+    refit_rejected= 1;
+   }
+  } else {
+   if ( worstq_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * worstq_baseline ) {
+    refit_rejected= 1;
+   }
+  }
+ }
+ if ( refit_rejected == 1 ) {
+  if ( accept_if_not_worse == 1 ) {
+   fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs is worse than the solution it would replace (worst-quadrant %.3lf vs %.3lf arcsec) - keeping the current solution\n", worstq_after, worstq_baseline );
+  } else {
+   fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-quadrant baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
+  }
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
   gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
@@ -6788,7 +6820,66 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+ if ( rms_after_out != NULL ) {
+  *rms_after_out= rms_after;
+ }
  return 0;
+}
+
+// Catalog-match fields of a detected star, saved before the post-refit
+// catalog re-match so a failed re-match can restore the pairs of the initial
+// matching. The corrected-position chains are not touched by the search
+// itself (they change only in correct_measured_positions(), which runs after
+// a successful re-match), and the photometric catalog fields are still unset
+// at that point, so neither needs a backup.
+struct detected_star_match_backup {
+ int matched_with_astrometric_catalog;
+ int matched_with_photometric_catalog;
+ double match_distance_astrometric_catalog_arcsec;
+ double d_ra;
+ double d_dec;
+ double catalog_ra;
+ double catalog_dec;
+ double catalog_ra_original;
+ double catalog_dec_original;
+ double catalog_mag;
+ double catalog_mag_err;
+};
+
+static void save_catalog_match_state( struct detected_star *stars, int N, struct detected_star_match_backup *backup ) {
+ int i;
+ for ( i= 0; i < N; i++ ) {
+  backup[i].matched_with_astrometric_catalog= stars[i].matched_with_astrometric_catalog;
+  backup[i].matched_with_photometric_catalog= stars[i].matched_with_photometric_catalog;
+  backup[i].match_distance_astrometric_catalog_arcsec= stars[i].match_distance_astrometric_catalog_arcsec;
+  backup[i].d_ra= stars[i].d_ra;
+  backup[i].d_dec= stars[i].d_dec;
+  backup[i].catalog_ra= stars[i].catalog_ra;
+  backup[i].catalog_dec= stars[i].catalog_dec;
+  backup[i].catalog_ra_original= stars[i].catalog_ra_original;
+  backup[i].catalog_dec_original= stars[i].catalog_dec_original;
+  backup[i].catalog_mag= stars[i].catalog_mag;
+  backup[i].catalog_mag_err= stars[i].catalog_mag_err;
+ }
+ return;
+}
+
+static void restore_catalog_match_state( struct detected_star *stars, int N, struct detected_star_match_backup *backup ) {
+ int i;
+ for ( i= 0; i < N; i++ ) {
+  stars[i].matched_with_astrometric_catalog= backup[i].matched_with_astrometric_catalog;
+  stars[i].matched_with_photometric_catalog= backup[i].matched_with_photometric_catalog;
+  stars[i].match_distance_astrometric_catalog_arcsec= backup[i].match_distance_astrometric_catalog_arcsec;
+  stars[i].d_ra= backup[i].d_ra;
+  stars[i].d_dec= backup[i].d_dec;
+  stars[i].catalog_ra= backup[i].catalog_ra;
+  stars[i].catalog_dec= backup[i].catalog_dec;
+  stars[i].catalog_ra_original= backup[i].catalog_ra_original;
+  stars[i].catalog_dec_original= backup[i].catalog_dec_original;
+  stars[i].catalog_mag= backup[i].catalog_mag;
+  stars[i].catalog_mag_err= backup[i].catalog_mag_err;
+ }
+ return;
 }
 
 int main( int argc, char **argv ) {
@@ -6819,6 +6910,16 @@ int main( int argc, char **argv ) {
  struct str_catalog_search_parameters catalog_search_parameters;
 
  int solution_iteration;
+
+ // Post-refit catalog re-match
+ int refit_applied;
+ double refit_rms_after_arcsec;
+ double second_refit_rms_after_arcsec;
+ double rematch_radius_deg;
+ double saved_search_radius_deg;
+ int stars_matched_before_rematch, stars_matched_after_rematch;
+ int rematch_ok;
+ struct detected_star_match_backup *match_backup;
 
  FILE *pipe_for_try_to_guess_image_fov;
  char command_string[2 * FILENAME_LENGTH + VAST_PATH_MAX];
@@ -7168,7 +7269,103 @@ int main( int argc, char **argv ) {
  // sub-arcsecond residuals they only add their own fit noise, and this
  // way the quality diagnostic below and all the output catalogs
  // consistently describe the header WCS.
- refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
+ refit_applied= 0;
+ refit_rms_after_arcsec= -1.0;
+ if ( 0 == refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 0, &refit_rms_after_arcsec ) ) {
+  refit_applied= 1;
+ }
+
+ // Post-refit catalog re-match. The pairs the refit was fitted to were
+ // assigned with the pre-refit solution and the wide first-pass search
+ // radius: where that solution was badly off, stars were paired with a
+ // wrong catalog neighbour or not at all, the refit rejected them as
+ // outliers and its polynomial is a mere extrapolation there (and the
+ // wrong pairs still show up in the residual diagnostics). Re-matching
+ // with the refit positions and a radius of a few arcsec assigns the
+ // correct counterparts, so the extrapolated regions become measured ones;
+ // a second refit on the corrected pairs may then improve the solution
+ // (accepted only if it is not worse than the first refit), and the local
+ // position corrections are recomputed on the final solution. A failed
+ // re-match (remote catalog server down, or a collapsed pair count) keeps
+ // the pairs of the initial matching. One cycle only; disable with
+ // VAST_SIP_REFIT_NO_REMATCH.
+ if ( refit_applied == 1 && NULL == getenv( "VAST_SIP_REFIT_NO_REMATCH" ) ) {
+  rematch_radius_deg= 5.0 * refit_rms_after_arcsec / 3600.0;
+  if ( rematch_radius_deg < 3.0 / 3600.0 ) {
+   rematch_radius_deg= 3.0 / 3600.0;
+  }
+  if ( rematch_radius_deg > catalog_search_parameters.search_radius_second_step_deg ) {
+   rematch_radius_deg= catalog_search_parameters.search_radius_second_step_deg;
+  }
+  for ( stars_matched_before_rematch= 0, i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    stars_matched_before_rematch++;
+   }
+  }
+  match_backup= (struct detected_star_match_backup *)malloc( number_of_stars_in_wcs_catalog * sizeof( struct detected_star_match_backup ) );
+  if ( match_backup == NULL ) {
+   fprintf( stderr, "SIP_REFIT: cannot allocate memory for the re-match backup - keeping the pairs from the initial matching\n" );
+  } else {
+   save_catalog_match_state( stars, number_of_stars_in_wcs_catalog, match_backup );
+   fprintf( stderr, "SIP_REFIT: re-matching the catalog with the refit solution (search radius %.1lf arcsec, %d pairs from the initial matching)\n", rematch_radius_deg * 3600.0, stars_matched_before_rematch );
+   for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+    stars[i].matched_with_astrometric_catalog= 0;
+    stars[i].matched_with_photometric_catalog= 0;
+   }
+   saved_search_radius_deg= catalog_search_parameters.search_radius_deg;
+   catalog_search_parameters.search_radius_deg= rematch_radius_deg;
+   rematch_ok= 0;
+   if ( 0 == search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
+    rematch_ok= 1;
+   }
+   catalog_search_parameters.search_radius_deg= saved_search_radius_deg;
+   stars_matched_after_rematch= 0;
+   if ( rematch_ok == 1 ) {
+    for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+     if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+      stars_matched_after_rematch++;
+     }
+    }
+    if ( stars_matched_after_rematch < SIP_REFIT_MIN_MATCHED_STARS || 2 * stars_matched_after_rematch < stars_matched_before_rematch ) {
+     fprintf( stderr, "SIP_REFIT: the re-match found only %d pairs (%d from the initial matching) - keeping the pairs from the initial matching\n", stars_matched_after_rematch, stars_matched_before_rematch );
+     rematch_ok= 0;
+    }
+   } else {
+    fprintf( stderr, "SIP_REFIT: the catalog re-match failed - keeping the pairs from the initial matching\n" );
+   }
+   if ( rematch_ok == 0 ) {
+    restore_catalog_match_state( stars, number_of_stars_in_wcs_catalog, match_backup );
+   } else {
+    fprintf( stderr, "SIP_REFIT: re-match found %d pairs (%d from the initial matching)\n", stars_matched_after_rematch, stars_matched_before_rematch );
+    // The re-match radius never exceeds the second-step radius, so the
+    // outlier removal of the iteration loop above is not needed before
+    // the second refit. That refit is accepted only if it is not worse
+    // than the first one, whose solution the stars carry now.
+    second_refit_rms_after_arcsec= -1.0;
+    if ( 0 != refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 1, &second_refit_rms_after_arcsec ) ) {
+     fprintf( stderr, "SIP_REFIT: the second refit on the re-matched pairs was not applied - keeping the first refit solution\n" );
+    }
+    // Recompute the local position corrections on the final solution
+    // (the same sequence as in the iteration loop above). A failure here
+    // is not fatal: the positions then stay at the refit model.
+    if ( 0 != correct_measured_positions( stars, number_of_stars_in_wcs_catalog, REFERENCE_LOCAL_SOLUTION_RADIUS_DEG, 1, &catalog_search_parameters ) ) {
+     fprintf( stderr, "WARNING: correct_measured_positions() failed after the re-match - the positions stay at the refit model\n" );
+    } else {
+     for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+      if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+       if ( compute_distance_on_sphere( stars[i].catalog_ra, stars[i].catalog_dec, stars[i].corrected_ra_local, stars[i].corrected_dec_local ) > catalog_search_parameters.search_radius_second_step_deg ) {
+        stars[i].matched_with_astrometric_catalog= 0;
+       }
+      }
+     }
+     if ( 0 != correct_measured_positions( stars, number_of_stars_in_wcs_catalog, REFERENCE_LOCAL_SOLUTION_RADIUS_DEG, 0, &catalog_search_parameters ) ) {
+      fprintf( stderr, "WARNING: correct_measured_positions() failed after the re-match - the positions stay at the refit model\n" );
+     }
+    }
+   }
+   free( match_backup );
+  }
+ }
 
  // Pre-local-correction astrometric residual diagnostic. Emits a single
  // "WCS_QUALITY_DIAG: ..." stderr line so downstream pipeline scripts can
