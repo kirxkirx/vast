@@ -385,7 +385,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  # default.sex.telephoto_lens_vTTU is default.sex.telephoto_lens_vSTL with
+  # DETECT_THRESH and ANALYSIS_THRESH lowered from 3.0 to 2.0 - needed to detect
+  # faint transients on bright twilight/bulge frames
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vTTU"
+  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
@@ -475,7 +479,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  # default.sex.telephoto_lens_vTTU is default.sex.telephoto_lens_vSTL with
+  # DETECT_THRESH and ANALYSIS_THRESH lowered from 3.0 to 2.0 - needed to detect
+  # faint transients on bright twilight/bulge frames
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vTTU"
+  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.

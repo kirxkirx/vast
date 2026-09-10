@@ -578,7 +578,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -14773,6 +14773,192 @@ if [ -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
+##### NMW-TexasTech Sgr-04-Q1b1x1 faint nova detection test #####
+# The nova AT 2026abbx at 17:52:06.799 -23:43:20.71 appeared in the galactic
+# bulge field Sgr-04 and reached about 13.1 mag on the 2026-09-07 evening
+# twilight images.  The production transient search missed it twice over:
+#  - on the bright twilight background (sky 8000-15000 ADU, per-pixel rms
+#    150-210) the filtered peak of the nova is only 2.5-3.3 sigma, so with
+#    DETECT_THRESH 3.0 fewer pixels than DETECT_MINAREA passed the threshold
+#    and SExtractor never extracted the object at all;
+#  - even when extracted, its signal-to-noise ratio of 4.88 on the first
+#    second-epoch image was below the old MIN_SNR_TRANSIENT_DETECTION of 5.0,
+#    which is applied to the first second-epoch measurement only.
+# The test pins the two changes that recover it: the NMW-TexasTech cameras
+# now use default.sex.telephoto_lens_vTTU (a copy of
+# default.sex.telephoto_lens_vSTL with DETECT_THRESH and ANALYSIS_THRESH
+# lowered from 3.0 to 2.0) and MIN_SNR_TRANSIENT_DETECTION is 4.5
+# (src/vast_limits.h).  Either change alone is not enough - both are needed
+# for the nova to appear in the candidate list.
+# Download the test dataset if needed
+if [ ! -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
+ cd .. || exit 1
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2" && tar -xvjf NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2 && rm -f NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Sgr-04-Q1b1x1 faint nova detection test "
+ echo -n "NMW-TexasTech Sgr-04-Q1b1x1 faint nova detection test: " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ SGR04NOVA_INPUT_DIR=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test/second_epoch_images
+ SGR04NOVA_WCS_BASELINE=$(cd "$SGR04NOVA_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
+ REFERENCE_IMAGES=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test/reference_images/ run_transient_factory_test31_with_cleanup "$SGR04NOVA_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_EXIT_CODE"
+ fi
+ check_transient_factory_wcs_leak_in_input_dir "$SGR04NOVA_INPUT_DIR" "$SGR04NOVA_WCS_BASELINE"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_REF_WCS_LEAK"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # There SHOULD NOT be a field-matching error message.
+  # Note that the twilight second-epoch images of this test are just above the
+  # soft passing-clouds threshold, so the report legitimately contains an
+  # 'ERROR: passing clouds (SD ratio=...)' line - do not test for 'ERROR' here.
+  grep -q 'ERROR: distance between reference and second-epoch image centers' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_ERROR_MESSAGE_IN_index_html"
+  fi
+  # Processing sanity
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA001"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA002"
+  fi
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_TYCHO2_V"
+  fi
+  # The faint-pass SExtractor settings file for the NMW-TexasTech cameras.
+  # If this check fails, the camera block in transient_factory_test31.sh was
+  # switched back to a config with DETECT_THRESH 3.0 and the nova check below
+  # cannot pass.
+  grep -q 'default.sex.telephoto_lens_vTTU' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_SESETTINGSFILE"
+  fi
+  # Candidate count sanity (baseline 2026-09-10: 68 candidates in this crowded
+  # bulge field with no per-camera exclusion list; the count varies with the
+  # success of the online Gaia/APASS exclusion queries)
+  NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
+  if [ "$NUMBER_OF_CANDIDATES" -lt 25 ] || [ "$NUMBER_OF_CANDIDATES" -gt 180 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NCANDIDATES_$NUMBER_OF_CANDIDATES"
+  fi
+
+  # ----------------------------------------------------------------------
+  # THE CORE CHECK: the nova has to be in the candidate list.
+  # Mean magnitude and position line of the candidate:
+  #                    2026 09 08.0752  2461291.5752  13.12  17:52:06.94 -23:43:20.0
+  # ----------------------------------------------------------------------
+  SGR04NOVA_MEANLINE=$(grep "2026 09 08.075.  2461291\.575.  1[0-9]\...  17:52:0" transient_report/index.html | head -n1)
+  if [ -z "$SGR04NOVA_MEANLINE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NOVA_NOT_FOUND"
+  else
+   # Position: NMW-TexasTech scale is 5.9"/pix, so 12" is about two pixels
+   # (measured offset from the TNS position on 2026-09-10: 2.1")
+   RADECPOSITION_TO_TEST=$(echo "$SGR04NOVA_MEANLINE" | awk '{print $6" "$7}')
+   DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 17:52:06.799 -23:43:20.71 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 12.0 ) print 1 ;else print 0 }')
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_POS_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_POS_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+   # Brightness: measured 13.12 with a 0.27 mag difference between the two
+   # second-epoch images, the band is wide enough to survive a change of the
+   # magnitude calibration
+   SGR04NOVA_MAG=$(echo "$SGR04NOVA_MEANLINE" | awk '{print $5}')
+   TEST=$(echo "$SGR04NOVA_MAG" | awk '{if ( $1 > 12.3 && $1 < 14.0 ) print 1 ;else print 0 }')
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_MAG_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_MAG_OUT_OF_RANGE_$SGR04NOVA_MAG"
+    fi
+   fi
+   # The nova has to be detected at this position on BOTH second-epoch images:
+   # the two 'Discovery image' lines right above the mean magnitude line
+   # 2026-09-07 20:47:45 UT (JD 2461291.57495) and 20:48:32 UT (2461291.57549)
+   SGR04NOVA_CANDIDATE_BLOCK=$(grep -B8 "2026 09 08.075.  2461291\.575.  1[0-9]\...  17:52:0" transient_report/index.html | sed 's:<[^>]*>::g')
+   SGR04NOVA_NUMBER_OF_DETECTIONS=$(echo "$SGR04NOVA_CANDIDATE_BLOCK" | grep -c "Discovery image [12].*17:52:0.\... -23:43:")
+   if [ "$SGR04NOVA_NUMBER_OF_DETECTIONS" -ne 2 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NDETECTIONS_$SGR04NOVA_NUMBER_OF_DETECTIONS"
+   fi
+  fi
+
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NO_index_html"
+ fi
+ # Restore the backup exclusion list if we moved it
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Sgr-04-Q1b1x1 faint nova detection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Sgr-04-Q1b1x1 faint nova detection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
