@@ -1875,6 +1875,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  FIELD_START_UNIXSEC=$(date +%s)
  echo "########### Starting $FIELD ###########" | tee -a transient_factory_test31.txt
 
+ # Remember how long the filtering log is at the start of this field: the
+ # source-monitoring block at the end of the field loop checks only the lines
+ # written after this point, so a processing ERROR raised for this field (and
+ # only this field) blocks the monitoring measurements on its images.
+ MONITORING_FIELD_LOG_LINES_AT_START=$(wc -l 2>/dev/null < transient_factory_test31.txt | awk '{print $1}')
+ if [ -z "$MONITORING_FIELD_LOG_LINES_AT_START" ];then
+  MONITORING_FIELD_LOG_LINES_AT_START=0
+ fi
+
  echo "Processing $FIELD" | tee -a transient_factory_test31.txt
  if [ "$FIELD" == "$PREVIOUS_FIELD" ];then
   echo "Script ERROR! This field has been processed just before!" | tee -a transient_factory_test31.txt | tee -a transient_report/index.html
@@ -4027,7 +4036,19 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
  # (the per-image zero-point calibration is cheap because wcs_*.wcscat already
  # exists). Results go to an ASCII hand-off file next to the report for the
  # unmw ingest. Any failure here is logged and never fatal to the pipeline.
+ # Run-status guard: if the transient search raised any ERROR for this field
+ # (any line containing ERROR written to the filtering log since the field
+ # started - no distinction between fatal and non-fatal conditions, the same
+ # rule that turns the field red in the nightly summary), the monitored
+ # positions are NOT measured on its images. The unmw ingest applies the same
+ # rule to the finished report, which also covers ERRORs raised after this block.
+ MONITORING_FIELD_ERROR_LINE=""
  if [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
+  MONITORING_FIELD_ERROR_LINE=$(tail -n +"$((${MONITORING_FIELD_LOG_LINES_AT_START:-0} + 1))" transient_factory_test31.txt 2>/dev/null | grep 'ERROR' | head -n 1)
+ fi
+ if [ -n "$MONITORING_FIELD_ERROR_LINE" ];then
+  echo "Source monitoring: NOT measuring the monitored positions on the field $FIELD - the transient search raised a processing error: $MONITORING_FIELD_ERROR_LINE" | tee -a transient_factory_test31.txt
+ elif [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
   echo "Source monitoring: measuring positions from $MONITORING_POSITIONS_FILE" | tee -a transient_factory_test31.txt
   MONITORING_RAW_OUTPUT="transient_report/monitoring_raw_measurements.txt"
   # Map PHOTOMETRIC_CALIBRATION to the single-image calibration method
