@@ -45,6 +45,17 @@ SECOND_EPOCH_DIR="$TEST_DATA_DIR/second_epoch_images"
 #   VAST_RUN (vSTL config): 350s
 #   HTML_REPORT (vSTL): 48s (wait -n optimization)
 #   Total runtime: 480s
+# Re-measured 2026-09-10/11 on the same machine while the NMW-TexasTech extra
+# SExtractor pass (default.sex.telephoto_lens_vTTU with DETECT_THRESH 2.0) was
+# being introduced:
+#   two passes, faint pass at DETECT_THRESH 3.0 : 8s + 254s -> 396s total
+#   two passes, faint pass at DETECT_THRESH 2.0 : 8s + 358s -> 564s total
+#   three passes                                : 8s + 255s + 361s -> 860-985s
+# The VaST runs themselves are reproducible to about 1%; the spread in the total
+# is the network-dependent HTML report stage.
+# Gem-03-Q1b1x1 is NOT one of the HIGH_PRIORITY_FIELDS, so it runs the usual TWO
+# passes and the original 480 s baseline applies. The Sgr-04 nova section of
+# util/examples/test_vast.sh covers the three-pass path.
 BASELINE_TOTAL_RUNTIME=480        # total run time
 TIMING_TOLERANCE_FACTOR=2.0       # Allow 2x baseline time
 
@@ -53,6 +64,9 @@ TIMING_TOLERANCE_FACTOR=2.0       # Allow 2x baseline time
 # queries at run time: 2026-07-03 runs give 11 candidates with all 5 online exclusions
 # succeeding, while the original 2026-02 baseline of 15 reflects runs where these
 # exclusions failed (VizieR timeouts). Accept the whole range.
+# 2026-09-11: measured 11 candidates with the two passes this field runs
+# (13 with the extra DETECT_THRESH 2.0 pass, which only the HIGH_PRIORITY_FIELDS
+# get and this field is not one of them).
 BASELINE_TOTAL_CANDIDATES=10
 MAX_ADDITIONAL_CANDIDATES=7       # Allow up to 7 more candidates (see above)
 MAX_UNIDENTIFIED_CANDIDATES=3     # Maximum acceptable unidentified candidates
@@ -859,7 +873,19 @@ fi
 echo -e "\n${BLUE}Checking calib.txt...${NC}\n"
 
 # Check calib.txt line count
-# Baseline: 10460 lines (allow 10% deviation)
+# calib.txt is left behind by the LAST VaST run of the SEXTRACTOR_CONFIG_FILES
+# loop, so this checks the magnitude calibration of that pass only.
+# Baseline history:
+#   10460 lines - two passes, last one default.sex.telephoto_lens_vSTL
+#    9569 lines - the same two-pass configuration measured 2026-09-10
+#    7617 lines - three passes, last one default.sex.telephoto_lens_vTTU
+# This field runs TWO passes (it is not one of the HIGH_PRIORITY_FIELDS), so the
+# last pass is vSTL and the original baseline applies. For the record, the drop
+# seen with the vTTU pass is a property of its DETECT_THRESH 2.0: the lower
+# threshold merges close neighbours into single detection islands, so fewer
+# Tycho-2 stars end up as clean isolated matches.
+# Baseline: 10460 lines (allow 10% deviation - the count also depends on how
+# many stars the online catalog queries return at run time)
 if [ -f calib.txt ]; then
     CALIB_LINES=$(wc -l < calib.txt)
     # Expected range: 9400-11500 (roughly +-10%)

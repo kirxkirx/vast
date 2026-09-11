@@ -14869,18 +14869,32 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_TYCHO2_V"
   fi
-  # The faint-pass SExtractor settings file for the NMW-TexasTech cameras.
-  # If this check fails, the camera block in transient_factory_test31.sh was
-  # switched back to a config with DETECT_THRESH 3.0 and the nova check below
-  # cannot pass.
-  grep -q 'default.sex.telephoto_lens_vTTU' transient_report/index.html
+  # The extra low-threshold SExtractor pass has to have actually RUN on this
+  # field. Sgr-04-Q1b1x1 is one of the HIGH_PRIORITY_FIELDS in
+  # transient_factory_test31.sh, which is what earns it the extra pass; ordinary
+  # fields run two passes only. Anchor the check on the profiling label, which
+  # is written once per pass that really executed - a plain grep for the config
+  # file name would also match the parameter dump at the top of the log.
+  # If this check fails, either the field was dropped from HIGH_PRIORITY_FIELDS
+  # or the extra pass was removed from the camera block, and the nova check
+  # below cannot pass.
+  grep -q 'VAST_RUN_default.sex.telephoto_lens_vTTU' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_SESETTINGSFILE"
   fi
-  # Candidate count sanity (baseline 2026-09-10: 68 candidates in this crowded
-  # bulge field with no per-camera exclusion list; the count varies with the
-  # success of the online Gaia/APASS exclusion queries)
+  # ... and the usual faint pass has to have run as well - the extra pass is run
+  # IN ADDITION to it, never instead of it
+  grep -q 'VAST_RUN_default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NO_VSTL_PASS"
+  fi
+  # Candidate count sanity (baseline 2026-09-11: 77 candidates in this crowded
+  # bulge field with no per-camera exclusion list, running all three passes;
+  # it was 68 when the low-threshold pass replaced the usual faint pass instead
+  # of being added to it. The count varies with the success of the online
+  # Gaia/APASS exclusion queries)
   NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
   if [ "$NUMBER_OF_CANDIDATES" -lt 25 ] || [ "$NUMBER_OF_CANDIDATES" -gt 180 ];then
    TEST_PASSED=0

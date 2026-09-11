@@ -113,10 +113,37 @@ export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 
 # If there are too many candidate transients in the field - something is wrong
 # and we probably don't want to clog the output with many false candidates.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
+# Raised from 40/100 in 2026-09 together with the more sensitive NMW-TexasTech
+# detection settings (default.sex.telephoto_lens_vTTU DETECT_THRESH 2.0 and
+# MIN_SNR_TRANSIENT_DETECTION 4.5) that roughly double the number of candidates
+# on a crowded field. Measured on 600 production fields (2026-09-08..10): with
+# the old 40/100 limits three fields would stop updating their exclusion list,
+# eight would with doubled counts, three again with these values.
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD=80
 # Higher limit when most candidates are already identified (known variable stars etc.)
 # This allows fields with many known objects to still update the exclusion list.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=100
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=200
+# Number of unidentified candidates up to which the higher limit above applies.
+# Keep this in step with the same threshold in the unmw combine_reports.sh gate.
+MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT=19
+
+# The high-priority fields: crowded Galactic Center region fields where a real
+# transient is most likely to hide among the many known variable stars.
+# Two things are done differently for them:
+#  - the candidate-number limits above are lifted, so a crowded field still
+#    updates its exclusion list (see is_high_priority_field below);
+#  - on the cameras that define SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA
+#    (currently the two NMW-TexasTech ones) an extra, more sensitive SExtractor
+#    pass is run on top of the usual ones. That pass roughly doubles the
+#    processing time of a field, which is why it is not run on every field.
+# Field names are matched EXACTLY against the first underscore-separated token
+# of the image file name, e.g. Sgr-04-Q1b1x1. Keep this list in step with the
+# one in the unmw combine_reports.sh; both scripts pick up the same
+# HIGH_PRIORITY_FIELDS if it is exported from local_config.sh.
+# allow HIGH_PRIORITY_FIELDS to be set externally
+if [ -z "$HIGH_PRIORITY_FIELDS" ];then
+ HIGH_PRIORITY_FIELDS="Sco6 Oph-08-Q1b1x1 Oph-08-Q2b1x1 Sco-04-Q1b1x1 Sco-04-Q2b1x1 Sgr-04-Q1b1x1 Sgr-04-Q2b1x1 242"
+fi
 
 # Default values
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=800
@@ -385,12 +412,24 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  # default.sex.telephoto_lens_vTTU is default.sex.telephoto_lens_vSTL with
-  # DETECT_THRESH and ANALYSIS_THRESH lowered from 3.0 to 2.0 - needed to detect
-  # faint transients on bright twilight/bulge frames
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vTTU"
-  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
+  # An extra SExtractor pass, run ONLY on the high-priority fields listed in
+  # HIGH_PRIORITY_FIELDS. default.sex.telephoto_lens_vTTU is
+  # default.sex.telephoto_lens_vSTL with DETECT_THRESH and ANALYSIS_THRESH
+  # lowered from 3.0 to 2.0. It is run IN ADDITION to the usual faint pass,
+  # never instead of it: the lower threshold finds faint transients on bright
+  # twilight/bulge frames (the 2026-09-07 Sgr-04 nova), but in crowded fields
+  # it also MERGES close neighbours into one detection island and the deblender
+  # then loses sources that the 3.0 pass detects cleanly (measured on the
+  # Gem-03 test field: asteroid 243 Ida, 14.0 mag, FLAGS=0 at threshold 3.0,
+  # absent at 2.0). Running both passes keeps what the 3.0 pass finds and adds
+  # what only the 2.0 pass sees, at the cost of roughly doubling the processing
+  # time of the field - which is why it is limited to the high-priority fields.
+  # The extra pass goes LAST so objects found by both are reported with the
+  # cleaner 3.0-pass photometry (the local exclusion list gives the object to
+  # whichever pass finds it first).
+  SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA="default.sex.telephoto_lens_vTTU"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
@@ -479,12 +518,24 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  # default.sex.telephoto_lens_vTTU is default.sex.telephoto_lens_vSTL with
-  # DETECT_THRESH and ANALYSIS_THRESH lowered from 3.0 to 2.0 - needed to detect
-  # faint transients on bright twilight/bulge frames
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vTTU"
-  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
+  # An extra SExtractor pass, run ONLY on the high-priority fields listed in
+  # HIGH_PRIORITY_FIELDS. default.sex.telephoto_lens_vTTU is
+  # default.sex.telephoto_lens_vSTL with DETECT_THRESH and ANALYSIS_THRESH
+  # lowered from 3.0 to 2.0. It is run IN ADDITION to the usual faint pass,
+  # never instead of it: the lower threshold finds faint transients on bright
+  # twilight/bulge frames (the 2026-09-07 Sgr-04 nova), but in crowded fields
+  # it also MERGES close neighbours into one detection island and the deblender
+  # then loses sources that the 3.0 pass detects cleanly (measured on the
+  # Gem-03 test field: asteroid 243 Ida, 14.0 mag, FLAGS=0 at threshold 3.0,
+  # absent at 2.0). Running both passes keeps what the 3.0 pass finds and adds
+  # what only the 2.0 pass sees, at the cost of roughly doubling the processing
+  # time of the field - which is why it is limited to the high-priority fields.
+  # The extra pass goes LAST so objects found by both are reported with the
+  # cleaner 3.0-pass photometry (the local exclusion list gives the object to
+  # whichever pass finds it first).
+  SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA="default.sex.telephoto_lens_vTTU"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
@@ -623,6 +674,30 @@ fi
 
 #################################
 # helper functions
+
+function is_high_priority_field {
+ # Check if the field name provided as the first argument is one of the
+ # high-priority fields listed in HIGH_PRIORITY_FIELDS (see the comment there).
+ # Returns 0 (true) if it is, 1 (false) otherwise.
+ # The comparison is exact - no patterns, no substrings - which matches the way
+ # the field name is derived from the image file name.
+ local field_to_check
+ local known_high_priority_field
+
+ field_to_check="$1"
+
+ if [ -z "$field_to_check" ];then
+  return 1
+ fi
+
+ for known_high_priority_field in $HIGH_PRIORITY_FIELDS ;do
+  if [ "$field_to_check" = "$known_high_priority_field" ];then
+   return 0
+  fi
+ done
+
+ return 1
+}
 
 function is_this_test_run_based_on_input_img_path {
  # Check if the provided path suggests this is a test run
@@ -1426,6 +1501,8 @@ PHOTOMETRIC_CALIBRATION= $PHOTOMETRIC_CALIBRATION
 REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES= $REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS= $SEXTRACTOR_CONFIG_BRIGHTSTARPASS
 SEXTRACTOR_CONFIG_FILES= $SEXTRACTOR_CONFIG_FILES
+SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA= $SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA
+HIGH_PRIORITY_FIELDS= $HIGH_PRIORITY_FIELDS
 STARMATCH_RADIUS_PIX= $STARMATCH_RADIUS_PIX
 SYSREM_ITERATIONS= $SYSREM_ITERATIONS
 TELESCOP= $TELESCOP
@@ -1899,6 +1976,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  PREVIOUS_FIELD="$FIELD"
 
+ # The list of SExtractor passes to run on THIS field. It is rebuilt from
+ # SEXTRACTOR_CONFIG_FILES on every iteration - that unconditional assignment is
+ # also the reset, so nothing can leak from one field into the next no matter
+ # which of the many 'continue' statements below ends the iteration early.
+ # SEXTRACTOR_CONFIG_FILES itself is never modified here: the run-wide parameter
+ # dump above and SEXTRACTOR_CONFIG_BRIGHTSTARPASS both depend on it.
+ SEXTRACTOR_CONFIG_FILES_THIS_FIELD="$SEXTRACTOR_CONFIG_FILES"
+ if [ -n "$SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA" ];then
+  if is_high_priority_field "$FIELD" ;then
+   SEXTRACTOR_CONFIG_FILES_THIS_FIELD="$SEXTRACTOR_CONFIG_FILES $SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA"
+   echo "$FIELD is a high-priority field: running the extra SExtractor pass $SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA in addition to $SEXTRACTOR_CONFIG_FILES" | tee -a transient_factory_test31.txt
+  fi
+ fi
 
  # clean up the local cache
  for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
@@ -2624,7 +2714,10 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  # Make multiple VaST runs with different SExtractor config files
  ### ===> SExtractor config file <===
  #for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
- for SEXTRACTOR_CONFIG_FILE in $SEXTRACTOR_CONFIG_FILES ;do
+ # SEXTRACTOR_CONFIG_FILES_THIS_FIELD is SEXTRACTOR_CONFIG_FILES plus, on the
+ # high-priority fields only, SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA;
+ # it is set at the top of the field loop
+ for SEXTRACTOR_CONFIG_FILE in $SEXTRACTOR_CONFIG_FILES_THIS_FIELD ;do
 
   # make sure nothing is left running from the previous run (in case it ended early with 'continue')
   echo "wait" | tee -a transient_factory_test31.txt
@@ -4332,16 +4425,17 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     ### ===> FIELD NAME HARDCODED HERE <===
     # drop the limit on the number of candidates for the all-important Galactic Center field
     # Use a higher limit if most candidates are already identified (few new ones)
-    if [ "$NUMBER_OF_UNIDENTIFIED_CANDIDATES" -le 9 ];then
+    if [ "$NUMBER_OF_UNIDENTIFIED_CANDIDATES" -le "$MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT" ];then
      EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN
     else
      EFFECTIVE_MAX_CANDIDATES=$MAX_NUMBER_OF_CANDIDATES_PER_FIELD
     fi
-    # Skip the candidate limit for crowded Galactic Center region fields
+    # Skip the candidate limit for the high-priority crowded Galactic Center
+    # region fields listed in HIGH_PRIORITY_FIELDS near the top of this script
     IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD="no"
-    case "$FIELD" in
-     Sco6|Oph-08-Q1b1x1|Oph-08-Q2b1x1|Sco-04-Q1b1x1|Sco-04-Q2b1x1|Sgr-04-Q1b1x1|Sgr-04-Q2b1x1|242) IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD="yes" ;;
-    esac
+    if is_high_priority_field "$FIELD" ;then
+     IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD="yes"
+    fi
     if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $EFFECTIVE_MAX_CANDIDATES ] && [ "$IS_GALACTIC_CENTER_CANDIDATE_LIMIT_EXEMPT_FIELD" != "yes" ] ;then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels, $NUMBER_OF_UNIDENTIFIED_CANDIDATES new), not updating the exclusion list!" | tee -a transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
