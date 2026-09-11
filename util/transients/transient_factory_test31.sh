@@ -2027,12 +2027,37 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  PREVIOUS_FIELD="$FIELD"
 
- # The list of SExtractor passes to run on THIS field. It is rebuilt from
- # SEXTRACTOR_CONFIG_FILES on every iteration - that unconditional assignment is
- # also the reset, so nothing can leak from one field into the next no matter
- # which of the many 'continue' statements below ends the iteration early.
- # SEXTRACTOR_CONFIG_FILES itself is never modified here: the run-wide parameter
- # dump above and SEXTRACTOR_CONFIG_BRIGHTSTARPASS both depend on it.
+ # The list of SExtractor passes to run on THIS field.
+ #
+ # Why an extra PASS rather than simply a lower detection threshold:
+ # the obvious way to find fainter transients would be to lower DETECT_THRESH
+ # in the one faint pass we already run. That does not work. A lower threshold
+ # makes the detection footprint of every source grow, so close neighbours merge
+ # into a single detection island, and the deblender then has to split that
+ # island back into separate sources. Sometimes it cannot, and a source that was
+ # detected cleanly at the higher threshold simply disappears from the catalog.
+ # In other words, lowering the threshold does not only ADD faint detections -
+ # it also LOSES real objects in crowded fields, which for a transient search is
+ # exactly the wrong trade. It was measured on the Gem-03 test field: at
+ # DETECT_THRESH 3.0 the 14.0 mag asteroid 243 Ida is detected cleanly
+ # (FLAGS=0), at 2.0 nothing is detected within 12 pixels of it, even though the
+ # frame as a whole yields 31% MORE detections and its immediate neighbourhood
+ # 40% more.
+ # So the two thresholds are run as INDEPENDENT passes over the same images and
+ # their candidates are merged: the high-threshold pass keeps the objects that
+ # deblending would swallow, the low-threshold pass adds the faint ones that
+ # only it can see (this is how the 2026-09-07 Sgr-04 nova is recovered), and
+ # nothing that either pass finds on its own is lost.
+ # The extra pass roughly doubles the processing time of a field, which is why
+ # it is limited to the high-priority fields - see HIGH_PRIORITY_FIELDS near the
+ # top of this script.
+ #
+ # The list is rebuilt from SEXTRACTOR_CONFIG_FILES on every iteration - that
+ # unconditional assignment is also the reset, so nothing can leak from one field
+ # into the next no matter which of the many 'continue' statements below ends the
+ # iteration early. SEXTRACTOR_CONFIG_FILES itself is never modified here: the
+ # run-wide parameter dump above and SEXTRACTOR_CONFIG_BRIGHTSTARPASS both
+ # depend on it.
  SEXTRACTOR_CONFIG_FILES_THIS_FIELD="$SEXTRACTOR_CONFIG_FILES"
  if [ -n "$SEXTRACTOR_CONFIG_FILES_HIGH_PRIORITY_EXTRA" ];then
   if is_high_priority_field "$FIELD" ;then
