@@ -1132,6 +1132,48 @@ function extract_wcs_quality_field {
  ' transient_factory_test31.txt
 }
 
+# Compare only the two new images' astrometric-star counts in detector
+# quadrants, ignoring residual values and the small inter-image shift.
+# Change is 100 * abs(N2 - N1) / max(N1, N2), with no total-count scaling.
+# Run before WCS retries, on the bright-star pass used for the count review.
+# A large change may indicate passing clouds (or a bad plate solution).
+# Report it through both factory logs, but never abort processing.
+function report_new_image_quadrant_count_changes {
+ local new1="$1" new2="$2"
+ awk -v new1="$new1" -v new2="$new2" '
+  $1 == "WCS_QUALITY_DIAG:" && ($2 == "file=" new1 || $2 == "file=" new2) {
+   image= ($2 == "file=" new1) ? 1 : 2
+   # Use only the latest diagnostic for each image; do not retain fields
+   # from an older line if the latest line is incomplete.
+   for (q=1; q<=4; q++) counts[image,q]=""
+   for (i=3; i<=NF; i++) {
+    if ($i ~ /^n_q[1-4]=[0-9]+$/) {
+     split($i, field, "=")
+     q=substr(field[1], 4)+0
+     counts[image,q]=field[2]
+    }
+   }
+  }
+  END {
+   for (q=1; q<=4; q++) {
+    if (counts[1,q] == "" || counts[2,q] == "") {
+     printf "INFO: astrometric-star count comparison unavailable for q%d (%s vs %s)\n", q, new1, new2
+     continue
+    }
+    a=counts[1,q]+0; b=counts[2,q]+0
+    largest=(a>b ? a : b)
+    difference=(a>b ? a-b : b-a)
+    # Compare before rounding; exactly 20 percent is not a large change.
+    # Both zero means no change; zero versus nonzero means 100 percent.
+    if (largest>0 && 100*difference>20*largest) {
+     printf "ERROR: large change in astrometric-star counts between the two new images (q%d: %d -> %d, %.3f%% > 20%%; %s vs %s) - possible passing clouds or a bad plate solution; continuing processing\n", q, a, b, 100*difference/largest, new1, new2
+    }
+   }
+  }
+ ' transient_factory_test31.txt | tee -a transient_factory_test31.txt transient_factory.log
+ return 0
+}
+
 # Average two numeric values; if only one is present, return it; if both empty,
 # return empty. Used to combine the two reference-image diagnostics.
 function average_two_numbers {
@@ -3947,6 +3989,10 @@ new2=$NEW2_DIAG_NAME sigma_overall=${NEW2_SIGMA:-N/A} worst_q_ratio=${NEW2_RATIO
 reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_AVG:-N/A}
 warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 ###################################" | tee -a transient_factory_test31.txt
+
+    # Non-fatal coverage check on the same initial bright-pass diagnostics.
+    # Do this before retries can append diagnostics for a rejected solution.
+    report_new_image_quadrant_count_changes "$NEW1_DIAG_NAME" "$NEW2_DIAG_NAME"
 
     # Reference-image plate-solution consistency check. The two reference
     # images show the same sky field, so their astrometric residuals must
