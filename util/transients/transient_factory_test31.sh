@@ -1139,6 +1139,15 @@ function extract_wcs_quality_field {
 # A large change may indicate passing clouds (or a bad plate solution).
 # Report it through both factory logs, but never abort processing.
 function report_new_image_quadrant_count_changes {
+ # Disabled by default: a large pointing shift between the two new images
+ # can move stars across quadrant boundaries and mimic a cloud-related change.
+ # Enable only for the two NMW-TTU cameras, whose good pointing keeps the
+ # intended inter-image shifts small enough for this unaligned count check.
+ case "${CAMERA_SETTINGS:-}" in
+  TTUQ1b1x1|TTUQ2b1x1) ;;
+  *) return 0 ;;
+ esac
+
  local new1="$1" new2="$2"
  awk -v new1="$new1" -v new2="$new2" '
   $1 == "WCS_QUALITY_DIAG:" && ($2 == "file=" new1 || $2 == "file=" new2) {

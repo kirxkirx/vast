@@ -60,12 +60,40 @@ check_case() {
  if [ "$expected" = unavailable ]; then
   grep -q 'INFO' stdout.txt || fail 'unavailable counts were not reported as INFO'
  fi
+ if [ "$expected" = disabled ]; then
+  [ "$(wc -l < stdout.txt)" -eq 1 ] || fail 'disabled check produced output'
+ fi
  grep -qx 'existing diagnostic log content' transient_factory_test31.txt || fail 'diagnostic log was overwritten'
  grep -qx 'existing summary log content' transient_factory.log || fail 'summary log was overwritten'
  N_CASES=$((N_CASES + 1))
  echo "PASS: $CASE_NAME"
 }
 
+# A large change must remain silent by default and on non-TTU cameras.
+unset CAMERA_SETTINGS
+start_case camera_unset
+diagnostic "$FIRST" 100 100 100 100
+diagnostic "$SECOND" 0 0 0 0
+check_case disabled
+
+for camera in '' unknown Stas STL-11000M TICA_TESS_FFI ED80__Black STEREO-A-H1 TTUQ3b1x1 TTUQ1b1x1_extra ; do
+ CAMERA_SETTINGS="$camera"
+ start_case "camera_disabled_${camera:-empty}"
+ diagnostic "$FIRST" 100 100 100 100
+ diagnostic "$SECOND" 0 0 0 0
+ check_case disabled
+done
+
+for camera in TTUQ1b1x1 TTUQ2b1x1 ; do
+ CAMERA_SETTINGS="$camera"
+ start_case "camera_enabled_$camera"
+ diagnostic "$FIRST" 100 100 100 100
+ diagnostic "$SECOND" 0 0 0 0
+ check_case error
+done
+
+# Exercise the existing threshold and input checks with a supported camera.
+export CAMERA_SETTINGS=TTUQ1b1x1
 start_case exactly_20_percent
 diagnostic "$FIRST" 80 100 100 100
 diagnostic "$SECOND" 100 80 100 100
