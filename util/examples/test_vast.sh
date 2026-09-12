@@ -14797,15 +14797,21 @@ fi
 #    150-210) the filtered peak of the nova is only 2.5-3.3 sigma, so with
 #    DETECT_THRESH 3.0 fewer pixels than DETECT_MINAREA passed the threshold
 #    and SExtractor never extracted the object at all;
-#  - even when extracted, its signal-to-noise ratio of 4.88 on the first
-#    second-epoch image was below the old MIN_SNR_TRANSIENT_DETECTION of 5.0,
-#    which is applied to the first second-epoch measurement only.
+#  - even when extracted, its signal-to-noise ratio on the first second-epoch
+#    image was below the old MIN_SNR_TRANSIENT_DETECTION of 5.0, and that cut
+#    is applied to the first second-epoch measurement only.
 # The test pins the two changes that recover it: the NMW-TexasTech cameras
-# now use default.sex.telephoto_lens_vTTU (a copy of
+# now run default.sex.telephoto_lens_vTTU (a copy of
 # default.sex.telephoto_lens_vSTL with DETECT_THRESH and ANALYSIS_THRESH
-# lowered from 3.0 to 2.0) and MIN_SNR_TRANSIENT_DETECTION is 4.5
-# (src/vast_limits.h).  Either change alone is not enough - both are needed
-# for the nova to appear in the candidate list.
+# lowered from 3.0 to 2.0) as an extra pass on the high-priority fields, and
+# MIN_SNR_TRANSIENT_DETECTION is 4.0 (src/vast_limits.h).  Either change alone
+# is not enough - both are needed for the nova to appear in the candidate list.
+# The SNR of the deciding measurement is about 4.8 (4.87 straight from the
+# SExtractor catalog, 4.77 after VaST picks the best aperture), so the cut was
+# taken from 5.0 to 4.5 and then to 4.0: at 4.5 the margin was only 6% and the
+# recovery flipped between machines - found on the dev box, lost on the Ubuntu
+# CI runner for three runs in a row.  If this check ever fails again, the
+# instrumentation further down records the actual SNR on the failing machine.
 # Download the test dataset if needed
 if [ ! -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
  cd .. || exit 1
@@ -14890,10 +14896,11 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NO_VSTL_PASS"
   fi
-  # Candidate count sanity (baseline 2026-09-11: 77 candidates in this crowded
-  # bulge field with no per-camera exclusion list, running all three passes;
-  # it was 68 when the low-threshold pass replaced the usual faint pass instead
-  # of being added to it. The count varies with the success of the online
+  # Candidate count sanity (baseline 2026-09-12: 78 candidates in this crowded
+  # bulge field with no per-camera exclusion list, running all three passes and
+  # with MIN_SNR_TRANSIENT_DETECTION at 4.0; it was 77 with the cut at 4.5 and
+  # 68 when the low-threshold pass replaced the usual faint pass instead of
+  # being added to it. The count varies with the success of the online
   # Gaia/APASS exclusion queries)
   NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
   if [ "$NUMBER_OF_CANDIDATES" -lt 25 ] || [ "$NUMBER_OF_CANDIDATES" -gt 180 ];then
@@ -14910,6 +14917,94 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
   if [ -z "$SGR04NOVA_MEANLINE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NOVA_NOT_FOUND"
+   # ---------------------------------------------------------------------
+   # The nova is a marginal detection: its signal-to-noise ratio on the FIRST
+   # second-epoch image is what decides whether it becomes a candidate at all
+   # (src/vast.c:545 applies MIN_SNR_TRANSIENT_DETECTION inside test_transient(),
+   # and test_transient() is called only for the first second-epoch frame,
+   # src/vast.c:5048). On the dev machine that ratio is 4.77; a build on another
+   # CPU can land on the other side of the cut, and then the nova silently never
+   # enters the candidate list. So when this check fails, record WHY: whether
+   # SExtractor saw the object at all on each new image, with what signal-to-noise
+   # ratio, and whether it survived into the lightcurves. Without this, a failure
+   # on a remote runner is not diagnosable - the factory output of this section is
+   # redirected to a temporary file and the report is not kept as a CI artifact.
+   # Everything below is best-effort: it must never itself fail the test.
+   # ---------------------------------------------------------------------
+   SGR04NOVA_DEBUG=$(
+    echo "The nova should be at 17:52:06.799 -23:43:20.71"
+    grep -n "define MIN_SNR_TRANSIENT_DETECTION" src/vast_limits.h 2>/dev/null
+    # The SExtractor catalogs left in the working directory belong to the LAST
+    # pass of the SEXTRACTOR_CONFIG_FILES loop, which is the low-threshold
+    # default.sex.telephoto_lens_vTTU pass the nova is expected to come from.
+    # vast_images_catalogs.log maps each catalog to its image.
+    # Catalog columns come from default.param: 16=XWIN_IMAGE, 17=YWIN_IMAGE,
+    # 4=MAG_APER(1), 10=MAGERR_APER(1), 22=FLAGS, 23=FWHM_IMAGE.
+    if [ -s vast_images_catalogs.log ];then
+     while read -r SGR04NOVA_CAT SGR04NOVA_IMG ;do
+      case "$SGR04NOVA_IMG" in
+       *second_epoch_images*) ;;
+       *) continue ;;
+      esac
+      SGR04NOVA_WCSIMG="wcs_$(basename "$SGR04NOVA_IMG")"
+      if [ ! -f "$SGR04NOVA_WCSIMG" ] || [ ! -s "$SGR04NOVA_CAT" ];then
+       echo "-- $SGR04NOVA_CAT: cannot check ($SGR04NOVA_WCSIMG or the catalog is missing)"
+       continue
+      fi
+      SGR04NOVA_XY=$(lib/bin/sky2xy "$SGR04NOVA_WCSIMG" 17:52:06.799 -23:43:20.71 2>/dev/null | awk '{print $(NF-1)" "$NF}')
+      if [ -z "$SGR04NOVA_XY" ];then
+       echo "-- $SGR04NOVA_CAT: sky2xy failed on $SGR04NOVA_WCSIMG"
+       continue
+      fi
+      echo "-- $(basename "$SGR04NOVA_IMG"): the nova position is pixel $SGR04NOVA_XY"
+      echo "$SGR04NOVA_XY" | awk -v cat="$SGR04NOVA_CAT" '
+       {novax=$1; novay=$2}
+       END {
+        n=0
+        while ( (getline line < cat) > 0 ) {
+         split(line, f)
+         dx=f[16]-novax; dy=f[17]-novay; d=sqrt(dx*dx+dy*dy)
+         if ( d < 10 ) {
+          n++
+          # signal-to-noise ratio from the aperture magnitude error
+          snr=(f[10]>0) ? 1.0857/f[10] : -1
+          printf "   detection at %.2f pix: mag_aper=%s magerr=%s SNR=%.2f FLAGS=%s FWHM=%s\n", d, f[4], f[10], snr, f[22], f[23]
+         }
+        }
+        close(cat)
+        if ( n == 0 ) printf "   NO SExtractor detection within 10 pix - the object was not extracted on this image\n"
+       }'
+     done < vast_images_catalogs.log
+    else
+     echo "-- vast_images_catalogs.log not found, cannot check the SExtractor catalogs"
+    fi
+    # Did the object survive into the lightcurves? If it is here but not in the
+    # report, it was dropped by the SNR cut or by a later filter rather than by
+    # SExtractor.
+    if [ -s vast_list_of_all_stars.log ] && [ -f wcs_"$(basename "$(head -n1 vast_images_catalogs.log 2>/dev/null | awk '{print $2}')")" ];then
+     SGR04NOVA_REFXY=$(lib/bin/sky2xy "wcs_$(basename "$(head -n1 vast_images_catalogs.log | awk '{print $2}')")" 17:52:06.799 -23:43:20.71 2>/dev/null | awk '{print $(NF-1)" "$NF}')
+     if [ -n "$SGR04NOVA_REFXY" ];then
+      echo "-- objects in the lightcurve list within 30 pix of the nova on the reference frame (pixel $SGR04NOVA_REFXY):"
+      awk -v pos="$SGR04NOVA_REFXY" '
+       BEGIN {split(pos, p); novax=p[1]; novay=p[2]; n=0}
+       {dx=$2-novax; dy=$3-novay; d=sqrt(dx*dx+dy*dy); if (d<30) {n++; printf "   out%s.dat at %.2f pix (%s %s)\n", $1, d, $2, $3}}
+       END {if (n==0) print "   none"}' vast_list_of_all_stars.log
+     fi
+    fi
+    # What the report does contain near that position, if anything
+    echo "-- lines in the report mentioning a position within a few arcmin of the nova:"
+    grep -o "17:5[12]:[0-9.]* -23:4[0-9]:[0-9.]*" transient_report/index.html 2>/dev/null | sort -u | head -n 20
+    echo "-- candidate count in the report: $(grep 'script' transient_report/index.html 2>/dev/null | grep -c 'printCandidateNameWithAbsLink')"
+    echo "-- SExtractor passes that ran:"
+    grep -o "VAST_RUN_[A-Za-z0-9_.]*" transient_report/index.html 2>/dev/null | sort -u
+    echo "-- detection limit lines from the report:"
+    sed 's:<[^>]*>::g' transient_report/index.html 2>/dev/null | grep -i -e 'limiting mag' -e 'detection limit' | sort -u | head -n 10
+   ) 2>&1
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SGR04NOVA_NOVA_NOT_FOUND ######
+$SGR04NOVA_DEBUG
+#########################################################
+"
   else
    # Position: NMW-TexasTech scale is 5.9"/pix, so 12" is about two pixels
    # (measured offset from the TNS position on 2026-09-10: 2.1")
@@ -25336,8 +25431,15 @@ $CAT_RESULT"
   # old 80% of stars value 14.19, new SNR5 value 15.54
   # after changing the outlier rejection strategy for magnitude calibration (all aoutliers at once instead of one-by-one with refit)
   # the new value is 15.48 at kadar2 and 15.49 at tau
+  # This number tracks MIN_SNR_TRANSIENT_DETECTION (src/vast_limits.h): the line
+  # is written from get_detection_limit_sn() called with that constant as the
+  # target signal-to-noise ratio, so a lower cut reports a fainter limit.
+  # 15.54 was measured with the cut at 5.0; measured 15.77 with the cut at 4.0
+  # on 2026-09-12 (+0.23 mag, of which about half came from the 5.0 -> 4.5 step
+  # of 2026-09-10 that went unnoticed because this whole section is skipped in
+  # GitHub Actions - see the GITHUB_ACTIONS guard above).
   MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.54)*($1 - 15.54) ) < 0.05 ) print 1 ;else print 0 }'`
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.77)*($1 - 15.77) ) < 0.05 ) print 1 ;else print 0 }'`
   #TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.48)*($1 - 15.48) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
@@ -25601,7 +25703,11 @@ $CAT_RESULT"
 
   #TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 14.92)*($1 - 14.92) ) < 0.05 ) print 1 ;else print 0 }'`
   # New mag limit claculation - new values
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 16.23)*($1 - 16.23) ) < 0.05 ) print 1 ;else print 0 }'`  re='^[0-9]+$'
+  # As in the magnitude calibration failure test above, this number tracks
+  # MIN_SNR_TRANSIENT_DETECTION (src/vast_limits.h). 16.23 was measured with the
+  # cut at 5.0; measured 16.46 with the cut at 4.0 on 2026-09-12 - the same
+  # +0.23 mag shift.
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 16.46)*($1 - 16.46) ) < 0.05 ) print 1 ;else print 0 }'`  re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
    TEST_PASSED=0

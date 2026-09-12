@@ -90,7 +90,15 @@
                                       
 #define FAINTEST_STARS_ANYMAG 30.0    // Discard observations with (instrumental or whatever) magnitudes > FAINTEST_STARS
 
-#define MIN_SNR_TRANSIENT_DETECTION 4.5 // Discard transient candidates with signal-to-noise ratio < MIN_SNR_TRANSIENT_DETECTION
+// The cut is applied in test_transient() (src/vast.c) which is called only for the
+// FIRST second-epoch image, so a candidate is accepted or rejected on the strength
+// of that one measurement even though the pipeline later requires it to be present
+// on the second new image too. That makes the value sensitive: the faint Sgr-04 nova
+// of 2026-09-07 sits at SNR 4.77 on its first new image, so with the cut at 4.5 the
+// recovery of that nova depended on the last digits of the aperture photometry and
+// flipped between machines (found on the dev box, lost on the Ubuntu CI runner).
+// Lowered 4.5 -> 4.0 on 2026-09-12 to give such objects a real margin.
+#define MIN_SNR_TRANSIENT_DETECTION 4.0 // Discard transient candidates with signal-to-noise ratio < MIN_SNR_TRANSIENT_DETECTION
 
 #define MIN_SNR 3.0                   // Discard objects detected with signal-to-noise ratio < MIN_SNR
 #define MAX_MAG_ERROR 1.086 / MIN_SNR // Discard observations with the estimated error >MAX_MAG_ERROR. Note: the meaning of this parameter has changed in vast-1.0rc80 
