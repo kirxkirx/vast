@@ -5814,6 +5814,29 @@ static void exit_when_parent_dies( void ) {
 // the NMW-TTU optics it never measurably beats order 3, while order 5 does)
 #define SIP_REFIT_MIN_MATCHES_FOR_ORDER5 1000
 
+// The outer annulus: a fifth region judged alongside the four quadrants.
+// A quadrant covers a quarter of the frame, so a defect confined to the
+// extreme corners is a couple of percent of its stars and cannot move a
+// median-based quadrant statistic - while being the largest astrometric
+// error on the frame. Measured on NMW-TexasTech Cyg-05-Q2b1x1 2026-09-11:
+// the delivered order-3 solution left 2.5-3.1 arcsec median residual in the
+// extreme upper-left and lower-left corners against 0.50 arcsec along the
+// middle of the left edge, while all four quadrant values sat at 0.39-0.58
+// arcsec and the order-5 fit that removes the defect was rejected because it
+// moved the worst quadrant by only 1.7 percent. Scoring the same fits on the
+// worst of the four quadrants PLUS this annulus turns that into a 26 percent
+// improvement, which clears the usual margin without changing it.
+// The annulus deliberately OVERLAPS the quadrants - a star may be counted in
+// both. The quadrants keep their guarding role unchanged: the statistic is a
+// maximum over the five regions, so any region that degrades still blocks the
+// refit.
+#define SIP_REFIT_OUTER_ANNULUS_RADIUS_FRACTION 0.75
+// ... but only when the annulus holds enough stars for a median-based
+// statistic to mean anything. Below this it is skipped and the metric falls
+// back to the worst of the four quadrants, so small or sparse fields behave
+// exactly as before.
+#define SIP_REFIT_MIN_STARS_IN_OUTER_ANNULUS 30
+
 // Gnomonic (TAN) projection of ra,dec (deg) about a0,d0 (rad) to xi,eta (deg)
 static void sip_refit_tan_project( double ra_deg, double dec_deg, double a0_rad, double d0_rad, double *xi_deg, double *eta_deg ) {
  double a, d, da, den;
@@ -5862,9 +5885,17 @@ static int sip_refit_monomials( double us, double vs, int deg, double *row ) {
 }
 
 // Robust (MAD-clipped) RMS of the input values; does not modify the input.
+// Note on the clipping threshold: sigma_from_mad below is the standard
+// deviation ESTIMATED from the median absolute deviation (MAD scaled by
+// 1.4826), not the raw MAD, so "median + 3.0 * sigma_from_mad" is a 3 sigma
+// cut and not a 3 MAD cut. This clip defines what the reported robust RMS
+// means, so it is deliberately kept at 3 sigma: loosening it here would
+// inflate every reported number and silently shift all the acceptance ratios.
+// The clip that selects the stars the model is FITTED to is a separate one,
+// inside refit_sip_from_catalog_matches().
 static double sip_refit_robust_rms( double *values, int n ) {
  double *work;
- double median, mad, threshold, sum;
+ double median, sigma_from_mad, threshold, sum;
  int i, nkept;
  if ( n < 3 )
   return -1.0;
@@ -5878,10 +5909,10 @@ static double sip_refit_robust_rms( double *values, int n ) {
  for ( i= 0; i < n; i++ )
   work[i]= fabs( values[i] - median );
  gsl_sort( work, 1, n );
- mad= 1.4826 * gsl_stats_median_from_sorted_data( work, 1, n );
- if ( mad < 0.05 )
-  mad= 0.05;
- threshold= median + 3.0 * mad;
+ sigma_from_mad= 1.4826 * gsl_stats_median_from_sorted_data( work, 1, n );
+ if ( sigma_from_mad < 0.05 )
+  sigma_from_mad= 0.05;
+ threshold= median + 3.0 * sigma_from_mad;
  sum= 0.0;
  nkept= 0;
  for ( i= 0; i < n; i++ ) {
@@ -5896,23 +5927,35 @@ static double sip_refit_robust_rms( double *values, int n ) {
  return sqrt( sum / (double)nkept );
 }
 
-// Worst-quadrant robust RMS of the residuals: the same MAD-clipped RMS as
-// sip_refit_robust_rms(), computed per image quadrant (same quadrant
-// convention as print_wcs_quality_diagnostic()) and maximized over the
-// quadrants with enough stars. This is the minimax quality metric the SIP
-// order selection and the keep-if-better guard judge on: a fit that is
-// excellent in three quadrants but blows up in the fourth must lose to a
-// uniformly acceptable one. The overall MAD-clipped RMS alone is blind to
-// exactly that failure - on the Cyg-08 single-frame reference an order-5
-// fit reached 0.53 arcsec clipped overall while one quadrant sat at 145
-// arcsec (the clipping silently discarded the bad quadrant's stars).
-// Quadrants with fewer than 5 stars are skipped; if no quadrant has
+// Worst-REGION robust RMS of the residuals: the same MAD-clipped RMS as
+// sip_refit_robust_rms(), computed over five overlapping regions - the four
+// image quadrants (same quadrant convention as print_wcs_quality_diagnostic())
+// and the outer annulus - and maximized over the regions with enough stars.
+// This is the minimax quality metric the SIP order selection and the
+// keep-if-better guard judge on.
+// The QUADRANTS catch a fit that is excellent in three quadrants but blows up
+// in the fourth: such a fit must lose to a uniformly acceptable one. The
+// overall MAD-clipped RMS alone is blind to exactly that failure - on the
+// Cyg-08 single-frame reference an order-5 fit reached 0.53 arcsec clipped
+// overall while one quadrant sat at 145 arcsec (the clipping silently
+// discarded the bad quadrant's stars).
+// The ANNULUS catches the opposite blind spot: a defect confined to the
+// extreme corners is only a couple of percent of a quadrant's stars and
+// cannot move a median-based quadrant statistic, however large it is. See
+// the comment at SIP_REFIT_OUTER_ANNULUS_RADIUS_FRACTION.
+// Regions with too few stars are skipped (5 for a quadrant,
+// SIP_REFIT_MIN_STARS_IN_OUTER_ANNULUS for the annulus); if no region has
 // enough, the overall robust RMS is returned as a fallback.
-static double sip_refit_worst_quadrant_robust_rms( double *sep_values, double *x_pix_values, double *y_pix_values, int n, double img_cx, double img_cy ) {
+// outer_annulus_rms_out (may be NULL): the annulus value on its own, for the
+// log - -1.0 when the annulus held too few stars and was skipped.
+static double sip_refit_worst_region_robust_rms( double *sep_values, double *x_pix_values, double *y_pix_values, int n, double img_cx, double img_cy, double *outer_annulus_rms_out ) {
  double *quadrant_scratch;
- double worst, quadrant_rms;
- int q, i, n_in_quadrant, q_of_star;
+ double worst, quadrant_rms, annulus_rms;
+ double half_diagonal_pix, annulus_inner_radius_pix, dx_pix, dy_pix;
+ int q, i, n_in_quadrant, q_of_star, n_in_annulus;
 
+ if ( outer_annulus_rms_out != NULL )
+  *outer_annulus_rms_out= -1.0;
  if ( n < 1 )
   return -1.0;
  quadrant_scratch= (double *)malloc( (size_t)n * sizeof( double ) );
@@ -5941,6 +5984,31 @@ static double sip_refit_worst_quadrant_robust_rms( double *sep_values, double *x
    worst= quadrant_rms;
   }
  }
+
+ // The fifth region: the outer annulus, overlapping the quadrants.
+ // The image centre passed in is NAXIS/2, so the distance from it to a frame
+ // corner is the half-diagonal.
+ half_diagonal_pix= sqrt( img_cx * img_cx + img_cy * img_cy );
+ annulus_inner_radius_pix= SIP_REFIT_OUTER_ANNULUS_RADIUS_FRACTION * half_diagonal_pix;
+ n_in_annulus= 0;
+ for ( i= 0; i < n; i++ ) {
+  dx_pix= x_pix_values[i] - img_cx;
+  dy_pix= y_pix_values[i] - img_cy;
+  if ( sqrt( dx_pix * dx_pix + dy_pix * dy_pix ) < annulus_inner_radius_pix ) {
+   continue;
+  }
+  quadrant_scratch[n_in_annulus]= sep_values[i];
+  n_in_annulus++;
+ }
+ if ( n_in_annulus >= SIP_REFIT_MIN_STARS_IN_OUTER_ANNULUS ) {
+  annulus_rms= sip_refit_robust_rms( quadrant_scratch, n_in_annulus );
+  if ( outer_annulus_rms_out != NULL )
+   *outer_annulus_rms_out= annulus_rms;
+  if ( annulus_rms > worst ) {
+   worst= annulus_rms;
+  }
+ }
+
  free( quadrant_scratch );
  if ( worst <= 0.0 ) {
   return sip_refit_robust_rms( sep_values, n );
@@ -5974,8 +6042,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  double a0_rad, d0_rad, scale_norm;
  int nmatched, i, k, term, nterms, deg, clip_iter, crval_pass, nkept, changed;
  double xi, eta, us, vs, ra_model, dec_model, dra, cosd;
- double median, mad, threshold;
+ double median, sigma_from_mad, threshold;
  double rms_before, rms_after;
+ // the outer-annulus region on its own, for the log only (-1.0 = skipped)
+ double outer_annulus_rms_before, outer_annulus_rms_after;
  double *row;
  gsl_matrix *X_design, *cov;
  gsl_vector *y_xi, *y_eta, *c_xi, *c_eta;
@@ -6263,7 +6333,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    }
   }
   rms_before_corrected= sip_refit_robust_rms( sep_before_corrected, nmatched );
-  worstq_before_corrected= sip_refit_worst_quadrant_robust_rms( sep_before_corrected, sep_before_corrected_x, sep_before_corrected_y, nmatched, img_center_x, img_center_y );
+  worstq_before_corrected= sip_refit_worst_region_robust_rms( sep_before_corrected, sep_before_corrected_x, sep_before_corrected_y, nmatched, img_center_x, img_center_y, NULL );
  }
  if ( sep_before_corrected != NULL )
   free( sep_before_corrected );
@@ -6309,7 +6379,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  }
 
  rms_before= sip_refit_robust_rms( sep_before, nmatched );
- worstq_before= sip_refit_worst_quadrant_robust_rms( sep_before, mx, my, nmatched, img_center_x, img_center_y );
+ worstq_before= sip_refit_worst_region_robust_rms( sep_before, mx, my, nmatched, img_center_x, img_center_y, &outer_annulus_rms_before );
 
  scale_norm= 0.5 * (double)( naxis1 > naxis2 ? naxis1 : naxis2 );
  original_crval1= crval1;
@@ -6488,11 +6558,28 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    for ( i= 0; i < nk2; i++ )
     worksep[i]= fabs( worksep[i] - median );
    gsl_sort( worksep, 1, nk2 );
-   mad= 1.4826 * gsl_stats_median_from_sorted_data( worksep, 1, nk2 );
+   // sigma_from_mad is the standard deviation ESTIMATED from the median
+   // absolute deviation (MAD scaled by 1.4826), not the raw MAD, so the
+   // threshold below is a sigma cut and not a MAD cut.
+   sigma_from_mad= 1.4826 * gsl_stats_median_from_sorted_data( worksep, 1, nk2 );
    free( worksep );
-   if ( mad < 0.05 )
-    mad= 0.05;
-   threshold= median + 3.0 * mad;
+   if ( sigma_from_mad < 0.05 )
+    sigma_from_mad= 0.05;
+   // 5 sigma rather than 3: at 3 sigma this clip throws away the very stars
+   // that prove the model is wrong. The corner stars of a frame whose
+   // distortion the model cannot follow look like outliers, are discarded,
+   // the interior fit tightens, the threshold drops and more corner stars go
+   // - a self-reinforcing loop. Measured on NMW-TexasTech Cyg-05-Q2b1x1: at
+   // order 3 the corner residual falls 2.46 -> 1.99 arcsec (lower left) and
+   // 2.79 -> 2.33 (upper left) going from 3 to 5 sigma, for 0.01 arcsec
+   // frame-wide. Robustness is unaffected - the clip still rejects gross
+   // mismatches: with 40 percent of the matches deliberately corrupted by
+   // 5-40 arcsec offsets the fitted solution stays at 0.563 arcsec frame-wide
+   // (0.555 at 3 sigma), while removing the clip entirely gives 0.784.
+   // Note this is the clip that selects the stars the model is FITTED to;
+   // the clip inside sip_refit_robust_rms() defines the reported statistic
+   // and stays at 3 sigma so the reported numbers keep their meaning.
+   threshold= median + 5.0 * sigma_from_mad;
    changed= 0;
    for ( i= 0; i < nmatched; i++ ) {
     nkept= ( sep_arcsec[i] < threshold ) ? 1 : 0;
@@ -6518,8 +6605,8 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   rms_after= sip_refit_robust_rms( sep_arcsec, nmatched );
   // Minimax quality metric: candidates are ranked (and the final solution
   // judged) on the WORST-quadrant robust RMS, not the overall one - see
-  // the comment at sip_refit_worst_quadrant_robust_rms()
-  worstq_after= sip_refit_worst_quadrant_robust_rms( sep_arcsec, mx, my, nmatched, img_center_x, img_center_y );
+  // the comment at sip_refit_worst_region_robust_rms()
+  worstq_after= sip_refit_worst_region_robust_rms( sep_arcsec, mx, my, nmatched, img_center_x, img_center_y, &outer_annulus_rms_after );
 
   if ( order_candidate_index >= n_order_candidates ) {
    // Final pass: this fit is the one the rest of the function works with,
@@ -6530,7 +6617,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    break;
   }
 
-  fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec worst_quadrant_rms=%.3lf arcsec\n", deg, nmatched, rms_after, worstq_after );
+  // worst_region_rms is the maximum over the four quadrants AND the outer
+  // annulus; outer_annulus_rms is that one region on its own (-1 = too few
+  // stars in it, so only the quadrants were used)
+  fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec worst_region_rms=%.3lf arcsec outer_annulus_rms=%.3lf arcsec\n", deg, nmatched, rms_after, worstq_after, outer_annulus_rms_after );
   if ( rms_after > 0.0 && worstq_after > 0.0 && ( best_deg < 0 || worstq_after < SIP_REFIT_HIGHER_ORDER_GAIN * best_worstq_after ) ) {
    best_deg= deg;
    best_worstq_after= worstq_after;
@@ -6554,7 +6644,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  }
  // The accept/keep decision is minimax: the refit's WORST-quadrant robust
  // RMS has to beat the better of the raw-header and corrected-chain
- // worst-quadrant baselines by the usual >10% margin. The overall RMS
+ // worst-region baselines by the usual >10% margin. The overall RMS
  // values are still computed and printed for the logs, but a fit that
  // wins overall while losing a quadrant is rejected here.
  worstq_baseline= worstq_before;
@@ -6564,7 +6654,11 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   }
  }
 
- fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec worst_quadrant_rms_before=%.3lf worst_quadrant_rms_after=%.3lf\n", deg, nmatched, rms_before, rms_before_corrected, rms_after, worstq_baseline, worstq_after );
+ // worst_region_rms_* is the maximum over the four quadrants AND the outer
+ // annulus (the field was called worst_quadrant_rms_* while the metric was
+ // quadrants only); outer_annulus_rms_* is that region on its own, -1 when it
+ // held too few stars and the metric fell back to the quadrants alone
+ fprintf( stderr, "SIP_REFIT: order=%d matched=%d robust_rms_before=%.3lf arcsec robust_rms_before_corrected=%.3lf arcsec robust_rms_after=%.3lf arcsec worst_region_rms_before=%.3lf worst_region_rms_after=%.3lf outer_annulus_rms_before=%.3lf outer_annulus_rms_after=%.3lf\n", deg, nmatched, rms_before, rms_before_corrected, rms_after, worstq_baseline, worstq_after, outer_annulus_rms_before, outer_annulus_rms_after );
 
  refit_rejected= 0;
  if ( rms_after <= 0.0 || worstq_after <= 0.0 || worstq_baseline <= 0.0 ) {
@@ -6584,9 +6678,9 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  }
  if ( refit_rejected == 1 ) {
   if ( accept_if_not_worse == 1 ) {
-   fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs is worse than the solution it would replace (worst-quadrant %.3lf vs %.3lf arcsec) - keeping the current solution\n", worstq_after, worstq_baseline );
+   fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs is worse than the solution it would replace (worst-region %.3lf vs %.3lf arcsec) - keeping the current solution\n", worstq_after, worstq_baseline );
   } else {
-   fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-quadrant baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
+   fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-region baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
   }
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
