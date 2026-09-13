@@ -24,6 +24,85 @@ CATALOG_DOWNLOAD_TIMEOUT_SEC=3600
 # archive, which is discarded so the next attempt starts from scratch.
 # $1 - the full download command
 # $2 - the output file that command writes
+# Size of a file in bytes, GNU stat then BSD stat; empty if neither works.
+get_file_size_in_bytes() {
+ FILE_SIZE_IN_BYTES=`stat -c '%s' "$1" 2>/dev/null`
+ if [ -z "$FILE_SIZE_IN_BYTES" ];then
+  FILE_SIZE_IN_BYTES=`stat -f '%z' "$1" 2>/dev/null`
+ fi
+ echo "$FILE_SIZE_IN_BYTES"
+}
+
+# The size a remote file advertises, or empty when the server sends no
+# Content-Length (the live ASAS-SN endpoint streams the CSV without one).
+get_remote_content_length() {
+ curl $VAST_CURL_PROXY --connect-timeout 10 --max-time 60 --insecure --silent --head --location "$1" 2>/dev/null | grep -i '^content-length:' | tail -n1 | awk '{print $2}' | tr -d '\r\n'
+}
+
+# The smallest size we are ever willing to accept for a catalog, in bytes.
+# This is the ONLY check that catches a well-formed but drastically incomplete
+# catalog on a FRESH install, where there is no previous local file for the
+# shrink check below to compare against. That is not hypothetical: in Sep 2026
+# the kirx.net mirror served an asassnv.csv of 643888 bytes - a perfectly valid
+# CSV with the right header, 79 fields per line and a complete final line, but
+# only 1000 of the ~687000 records, i.e. one unpaginated page from the ASAS-SN
+# web endpoint. Hosts that already had a good catalog were saved by the shrink
+# check; ariel, which did not, installed the stub and its variable-star
+# identification silently degraded.
+# The floors are deliberately FAR below the real sizes (asassnv.csv ~443 MB,
+# vsx.dat ~370 MB, astorb.dat ~110 MB, ObsCodes.html ~145 kB) so that a genuine
+# new release can shrink a lot without tripping them.
+get_catalog_minimum_expected_size_in_bytes() {
+ case "$1" in
+  *asassnv.csv)
+   echo 100000000
+   ;;
+  *vsx.dat)
+   echo 100000000
+   ;;
+  *astorb.dat)
+   echo 30000000
+   ;;
+  *ObsCodes.html)
+   echo 50000
+   ;;
+  *)
+   echo 0
+   ;;
+ esac
+}
+
+# Structural check for a plain-text catalog: it must end with a newline and its
+# last line must carry as many fields as the line before it. Catches a download
+# cut off in the middle of a record. It does NOT catch a cut at a record
+# boundary - that is what the size checks are for.
+verify_plain_text_catalog_structure() {
+ VERIFY_CATALOG_FILE="$1"
+ if [ ! -s "$VERIFY_CATALOG_FILE" ];then
+  return 1
+ fi
+ # A file not ending in a newline was cut mid-record.
+ if [ -n "`tail -c 1 \"$VERIFY_CATALOG_FILE\" 2>/dev/null`" ];then
+  echo "WARNING: $VERIFY_CATALOG_FILE does not end with a newline - it looks cut off in the middle of a record" >&2
+  return 1
+ fi
+ # Compare the field count of the last two lines. Comma-separated for .csv,
+ # whitespace-separated otherwise. Files with fewer than two lines are skipped.
+ case "$VERIFY_CATALOG_FILE" in
+  *.csv)
+   VERIFY_CATALOG_FIELD_SEPARATOR=','
+   ;;
+  *)
+   VERIFY_CATALOG_FIELD_SEPARATOR=' '
+   ;;
+ esac
+ if ! tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null | awk -F"$VERIFY_CATALOG_FIELD_SEPARATOR" 'NR==1{first=NF} NR==2{second=NF} END{if (NR<2) exit 0; exit !(first==second)}' ;then
+  echo "WARNING: the last line of $VERIFY_CATALOG_FILE has a different number of fields than the line before it - it looks cut off in the middle of a record" >&2
+  return 1
+ fi
+ return 0
+}
+
 attempt_download_with_resume() {
  DOWNLOAD_ATTEMPT_COUNTER=1
  while true ;do
@@ -385,6 +464,22 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   fi
  fi
  
+ # Check the catalog that is ALREADY installed, not just the ones we download.
+ # Nothing else ever re-examines an installed catalog, so a file that arrived
+ # incomplete stays in place and degrades every run silently - which is exactly
+ # what happened on ariel with the 1000-record asassnv.csv stub. An implausibly
+ # small catalog is re-downloaded regardless of its age.
+ if [ -s "$FILE_TO_UPDATE" ];then
+  INSTALLED_CATALOG_SIZE_BYTES=`get_file_size_in_bytes "$FILE_TO_UPDATE"`
+  MINIMUM_CATALOG_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
+  if [ -n "$INSTALLED_CATALOG_SIZE_BYTES" ] && [ "$MINIMUM_CATALOG_SIZE_BYTES" -gt 0 ] 2>/dev/null ;then
+   if [ "$INSTALLED_CATALOG_SIZE_BYTES" -lt "$MINIMUM_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
+    echo "WARNING: the installed $FILE_TO_UPDATE is only $INSTALLED_CATALOG_SIZE_BYTES bytes, far below the $MINIMUM_CATALOG_SIZE_BYTES bytes expected - it is incomplete and will be re-downloaded" >&2
+    NEED_TO_UPDATE_THE_FILE=1
+   fi
+  fi
+ fi
+
  if [ "$1" == "force" ];then
   echo "Forcing the catalog update per user request" >&2
   NEED_TO_UPDATE_THE_FILE=1
@@ -428,7 +523,16 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    # without it, so a failed/empty download must not abort the whole run.
    CATALOG_IS_OPTIONAL=1
    TMP_OUTPUT="asassnv.csv"
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
+   # NOTE: the URL must NOT be wrapped in escaped quotes. These command strings
+   # are run as unquoted "$1" inside attempt_download_with_resume(), which word-
+   # splits them but does NOT perform quote removal, so \" would reach curl as
+   # part of the URL and curl rejects it outright:
+   #   curl: (3) URL rejected: Port number was not a decimal number between 0 and 65535
+   # That silently disabled this fallback, which is why a mirror serving an
+   # incomplete asassnv.csv had nothing to fall back to. The '?' and '&' are
+   # safe unquoted here: word splitting does not re-parse operators, and the
+   # other three catalogs have always passed their URLs the same way.
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT https://asas-sn.osu.edu/variables.csv?action=index&controller=variables"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
    DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
@@ -456,12 +560,18 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    rm -f "$TMP_OUTPUT"
   fi
 
+  # Remember which URL the file actually came from, so the size check below
+  # can ask that same source what it thinks the file size is. The URL is the
+  # last word of the curl command line.
+  DOWNLOAD_URL_USED=`echo "$CURL_LOCAL_COMMAND" | awk '{print $NF}' | tr -d '"'`
+
   # First try to download a catalog from the mirror
   echo "### CURL_LOCAL_COMMAND ###
 $PWD" >&2
   echo "$CURL_LOCAL_COMMAND" >&2
   attempt_download_with_resume "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE"
   if [ $? -ne 0 ];then
+   DOWNLOAD_URL_USED=`echo "$CURL_COMMAND" | awk '{print $NF}' | tr -d '"'`
    # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_COMMAND point to exact same version of the file
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
@@ -530,15 +640,57 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    *.gz)
     ;;
    *)
+    NEW_CATALOG_SIZE_BYTES=`get_file_size_in_bytes "$TMP_OUTPUT"`
+
+    # (a) Did we receive everything the server promised? A short transfer with
+    # a known Content-Length makes curl fail, but only when the server sends
+    # one - so check explicitly rather than trusting the exit code. Skipped
+    # when the server advertises no size (the live ASAS-SN endpoint).
+    REMOTE_CATALOG_SIZE_BYTES=`get_remote_content_length "$DOWNLOAD_URL_USED"`
+    if [ -n "$REMOTE_CATALOG_SIZE_BYTES" ] && [ -n "$NEW_CATALOG_SIZE_BYTES" ];then
+     if [ "$REMOTE_CATALOG_SIZE_BYTES" -gt 0 ] 2>/dev/null ;then
+      if [ "$NEW_CATALOG_SIZE_BYTES" -ne "$REMOTE_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
+       echo "ERROR: the downloaded $TMP_OUTPUT is $NEW_CATALOG_SIZE_BYTES bytes but $DOWNLOAD_URL_USED advertises $REMOTE_CATALOG_SIZE_BYTES - the transfer is incomplete, keeping the old file" >&2
+       rm -f "$TMP_OUTPUT"
+       if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+        continue
+       fi
+       exit 1
+      fi
+     fi
+    fi
+
+    # (b) Is the file cut off in the middle of a record?
+    if ! verify_plain_text_catalog_structure "$TMP_OUTPUT" ;then
+     echo "ERROR: the downloaded $TMP_OUTPUT does not look like a complete catalog file - keeping the old file" >&2
+     rm -f "$TMP_OUTPUT"
+     if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+      continue
+     fi
+     exit 1
+    fi
+
+    # (c) Is it implausibly small in absolute terms? This is the check that
+    # catches a well-formed but drastically incomplete catalog served by a
+    # mirror, including on a fresh install where (d) below has nothing to
+    # compare against. See get_catalog_minimum_expected_size_in_bytes().
+    MINIMUM_CATALOG_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
+    if [ -n "$NEW_CATALOG_SIZE_BYTES" ] && [ "$MINIMUM_CATALOG_SIZE_BYTES" -gt 0 ] 2>/dev/null ;then
+     if [ "$NEW_CATALOG_SIZE_BYTES" -lt "$MINIMUM_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
+      echo "ERROR: the downloaded $TMP_OUTPUT is only $NEW_CATALOG_SIZE_BYTES bytes, far below the $MINIMUM_CATALOG_SIZE_BYTES bytes expected for $FILE_TO_UPDATE - the source is serving an incomplete catalog, keeping the old file" >&2
+      rm -f "$TMP_OUTPUT"
+      if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+       continue
+      fi
+      exit 1
+     fi
+    fi
+
+    # (d) Never replace a good catalog with a much smaller one. Real releases
+    # do not shrink by 20 percent. To override a false alarm (a genuinely much
+    # smaller new version), remove the old file and re-run the update.
     if [ -s "$FILE_TO_UPDATE" ];then
-     OLD_CATALOG_SIZE_BYTES=`stat -c '%s' "$FILE_TO_UPDATE" 2>/dev/null`
-     if [ -z "$OLD_CATALOG_SIZE_BYTES" ];then
-      OLD_CATALOG_SIZE_BYTES=`stat -f '%z' "$FILE_TO_UPDATE" 2>/dev/null`
-     fi
-     NEW_CATALOG_SIZE_BYTES=`stat -c '%s' "$TMP_OUTPUT" 2>/dev/null`
-     if [ -z "$NEW_CATALOG_SIZE_BYTES" ];then
-      NEW_CATALOG_SIZE_BYTES=`stat -f '%z' "$TMP_OUTPUT" 2>/dev/null`
-     fi
+     OLD_CATALOG_SIZE_BYTES=`get_file_size_in_bytes "$FILE_TO_UPDATE"`
      # If the sizes cannot be determined, skip the check (fail open)
      if [ -n "$OLD_CATALOG_SIZE_BYTES" ] && [ -n "$NEW_CATALOG_SIZE_BYTES" ];then
       if ! echo "$NEW_CATALOG_SIZE_BYTES $OLD_CATALOG_SIZE_BYTES" | awk '{exit !($1+0 >= 0.8*$2)}' ;then
