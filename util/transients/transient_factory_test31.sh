@@ -1135,9 +1135,17 @@ function extract_wcs_quality_field {
 # Compare only the two new images' astrometric-star counts in detector
 # quadrants, ignoring residual values and the small inter-image shift.
 # Change is 100 * abs(N2 - N1) / max(N1, N2), with no total-count scaling.
-# Run before WCS retries, on the bright-star pass used for the count review.
-# A large change may indicate passing clouds (or a bad plate solution).
+# Run on the bright-star pass, AFTER the WCS retries, so that the counts being
+# compared belong to the plate solutions the run actually keeps.
 # Report it through both factory logs, but never abort processing.
+#
+# On the causes, in the order the archive says they occur: a bad plate solution
+# on one of the two images censors its catalog cross-match unevenly and is by
+# far the commonest explanation; a large inter-image offset moves stars across a
+# quadrant boundary, which this check ignores by construction; a transparency
+# change (clouds) would do it too, but in the 31 occurrences between 2026-09-11
+# and 2026-09-13 not one coincided with VaST's own bad-image detector flagging
+# anything, so it is listed last rather than first.
 function report_new_image_quadrant_count_changes {
  # Disabled by default: a large pointing shift between the two new images
  # can move stars across quadrant boundaries and mimic a cloud-related change.
@@ -1175,7 +1183,7 @@ function report_new_image_quadrant_count_changes {
     # Compare before rounding; exactly 20 percent is not a large change.
     # Both zero means no change; zero versus nonzero means 100 percent.
     if (largest>0 && 100*difference>20*largest) {
-     printf "ERROR: large change in astrometric-star counts between the two new images (q%d: %d -> %d, %.3f%% > 20%%; %s vs %s) - possible passing clouds or a bad plate solution; continuing processing\n", q, a, b, 100*difference/largest, new1, new2
+     printf "ERROR: large change in astrometric-star counts between the two new images (q%d: %d -> %d, %.3f%% > 20%%; %s vs %s) - usually a bad plate solution on one of them, sometimes stars crossing a quadrant boundary when the two images are widely offset, rarely a transparency change; continuing processing\n", q, a, b, 100*difference/largest, new1, new2
     }
    }
   }
@@ -1241,25 +1249,100 @@ function retry_wcs_with_lower_tweak_order {
  local ref_ratio_avg="$6"
  local threshold="$7"
  local plate_solve_iterations="$8"
+ # Both optional, and referenced with :- so that a caller passing only the first
+ # eight arguments keeps the original behaviour instead of tripping set -u.
+ local sigma_floor_arcsec="${9:-}"
+ local bad_refit_baseline_arcsec="${10:-}"
 
  local diag_basename
  diag_basename=$(image_basename_for_wcs_quality_diag "$image_path")
 
  # Decide whether to retry. Either metric exceeding the threshold triggers.
+ #
+ # Both tests are RATIOS to the reference average, which on a night with
+ # unusually sharp reference images makes an entirely ordinary new-image
+ # solution look bad: with both references at 0.28 arcsec, a 0.98 arcsec
+ # solution is "3.5x worse" and gets re-solved for nothing. sigma_floor_arcsec
+ # is the absolute residual below which the overall sigma is simply not a cause
+ # for concern, whatever the ratio to the reference says.
+ #
+ # The floor is applied to the OVERALL-SIGMA test only, never to the
+ # worst-quadrant test, and that distinction is the whole point. A SIP fit that
+ # diverges in one corner barely moves the overall sigma while the quadrant
+ # ratio explodes, and those are the retries most worth making: on 2026-09-13
+ # one image with sigma 1.198 but ratio 12.595 was repaired to 0.391/1.103, and
+ # another with sigma 0.691 and ratio 4.424 had its worst quadrant brought back
+ # to 2.883. A floor on sigma alone would have thrown both of those away in
+ # order to save the four pointless re-solves it was written to prevent.
  local trigger
  trigger=$(awk -v s="$current_sigma" -v r="$current_ratio" \
                -v rs="$ref_sigma_avg" -v rr="$ref_ratio_avg" \
-               -v t="$threshold" '
+               -v t="$threshold" -v f="$sigma_floor_arcsec" '
    BEGIN {
     bad_sigma= (s != "" && rs != "" && rs+0 > 0 && (s+0)/(rs+0) > t+0)
     bad_ratio= (r != "" && rr != "" && rr+0 > 0 && (r+0)/(rr+0) > t+0)
-    print (bad_sigma || bad_ratio) ? 1 : 0
+    sigma_inside_floor= (f != "" && f+0 > 0 && s != "" && s+0 > 0 && s+0 < f+0)
+    if (bad_sigma && sigma_inside_floor) {
+     bad_sigma= 0
+     floor_suppressed_it= 1
+    }
+    if (bad_sigma || bad_ratio) { print "retry" }
+    else if (floor_suppressed_it)  { print "floor" }
+    else                           { print "no" }
    }')
- if [ "$trigger" != 1 ]; then
+ # Third trigger, independent of the two above and of the reference images
+ # altogether: the plate solver itself refused to refit this image's SIP and
+ # kept a solution that is bad in absolute terms. It prints SIP_REFIT_REJECTED
+ # with the worst-region residual of the solution it kept; see the long comment
+ # at that fprintf in src/solve_plate_with_UCAC5.c for why the refusal is a
+ # symptom rather than a verdict. What it means in practice is that the catalog
+ # cross-match went through a WCS too far off to pair stars correctly, so no
+ # amount of refitting those pairs helps and only a fresh plate solve will do.
+ #
+ # This matters because the two tests above are relative: if the reference
+ # images are themselves mediocre, a badly solved new image can sit inside
+ # ${threshold}x of them and never be retried at all. On 2026-09-13 the four
+ # frames whose rejected baseline was above one pixel were all repaired by a
+ # retry, but each of them reached it through the ratio test by luck rather
+ # than because anything had noticed what the solver was saying.
+ if [ "$trigger" != "retry" ] && [ -n "$bad_refit_baseline_arcsec" ]; then
+  local rejected_baseline_arcsec
+  rejected_baseline_arcsec=$(awk -v img="$diag_basename" '
+    $1 == "SIP_REFIT_REJECTED:" && $2 == ("file=" img) {
+     for ( i= 3; i <= NF; i++ ) {
+      if ( substr( $i, 1, 22 ) == "worst_region_rms_kept=" ) {
+       last_value= substr( $i, 23 )
+      }
+     }
+    }
+    END { print last_value }' transient_factory_test31.txt)
+  if [ -n "$rejected_baseline_arcsec" ]; then
+   if awk -v v="$rejected_baseline_arcsec" -v t="$bad_refit_baseline_arcsec" 'BEGIN { exit !( t+0 > 0 && v+0 > t+0 ) }' ; then
+    echo "WCS_QUALITY_RETRY: $image_label ($diag_basename) flagged by the plate solver: it refused the SIP refit and kept a solution whose worst region is $rejected_baseline_arcsec arcsec, above the $bad_refit_baseline_arcsec arcsec limit. The catalog cross-match was made through a WCS too far off to pair stars correctly, which only a fresh plate solve can fix." | tee -a transient_factory_test31.txt
+    trigger="retry"
+   fi
+  fi
+ fi
+
+ if [ "$trigger" = "floor" ]; then
+  echo "WCS_QUALITY_RETRY: not retrying $image_label ($diag_basename): sigma=$current_sigma arcsec is inside the $sigma_floor_arcsec arcsec floor, so exceeding ${threshold}x of the reference average sigma is not worth a re-solve; the worst quadrant (ratio=${current_ratio:-N/A}) is within its own threshold too" | tee -a transient_factory_test31.txt
+  return 0
+ fi
+ if [ "$trigger" != "retry" ]; then
   return 0
  fi
 
  echo "WCS_QUALITY_RETRY: $image_label ($diag_basename) flagged: sigma=${current_sigma:-N/A} (ref avg ${ref_sigma_avg:-N/A}), ratio=${current_ratio:-N/A} (ref avg ${ref_ratio_avg:-N/A}), threshold=${threshold}x. Retrying with --tweak-order 2." | tee -a transient_factory_test31.txt
+
+ # Everything downstream that asks "how good is this image's plate solution?"
+ # reads the LAST WCS_QUALITY_DIAG line for the image. The solver we are about
+ # to run appends its own DIAG line whatever the outcome, so on the revert path
+ # we have to put this one back: otherwise the log's last word about the image
+ # describes a solution that is no longer on disk, and both the post-retry
+ # metric re-extraction and the quadrant-count comparison would be reading a
+ # result that was thrown away.
+ local original_diag_line
+ original_diag_line=$(awk -v img="$diag_basename" '$1 == "WCS_QUALITY_DIAG:" && $2 == ("file=" img) { last_line=$0 } END { print last_line }' transient_factory_test31.txt)
 
  local wcs_basename
  wcs_basename="wcs_$(basename "$image_path")"
@@ -1326,6 +1409,12 @@ function retry_wcs_with_lower_tweak_order {
     cp -p "$backup_dir/$(basename "$f")" "$f"
    fi
   done
+  # The WCS files are back; put the matching diagnostic back too, so that the
+  # last WCS_QUALITY_DIAG line for this image again describes what is on disk.
+  if [ -n "$original_diag_line" ]; then
+   echo "WCS_QUALITY_RETRY: re-stating the kept diagnostic for $diag_basename below, so the last WCS_QUALITY_DIAG line matches the restored WCS" | tee -a transient_factory_test31.txt
+   echo "$original_diag_line" >> transient_factory_test31.txt
+  fi
   rm -rf "$backup_dir"
  fi
 }
@@ -4024,10 +4113,6 @@ reference average sigma_overall=${REF_SIGMA_AVG:-N/A} worst_q_ratio=${REF_RATIO_
 warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 ###################################" | tee -a transient_factory_test31.txt
 
-    # Non-fatal coverage check on the same initial bright-pass diagnostics.
-    # Do this before retries can append diagnostics for a rejected solution.
-    report_new_image_quadrant_count_changes "$NEW1_DIAG_NAME" "$NEW2_DIAG_NAME"
-
     # Reference-image plate-solution consistency check. The two reference
     # images show the same sky field, so their astrometric residuals must
     # be similar; a large mismatch means the worse one carries a broken
@@ -4062,8 +4147,22 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     # the threshold relative to the reference average, retry that image's
     # plate solve with VAST_TWEAK_ORDER=2. Reference images are not retried.
     # The helper keeps the retry only if its sigma*ratio scalar improves.
-    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__FIRST_IMAGE"  "1st new image" "$NEW1_SIGMA" "$NEW1_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS"
-    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__SECOND_IMAGE" "2nd new image" "$NEW2_SIGMA" "$NEW2_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS"
+    # The last argument is an absolute floor below which no ratio, however
+    # large, is worth a re-solve: a quarter of a pixel, well under anything a
+    # transient search is limited by. Without it a night with unusually sharp
+    # reference images re-solves ordinary sub-arcsecond solutions for nothing.
+    WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC=$(echo "${IMAGE_SCALE_ARCSECPIX:-0}" | awk '{floor_arcsec= 0.25 * ($1+0); if (floor_arcsec <= 0) floor_arcsec= 1.0; printf "%.2f", floor_arcsec}')
+    # The last argument is the absolute worst-region residual above which a
+    # plate solver that REFUSED to refit the SIP is telling us the frame needs
+    # re-solving rather than that it was already good enough to leave alone.
+    # One pixel, and the separation is not marginal: over the 643 refit
+    # rejections of 2026-09-13 the kept baseline had a median of 0.44 arcsec and
+    # a maximum of 1.10 arcsec, then jumped straight to 19.8-24.5 arcsec for the
+    # four frames that genuinely needed a fresh solve. One pixel sits in that
+    # gap with a factor of five of clearance on either side.
+    WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC=$(echo "${IMAGE_SCALE_ARCSECPIX:-0}" | awk '{limit_arcsec= 1.0 * ($1+0); if (limit_arcsec <= 0) limit_arcsec= 5.0; printf "%.2f", limit_arcsec}')
+    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__FIRST_IMAGE"  "1st new image" "$NEW1_SIGMA" "$NEW1_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
+    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__SECOND_IMAGE" "2nd new image" "$NEW2_SIGMA" "$NEW2_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
 
     # Re-extract metrics after possible retries so the warnings below
     # reflect the FINAL post-retry quality, not the pre-retry state.
@@ -4071,6 +4170,17 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     NEW2_SIGMA=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "sigma_overall_arcsec")
     NEW1_RATIO=$(extract_wcs_quality_field "$NEW1_DIAG_NAME" "worst_quadrant_to_overall_ratio")
     NEW2_RATIO=$(extract_wcs_quality_field "$NEW2_DIAG_NAME" "worst_quadrant_to_overall_ratio")
+
+    # Non-fatal per-quadrant coverage check, run HERE rather than before the
+    # retries: a retry that repairs a broken solution would otherwise leave an
+    # ERROR standing about a problem the pipeline had just fixed, which is what
+    # happened to Lac-01-Q2b1x1 on 2026-09-13 - the message survived a retry
+    # that took the image from 7.578 to 0.516 arcsec and brought all four
+    # quadrants back to within 1.4% of the other image. Running it after the
+    # re-extraction above is only safe because the revert path inside
+    # retry_wcs_with_lower_tweak_order now re-states the diagnostic of the
+    # solution it restores.
+    report_new_image_quadrant_count_changes "$NEW1_DIAG_NAME" "$NEW2_DIAG_NAME"
 
     warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"

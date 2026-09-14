@@ -6081,6 +6081,8 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char path_to_vast_string[VAST_PATH_MAX];
  char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
  char solved_image_filename[FILENAME_LENGTH + 32];
+ // A private copy for basename(), which is allowed to modify its argument
+ char image_basename_for_refit_log[FILENAME_LENGTH + 32];
  double *sep_before_corrected;
  double *sep_before_corrected_x;
  double *sep_before_corrected_y;
@@ -6681,6 +6683,33 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs is worse than the solution it would replace (worst-region %.3lf vs %.3lf arcsec) - keeping the current solution\n", worstq_after, worstq_baseline );
   } else {
    fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-region baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
+   // Machine-readable companion to the line above, for the calling pipeline.
+   //
+   // Refusing the refit is normally the right answer and means nothing is
+   // wrong: on a solution that is already good there is simply nothing left to
+   // improve, and that is what almost every rejection is (measured over 643
+   // rejections in one night of NMW-TexasTech data, the kept worst-region
+   // baseline had a median of 0.44 arcsec and never exceeded 1.10 arcsec).
+   //
+   // The rare case that matters is a rejection where the solution being KEPT is
+   // itself bad. Then the refusal is a symptom, not a verdict: the catalog
+   // cross-match was made through a WCS too far off to pair stars with their
+   // real counterparts, so the pairs the refit was fitted to are wrong and no
+   // refit of those pairs can recover the frame. Re-matching does not help
+   // either, because the re-match radius is derived from the refit residual and
+   // is itself enormous. Only a fresh plate solve can fix it, and this program
+   // does not do plate solving - so state the fact and let the caller act. In
+   // the same night's data the two rejections with a bad baseline (21.2 and
+   // 24.5 arcsec) are exactly the two frames that needed re-solving.
+   //
+   // The caller decides what counts as "bad" because the caller knows the pixel
+   // scale; here we only report, in a form a script can grep. basename() is
+   // given a private copy because it is allowed to modify its argument, and the
+   // name is formed exactly as in the WCS_QUALITY_DIAG line so the two can be
+   // matched up by the pipeline.
+   strncpy( image_basename_for_refit_log, fits_image_filename, sizeof( image_basename_for_refit_log ) - 1 );
+   image_basename_for_refit_log[sizeof( image_basename_for_refit_log ) - 1]= '\0';
+   fprintf( stderr, "SIP_REFIT_REJECTED: file=%s worst_region_rms_kept=%.3lf arcsec robust_rms_kept=%.3lf arcsec matched=%d\n", basename( image_basename_for_refit_log ), worstq_baseline, rms_baseline, nmatched );
   }
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );

@@ -72,34 +72,114 @@ get_catalog_minimum_expected_size_in_bytes() {
  esac
 }
 
-# Structural check for a plain-text catalog: it must end with a newline and its
-# last line must carry as many fields as the line before it. Catches a download
-# cut off in the middle of a record. It does NOT catch a cut at a record
-# boundary - that is what the size checks are for.
-verify_plain_text_catalog_structure() {
+# Structural check for a downloaded catalog: does the file end where a complete
+# file is supposed to end? Catches a download cut off in the middle of a record.
+# It does NOT catch a cut at a record boundary - that is what the size checks are
+# for.
+#
+# There is no single rule that works for all four catalogs, because they have
+# nothing in common beyond being text. Each one gets the test that matches what
+# is actually invariant about it:
+#
+#  astorb.dat, vsx.dat  fixed-width records - every line is exactly the same
+#                       length (267 and 205 characters), so a short final line
+#                       means a cut mid-record. Their whitespace FIELD count is
+#                       not constant, because object names hold a variable
+#                       number of words ("1 Ceres" against "6331 P-L"), so
+#                       counting fields would reject perfectly good files.
+#  asassnv.csv          variable-length records, but exactly 79 comma-separated
+#                       fields on every line.
+#  ObsCodes.html        an HTML page, not a record file: the codes live inside
+#                       <pre>...</pre> and the observatory name is an unpadded
+#                       last column, so neither the line length nor the field
+#                       count is constant. The only reliable end-of-file marker
+#                       is the closing tag. Counting fields here rejected every
+#                       single download - the last line "</pre>" has one field
+#                       and the line above it has four - which broke catalog
+#                       installation on every machine without a local copy.
+#
+# A format this function does not know gets no structural check at all: a check
+# that misunderstands the format is worse than no check, because it refuses good
+# data forever rather than only on a bad day.
+#
+# $1 is the file to inspect (usually the freshly downloaded temporary copy);
+# $2 is the name of the catalog it will become, which selects the test.
+verify_catalog_structure() {
  VERIFY_CATALOG_FILE="$1"
+ VERIFY_CATALOG_NAME="$2"
+ if [ -z "$VERIFY_CATALOG_NAME" ];then
+  VERIFY_CATALOG_NAME="$1"
+ fi
  if [ ! -s "$VERIFY_CATALOG_FILE" ];then
   return 1
  fi
- # A file not ending in a newline was cut mid-record.
+ # A file not ending in a newline was cut mid-record. True of every format here,
+ # the HTML page included.
  if [ -n "`tail -c 1 \"$VERIFY_CATALOG_FILE\" 2>/dev/null`" ];then
   echo "WARNING: $VERIFY_CATALOG_FILE does not end with a newline - it looks cut off in the middle of a record" >&2
   return 1
  fi
- # Compare the field count of the last two lines. Comma-separated for .csv,
- # whitespace-separated otherwise. Files with fewer than two lines are skipped.
- case "$VERIFY_CATALOG_FILE" in
+ case "$VERIFY_CATALOG_NAME" in
+  *ObsCodes.html*)
+   # tr -d '\r' so a CRLF-served copy is not mistaken for a truncated one.
+   VERIFY_CATALOG_LAST_LINE=`awk 'NF>0 {last_line=$0} END {print last_line}' "$VERIFY_CATALOG_FILE" 2>/dev/null | tr -d '\r'`
+   if [ "$VERIFY_CATALOG_LAST_LINE" != "</pre>" ];then
+    echo "WARNING: $VERIFY_CATALOG_FILE does not end with the </pre> tag that closes the MPC observatory-code list (its last non-empty line is '$VERIFY_CATALOG_LAST_LINE') - it looks incomplete" >&2
+    return 1
+   fi
+   ;;
   *.csv)
-   VERIFY_CATALOG_FIELD_SEPARATOR=','
+   # Files with fewer than two lines are skipped.
+   if ! tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null | awk -F',' 'NR==1{first=NF} NR==2{second=NF} END{if (NR<2) exit 0; exit !(first==second)}' ;then
+    echo "WARNING: the last line of $VERIFY_CATALOG_FILE has a different number of comma-separated fields than the line before it - it looks cut off in the middle of a record" >&2
+    return 1
+   fi
+   ;;
+  *astorb*|*vsx.dat*)
+   if ! tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null | awk 'NR==1{first=length($0)} NR==2{second=length($0)} END{if (NR<2) exit 0; exit !(first==second)}' ;then
+    echo "WARNING: the last line of $VERIFY_CATALOG_FILE is not the same length as the line before it - this is a fixed-width catalog, so it looks cut off in the middle of a record" >&2
+    return 1
+   fi
    ;;
   *)
-   VERIFY_CATALOG_FIELD_SEPARATOR=' '
+   # Unknown format: no structural check rather than a wrong one.
    ;;
  esac
- if ! tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null | awk -F"$VERIFY_CATALOG_FIELD_SEPARATOR" 'NR==1{first=NF} NR==2{second=NF} END{if (NR<2) exit 0; exit !(first==second)}' ;then
-  echo "WARNING: the last line of $VERIFY_CATALOG_FILE has a different number of fields than the line before it - it looks cut off in the middle of a record" >&2
-  return 1
+ return 0
+}
+
+# One catalog that cannot be updated must not stop the other three from being
+# updated. ObsCodes.html is first in the update loop, so before this any failure
+# on it - an MPC outage, a mirror hiccup, a bug in one of the checks above -
+# also blocked astorb.dat, vsx.dat and asassnv.csv, which is how a single wrong
+# structural test could leave a machine with no catalogs at all.
+#
+# The severity depends on what is already on disk. Failing to REFRESH a catalog
+# we already hold is a warning; failing to OBTAIN one we do not hold is an
+# error that the exit code must report, but even then the remaining catalogs are
+# still attempted first. Call it and then `continue` to the next catalog.
+CATALOG_UPDATE_HARD_FAILURE=0
+note_catalog_update_failure() {
+ NOTE_CATALOG_NAME="$1"
+ if [ "$CATALOG_IS_OPTIONAL" -eq 1 ] 2>/dev/null ;then
+  echo "ERROR: the optional catalog $NOTE_CATALOG_NAME could not be updated - continuing without updating it" >&2
+  return 0
  fi
+ if [ -s "$NOTE_CATALOG_NAME" ];then
+  # Only an installed copy that is plausibly complete is worth keeping: a stub
+  # left in place would degrade every run from now on, exactly as the 1000-record
+  # asassnv.csv did on ariel.
+  NOTE_INSTALLED_SIZE_BYTES=`get_file_size_in_bytes "$NOTE_CATALOG_NAME"`
+  NOTE_MINIMUM_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$NOTE_CATALOG_NAME"`
+  if [ -z "$NOTE_INSTALLED_SIZE_BYTES" ] || [ "$NOTE_MINIMUM_SIZE_BYTES" -le 0 ] 2>/dev/null || [ "$NOTE_INSTALLED_SIZE_BYTES" -ge "$NOTE_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
+   echo "WARNING: $NOTE_CATALOG_NAME could not be updated - keeping the copy that is already installed and carrying on with the other catalogs" >&2
+   return 0
+  fi
+  echo "ERROR: $NOTE_CATALOG_NAME could not be updated and the copy on disk is too small to be usable" >&2
+ else
+  echo "ERROR: $NOTE_CATALOG_NAME could not be updated and there is no copy installed" >&2
+ fi
+ CATALOG_UPDATE_HARD_FAILURE=1
  return 0
 }
 
@@ -591,11 +671,8 @@ $PWD" >&2
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
-    if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-     echo "ERROR: failed to download the optional catalog $FILE_TO_UPDATE - continuing without updating it" >&2
-     continue
-    fi
-    exit 1
+    note_catalog_update_failure "$FILE_TO_UPDATE"
+    continue
    fi
    #
   fi # if that failed
@@ -609,7 +686,8 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    $UNPACK_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running $UNPACK_COMMAND" >&2
-    exit 1
+    note_catalog_update_failure "$FILE_TO_UPDATE"
+    continue
    else
     echo "Unpack complete" >&2
    fi
@@ -619,11 +697,8 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
    fi
-   if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-    echo "ERROR: the optional catalog $FILE_TO_UPDATE could not be updated (empty download) - continuing without it" >&2
-    continue
-   fi
-   exit 1
+   note_catalog_update_failure "$FILE_TO_UPDATE"
+   continue
   fi
   # Size sanity check for plain (non-gzip) catalog downloads. The .gz
   # catalogs are protected by the gzip integrity test in
@@ -652,22 +727,19 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
       if [ "$NEW_CATALOG_SIZE_BYTES" -ne "$REMOTE_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
        echo "ERROR: the downloaded $TMP_OUTPUT is $NEW_CATALOG_SIZE_BYTES bytes but $DOWNLOAD_URL_USED advertises $REMOTE_CATALOG_SIZE_BYTES - the transfer is incomplete, keeping the old file" >&2
        rm -f "$TMP_OUTPUT"
-       if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-        continue
-       fi
-       exit 1
+       note_catalog_update_failure "$FILE_TO_UPDATE"
+       continue
       fi
      fi
     fi
 
-    # (b) Is the file cut off in the middle of a record?
-    if ! verify_plain_text_catalog_structure "$TMP_OUTPUT" ;then
+    # (b) Is the file cut off in the middle of a record? The test is chosen per
+    # catalog - see verify_catalog_structure().
+    if ! verify_catalog_structure "$TMP_OUTPUT" "$FILE_TO_UPDATE" ;then
      echo "ERROR: the downloaded $TMP_OUTPUT does not look like a complete catalog file - keeping the old file" >&2
      rm -f "$TMP_OUTPUT"
-     if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-      continue
-     fi
-     exit 1
+     note_catalog_update_failure "$FILE_TO_UPDATE"
+     continue
     fi
 
     # (c) Is it implausibly small in absolute terms? This is the check that
@@ -679,10 +751,8 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
      if [ "$NEW_CATALOG_SIZE_BYTES" -lt "$MINIMUM_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
       echo "ERROR: the downloaded $TMP_OUTPUT is only $NEW_CATALOG_SIZE_BYTES bytes, far below the $MINIMUM_CATALOG_SIZE_BYTES bytes expected for $FILE_TO_UPDATE - the source is serving an incomplete catalog, keeping the old file" >&2
       rm -f "$TMP_OUTPUT"
-      if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-       continue
-      fi
-      exit 1
+      note_catalog_update_failure "$FILE_TO_UPDATE"
+      continue
      fi
     fi
 
@@ -696,10 +766,8 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
       if ! echo "$NEW_CATALOG_SIZE_BYTES $OLD_CATALOG_SIZE_BYTES" | awk '{exit !($1+0 >= 0.8*$2)}' ;then
        echo "ERROR: the downloaded $TMP_OUTPUT ($NEW_CATALOG_SIZE_BYTES bytes) is suspiciously smaller than the current $FILE_TO_UPDATE ($OLD_CATALOG_SIZE_BYTES bytes) - looks like a truncated download, keeping the old file (remove $FILE_TO_UPDATE and re-run the update to override)" >&2
        rm -f "$TMP_OUTPUT"
-       if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
-        continue
-       fi
-       exit 1
+       note_catalog_update_failure "$FILE_TO_UPDATE"
+       continue
       fi
      fi
     fi
@@ -861,3 +929,15 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
 fi
 #can't have output here as it goes straight to the transient candidates list
 #echo "The Tycho-2 list of bright stars looks good"
+
+# A catalog we could neither update nor find already installed is reported here,
+# at the very end, rather than where it happened: the loop above deliberately
+# carries on so that one unreachable source cannot cost us the other three, and
+# the Bright Star Catalogue and Tycho-2 above are installed either way. The
+# caller still sees a non-zero exit code, which is what it acts on.
+if [ "$CATALOG_UPDATE_HARD_FAILURE" -ne 0 ] 2>/dev/null ;then
+ echo "ERROR: one or more required catalogs are missing and could not be downloaded - see the messages above" >&2
+ exit 1
+fi
+
+exit 0
