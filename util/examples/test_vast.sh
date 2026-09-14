@@ -15439,6 +15439,8 @@ if [ -d /usr/share/astrometry/bin ] && ! echo "$PATH" | grep -q '/usr/share/astr
  export PATH="$PATH:/usr/share/astrometry/bin"
 fi
 
+### Skipped on GitHub Actions to keep the CI run short (5.5 min; it also needs a working solve-field and two remote image servers)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test image if needed (a single bzip2-compressed FITS frame,
 # no tarball; it is kept inside its own dataset directory so the usual
 # skip-if-present and disk-space-cleanup conventions apply)
@@ -15520,6 +15522,7 @@ if [ -s ../NMW-TexasTech__Cas02_RA0_plate_solve_test/wcs_fd_Cas-02-Q1b1x1_2026-0
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS02RA0PLATESOLVE_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -26744,8 +26747,8 @@ fi
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ######### SN2023ixf N130 image
-### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+### Skipped on GitHub Actions to keep the CI run short (1.2 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 
 if [ ! -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -26852,9 +26855,11 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130_TEST_NOT_PERFORMED"
 fi
 
-### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+### End of the section skipped on GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
+### Skipped on GitHub Actions to keep the CI run short (0.5 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 ######### TTU Skyview Obs. Tel.-4 0.3m + SBIG STC-428P CMOS
 if [ ! -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -26946,6 +26951,7 @@ if [ -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];the
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### Many hot pixels image
@@ -27905,6 +27911,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 
+### Skipped on GitHub Actions to keep the CI run short (0.9 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # T33 no focal reducer
 if [ ! -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -27986,6 +27994,7 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
@@ -28191,6 +28200,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
 
+### Skipped on GitHub Actions to keep the CI run short (0.6 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 ### HST image - check that we are creating a flag image for that one
 if [ ! -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];then
  if [ ! -d ../individual_images_test ];then
@@ -28248,6 +28259,7 @@ $GREP_RESULT"
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
@@ -29228,6 +29240,8 @@ fi
 
 
 
+### Skipped on GitHub Actions to keep the CI run short (0.7 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 ### Test imstat code
 if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -29280,6 +29294,7 @@ if [ -d ../individual_images_test ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
@@ -30679,6 +30694,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 
+### Skipped on GitHub Actions to keep the CI run short (4.0 min; it also depends on remote period-search servers)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 #### Period search servers test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
@@ -30976,6 +30993,7 @@ else
  echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -31973,6 +31991,8 @@ if [ $? -ne 0 ];then
 fi
 
 
+### Skipped on GitHub Actions to keep the CI run short (0.4 min)
+if [ "$GITHUB_ACTIONS" != "true" ];then
 #### Period search test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
@@ -32023,6 +32043,7 @@ else
  echo -e "\n\033[01;34mThe second period search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
