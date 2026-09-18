@@ -1,2 +1,7 @@
 ObsCodes.html
 NMW_select_two_reference_images_NMW-TexasTech.sh
+
+# Markers left by lib/update_offline_catalogs.sh: a remembered download
+# failure and the lock held while it downloads. Both are runtime state.
+*.download_failed
+lib/catalogs/.update_offline_catalogs.lock

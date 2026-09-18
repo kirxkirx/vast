@@ -16668,11 +16668,32 @@ if [ $ARTSTARRECOVERY_TEST_CAN_RUN -eq 1 ];then
  fi
  #
  rm -f artificial_star_test_results.txt
- # Run the insert-and-recovery test with a single faint flux (oneflux variant)
- REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_artificial_star_recovery_terminal_output$$.tmp
- if [ $? -ne 0 ];then
+ # Run the insert-and-recovery test with a single faint flux (oneflux variant).
+ #
+ # Under a hard timeout, because all of the output goes to a file: if this ever
+ # hangs, nothing at all appears on the terminal and the whole test run dies at
+ # the CI job limit with no clue as to which test was to blame. That is exactly
+ # what happened on 2026-09-14 - the test printed its banner, went quiet for
+ # 2 h 59 m, and GitHub Actions killed the job at its 300-minute limit. A
+ # timeout here turns that into an ordinary FAILED section with the terminal
+ # output preserved below, and lets the remaining tests run.
+ # The test normally takes about 10-20 minutes.
+ ARTSTARRECOVERY_TIMEOUT_SEC=3600
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ $($WORKDIR/lib/find_timeout_command.sh) "$ARTSTARRECOVERY_TIMEOUT_SEC" util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_artificial_star_recovery_terminal_output$$.tmp
+ ARTSTARRECOVERY_EXIT_CODE=$?
+ if [ $ARTSTARRECOVERY_EXIT_CODE -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_EXIT_CODE"
+  # 124 is what both GNU and BSD timeout(1) return when they had to kill the
+  # command, so a hang is reported as a hang rather than as a generic failure.
+  if [ $ARTSTARRECOVERY_EXIT_CODE -eq 124 ];then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_TIMEOUT_${ARTSTARRECOVERY_TIMEOUT_SEC}SEC"
+   GREP_RESULT=$(tail -n 50 test_artificial_star_recovery_terminal_output$$.tmp 2>/dev/null)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ARTSTARRECOVERY_TIMEOUT ######
+$GREP_RESULT"
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_EXIT_CODE"
+  fi
  fi
  #
  if [ -s artificial_star_test_results.txt ];then
@@ -16704,6 +16725,11 @@ $GREP_RESULT"
   DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### ARTSTARRECOVERY_NO_RESULTS_FILE ######
 $GREP_RESULT"
+ fi
+ # Keep the terminal output of a failed run where the CI artifact step can find
+ # it; on success it is of no interest and is removed.
+ if [ $TEST_PASSED -ne 1 ];then
+  cp -f test_artificial_star_recovery_terminal_output$$.tmp artificial_star_recovery_terminal_output.txt 2>/dev/null
  fi
  rm -f test_artificial_star_recovery_terminal_output$$.tmp
  #

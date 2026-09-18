@@ -75,6 +75,11 @@ jobs:
               TEST_EXIT_CODE=${PIPESTATUS[0]}
               # copy artifacts to the runner workspace for upload
               cp vast_test_incremental_list_of_failed_test_codes.txt test_artifacts/ 2>/dev/null || true
+              cp artificial_star_recovery_terminal_output.txt test_artifacts/ 2>/dev/null || true
+              # Whatever a hanging test left behind: without this a run killed at
+              # the job time limit uploads no evidence of what it was stuck on.
+              cp -- *_terminal_output*.tmp test_artifacts/ 2>/dev/null || true
+              cp vast_test_report.txt test_artifacts/ 2>/dev/null || true
               if [ -d test_artifacts ]; then
                 rm -rf /out/test_artifacts
                 cp -a test_artifacts /out/

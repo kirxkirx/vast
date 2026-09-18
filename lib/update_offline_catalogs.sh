@@ -16,6 +16,68 @@ CATALOG_DOWNLOAD_TIMEOUT_SEC=3600
 : "${CATALOG_DOWNLOAD_ATTEMPTS:=3}"
 : "${CATALOG_DOWNLOAD_RETRY_DELAY_SEC:=60}"
 
+# How long a failed download is remembered before the catalog is attempted
+# again. This is not an optimisation, it is what stops a source that is
+# permanently broken from being re-fetched thousands of times in one run.
+#
+# lib/catalogs/check_catalogs_offline runs this script, and it is itself run
+# once per transient candidate. While a catalog cannot be obtained - a mirror
+# serving a truncated file, an upstream that is down - every single candidate
+# pays for a fresh download and a fresh rejection. On 2026-09-14 that turned
+# the artificial-star test into a three-hour hang that consumed the entire
+# 300-minute GitHub Actions budget: the ASAS-SN mirror was serving a
+# 643888-byte stub, the size floor correctly refused it every time, and
+# nothing remembered that it had just been refused. A no-op run of this script
+# costs 0.06 s; one that re-downloads and re-rejects costs about 2 s.
+#
+# A failure is therefore recorded next to the catalog it belongs to and the
+# download is skipped until the marker ages out. "force" ignores and clears the
+# markers, so a mirror that has just been repaired can be picked up at once.
+: "${CATALOG_DOWNLOAD_FAILURE_COOLDOWN_SEC:=3600}"
+
+# Name of the marker recording that this catalog could not be downloaded.
+catalog_download_failure_marker_name() {
+ echo "$1.download_failed"
+}
+
+# 0 (true) when this catalog failed to download recently enough that we should
+# not try again yet.
+recent_catalog_download_failure() {
+ RECENT_FAILURE_MARKER=`catalog_download_failure_marker_name "$1"`
+ if [ ! -f "$RECENT_FAILURE_MARKER" ];then
+  return 1
+ fi
+ # GNU stat then BSD stat, the same pattern used elsewhere in this script.
+ RECENT_FAILURE_MARKER_UNIXSEC=`stat -c "%Y" "$RECENT_FAILURE_MARKER" 2>/dev/null`
+ if [ -z "$RECENT_FAILURE_MARKER_UNIXSEC" ];then
+  RECENT_FAILURE_MARKER_UNIXSEC=`stat -f "%m" "$RECENT_FAILURE_MARKER" 2>/dev/null`
+ fi
+ if [ -z "$RECENT_FAILURE_MARKER_UNIXSEC" ];then
+  # The marker is there but we cannot read its age: treat it as fresh rather
+  # than fall back into the retry storm it exists to prevent.
+  return 0
+ fi
+ RECENT_FAILURE_AGE_SEC=$(( `date +%s` - RECENT_FAILURE_MARKER_UNIXSEC ))
+ if [ "$RECENT_FAILURE_AGE_SEC" -lt 0 ] 2>/dev/null ;then
+  # Clock went backwards; do not trust the marker.
+  return 1
+ fi
+ if [ "$RECENT_FAILURE_AGE_SEC" -lt "$CATALOG_DOWNLOAD_FAILURE_COOLDOWN_SEC" ] 2>/dev/null ;then
+  return 0
+ fi
+ return 1
+}
+
+remember_catalog_download_failure() {
+ REMEMBER_FAILURE_MARKER=`catalog_download_failure_marker_name "$1"`
+ : > "$REMEMBER_FAILURE_MARKER" 2>/dev/null
+}
+
+forget_catalog_download_failure() {
+ FORGET_FAILURE_MARKER=`catalog_download_failure_marker_name "$1"`
+ rm -f "$FORGET_FAILURE_MARKER"
+}
+
 # Run a download command up to CATALOG_DOWNLOAD_ATTEMPTS times, resuming the
 # partial output file between the attempts. For .gz targets the completed
 # file must also pass a gzip integrity test: a resumed download stitched
@@ -161,6 +223,9 @@ verify_catalog_structure() {
 CATALOG_UPDATE_HARD_FAILURE=0
 note_catalog_update_failure() {
  NOTE_CATALOG_NAME="$1"
+ # Remember the failure whatever its severity, so the next caller does not
+ # repeat a download that has just been shown not to work.
+ remember_catalog_download_failure "$NOTE_CATALOG_NAME"
  if [ "$CATALOG_IS_OPTIONAL" -eq 1 ] 2>/dev/null ;then
   echo "ERROR: the optional catalog $NOTE_CATALOG_NAME could not be updated - continuing without updating it" >&2
   return 0
@@ -499,7 +564,79 @@ CURRENT_DATE_UNIXSEC=`date +%s`
 
 cd "$VASTDIR" || exit 1
 
+# Only one copy of this script may download at a time.
+#
+# Every download writes to a fixed temporary name in the VaST directory
+# (asassnv.csv, astorb_dat_new.gz, ...) and does so with 'curl --continue-at -'.
+# That resume is deliberate and valuable - it is what lets a 400 MB catalog
+# arrive in pieces over an unstable link - but it means two copies of this
+# script running at once would resume and append to each other's partial file
+# and produce garbage. Concurrency is not hypothetical: transient candidates are
+# identified in parallel (util/transients/report_transient.sh runs
+# check_catalogs_offline in a background branch), and nine of them were caught
+# running simultaneously when the 2026-09-14 CI job was killed.
+#
+# A lock DIRECTORY is used because mkdir is atomic on every POSIX filesystem,
+# needs no helper binary, and works identically on Linux, macOS, FreeBSD and
+# busybox. Failing to take it is not an error: whoever holds it is already doing
+# the work, so we simply skip the downloads and carry on to the checks below.
+CATALOG_UPDATE_LOCK_DIR="lib/catalogs/.update_offline_catalogs.lock"
+: "${CATALOG_UPDATE_LOCK_STALE_SEC:=7200}"
+CATALOG_UPDATE_LOCK_IS_OURS=0
+SKIP_CATALOG_DOWNLOADS=0
+
+release_catalog_update_lock() {
+ if [ "$CATALOG_UPDATE_LOCK_IS_OURS" -eq 1 ] 2>/dev/null ;then
+  rmdir "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null
+  CATALOG_UPDATE_LOCK_IS_OURS=0
+ fi
+}
+
+if mkdir "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null ;then
+ CATALOG_UPDATE_LOCK_IS_OURS=1
+ # Released on every exit path, of which this script has many.
+ trap release_catalog_update_lock EXIT
+elif [ ! -d "$CATALOG_UPDATE_LOCK_DIR" ];then
+ # mkdir failed and no lock is there - the directory is not writable, or
+ # lib/catalogs is missing. Do not let the locking itself become a reason not
+ # to update: carry on unlocked, exactly as before this was introduced.
+ echo "WARNING: cannot create the catalog update lock $CATALOG_UPDATE_LOCK_DIR - proceeding without it" >&2
+else
+ # Somebody else holds it. Steal it only if it is old enough that the holder
+ # cannot plausibly still be alive (a machine that was powered off mid-download
+ # would otherwise never update its catalogs again).
+ CATALOG_UPDATE_LOCK_UNIXSEC=`stat -c "%Y" "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null`
+ if [ -z "$CATALOG_UPDATE_LOCK_UNIXSEC" ];then
+  CATALOG_UPDATE_LOCK_UNIXSEC=`stat -f "%m" "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null`
+ fi
+ CATALOG_UPDATE_LOCK_AGE_SEC=""
+ if [ -n "$CATALOG_UPDATE_LOCK_UNIXSEC" ];then
+  CATALOG_UPDATE_LOCK_AGE_SEC=$(( CURRENT_DATE_UNIXSEC - CATALOG_UPDATE_LOCK_UNIXSEC ))
+ fi
+ if [ -n "$CATALOG_UPDATE_LOCK_AGE_SEC" ] && [ "$CATALOG_UPDATE_LOCK_AGE_SEC" -gt "$CATALOG_UPDATE_LOCK_STALE_SEC" ] 2>/dev/null ;then
+  echo "WARNING: the catalog update lock $CATALOG_UPDATE_LOCK_DIR is $CATALOG_UPDATE_LOCK_AGE_SEC seconds old - assuming it was left behind and taking it over" >&2
+  rmdir "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null
+  if mkdir "$CATALOG_UPDATE_LOCK_DIR" 2>/dev/null ;then
+   CATALOG_UPDATE_LOCK_IS_OURS=1
+   trap release_catalog_update_lock EXIT
+  else
+   SKIP_CATALOG_DOWNLOADS=1
+  fi
+ else
+  SKIP_CATALOG_DOWNLOADS=1
+ fi
+ if [ "$SKIP_CATALOG_DOWNLOADS" -eq 1 ];then
+  echo "Another copy of $0 is updating the catalogs right now - not downloading anything in this run" >&2
+ fi
+fi
+
 for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
+
+ # Another copy of this script holds the download lock; it will fetch whatever
+ # is missing, so there is nothing useful for us to do here.
+ if [ "$SKIP_CATALOG_DOWNLOADS" -eq 1 ];then
+  continue
+ fi
 
  #can't have output here as it goes straight to the transient candidates list
  #echo "$0 is checking $FILE_TO_UPDATE"
@@ -563,6 +700,20 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
  if [ "$1" == "force" ];then
   echo "Forcing the catalog update per user request" >&2
   NEED_TO_UPDATE_THE_FILE=1
+  # An explicit force is the operator saying "try again now", so a remembered
+  # failure must not stand in the way.
+  forget_catalog_download_failure "$FILE_TO_UPDATE"
+ fi
+
+ # Do not re-attempt a download that has just failed. Without this a source
+ # that cannot be fixed from here - a mirror serving a truncated catalog, an
+ # upstream that is down - is re-fetched on every single call of this script,
+ # and this script runs once per transient candidate.
+ if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
+  if recent_catalog_download_failure "$FILE_TO_UPDATE" ;then
+   echo "Not re-downloading $FILE_TO_UPDATE: it failed less than $CATALOG_DOWNLOAD_FAILURE_COOLDOWN_SEC seconds ago (remove `catalog_download_failure_marker_name "$FILE_TO_UPDATE"`, or run with 'force', to try again now)" >&2
+   NEED_TO_UPDATE_THE_FILE=0
+  fi
  fi
 
  # Update the file if needed
@@ -775,6 +926,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
   esac
   mv "$TMP_OUTPUT" "$FILE_TO_UPDATE" && touch "$FILE_TO_UPDATE" && echo "Moved $TMP_OUTPUT to $FILE_TO_UPDATE" >&2
   echo "Successfully updated $FILE_TO_UPDATE" >&2
+  forget_catalog_download_failure "$FILE_TO_UPDATE"
  fi
 
 done

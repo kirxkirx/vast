@@ -89,6 +89,11 @@ jobs:
         if: always()
         run: |
           cp ~/vast/vast_test_incremental_list_of_failed_test_codes.txt ~/vast/test_artifacts/ 2>/dev/null || true
+          cp ~/vast/artificial_star_recovery_terminal_output.txt ~/vast/test_artifacts/ 2>/dev/null || true
+          # Whatever a hanging test left behind: without this a run killed at the
+          # job time limit uploads no evidence at all of what it was stuck on.
+          cp -- ~/vast/*_terminal_output*.tmp ~/vast/test_artifacts/ 2>/dev/null || true
+          cp ~/vast/vast_test_report.txt ~/vast/test_artifacts/ 2>/dev/null || true
 
       - name: Copy test artifacts to Windows filesystem
         if: always()

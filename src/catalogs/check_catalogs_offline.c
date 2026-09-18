@@ -904,6 +904,27 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  return is_found;
 }
 
+// Is this catalog file present and not empty?
+// Used only to decide whether the update script has to be run at all.
+static int catalog_file_is_present_and_nonempty( const char *catalog_filename ) {
+ FILE *catalog_file;
+ long catalog_file_size;
+ catalog_file= fopen( catalog_filename, "r" );
+ if ( catalog_file == NULL ) {
+  return 0;
+ }
+ if ( 0 != fseek( catalog_file, 0, SEEK_END ) ) {
+  fclose( catalog_file );
+  return 0;
+ }
+ catalog_file_size= ftell( catalog_file );
+ fclose( catalog_file );
+ if ( catalog_file_size > 0 ) {
+  return 1;
+ }
+ return 0;
+}
+
 int main( int argc, char **argv ) {
 
  int html_output= 0; // 0 - no, 1 - yes
@@ -964,8 +985,25 @@ int main( int argc, char **argv ) {
  // Note: The relative path "lib/update_offline_catalogs.sh" requires this program to be
  // executed from the VaST root directory. Calling scripts (e.g., util/search_databases_with_vizquery.sh)
  // must ensure they cd to VAST_PATH before invoking this binary.
- if ( 0 != system( "lib/update_offline_catalogs.sh all" ) ) {
-  fprintf( stderr, "WARNING: an error occured while updating the catalogs with lib/update_offline_catalogs.sh\n" );
+ //
+ // Run it only when one of the two catalogs this program reads is actually
+ // missing. This used to be unconditional, and since the program is executed
+ // once per transient candidate, that meant forking a shell script for every
+ // candidate of every field for the whole night. When the catalogs are in
+ // place the script does nothing and returns in about 0.06 s, so the waste was
+ // invisible - until a mirror started serving a truncated ASAS-SN catalog that
+ // the size checks correctly refused. The catalog then never appeared, every
+ // candidate re-downloaded and re-rejected it at about 2 s a time, and the
+ // 2026-09-14 CI run spent three hours in one test before the 300-minute
+ // GitHub Actions limit killed it.
+ // Refreshing catalogs that are present but stale is not this program's job:
+ // the transient factory and the other entry points run the update script at
+ // startup for exactly that purpose.
+ if ( 0 == catalog_file_is_present_and_nonempty( "lib/catalogs/vsx.dat" ) ||
+      0 == catalog_file_is_present_and_nonempty( "lib/catalogs/asassnv.csv" ) ) {
+  if ( 0 != system( "lib/update_offline_catalogs.sh all" ) ) {
+   fprintf( stderr, "WARNING: an error occured while updating the catalogs with lib/update_offline_catalogs.sh\n" );
+  }
  }
 
  is_found= 0; // init
