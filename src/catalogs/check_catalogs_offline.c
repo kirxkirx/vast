@@ -32,6 +32,19 @@
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 #endif
 
+// Set by any of the three catalog searches that could not read its catalog file.
+//
+// Without it "we searched everything and this is not a known variable" and "we
+// could not actually search" are the same exit status, 1, and a caller has no
+// way to tell them apart. That conflation is what turns a catalog outage into a
+// confident wrong answer: util/search_databases_with_vizquery.sh falls through
+// to an online query with a 3" radius in place of the local 25" one and then
+// prints "This object is not listed in the common varaible star catalogs" as a
+// definitive verdict, and util/transients/report_transient.sh records the same
+// 1 in VARIABLE_STAR_ID. main() turns this flag into exit status 3 so the
+// difference is visible. See the comment on the return statements in main().
+static int a_catalog_was_unusable= 0;
+
 // Check if a whitespace-delimited token from a catalog record is a magnitude
 // value. One leading limit flag '<' or '>' and one trailing ':' (uncertainty
 // flag) are allowed and ignored. Values outside the plausible magnitude range
@@ -359,6 +372,7 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
  mymdvfile= fopen( "lib/myMDV.dat", "r" );
  if ( NULL == mymdvfile ) {
   fprintf( stderr, "ERROR: Cannot open myMDV.dat\n" );
+  a_catalog_was_unusable= 1;
   return -1;
  }
  while ( NULL != fgets( string, 256, mymdvfile ) ) {
@@ -469,6 +483,7 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  vsx_dat= fopen( "lib/catalogs/vsx.dat", "r" );
  if ( NULL == vsx_dat ) {
   fprintf( stderr, "ERROR: Cannot open vsx.dat\n" );
+  a_catalog_was_unusable= 1;
   return -1;
  }
  while ( NULL != fgets( string, 256, vsx_dat ) ) {
@@ -696,16 +711,50 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  int amplitude_token= 7;
  int period_token= 8;
 
+ // main() calls this function up to twice per run; warn only once.
+ static int asassnv_missing_warning_printed= 0;
+ static int asassnv_malformed_record_warning_printed= 0;
+
+ // Number of commas on the header line, learned from the file itself, and the
+ // count for the record currently being parsed. -1 means "no header seen yet".
+ int expected_number_of_commas= -1;
+ int number_of_commas_in_this_line= 0;
+ int comma_index;
+
  asassnv_csv= fopen( "lib/catalogs/asassnv.csv", "r" );
  if ( NULL == asassnv_csv ) {
-  fprintf( stderr, "ERROR: Cannot open asassnv.csv\n" );
-  exit( EXIT_FAILURE );
+  // The ASAS-SN Variables catalog is an optional download: lib/update_offline_catalogs.sh
+  // declares it optional ("the search can proceed without it") and will legitimately leave
+  // it absent when no mirror serves a complete copy. Its absence must NOT abort the VSX and
+  // MDV searches that main() runs after this one - they have their own catalogs and those
+  // are present. Degrade exactly the way search_vsx() and search_myMDV() do when their
+  // catalog cannot be opened.
+  //
+  // This used to be exit( EXIT_FAILURE ), which was unreachable while download_asassnv() was
+  // called on the line above the fopen(). Once that call was commented out the exit became
+  // live, and when the ASAS-SN mirror started serving a truncated catalog in Sep 2026 that
+  // the size checks correctly refused, every search whose VSX match falls outside the 6"
+  // pre-pass died here - losing the full-radius VSX pass and the MDV search entirely.
+  if ( 0 == asassnv_missing_warning_printed ) {
+   fprintf( stderr, "WARNING: cannot open lib/catalogs/asassnv.csv - skipping the ASAS-SN part of the search\n" );
+   asassnv_missing_warning_printed= 1;
+  }
+  a_catalog_was_unusable= 1;
+  return -1;
  }
  while ( NULL != fgets( string, 4096 - 1, asassnv_csv ) ) {
   if ( strlen( string ) < 180 ) {
    // That happens all too often!
    //   fprintf(stderr,"WARNING from search_asassnv() a string in lib/catalogs/asassnv.csv is too short:\n%s\n",string);
    continue;
+  }
+  // Count the fields before anything else touches the line: a record with the
+  // wrong number of them must not be parsed at all. See the guard below.
+  number_of_commas_in_this_line= 0;
+  for ( comma_index= 0; string[comma_index] != '\0'; comma_index++ ) {
+   if ( string[comma_index] == ',' ) {
+    number_of_commas_in_this_line++;
+   }
   }
   // fix the FIRST PART of string for strtok() as it cannot handle empty cells ",,"
   // Assume Name RA and Dec will all fit within the first 100 characters
@@ -734,6 +783,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
   // Skip the header line -- old file format
   if ( 0 == strncmp( "ASAS-SN Name", getfield_from_csv_string( string_to_be_ruined_by_strtok, asassn_name_token ), strlen( "ASAS-SN Name" ) ) ) {
+   expected_number_of_commas= number_of_commas_in_this_line;
    continue;
   }
   //
@@ -750,9 +800,35 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
    period_token= 10;
    //   url_token= 0;
    //
+   expected_number_of_commas= number_of_commas_in_this_line;
    continue;
   }
   //
+
+  // A data record must carry the same number of comma-separated fields as the
+  // header line that opens the file. Anything else is a damaged record, and
+  // parsing it does not merely lose that star - it INVENTS one.
+  //
+  // getfield_from_csv_string() splits with strtok(), and strtok() collapses a
+  // leading delimiter, while the ",," padding loop above only pads an empty cell
+  // that sits BETWEEN two commas. A record that begins with a comma therefore has
+  // every field shifted by one and still parses "successfully". The ASAS-SN copy
+  // published in Feb 2026 contains exactly such a record - the tail half of a row
+  // whose first 38 fields are gone, 316 characters long and so comfortably past
+  // the 180-character filter above - and VaST read it as a variable star named
+  // "0.034" of type "-1.649" at RA 0.021 Dec 6.79, reporting a false match to
+  // anything searched near that position.
+  //
+  // The expected count is learned from the file's own header rather than
+  // hard-coded to 79, so this works for the old and the new format alike and
+  // cannot go stale if a future release adds a column.
+  if ( expected_number_of_commas >= 0 && number_of_commas_in_this_line != expected_number_of_commas ) {
+   if ( 0 == asassnv_malformed_record_warning_printed ) {
+    fprintf( stderr, "WARNING: lib/catalogs/asassnv.csv contains at least one malformed record (%d comma-separated fields where the header has %d) - such records are skipped\n", number_of_commas_in_this_line + 1, expected_number_of_commas + 1 );
+    asassnv_malformed_record_warning_printed= 1;
+   }
+   continue;
+  }
 
   //// Dec
   // We should do this before each invocation of getfield_from_csv_string() !!!
@@ -1047,6 +1123,18 @@ int main( int argc, char **argv ) {
  // Return 0 if the source is found
  if ( is_found == 1 ) {
   return 0;
+ }
+
+ // 3 means "not found, but at least one catalog could not be read, so this is
+ // NOT a confident non-detection". It has to be 3 rather than 2: 2 is already
+ // returned above for a colon in the input and for an out-of-range RA/Dec, so
+ // reusing it would make every caller that passes sexagesimal coordinates look
+ // like a catalog outage. Callers that only test for 0 are unaffected, and the
+ // one caller that tests for non-zero - report_transient.sh, which stores this
+ // in VARIABLE_STAR_ID and proceeds to the online search when it is not 0 -
+ // does the right thing with 3 already.
+ if ( 0 != a_catalog_was_unusable ) {
+  return 3;
  }
 
  return 1;

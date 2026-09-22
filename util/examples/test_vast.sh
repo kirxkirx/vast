@@ -1610,6 +1610,84 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 fi # if [ "$GITHUB_ACTIONS" == "true" ];then # - enable the anove test for GitHub Actions only
 
 
+#### A missing OPTIONAL catalog must degrade the offline search, not abort it
+### This test is hermetic: it touches no network and needs no catalog download,
+### so unlike the database query test below it also runs on GitHub Actions.
+###
+### lib/catalogs/asassnv.csv is an optional download (CATALOG_IS_OPTIONAL=1 in
+### lib/update_offline_catalogs.sh) and will legitimately be absent whenever no
+### mirror serves a complete copy. Until Sep 2026 search_asassnv() called
+### exit( EXIT_FAILURE ) when it could not open that file, which killed the whole
+### process partway through main()'s search cascade:
+###   search_vsx(6") -> search_asassnv(4") -> search_vsx(25") -> search_myMDV(25")
+### so every query whose VSX match fell outside the 6" pre-pass silently lost both
+### the full-radius VSX pass and the MDV search - in production as well as here.
+###
+### The existing anti-crash check (STANDALONEDBSCRIPT007_check_catalogs_offline,
+### khi Cyg) could not catch that: khi Cyg is matched at 0" inside the 6" pre-pass,
+### so search_asassnv() is never entered and the test stays green through a fatal
+### abort. Do NOT "simplify" the positions below to ones VSX matches within 6" -
+### that is exactly what made the old test blind.
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Performing a test of the offline catalog search with a missing optional catalog"
+echo -n "Missing optional catalog degradation test: " >> vast_test_report.txt
+
+# A sandbox with vsx.dat and myMDV.dat but deliberately NO asassnv.csv, and a
+# do-nothing update script so nothing reaches for the network.
+CATALOGMISSING_SANDBOX="catalogmissing_sandbox$$"
+mkdir -p "$CATALOGMISSING_SANDBOX/lib/catalogs"
+ln -s "$WORKDIR"/lib/catalogs/vsx.dat "$CATALOGMISSING_SANDBOX/lib/catalogs/vsx.dat"
+cp "$WORKDIR"/lib/myMDV.dat "$CATALOGMISSING_SANDBOX/lib/myMDV.dat"
+printf '#!/bin/sh\nexit 0\n' > "$CATALOGMISSING_SANDBOX/lib/update_offline_catalogs.sh"
+chmod +x "$CATALOGMISSING_SANDBOX/lib/update_offline_catalogs.sh"
+
+# (a) the MDV test target: it is in no other catalog and is reached only by the
+# very last step of the cascade, so it proves the cascade ran to completion.
+(cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 20.9402917 89.1697500 2>/dev/null) | grep -q 'TEST'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_MDV_STILL_FOUND"
+fi
+
+# (b) V6594 Sgr sits 13" away - outside the 6" pre-pass, inside the 25" pass that
+# the old exit() prevented from ever running.
+(cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 282.2748750 -19.0342222 2>/dev/null) | grep -q 'V6594 Sgr'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_VSX_FULLRADIUS_STILL_FOUND"
+fi
+
+# (c) the exit status must mean "found", not "aborted"
+(cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 20.9402917 89.1697500) &>/dev/null
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_EXIT_STATUS"
+fi
+
+# (d) a present-but-empty catalog is the other way this breaks: a download that
+# was interrupted before writing anything leaves a zero-length file behind.
+: > "$CATALOGMISSING_SANDBOX/lib/catalogs/asassnv.csv"
+(cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 20.9402917 89.1697500 2>/dev/null) | grep -q 'TEST'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_EMPTYFILE"
+fi
+
+rm -rf "$CATALOGMISSING_SANDBOX"
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mTest of the offline catalog search with a missing optional catalog \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mTest of the offline catalog search with a missing optional catalog \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+
+
 #### Standalone test for database querry scripts
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then

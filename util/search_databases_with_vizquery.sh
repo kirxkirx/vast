@@ -513,7 +513,20 @@ The script will try to download these catalogs now - it will take some time!
  # using a relative path, so it must be run from the VaST root directory. We use a subshell
  # with cd to ensure the correct working directory without affecting the parent shell.
  LOCAL_CATALOG_SEARCH_RESULTS=$(cd "$VAST_PATH" && lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG)
- if [ $? -eq 0 ];then
+ LOCAL_CATALOG_SEARCH_EXIT_CODE=$?
+ # Exit status 3 means the binary could not read one of its catalogs, so the
+ # local search did not really happen. Do not let that pass as an ordinary
+ # "not a known variable": the online queries below search a much smaller
+ # radius than the local 25", so a silent fallback can turn a catalog outage
+ # into a confidently wrong identification.
+ if [ $LOCAL_CATALOG_SEARCH_EXIT_CODE -eq 3 ];then
+  echo "
+WARNING: the offline VSX/ASAS-SN/MDV search could not read one of its catalogs.
+The identification below comes from the online catalogs only and may miss a match
+that the local search would have found.
+" >&2
+ fi
+ if [ $LOCAL_CATALOG_SEARCH_EXIT_CODE -eq 0 ];then
   # The object is found in local catalogs
   # Mac doesn't allow '-m1 -A1' combination for grep (!!!)
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '>found<' | tail -n1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g'`  

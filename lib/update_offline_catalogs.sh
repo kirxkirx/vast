@@ -175,11 +175,27 @@ verify_catalog_structure() {
  if [ ! -s "$VERIFY_CATALOG_FILE" ];then
   return 1
  fi
- # A file not ending in a newline was cut mid-record. True of every format here,
- # the HTML page included.
+ # A file not ending in a newline was cut mid-record - true of every format here
+ # except the ASAS-SN CSV export, which the PUBLISHER itself ends in the middle of
+ # a record: the 443578365-byte catalog stops 351 bytes into a partial 41-of-79-field
+ # line with no final newline. That is a property of the source, not evidence of a
+ # broken transfer, and refusing it made the complete catalog uninstallable on every
+ # host - the strict rule rejected the only good copy in existence. For *.csv the
+ # completeness of the transfer is already established by the Content-Length check in
+ # the caller, so here we only note the unterminated last line and let the field-count
+ # test below run on the last two COMPLETE records.
+ VERIFY_CATALOG_UNTERMINATED_LAST_LINE=0
  if [ -n "`tail -c 1 \"$VERIFY_CATALOG_FILE\" 2>/dev/null`" ];then
-  echo "WARNING: $VERIFY_CATALOG_FILE does not end with a newline - it looks cut off in the middle of a record" >&2
-  return 1
+  case "$VERIFY_CATALOG_NAME" in
+   *.csv)
+    VERIFY_CATALOG_UNTERMINATED_LAST_LINE=1
+    echo "NOTE: $VERIFY_CATALOG_FILE does not end with a newline - ignoring its incomplete last record, as the ASAS-SN export is published that way" >&2
+    ;;
+   *)
+    echo "WARNING: $VERIFY_CATALOG_FILE does not end with a newline - it looks cut off in the middle of a record" >&2
+    return 1
+    ;;
+  esac
  fi
  case "$VERIFY_CATALOG_NAME" in
   *ObsCodes.html*)
@@ -191,8 +207,16 @@ verify_catalog_structure() {
    fi
    ;;
   *.csv)
-   # Files with fewer than two lines are skipped.
-   if ! tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null | awk -F',' 'NR==1{first=NF} NR==2{second=NF} END{if (NR<2) exit 0; exit !(first==second)}' ;then
+   # Files with fewer than two lines are skipped. When the final record is
+   # unterminated it is the publisher's own partial line, so compare the two
+   # COMPLETE records before it instead - a transfer that really was cut mid-record
+   # still trips this, because it almost never lands exactly on a record boundary.
+   if [ $VERIFY_CATALOG_UNTERMINATED_LAST_LINE -eq 1 ];then
+    VERIFY_CATALOG_LAST_TWO_LINES=`tail -n 3 "$VERIFY_CATALOG_FILE" 2>/dev/null | head -n 2`
+   else
+    VERIFY_CATALOG_LAST_TWO_LINES=`tail -n 2 "$VERIFY_CATALOG_FILE" 2>/dev/null`
+   fi
+   if ! echo "$VERIFY_CATALOG_LAST_TWO_LINES" | awk -F',' 'NR==1{first=NF} NR==2{second=NF} END{if (NR<2) exit 0; exit !(first==second)}' ;then
     echo "WARNING: the last line of $VERIFY_CATALOG_FILE has a different number of comma-separated fields than the line before it - it looks cut off in the middle of a record" >&2
     return 1
    fi
@@ -545,19 +569,30 @@ if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == false ]]; then
   VAST_COUNTRY_CODE="RU"
  fi
  
+ # The country code decides which mirror is tried FIRST, not which mirror exists.
+ # It used to decide membership: a non-RU host set LOCAL_SERVER=kirx.net and never had
+ # any other address to fall back to. On 2026-09-21 the kirx.net mirror re-published
+ # asassnv.csv from the ASAS-SN web export, which is now capped at 1000 rows, and served
+ # a 643888-byte stub in place of the 443 MB catalog. The size floor below correctly
+ # refused it, but with no second mirror to try, every non-RU host simply lost the
+ # catalog - while scan.sai.msu.ru was serving a complete copy the whole time.
  if [ "$VAST_COUNTRY_CODE" == "RU" ];then
   #LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
   LOCAL_SERVER="https://scan.sai.msu.ru/~kirx/vast_catalogs"
   #LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+  ALTERNATIVE_SERVER="https://kirx.net/~kirx/vast_catalogs"
  else
   LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+  ALTERNATIVE_SERVER="https://scan.sai.msu.ru/~kirx/vast_catalogs"
  fi
 else
  # curl is too old to attempt HTTPS, we'll do plain HTTP instead
  LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+ ALTERNATIVE_SERVER="http://kirx.net/~kirx/vast_catalogs"
 fi
 
 export LOCAL_SERVER
+export ALTERNATIVE_SERVER
 
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
@@ -754,16 +789,23 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    # without it, so a failed/empty download must not abort the whole run.
    CATALOG_IS_OPTIONAL=1
    TMP_OUTPUT="asassnv.csv"
-   # NOTE: the URL must NOT be wrapped in escaped quotes. These command strings
-   # are run as unquoted "$1" inside attempt_download_with_resume(), which word-
-   # splits them but does NOT perform quote removal, so \" would reach curl as
-   # part of the URL and curl rejects it outright:
+   # The fallback used to point at https://asas-sn.osu.edu/variables.csv, the
+   # ASAS-SN web export. As of Sep 2026 that endpoint is capped at 1000 of the
+   # ~688000 records and returns 643888 bytes - byte-identical to the stub the
+   # kirx.net mirror re-published from it (md5 9ff002b36b5f8e87cb6eb3da65743a79),
+   # and unchanged by page= or per_page= parameters. A fallback that returns the
+   # same bytes as the source it is falling back from is not a fallback at all.
+   # Fall back to the OTHER mirror instead: both carry the full catalog, and the
+   # country code above now decides only which one is tried first.
+   #
+   # If a query-string URL is ever put back here, note that it must NOT be wrapped
+   # in escaped quotes: these command strings are run as unquoted "$1" inside
+   # attempt_download_with_resume(), which word-splits them but does NOT perform
+   # quote removal, so \" reaches curl as part of the URL and curl refuses it with
    #   curl: (3) URL rejected: Port number was not a decimal number between 0 and 65535
-   # That silently disabled this fallback, which is why a mirror serving an
-   # incomplete asassnv.csv had nothing to fall back to. The '?' and '&' are
-   # safe unquoted here: word splitting does not re-parse operators, and the
-   # other three catalogs have always passed their URLs the same way.
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT https://asas-sn.osu.edu/variables.csv?action=index&controller=variables"
+   # That is what silently disabled this fallback once before. Bare '?' and '&' are
+   # safe: word splitting does not re-parse shell operators.
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $ALTERNATIVE_SERVER/asassnv.csv"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
    DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
@@ -796,12 +838,34 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   # last word of the curl command line.
   DOWNLOAD_URL_USED=`echo "$CURL_LOCAL_COMMAND" | awk '{print $NF}' | tr -d '"'`
 
-  # First try to download a catalog from the mirror
-  echo "### CURL_LOCAL_COMMAND ###
+  # First try to download a catalog from the mirror - but ask it first how big the
+  # file it is offering is.
+  #
+  # The fallback below used to be reached only when curl itself failed, i.e. on a
+  # transport error. A mirror serving a well-formed but drastically incomplete file
+  # downloads with exit code 0, so control went on to the validation gates further
+  # down, which reject the file and then 'continue' - to the next CATALOG, never to
+  # the next URL. That is how one poisoned mirror took the ASAS-SN catalog away from
+  # every non-RU host in Sep 2026: the 100 MB floor detected the 643888-byte stub
+  # perfectly well, but nothing could route around it.
+  #
+  # A HEAD request costs ~0.3 s and, when the mirror advertises less than the floor,
+  # saves the pointless transfer as well. It fails OPEN: a server that sends no
+  # Content-Length (the live ASAS-SN endpoint does not) leaves the variable empty and
+  # the mirror is attempted exactly as before, as does a catalog whose floor is 0.
+  MIRROR_ADVERTISED_SIZE_BYTES=`get_remote_content_length "$DOWNLOAD_URL_USED"`
+  MIRROR_MINIMUM_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
+  LOCAL_MIRROR_DOWNLOAD_EXIT_CODE=1
+  if [ -n "$MIRROR_ADVERTISED_SIZE_BYTES" ] && [ "$MIRROR_MINIMUM_SIZE_BYTES" -gt 0 ] 2>/dev/null && [ "$MIRROR_ADVERTISED_SIZE_BYTES" -lt "$MIRROR_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
+   echo "WARNING: $DOWNLOAD_URL_USED advertises only $MIRROR_ADVERTISED_SIZE_BYTES bytes for $FILE_TO_UPDATE ($MIRROR_MINIMUM_SIZE_BYTES expected at least) - it is serving an incomplete catalog, skipping this mirror and trying the fallback URL" >&2
+  else
+   echo "### CURL_LOCAL_COMMAND ###
 $PWD" >&2
-  echo "$CURL_LOCAL_COMMAND" >&2
-  attempt_download_with_resume "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE"
-  if [ $? -ne 0 ];then
+   echo "$CURL_LOCAL_COMMAND" >&2
+   attempt_download_with_resume "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE"
+   LOCAL_MIRROR_DOWNLOAD_EXIT_CODE=$?
+  fi
+  if [ $LOCAL_MIRROR_DOWNLOAD_EXIT_CODE -ne 0 ];then
    DOWNLOAD_URL_USED=`echo "$CURL_COMMAND" | awk '{print $NF}' | tr -d '"'`
    # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_COMMAND point to exact same version of the file
    if [ -f "$TMP_OUTPUT" ];then
