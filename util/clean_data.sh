@@ -37,8 +37,10 @@ sudo chown -R $USER $PWD"
  fi # see if we are completely out of disk space
 fi
 
-## Clean the silly *.chk files produced by astcheck
-rm -f -- *.chk
+## Clean the silly *.chk files produced by astcheck (and *.chl if it was run on mpcorb.dat)
+## together with the per-process temporary files YYYYMMDD.chk.<pid> and curr_unc.<pid>
+## that astcheck writes before renaming them into place (left behind only if it was killed)
+rm -f -- *.chk *.chl *.chk.[0-9]* *.chl.[0-9]* curr_unc.[0-9]*
 
 rm -f test.cat CPCS.cat  
 echo "$0 is deleting ALL data files from $PWD"

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>    /* getpid() for the unique temporary cache file names */
 #include "watdefs.h"
 #include "date.h"
 #include "comets.h"
@@ -349,21 +350,73 @@ static double centralize_angle( double ang)
 
 #define HEADER_SIZE 4
 
+/* Atomically replace 'filename' with 'header_bytes' bytes of 'header' (may  */
+/* be NULL) followed by 'n_items' items of 'item_size' bytes from 'data'.   */
+/* The data are written to a per-process temporary file in the same        */
+/* directory which is then rename()d into place.  rename() is atomic on    */
+/* POSIX systems,  so a concurrent reader sees either the previous complete */
+/* file,  the new complete file,  or no file at all -- never a partially    */
+/* written one.  Returns 0 on success,  -1 if the file could not be         */
+/* written (unwritable directory,  full disk,  ...);  in that case no       */
+/* temporary file is left behind and 'filename' is left untouched.         */
+
+static int write_cache_file_atomically( const char *filename,
+            const void *header, const size_t header_bytes,
+            const void *data, const size_t item_size, const size_t n_items)
+{
+   char tmpname[64];
+   FILE *ofile;
+   int rval = 0;
+
+   sprintf( tmpname, "%s.%ld", filename, (long)getpid( ));
+   ofile = fopen( tmpname, "wb");
+   if( !ofile)
+      return( -1);
+   if( header_bytes && fwrite( header, header_bytes, 1, ofile) != 1)
+      rval = -1;
+   if( !rval && n_items && fwrite( data, item_size, n_items, ofile) != n_items)
+      rval = -1;
+   if( fclose( ofile) != 0)
+      rval = -1;
+   if( !rval && rename( tmpname, filename) != 0)
+      rval = -1;
+   if( rval)
+      remove( tmpname);
+   return( rval);
+}
+
+/* Several astcheck processes may run at the same time in the same          */
+/* directory (VaST checks transient candidates in parallel),  all of them   */
+/* trying to create the same cache files.  So the cache is never trusted    */
+/* blindly:  every read is checked,  and a short read,  a missing           */
+/* 'curr_unc' or a size mismatch means the cache is unusable and the data   */
+/* are recomputed from the orbital elements instead.  The files are written */
+/* atomically (see above),  'curr_unc' before the .chk file,  so a reader   */
+/* that finds a complete .chk file normally finds a matching 'curr_unc'     */
+/* too;  if it does not (the 'curr_unc' write failed),  the size check      */
+/* below rejects the cache and the data are recomputed.  The checks also    */
+/* protect against a truncated file left behind by an old astcheck version  */
+/* or a full disk.                                                          */
+
 static AST_DATA *get_cached_day_data( const int ijd)
 {
    char filename[20];
-   FILE *ifile, *ofile;
+   FILE *ifile;
    int32_t header[HEADER_SIZE];
    const int32_t magic_version_number = 1314159266;
-   AST_DATA *rval;
+   AST_DATA *rval = NULL;
    int uncertainties_loaded = (ephem_uncertainties != NULL);
+   int cache_ok = 0;
 
    if( !ephem_uncertainties)
+      {
       ephem_uncertainties = (int16_t *)malloc( n_asteroids * sizeof( int16_t));
-      if(ephem_uncertainties == NULL){
-            fprintf(stderr, "ERROR: Couldn't allocate memory for ephem_uncertainties\n");
-            exit(1);
-        };
+      if( ephem_uncertainties == NULL)
+         {
+         fprintf( stderr, "ERROR: Couldn't allocate memory for ephem_uncertainties\n");
+         exit( 1);
+         }
+      }
 
                   /* Create a filename in 'YYYYMMDD.chk' form: */
    full_ctime( filename, (double)ijd, FULL_CTIME_YMD | FULL_CTIME_NO_SPACES
@@ -375,42 +428,61 @@ static AST_DATA *get_cached_day_data( const int ijd)
    ifile = fopen( filename, "rb");
    if( ifile)
       {
-      fread( header, HEADER_SIZE, sizeof( int), ifile);
-      if( header[0] != magic_version_number
-                   || header[1] != astorb_epoch || header[2] != n_asteroids)
-         fclose( ifile);
-      else   /* appears to be legitimate cached data */
+      cache_ok = (fread( header, sizeof( int32_t), HEADER_SIZE, ifile) == HEADER_SIZE
+                   && header[0] == magic_version_number
+                   && header[1] == astorb_epoch && header[2] == n_asteroids);
+      if( cache_ok)     /* appears to be legitimate cached data */
          {
          rval = (AST_DATA *)malloc( n_asteroids * sizeof( AST_DATA));
-         if(rval == NULL){
-                fprintf(stderr, "ERROR: Couldn't allocate memory for rval\n rval = (AST_DATA *)malloc( n_asteroids * sizeof( AST_DATA))\n");
-                exit(1);
-        };
-         n_numbered = header[3];
-         fread( rval, n_asteroids, sizeof( AST_DATA), ifile);
-         fclose( ifile);
-         if( !uncertainties_loaded)
+         if( rval == NULL)
             {
-            ifile = fopen( "curr_unc", "rb");
-            fread( ephem_uncertainties, n_asteroids, sizeof( int16_t), ifile);
+            fprintf( stderr, "ERROR: Couldn't allocate memory for rval\n rval = (AST_DATA *)malloc( n_asteroids * sizeof( AST_DATA))\n");
+            exit( 1);
+            }
+         cache_ok = (fread( rval, sizeof( AST_DATA), n_asteroids, ifile)
+                                                 == (size_t)n_asteroids);
+         }
+      fclose( ifile);
+      if( cache_ok && !uncertainties_loaded)
+         {
+         ifile = fopen( "curr_unc", "rb");
+         if( ifile)
+            {
+            cache_ok = (fread( ephem_uncertainties, sizeof( int16_t), n_asteroids, ifile)
+                                                 == (size_t)n_asteroids
+                        && fgetc( ifile) == EOF);
             fclose( ifile);
             }
+         else
+            cache_ok = 0;
+         }
+      if( cache_ok)
+         {
+         n_numbered = header[3];
          return( rval);
          }
+      if( rval)
+         {
+         free( rval);
+         rval = NULL;
+         }
+      if( verbose)
+         printf( "Cached data in '%s' stale or unusable (header mismatch, incomplete file or 'curr_unc' missing), recomputing\n",
+                                                 filename);
       }
    rval = compute_day_data( ijd);
    header[0] = magic_version_number;
    header[1] = astorb_epoch;
    header[2] = n_asteroids;
    header[3] = n_numbered;
-   ofile = fopen( filename, "wb");
-   fwrite( header, HEADER_SIZE, sizeof( int), ofile);
-   fwrite( rval, n_asteroids, sizeof( AST_DATA), ofile);
-   fclose( ofile);
-
-   ofile = fopen( "curr_unc", "wb");
-   fwrite( ephem_uncertainties, n_asteroids, sizeof( int16_t), ofile);
-   fclose( ofile);
+   /* Failing to write the cache is not fatal:  the data have been computed */
+   /* already,  the next run will just have to compute them again.          */
+   if( write_cache_file_atomically( "curr_unc", NULL, 0,
+                  ephem_uncertainties, sizeof( int16_t), (size_t)n_asteroids))
+      fprintf( stderr, "WARNING: cannot write the astcheck cache file 'curr_unc'\n");
+   if( write_cache_file_atomically( filename, header, sizeof( header),
+                  rval, sizeof( AST_DATA), (size_t)n_asteroids))
+      fprintf( stderr, "WARNING: cannot write the astcheck cache file '%s'\n", filename);
    return( rval);
 }
 
