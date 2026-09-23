@@ -5,3 +5,9 @@ NMW_select_two_reference_images_NMW-TexasTech.sh
 # failure and the lock held while it downloads. Both are runtime state.
 *.download_failed
 lib/catalogs/.update_offline_catalogs.lock
+
+# Per-machine Claude Code state. CLAUDE.md, notes.md and the design docs in .claude/ ARE tracked.
+.claude/settings.local.json
+.claude/settings.local.json~
+.claude/projects/
+.claude/*~
