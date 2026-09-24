@@ -57,7 +57,38 @@ Update this file as you learn new things.
 - To test for these on Linux, build bash 3.2.57 in a scratch dir: download
   bash-3.2.57.tar.gz from ftp.gnu.org, `./configure --without-bash-malloc
   CFLAGS='-O1 -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion' && make`
-  (works with gcc 11), then run `./bash -n` on the scripts and run suspicious snippets with it.
+  (works with gcc 11; gcc 14 needs `CC='gcc -std=gnu89'` because the build-helper programs
+  do not get CFLAGS), then run `./bash -n` on the scripts and run suspicious snippets with it.
+  The official Docker image `bash:3.2.57` is the same GNU bash (built on musl).
+- `bash -n` coverage: bash 3.2 and 5.1 do NOT parse the bodies of `$( )` / backticks / `<( )`
+  (a syntax error inside one surfaces only at run time); bash 5.2 does. A `case` inside a
+  DOUBLE-QUOTED "$( ... )" even passes 3.2 -n and then silently runs a truncated command.
+- shellcheck cannot target a bash version and passed the broken test_vast.sh; BASH_COMPAT=32
+  in a modern bash does not reject bash-4 syntax either.
+
+## Remote plate-solve WCS download (util/identify.sh, 2026-09-24)
+
+- curl without --fail saves an HTTP error page (or a file the server is still writing) and
+  exits 0. On 2026-09-24 tau.kirx.net solved c176.fits but the client got 341 bytes that
+  were not a FITS header; insert_wcs_header failed and identify.sh did `exit 1` without
+  trying the other server (the 'many hot pixels' test failed). wcs_header_file_looks_valid()
+  now requires 'SIMPLE  =' and a whole number of 2880-byte blocks (cfitsio rejects anything
+  else); an invalid download is fetched once more, then the next server is tried. Anything
+  echoed from a server reply must be sanitized (printable ASCII, no '<>' tags, no 'ERROR')
+  because identify.sh output can end up in index.html.
+- Known leftovers (not fixed): ERROR_STATUS=2 carries into the next field-of-view trial, so
+  with a single reachable/forced server the later trials skip it; failed jobs are not removed
+  from the server (remove_job.py) on the `continue` paths.
+- lib/bin/xy2sky (bundled WCSTools 3.9.7) segfaults when the input file does not exist.
+
+## `grep -C 'fd_'` typo disabled a test check for 3 years
+
+- test_vast.sh NMWCALIB0_no_calibration_in_filename used `grep -C` (context) instead of
+  `grep -c` (count) from 7abbf3ca (Dec 2023) until 2026-09-24: grep failed, N was empty and
+  `[ $N -ne 2 ]` errored, so the check never fired. When a check compares an unquoted
+  variable with -ne/-eq, a broken producer makes the test silently pass - look for
+  'unary operator expected' in test_vast.sh output. N=2 comes from the two NMW SExtractor
+  passes, each appending vast_summary.log ('Last  image:') to the report.
 - Never edit util/examples/test_vast.sh in place while a test_vast.sh run is using it (bash
   reads it incrementally through fd 255). Replace it atomically instead: `cp` the new version
   to a temp file in the same directory, then `mv` it over the original. The running bash keeps
@@ -130,6 +161,22 @@ Update this file as you learn new things.
   FFIs at 21"/pix have a NORMAL yield of ~0.6 percent (227-235 of 38129) with a healthy
   solution, so the TICA camera block exports 0.2. The STL plate-solve-failure dataset yields
   a deterministic 65/19893 = 0.33 percent (same numbers on every host).
+- Whitelisting is for messages a DATASET legitimately triggers. A message triggered by the
+  host environment (an optional catalog that no source can deliver, a mirror outage) must not
+  be an ERROR at all: since 2026-09-09 any ERROR line in index.html is a run status (unmw
+  combine_reports.sh marks the field red and shows the FIRST ERROR line; autoprocess.sh skips
+  the monitoring ingest). 'ERROR: ASASSN-V catalog ... is missing or empty' failed the VENUS,
+  NMWCALIB and STEREOA sections on the macOS runner on 2026-09-19, when the kirx.net mirror
+  served a 643888-byte stub that the 100 MB floor (8b776fbd) rightly refused. It is now a
+  WARNING; test_vast.sh records the missing catalog as the informational code
+  ASASSNV_CATALOG_UNAVAILABLE (not counted in the exit code). Do NOT repeat such a notice at
+  the end of the report: unmw combine_reports.sh shows only the LAST WARNING line of a field,
+  so a repeated catalog notice would hide field-specific warnings for the whole outage.
+  stderr of lib/update_offline_catalogs.sh reaches index.html too (make_report_in_HTML.sh,
+  and the system() call in check_catalogs_offline), so its failure messages use
+  CATALOG_FAILURE_LEVEL: WARNING for an optional catalog and for a failed refresh of a
+  required catalog whose installed copy is kept; ERROR only when a required catalog is
+  missing or unusable.
 
 ## Candidate HTML report block parsers (must not break when changing report output)
 

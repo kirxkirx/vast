@@ -280,7 +280,7 @@ normalise_asassnv_catalog_layout() {
   return 1
  fi
  if ! head -n 1 "$NORMALISE_ASASSNV_FILE.converting" | grep -q '^source_id,asassn_name,other_names,raj2000,dej2000,' ;then
-  echo "ERROR: converting $NORMALISE_ASASSNV_FILE did not produce the expected header" >&2
+  echo "${CATALOG_FAILURE_LEVEL:-ERROR}: converting $NORMALISE_ASASSNV_FILE did not produce the expected header" >&2
   rm -f "$NORMALISE_ASASSNV_FILE.converting"
   return 1
  fi
@@ -304,7 +304,7 @@ note_catalog_update_failure() {
  # repeat a download that has just been shown not to work.
  remember_catalog_download_failure "$NOTE_CATALOG_NAME"
  if [ "$CATALOG_IS_OPTIONAL" -eq 1 ] 2>/dev/null ;then
-  echo "ERROR: the optional catalog $NOTE_CATALOG_NAME could not be updated - continuing without updating it" >&2
+  echo "WARNING: the optional catalog $NOTE_CATALOG_NAME could not be updated - continuing without updating it" >&2
   return 0
  fi
  if [ -s "$NOTE_CATALOG_NAME" ];then
@@ -679,11 +679,11 @@ if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == false ]]; then
  
  # The country code decides which mirror is tried FIRST, not which mirror exists.
  # It used to decide membership: a non-RU host set LOCAL_SERVER=kirx.net and never had
- # any other address to fall back to. On 2026-09-21 the kirx.net mirror re-published
- # asassnv.csv from the ASAS-SN web export, which is now capped at 1000 rows, and served
- # a 643888-byte stub in place of the 443 MB catalog. The size floor below correctly
- # refused it, but with no second mirror to try, every non-RU host simply lost the
- # catalog - while scan.sai.msu.ru was serving a complete copy the whole time.
+ # any other address to fall back to. By 2026-08-29 (seen in CI logs) the kirx.net mirror
+ # had re-published asassnv.csv from the ASAS-SN web export, which is now capped at 1000
+ # rows, and served a 643888-byte stub in place of the 443 MB catalog. The size floor
+ # below correctly refused it, but with no second mirror to try, every non-RU host simply
+ # lost the catalog - while scan.sai.msu.ru was serving a complete copy the whole time.
  if [ "$VAST_COUNTRY_CODE" == "RU" ];then
   #LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
   LOCAL_SERVER="https://scan.sai.msu.ru/~kirx/vast_catalogs"
@@ -870,7 +870,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   TMP_OUTPUT=""
   # Optional catalogs are the ones the transient search can run without (it will just skip
   # the corresponding identification step). A failed/empty download of an optional catalog is
-  # reported as an ERROR but is NOT fatal to the update run.
+  # reported as a WARNING (see CATALOG_FAILURE_LEVEL below) and is NOT fatal to the update run.
   CATALOG_IS_OPTIONAL=0
   if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
    TMP_OUTPUT="ObsCodes.html_new"
@@ -935,6 +935,27 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    UNPACK_COMMAND=""
    DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
   fi
+  # The label of this catalog's download and validation failure messages. This
+  # script's stderr ends up in the transient report: make_report_in_HTML.sh runs
+  # it with stderr captured in the filtering log, and check_catalogs_offline runs
+  # it for every candidate while asassnv.csv is missing. There, an ERROR line
+  # fails the whole field (unmw marks it red and skips its monitoring ingest, and
+  # the source-monitoring block of transient_factory_test31.sh does not measure
+  # it). That is right for a catalog the search needs and does not have, wrong for
+  # an optional one, and wrong for a failed REFRESH while a usable copy stays
+  # installed - note_catalog_update_failure() reports that outcome as a WARNING,
+  # so the messages leading up to it must not say ERROR either.
+  CATALOG_FAILURE_LEVEL="ERROR"
+  if [ "$CATALOG_IS_OPTIONAL" -eq 1 ];then
+   CATALOG_FAILURE_LEVEL="WARNING"
+  elif [ -s "$FILE_TO_UPDATE" ];then
+   # The same test as in note_catalog_update_failure()
+   INSTALLED_CATALOG_SIZE_BYTES=`get_file_size_in_bytes "$FILE_TO_UPDATE"`
+   INSTALLED_CATALOG_MINIMUM_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
+   if [ -z "$INSTALLED_CATALOG_SIZE_BYTES" ] || [ "$INSTALLED_CATALOG_MINIMUM_SIZE_BYTES" -le 0 ] 2>/dev/null || [ "$INSTALLED_CATALOG_SIZE_BYTES" -ge "$INSTALLED_CATALOG_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
+    CATALOG_FAILURE_LEVEL="WARNING"
+   fi
+  fi
   if [ -z "$CURL_COMMAND" ];then
    echo "ERROR CURL_COMMAND is not set" >&2
    exit 1
@@ -990,7 +1011,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    done
   fi
   if [ $CATALOG_DOWNLOAD_SUCCEEDED -ne 1 ];then
-   echo "ERROR: could not download $FILE_TO_UPDATE from any source" >&2
+   echo "$CATALOG_FAILURE_LEVEL: could not download $FILE_TO_UPDATE from any source" >&2
    # Keep the partial .gz download (if any): the next update run will resume
    # it, so even repeatedly failing runs make forward progress on a large
    # catalog over an unstable connection.
@@ -1017,7 +1038,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
    fi
   fi
   if [ ! -s "$TMP_OUTPUT" ];then
-   echo "ERROR: $TMP_OUTPUT is EMPTY!" >&2
+   echo "$CATALOG_FAILURE_LEVEL: $TMP_OUTPUT is EMPTY!" >&2
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
    fi
@@ -1049,7 +1070,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
     if [ -n "$REMOTE_CATALOG_SIZE_BYTES" ] && [ -n "$NEW_CATALOG_SIZE_BYTES" ];then
      if [ "$REMOTE_CATALOG_SIZE_BYTES" -gt 0 ] 2>/dev/null ;then
       if [ "$NEW_CATALOG_SIZE_BYTES" -ne "$REMOTE_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
-       echo "ERROR: the downloaded $TMP_OUTPUT is $NEW_CATALOG_SIZE_BYTES bytes but $DOWNLOAD_URL_USED advertises $REMOTE_CATALOG_SIZE_BYTES - the transfer is incomplete, keeping the old file" >&2
+       echo "$CATALOG_FAILURE_LEVEL: the downloaded $TMP_OUTPUT is $NEW_CATALOG_SIZE_BYTES bytes but $DOWNLOAD_URL_USED advertises $REMOTE_CATALOG_SIZE_BYTES - the transfer is incomplete, keeping the old file" >&2
        rm -f "$TMP_OUTPUT"
        note_catalog_update_failure "$FILE_TO_UPDATE"
        continue
@@ -1063,7 +1084,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
     # after (a), which compares the download with the size the server promised.
     if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
      if ! normalise_asassnv_catalog_layout "$TMP_OUTPUT" ;then
-      echo "ERROR: could not convert the downloaded $TMP_OUTPUT to the layout VaST reads - keeping the old file" >&2
+      echo "$CATALOG_FAILURE_LEVEL: could not convert the downloaded $TMP_OUTPUT to the layout VaST reads - keeping the old file" >&2
       rm -f "$TMP_OUTPUT"
       note_catalog_update_failure "$FILE_TO_UPDATE"
       continue
@@ -1074,7 +1095,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
     # (b) Is the file cut off in the middle of a record? The test is chosen per
     # catalog - see verify_catalog_structure().
     if ! verify_catalog_structure "$TMP_OUTPUT" "$FILE_TO_UPDATE" ;then
-     echo "ERROR: the downloaded $TMP_OUTPUT does not look like a complete catalog file - keeping the old file" >&2
+     echo "$CATALOG_FAILURE_LEVEL: the downloaded $TMP_OUTPUT does not look like a complete catalog file - keeping the old file" >&2
      rm -f "$TMP_OUTPUT"
      note_catalog_update_failure "$FILE_TO_UPDATE"
      continue
@@ -1087,7 +1108,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
     MINIMUM_CATALOG_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
     if [ -n "$NEW_CATALOG_SIZE_BYTES" ] && [ "$MINIMUM_CATALOG_SIZE_BYTES" -gt 0 ] 2>/dev/null ;then
      if [ "$NEW_CATALOG_SIZE_BYTES" -lt "$MINIMUM_CATALOG_SIZE_BYTES" ] 2>/dev/null ;then
-      echo "ERROR: the downloaded $TMP_OUTPUT is only $NEW_CATALOG_SIZE_BYTES bytes, far below the $MINIMUM_CATALOG_SIZE_BYTES bytes expected for $FILE_TO_UPDATE - the source is serving an incomplete catalog, keeping the old file" >&2
+      echo "$CATALOG_FAILURE_LEVEL: the downloaded $TMP_OUTPUT is only $NEW_CATALOG_SIZE_BYTES bytes, far below the $MINIMUM_CATALOG_SIZE_BYTES bytes expected for $FILE_TO_UPDATE - the source is serving an incomplete catalog, keeping the old file" >&2
       rm -f "$TMP_OUTPUT"
       note_catalog_update_failure "$FILE_TO_UPDATE"
       continue
@@ -1102,7 +1123,7 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
      # If the sizes cannot be determined, skip the check (fail open)
      if [ -n "$OLD_CATALOG_SIZE_BYTES" ] && [ -n "$NEW_CATALOG_SIZE_BYTES" ];then
       if ! echo "$NEW_CATALOG_SIZE_BYTES $OLD_CATALOG_SIZE_BYTES" | awk '{exit !($1+0 >= 0.8*$2)}' ;then
-       echo "ERROR: the downloaded $TMP_OUTPUT ($NEW_CATALOG_SIZE_BYTES bytes) is suspiciously smaller than the current $FILE_TO_UPDATE ($OLD_CATALOG_SIZE_BYTES bytes) - looks like a truncated download, keeping the old file (remove $FILE_TO_UPDATE and re-run the update to override)" >&2
+       echo "$CATALOG_FAILURE_LEVEL: the downloaded $TMP_OUTPUT ($NEW_CATALOG_SIZE_BYTES bytes) is suspiciously smaller than the current $FILE_TO_UPDATE ($OLD_CATALOG_SIZE_BYTES bytes) - looks like a truncated download, keeping the old file (remove $FILE_TO_UPDATE and re-run the update to override)" >&2
        rm -f "$TMP_OUTPUT"
        note_catalog_update_failure "$FILE_TO_UPDATE"
        continue

@@ -1714,11 +1714,19 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 # The ASASSN-V catalog is optional: lib/update_offline_catalogs.sh does NOT abort when it cannot
-# be downloaded (e.g. an empty file served by the mirror). Report a loud ERROR here so it is
-# propagated into the HTML report and the summary log via transient_factory_test31.txt, but keep
-# going - the ASASSN-V identification of candidates is simply skipped for this run.
+# be downloaded (no source serving a complete copy), and lib/catalogs/check_catalogs_offline
+# simply skips the ASAS-SN part of the search. Keep going - the ASASSN-V identification of
+# candidates is skipped for this run - and say so in the report.
+# This must be a WARNING, not an ERROR. Any line containing ERROR in the report is a run status
+# (see the source-monitoring run-status guard below): unmw's combine_reports.sh turns the field
+# red and shows the FIRST ERROR line - this one, as it is printed before any field is processed,
+# masking a real per-field error - and unmw's autoprocess.sh refuses to ingest the monitoring
+# measurements. A catalog outage on the server says nothing about the images, yet as an ERROR it
+# failed every field of the night, and every test_vast.sh section that checks the report for
+# ERROR lines (Sep 2026). As a WARNING it still shows in the nightly summary, which displays
+# the last WARNING line of each report, unless a later field-specific WARNING takes its place.
 if [ ! -s lib/catalogs/asassnv.csv ];then
- echo "ERROR: ASASSN-V catalog lib/catalogs/asassnv.csv is missing or empty - the ASASSN-V identification of transient candidates will be SKIPPED for this run" | tee -a transient_factory_test31.txt
+ echo "WARNING: ASASSN-V catalog lib/catalogs/asassnv.csv is missing or empty - the ASASSN-V identification of transient candidates will be SKIPPED for this run" | tee -a transient_factory_test31.txt
 fi
 
 echo "Reference image directory is set to $REFERENCE_IMAGES" | tee -a transient_factory_test31.txt

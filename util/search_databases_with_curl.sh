@@ -208,7 +208,8 @@ if [ "$DATABASE_RESULTS" != "" ];then
  DATABASE_RESULTS=$(echo $DATABASE_RESULTS | awk -F"<pre>" '{print $6}')
  # Do not use ${DATABASE_RESULTS//"</pre>"/""} here: bash 3.2 (macOS /bin/bash) ends
  # the pattern at the slash even inside quotes and inserts garbage instead of deleting the tag
- DATABASE_RESULTS=$(echo $DATABASE_RESULTS | sed 's:</pre>::g')
+ DATABASE_RESULTS=$(echo "$DATABASE_RESULTS" | sed 's:</pre>::g')
+ DATABASE_RESULTS=$(echo $DATABASE_RESULTS)
  DATABASE_RESULTS=$(echo "$DATABASE_RESULTS" | sed 's/>[^<]*<//g' | sed 's/<[^>]*>//g')
  # Cut out the first word which is the distance from the specified position
  DATABASE_RESULTS=$(echo "${DATABASE_RESULTS#* }")
