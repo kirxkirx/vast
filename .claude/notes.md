@@ -38,6 +38,33 @@ Update this file as you learn new things.
 - `shellcheck` catches most issues but some warnings (SC2181, SC2034 for unused read vars) are intentional patterns
 - **Never use `gawk`** - rely only on portable `awk` functionality for maximum portability across platforms
 
+## bash 3.2 traps (macOS /bin/bash 3.2.57 runs every `#!/usr/bin/env bash` script on the macOS CI runner)
+
+- A `case` statement inside `$( ... )` fails to parse (`syntax error near unexpected token ;;`)
+  unless every pattern has the leading paren form `(pattern)`. bash reads a script as it
+  runs, so the error hits only when execution reaches that compound command - in test_vast.sh
+  this killed the macOS CI run 80 min in (Sep 19 and 24, 2026, SGR04NOVA_DEBUG=$( ... ) block).
+  Simplest: no `case` inside `$( )`; use `echo "$X" | grep -q ... || continue`. The first
+  test_vast.sh section now also runs `bash -n` on util/examples/*.sh, so on macOS such an
+  error fails the run in its first minute. Caveat: bash 3.2 `-n` does not parse the BODIES
+  of `$( )` blocks, it only catches this extraction failure.
+- A `/` inside a QUOTED pattern of `${var//pattern/repl}` still ends the pattern in bash 3.2:
+  `${R//"</a"/ }` on 'V0615 Vul</a' gives 'V0615 Vula"/ /a'. This garbled VSX names in
+  util/search_databases_with_curl.sh on macOS since 2019 and, whenever GCVS did not answer,
+  broke the CBA/AAVSO report file names (NMWNVUL24ST_CBASCRIPTTEST_NOOUTPUTFILE, Jun 27 and
+  Sep 12, 2026). Use `sed 's:</a:...:g'` for patterns containing '/'. (The common
+  `${VAST_PATH/'//'/'/'}` idiom is also a no-op under 3.2 but is followed by a sed fallback.)
+- To test for these on Linux, build bash 3.2.57 in a scratch dir: download
+  bash-3.2.57.tar.gz from ftp.gnu.org, `./configure --without-bash-malloc
+  CFLAGS='-O1 -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion' && make`
+  (works with gcc 11), then run `./bash -n` on the scripts and run suspicious snippets with it.
+- Never edit util/examples/test_vast.sh in place while a test_vast.sh run is using it (bash
+  reads it incrementally through fd 255). Replace it atomically instead: `cp` the new version
+  to a temp file in the same directory, then `mv` it over the original. The running bash keeps
+  reading the old inode.
+- shellcheck on the whole 36k-line test_vast.sh gets OOM-killed on a 15 GB machine. Check the
+  edited sections by extracting them into a separate file with a bash shebang.
+
 ## C Code
 
 - C89/C90 style required: all variables declared at the very start of the function, before any executable statements

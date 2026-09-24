@@ -206,7 +206,9 @@ if [ "$DATABASE_RESULTS" != "" ];then
   echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME:  "
  fi
  DATABASE_RESULTS=$(echo $DATABASE_RESULTS | awk -F"<pre>" '{print $6}')
- DATABASE_RESULTS=$(echo ${DATABASE_RESULTS//"</pre>"/""})
+ # Do not use ${DATABASE_RESULTS//"</pre>"/""} here: bash 3.2 (macOS /bin/bash) ends
+ # the pattern at the slash even inside quotes and inserts garbage instead of deleting the tag
+ DATABASE_RESULTS=$(echo $DATABASE_RESULTS | sed 's:</pre>::g')
  DATABASE_RESULTS=$(echo "$DATABASE_RESULTS" | sed 's/>[^<]*<//g' | sed 's/<[^>]*>//g')
  # Cut out the first word which is the distance from the specified position
  DATABASE_RESULTS=$(echo "${DATABASE_RESULTS#* }")
@@ -296,7 +298,9 @@ if [ "$DATABASE_RESULTS" != "" ];then
  else
   echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME:  "
  fi
- echo -e "${DATABASE_RESULTS//"</a"/     }"
+ # Do not use "${DATABASE_RESULTS//"</a"/     }" here: bash 3.2 (macOS /bin/bash) ends
+ # the pattern at the slash even inside quotes, turning 'V0615 Vul</a' into 'V0615 Vula"/     /a'
+ echo -e "$DATABASE_RESULTS" | sed 's:</a:     :g'
 else
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."
