@@ -65,6 +65,15 @@ Update this file as you learn new things.
   DOUBLE-QUOTED "$( ... )" even passes 3.2 -n and then silently runs a truncated command.
 - shellcheck cannot target a bash version and passed the broken test_vast.sh; BASH_COMPAT=32
   in a modern bash does not reject bash-4 syntax either.
+- CI guard (2026-09-24): the `bash32compatibility` job in build_and_test_ubuntu.yml runs
+  `lib/check_bash32_compatibility.sh <bash 3.2>` on every push to master, in parallel with the
+  long jobs. bash 3.2 comes from the official Docker image bash:3.2.57 pinned by digest (with
+  public.ecr.aws and mirror.gcr.io fallbacks for the same digest). The script runs bash 3.2 -n
+  and the runner's bash (5.2) -n over all tracked shell scripts outside src/, plus an awk lint
+  for bash 4+ features that 3.2 parses but runs differently (quoted '/' in ${VAR//pat/rep},
+  case inside "$( )", declare -A, ${v,,}, wait -n, ...). A line that is safe (e.g. guarded by
+  BASH_VERSINFO) is silenced with a trailing '# bash32-ok: reason' comment. Run it locally with
+  a self-built bash 3.2: `lib/check_bash32_compatibility.sh /path/to/bash-3.2.57/bash`.
 
 ## Remote plate-solve WCS download (util/identify.sh, 2026-09-24)
 
@@ -99,6 +108,13 @@ Update this file as you learn new things.
 ## C Code
 
 - C89/C90 style required: all variables declared at the very start of the function, before any executable statements
+- `lib/check_no_for_loop_initial_declaration.sh` (run by `make`, GNUmakefile 'all' target) fails
+  the build on any `for (int i ...` / `for (size_t ...` in a .c file below the VaST root and
+  prints every finding. Until 2026-09-24 it always exited 0 (its failure flag was set inside a
+  `find | while` subshell). Known exceptions, allowed by path in is_allowed_exception(), are
+  bundled third-party files VaST does not compile: src/cfitsio-*/utilities/iter_image.c,
+  iter_var.c and src/zlib-*/examples/enough.c. If a library upgrade adds such loops to code
+  that IS compiled, fix that code (gcc 4.1 gnu89 rejects it) rather than adding an exception.
 - Do NOT use `{ }` block scopes to introduce new variable declarations mid-function - move them to the function top instead. This applies even though C89 technically allows declarations at the start of any block; the project style requires function-top only for uniformity.
 - Use `gcc -Wdeclaration-after-statement -fsyntax-only -I src` to find all mixed declarations and code violations. This catches declarations after executable statements, including inside `#if` preprocessor blocks.
 - GSL library is used for sorting and statistics (gsl_sort, gsl_stats_median_from_sorted_data)

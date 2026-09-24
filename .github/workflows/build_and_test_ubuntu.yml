@@ -6,6 +6,42 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A quick check (well under a minute) of all shell scripts against bash 3.2, which is
+  # /bin/bash on macOS, so that a script bash 3.2 cannot handle fails on every push
+  # rather than a week later in the macOS test run. It runs in parallel with the other jobs.
+  bash32compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get bash 3.2 (official Docker image, pinned by digest)
+        run: |
+          # bash 3.2.57 is the version of macOS /bin/bash. Docker Hub and the AWS and Google mirrors
+          # of the Docker Official Images serve the same multi-arch image index (same digest), so if
+          # Docker Hub fails or rate-limits the pull, the identical image comes from a mirror.
+          BASH32_DIGEST="sha256:0fd7cb8499c63a3c9345e7088a9cd83bb69f6e895e83833859aff838a0312091"
+          BASH32_IMAGE=""
+          for BASH32_REPOSITORY in docker.io/library/bash public.ecr.aws/docker/library/bash mirror.gcr.io/library/bash ;do
+            if docker pull -q "$BASH32_REPOSITORY@$BASH32_DIGEST" ;then
+              BASH32_IMAGE="$BASH32_REPOSITORY@$BASH32_DIGEST"
+              break
+            fi
+            sleep 10
+          done
+          if [ -z "$BASH32_IMAGE" ];then
+            echo "::error::could not pull the bash 3.2 image from Docker Hub or its mirrors"
+            exit 1
+          fi
+          # A wrapper running bash 3.2 in the container with the current directory mounted
+          # at the same path, so it takes the same file names as a local bash binary
+          printf '#!/bin/sh\nexec docker run --rm -v "$PWD":"$PWD" -w "$PWD" %s bash "$@"\n' "$BASH32_IMAGE" > "$RUNNER_TEMP/bash32"
+          chmod +x "$RUNNER_TEMP/bash32"
+          "$RUNNER_TEMP/bash32" --version
+      - name: Check shell scripts with bash 3.2 and the current bash
+        run: lib/check_bash32_compatibility.sh "$RUNNER_TEMP/bash32"
+
   ubuntu2204build:
     runs-on: ubuntu-22.04
     steps:
