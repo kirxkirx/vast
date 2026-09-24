@@ -1676,6 +1676,49 @@ fi
 
 rm -rf "$CATALOGMISSING_SANDBOX"
 
+# (e) The ASAS-SN catalog may arrive in the database layout of the "Full Dataset"
+# on https://asas-sn.osu.edu/variables (Google Drive), with id, created_at and
+# updated_at columns that check_catalogs_offline cannot read - it silently finds
+# nothing at all in such a file. lib/update_offline_catalogs.sh converts it with
+# normalise_asassnv_catalog_layout(); run that function on a one-star fixture and
+# make sure VaST then finds the star. The fixture carries the two things the first
+# version of that conversion got wrong: an other_names value that ends like float
+# noise ("TAOS 160.00004", which an unanchored cleanup turned into "0") and a period
+# written as binary-float noise, which must be printed as 490.5823333.
+CATALOGLAYOUT_SANDBOX="cataloglayout_sandbox$$"
+mkdir -p "$CATALOGLAYOUT_SANDBOX/lib/catalogs"
+cp "$WORKDIR"/lib/myMDV.dat "$CATALOGLAYOUT_SANDBOX/lib/myMDV.dat"
+printf '#!/bin/sh\nexit 0\n' > "$CATALOGLAYOUT_SANDBOX/lib/update_offline_catalogs.sh"
+chmod +x "$CATALOGLAYOUT_SANDBOX/lib/update_offline_catalogs.sh"
+awk '/^normalise_asassnv_catalog_layout\(\) \{/,/^\}/' "$WORKDIR"/lib/update_offline_catalogs.sh > "$CATALOGLAYOUT_SANDBOX/normalise.sh"
+CATALOGLAYOUT_VAST_HEADER="source_id,asassn_name,other_names,raj2000,dej2000,l,b,mean_vmag,amplitude,period,variable_type,class_probability,lksl_statistic,rfr_score,epoch_hjd,gdr2_id,phot_g_mean_mag,e_phot_g_mean_mag,phot_bp_mean_mag,e_phot_bp_mean_mag,phot_rp_mean_mag,e_phot_rp_mean_mag,bp_rp,parallax,parallax_error,parallax_over_error,pmra,pmra_error,pmdec,pmdec_error,vt,dist,allwise_id,j_mag,e_j_mag,h_mag,e_h_mag,k_mag,e_k_mag,w1_mag,e_w1_mag,w2_mag,e_w2_mag,w3_mag,e_w3_mag,w4_mag,e_w4_mag,j_k,w1_w2,w3_w4,apass_dr9_id,apass_vmag,e_apass_vmag,apass_bmag,e_apass_bmag,apass_gpmag,e_apass_gpmag,apass_rpmag,e_apass_rpmag,apass_ipmag,e_apass_ipmag,b_v,e_b_v,vector_x,vector_y,vector_z,reference,periodic,classified,asassn_discovery,edr3_source_id,galex_id,FUVmag,e_FUVmag,NUVmag,e_NUVmag,tic_id,pm,ruwe"
+# The database layout is id, the first 70 VaST columns, created_at, updated_at, the last 9
+echo "$CATALOGLAYOUT_VAST_HEADER" | awk -F',' '{ s= "id" ; for (i= 1; i <= 79; i++) { s= s "," $i ; if (i == 70) s= s ",created_at,updated_at" } ; print s
+ r= "7a36f09f-20aa-5020-8ad8-36babfcb3734,1,ASASSN-V J010203.04+050607.8,TAOS 160.00004   ,15.51267,5.10217,0,0,13.5,0.4,490.58233330000013,SR"
+ for (i= 12; i <= 70; i++) r= r ",1.5"
+ r= r ",2019-04-16 09:53:06.000000,2021-08-05 18:06:14.145180"
+ for (i= 71; i <= 79; i++) r= r ",1.5"
+ print r }' > "$CATALOGLAYOUT_SANDBOX/lib/catalogs/asassnv.csv"
+( . "$CATALOGLAYOUT_SANDBOX/normalise.sh" && normalise_asassnv_catalog_layout "$CATALOGLAYOUT_SANDBOX/lib/catalogs/asassnv.csv" ) 2>/dev/null
+head -n 1 "$CATALOGLAYOUT_SANDBOX/lib/catalogs/asassnv.csv" | grep -q "^$CATALOGLAYOUT_VAST_HEADER\$" && awk -F',' 'NF != 79 { exit 1 }' "$CATALOGLAYOUT_SANDBOX/lib/catalogs/asassnv.csv"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGLAYOUT_CONVERSION"
+fi
+grep -q ',TAOS 160.00004,' "$CATALOGLAYOUT_SANDBOX/lib/catalogs/asassnv.csv"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGLAYOUT_OTHER_NAMES_KEPT"
+fi
+# there is no vsx.dat in this sandbox, so only the ASAS-SN catalog can answer
+CATALOGLAYOUT_OUT=$(cd "$CATALOGLAYOUT_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 15.51267 5.10217 2>/dev/null)
+echo "$CATALOGLAYOUT_OUT" | grep -q 'ASASSN-V J010203.04+050607.8' && echo "$CATALOGLAYOUT_OUT" | grep -q 'Period 490.5823333 d'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGLAYOUT_FOUND_BY_VAST"
+fi
+rm -rf "$CATALOGLAYOUT_SANDBOX"
+
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 if [ $TEST_PASSED -eq 1 ];then

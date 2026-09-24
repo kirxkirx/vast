@@ -234,6 +234,59 @@ verify_catalog_structure() {
  return 0
 }
 
+# The ASAS-SN V-band catalog comes in two layouts. VaST reads the 79-column one
+# ("source_id,asassn_name,other_names,raj2000,dej2000,..."). The "Full Dataset" that
+# https://asas-sn.osu.edu/variables links to (asassn_catalog_full.csv on Google Drive,
+# 2022-03-22, 687695 records) has three more database columns - id first, then
+# created_at and updated_at - and check_catalogs_offline, which recognises the layout
+# by the first header field, silently finds nothing at all in it. The same export also
+# pads other_names with spaces in ~900 records and writes some numbers as binary-float
+# noise (period 490.58233330000013 for 490.5823333) that VaST would print verbatim.
+#
+# Rewrite a file in the database layout into the 79-column one in place; leave any
+# other file untouched. Columns are dropped by NAME, so a reordered dump cannot be cut
+# in the wrong places. The float cleanup only touches values that are a plain decimal
+# number ending in a run of 0000 or 9999 plus one or two stray digits, which %.15g
+# turns back into the intended number. It must be anchored to the whole value: names
+# such as "TAOS 160.00004" in other_names end the same way and an unanchored pattern
+# turns them into "0". Returns non-zero if the file needed converting and the
+# conversion failed.
+normalise_asassnv_catalog_layout() {
+ NORMALISE_ASASSNV_FILE="$1"
+ if ! head -n 1 "$NORMALISE_ASASSNV_FILE" 2>/dev/null | grep -q '^id,source_id,asassn_name,other_names,raj2000,dej2000,' ;then
+  return 0
+ fi
+ echo "Converting $NORMALISE_ASASSNV_FILE from the ASAS-SN database layout (id,...,created_at,updated_at,...) to the 79-column layout VaST reads" >&2
+ if ! awk -F',' '
+  NR == 1 {
+   for (i= 1; i <= NF; i++) {
+    if ( $i == "id" || $i == "created_at" || $i == "updated_at" ) drop[i]= 1
+    if ( $i == "other_names" ) other_names_column= i
+   }
+  }
+  {
+   n= 0
+   line= ""
+   for (i= 1; i <= NF; i++) {
+    if ( i in drop ) continue
+    v= $i
+    if ( i == other_names_column ) gsub(/^ +| +$/, "", v)
+    else if ( NR > 1 && v ~ /^-?[0-9]+\.[0-9]*(0000|9999)[0-9]?[0-9]$/ ) v= sprintf("%.15g", v)
+    line= ( n++ ? line "," v : v )
+   }
+   print line
+  }' "$NORMALISE_ASASSNV_FILE" > "$NORMALISE_ASASSNV_FILE.converting" ;then
+  rm -f "$NORMALISE_ASASSNV_FILE.converting"
+  return 1
+ fi
+ if ! head -n 1 "$NORMALISE_ASASSNV_FILE.converting" | grep -q '^source_id,asassn_name,other_names,raj2000,dej2000,' ;then
+  echo "ERROR: converting $NORMALISE_ASASSNV_FILE did not produce the expected header" >&2
+  rm -f "$NORMALISE_ASASSNV_FILE.converting"
+  return 1
+ fi
+ mv -f "$NORMALISE_ASASSNV_FILE.converting" "$NORMALISE_ASASSNV_FILE"
+}
+
 # One catalog that cannot be updated must not stop the other three from being
 # updated. ObsCodes.html is first in the update loop, so before this any failure
 # on it - an MPC outage, a mirror hiccup, a bug in one of the checks above -
@@ -300,6 +353,61 @@ attempt_download_with_resume() {
   echo "Waiting $CATALOG_DOWNLOAD_RETRY_DELAY_SEC seconds before download attempt $DOWNLOAD_ATTEMPT_COUNTER (a partial file, if any, will be resumed)" >&2
   sleep "$CATALOG_DOWNLOAD_RETRY_DELAY_SEC"
  done
+}
+
+# Download a catalog from one source - but ask the source first how big the file it
+# is offering is, and skip it without downloading if that is below the floor for
+# this catalog. A source serving a well-formed but drastically incomplete file
+# downloads with curl exit code 0, and the validation gates in the main loop then
+# reject the file and 'continue' to the next CATALOG, never to the next source - so
+# the stub has to be recognised here, before the download, for the next source to
+# get its turn. That is how one poisoned mirror took the ASAS-SN catalog away from
+# every non-RU host in Sep 2026: the 100 MB floor detected the 643888-byte stub
+# perfectly well, but nothing could route around it.
+#
+# The HEAD request costs ~0.3 s. It fails OPEN: a server that sends no
+# Content-Length leaves the size empty and the source is attempted anyway, as is a
+# catalog whose floor is 0.
+# $1 - the download command; its last word is the URL
+# $2 - the file that command writes
+# $3 - the catalog it will become (selects the floor)
+# Sets DOWNLOAD_URL_USED to the URL, which the size check in the main loop compares
+# the downloaded file against. Returns 0 if the download succeeded.
+download_catalog_from_source() {
+ DOWNLOAD_URL_USED=`echo "$1" | awk '{print $NF}' | tr -d '"'`
+ SOURCE_ADVERTISED_SIZE_BYTES=`get_remote_content_length "$DOWNLOAD_URL_USED"`
+ SOURCE_MINIMUM_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$3"`
+ if [ -n "$SOURCE_ADVERTISED_SIZE_BYTES" ] && [ "$SOURCE_MINIMUM_SIZE_BYTES" -gt 0 ] 2>/dev/null && [ "$SOURCE_ADVERTISED_SIZE_BYTES" -lt "$SOURCE_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
+  echo "WARNING: $DOWNLOAD_URL_USED advertises only $SOURCE_ADVERTISED_SIZE_BYTES bytes for $3 ($SOURCE_MINIMUM_SIZE_BYTES expected at least) - it is serving an incomplete catalog, skipping this source" >&2
+  return 1
+ fi
+ echo "### download command ###
+$PWD" >&2
+ echo "$1" >&2
+ if ! attempt_download_with_resume "$1" "$2" ;then
+  return 1
+ fi
+ # The HEAD check above cannot see everything: a missing file on a web server
+ # typically comes back as a short HTML error page with no Content-Length, and curl
+ # (without --fail) reports that as a successful download. The validation gates in
+ # the main loop would reject it, but only by giving up on the whole catalog, so
+ # apply the size floor here, where rejecting the file still lets the next source
+ # have a go. Compressed downloads are exempt: the floor is for the unpacked
+ # catalog, and an error page never passes the gzip test in
+ # attempt_download_with_resume() anyway.
+ case "$2" in
+  *.gz)
+   ;;
+  *)
+   SOURCE_DOWNLOADED_SIZE_BYTES=`get_file_size_in_bytes "$2"`
+   if [ -n "$SOURCE_DOWNLOADED_SIZE_BYTES" ] && [ "$SOURCE_MINIMUM_SIZE_BYTES" -gt 0 ] 2>/dev/null && [ "$SOURCE_DOWNLOADED_SIZE_BYTES" -lt "$SOURCE_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
+    echo "WARNING: $DOWNLOAD_URL_USED delivered only $SOURCE_DOWNLOADED_SIZE_BYTES bytes for $3 ($SOURCE_MINIMUM_SIZE_BYTES expected at least) - an error page or an incomplete catalog, trying the next source" >&2
+    rm -f "$2"
+    return 1
+   fi
+   ;;
+ esac
+ return 0
 }
 
 #################################
@@ -756,6 +864,8 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   echo "######### Updating $FILE_TO_UPDATE #########" >&2 
   CURL_COMMAND=""
   CURL_LOCAL_COMMAND=""
+  # A third source, tried after the other two; only some catalogs have one.
+  CURL_SECOND_FALLBACK_COMMAND=""
   UNPACK_COMMAND=""
   TMP_OUTPUT=""
   # Optional catalogs are the ones the transient search can run without (it will just skip
@@ -798,6 +908,20 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    # Fall back to the OTHER mirror instead: both carry the full catalog, and the
    # country code above now decides only which one is tried first.
    #
+   # When neither mirror can deliver, go to the source itself: the "Full Dataset"
+   # that https://asas-sn.osu.edu/variables links to under "Export V-Band Data".
+   # It is asassn_catalog_full.csv in a public Google Drive folder, 541282135 bytes,
+   # 687695 records, 2022-03-22 - the V-band database has not changed since its
+   # "Database Updated: 08/10/2021", so this is the current catalog, not an old one.
+   # It is in the database layout (82 columns); normalise_asassnv_catalog_layout()
+   # converts it after the download. The drive.usercontent.google.com form of the URL
+   # downloads without the "can't scan this file for viruses" interstitial page that
+   # drive.google.com shows for large files (confirm=t); it is not a documented
+   # interface, and if Google changes it the header and size checks will reject
+   # whatever comes back and the mirrors remain the primary sources.
+   # To find the file again: open the "Full Dataset" link on that page and take the
+   # file ID from the asassn_catalog_full.csv entry.
+   #
    # If a query-string URL is ever put back here, note that it must NOT be wrapped
    # in escaped quotes: these command strings are run as unquoted "$1" inside
    # attempt_download_with_resume(), which word-splits them but does NOT perform
@@ -807,6 +931,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    # safe: word splitting does not re-parse shell operators.
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $ALTERNATIVE_SERVER/asassnv.csv"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
+   CURL_SECOND_FALLBACK_COMMAND="curl $VAST_CURL_PROXY --location --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT https://drive.usercontent.google.com/download?id=136bTIHxANp9C2WxizkST-lJ4eWNzkE7N&export=download&confirm=t"
    UNPACK_COMMAND=""
    DOWNLOAD_TARGET_FILE="$TMP_OUTPUT"
   fi
@@ -833,64 +958,48 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    rm -f "$TMP_OUTPUT"
   fi
 
-  # Remember which URL the file actually came from, so the size check below
-  # can ask that same source what it thinks the file size is. The URL is the
-  # last word of the curl command line.
-  DOWNLOAD_URL_USED=`echo "$CURL_LOCAL_COMMAND" | awk '{print $NF}' | tr -d '"'`
-
-  # First try to download a catalog from the mirror - but ask it first how big the
-  # file it is offering is.
-  #
-  # The fallback below used to be reached only when curl itself failed, i.e. on a
-  # transport error. A mirror serving a well-formed but drastically incomplete file
-  # downloads with exit code 0, so control went on to the validation gates further
-  # down, which reject the file and then 'continue' - to the next CATALOG, never to
-  # the next URL. That is how one poisoned mirror took the ASAS-SN catalog away from
-  # every non-RU host in Sep 2026: the 100 MB floor detected the 643888-byte stub
-  # perfectly well, but nothing could route around it.
-  #
-  # A HEAD request costs ~0.3 s and, when the mirror advertises less than the floor,
-  # saves the pointless transfer as well. It fails OPEN: a server that sends no
-  # Content-Length (the live ASAS-SN endpoint does not) leaves the variable empty and
-  # the mirror is attempted exactly as before, as does a catalog whose floor is 0.
-  MIRROR_ADVERTISED_SIZE_BYTES=`get_remote_content_length "$DOWNLOAD_URL_USED"`
-  MIRROR_MINIMUM_SIZE_BYTES=`get_catalog_minimum_expected_size_in_bytes "$FILE_TO_UPDATE"`
-  LOCAL_MIRROR_DOWNLOAD_EXIT_CODE=1
-  if [ -n "$MIRROR_ADVERTISED_SIZE_BYTES" ] && [ "$MIRROR_MINIMUM_SIZE_BYTES" -gt 0 ] 2>/dev/null && [ "$MIRROR_ADVERTISED_SIZE_BYTES" -lt "$MIRROR_MINIMUM_SIZE_BYTES" ] 2>/dev/null ;then
-   echo "WARNING: $DOWNLOAD_URL_USED advertises only $MIRROR_ADVERTISED_SIZE_BYTES bytes for $FILE_TO_UPDATE ($MIRROR_MINIMUM_SIZE_BYTES expected at least) - it is serving an incomplete catalog, skipping this mirror and trying the fallback URL" >&2
+  # Try the sources in order: the mirror chosen by country code, then the fallback,
+  # then - for the catalogs that have one - the second fallback. Each one is skipped
+  # without downloading if it advertises a stub (see download_catalog_from_source()).
+  # download_catalog_from_source() also records in DOWNLOAD_URL_USED which URL the
+  # file came from, so the size check below asks that same source what it thinks
+  # the file size is.
+  CATALOG_DOWNLOAD_SUCCEEDED=0
+  download_catalog_from_source "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE" "$FILE_TO_UPDATE"
+  if [ $? -eq 0 ];then
+   CATALOG_DOWNLOAD_SUCCEEDED=1
   else
-   echo "### CURL_LOCAL_COMMAND ###
-$PWD" >&2
-   echo "$CURL_LOCAL_COMMAND" >&2
-   attempt_download_with_resume "$CURL_LOCAL_COMMAND" "$DOWNLOAD_TARGET_FILE"
-   LOCAL_MIRROR_DOWNLOAD_EXIT_CODE=$?
-  fi
-  if [ $LOCAL_MIRROR_DOWNLOAD_EXIT_CODE -ne 0 ];then
-   DOWNLOAD_URL_USED=`echo "$CURL_COMMAND" | awk '{print $NF}' | tr -d '"'`
-   # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_COMMAND point to exact same version of the file
-   if [ -f "$TMP_OUTPUT" ];then
-    rm -f "$TMP_OUTPUT"
-   fi
-   if [ -f "$TMP_OUTPUT".gz ];then
-    rm -f "$TMP_OUTPUT".gz
-   fi
-   #
-   # if that failed, try to download the catalog from the original link
-   echo "Failed to download from the local link, fallig back to $CURL_COMMAND" >&2
-   attempt_download_with_resume "$CURL_COMMAND" "$DOWNLOAD_TARGET_FILE"
-   if [ $? -ne 0 ];then
-    echo "ERROR running the download command" >&2
-    # Keep the partial .gz download (if any): the next update run will resume
-    # it, so even repeatedly failing runs make forward progress on a large
-    # catalog over an unstable connection.
+   for FALLBACK_DOWNLOAD_COMMAND in "$CURL_COMMAND" "$CURL_SECOND_FALLBACK_COMMAND" ;do
+    if [ -z "$FALLBACK_DOWNLOAD_COMMAND" ];then
+     continue
+    fi
+    # Clean up the possible incomplete download - the next source may not serve
+    # exactly the same version of the file, so resuming across sources is unsafe
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
-    note_catalog_update_failure "$FILE_TO_UPDATE"
-    continue
+    if [ -f "$TMP_OUTPUT".gz ];then
+     rm -f "$TMP_OUTPUT".gz
+    fi
+    echo "Failed to download $FILE_TO_UPDATE from $DOWNLOAD_URL_USED, falling back to the next source" >&2
+    download_catalog_from_source "$FALLBACK_DOWNLOAD_COMMAND" "$DOWNLOAD_TARGET_FILE" "$FILE_TO_UPDATE"
+    if [ $? -eq 0 ];then
+     CATALOG_DOWNLOAD_SUCCEEDED=1
+     break
+    fi
+   done
+  fi
+  if [ $CATALOG_DOWNLOAD_SUCCEEDED -ne 1 ];then
+   echo "ERROR: could not download $FILE_TO_UPDATE from any source" >&2
+   # Keep the partial .gz download (if any): the next update run will resume
+   # it, so even repeatedly failing runs make forward progress on a large
+   # catalog over an unstable connection.
+   if [ -f "$TMP_OUTPUT" ];then
+    rm -f "$TMP_OUTPUT"
    fi
-   #
-  fi # if that failed
+   note_catalog_update_failure "$FILE_TO_UPDATE"
+   continue
+  fi
   echo "TMP_OUTPUT=$TMP_OUTPUT" >&2
   # If we are still here, we downloaded the catalog, one way or the other
   if [ ! -z "$UNPACK_COMMAND" ];then
@@ -946,6 +1055,20 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
        continue
       fi
      fi
+    fi
+
+    # The ASAS-SN catalog may arrive in the database layout (from Google Drive, or
+    # from a mirror that republished that file) - convert it before the checks
+    # below, which must judge the file VaST will actually read. This has to come
+    # after (a), which compares the download with the size the server promised.
+    if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
+     if ! normalise_asassnv_catalog_layout "$TMP_OUTPUT" ;then
+      echo "ERROR: could not convert the downloaded $TMP_OUTPUT to the layout VaST reads - keeping the old file" >&2
+      rm -f "$TMP_OUTPUT"
+      note_catalog_update_failure "$FILE_TO_UPDATE"
+      continue
+     fi
+     NEW_CATALOG_SIZE_BYTES=`get_file_size_in_bytes "$TMP_OUTPUT"`
     fi
 
     # (b) Is the file cut off in the middle of a record? The test is chosen per
