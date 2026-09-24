@@ -546,3 +546,28 @@ Update this file as you learn new things.
 - astcheck.cpp has CRLF line endings; edit it with a script that preserves them.
 - When comparing astcheck outputs between runs, drop the "ASTCHECK version <build date>"
   and "Run time:" lines first.
+
+## test_vast.sh on tau is not hermetic: host calibration and leftover fd_ frames (2026-09-24)
+- util/transients/transient_factory_test31.sh picks NMW_CALIBRATION from a fixed list
+  ($HOME/nmw_calibration, /dataX/..., /home/apache/..., /var/www/nmw_calibration; the
+  environment cannot override it). On tau it finds /home/kirx/nmw_calibration, so for the
+  TTU/STL/Stas cameras the factory dark/flat-calibrates RAW test frames and also swaps in
+  tau's bad-region lists and neverexclude_list.txt. GitHub runners find nothing and process
+  the raw frames. A tau pass therefore does not predict CI for factory sections on raw data.
+- The calibration writes d_/fd_ frames into the INPUT (dataset) directory, and nothing
+  removes them for test paths (the test wrapper deletes only *.cat). On the next run any
+  fd_*/wcs_fd_* file sets CALIBRATION_STATUS_PREFIX, the raw frames are ignored and the
+  stale calibration is reused. check_transient_factory_wcs_leak_in_input_dir() only sees
+  wcs_*.fits(.fz) and is blind to these, and to all .fts datasets.
+- Example: SGR04NOVA_NOVA_NOT_FOUND failed on every CI runner and passed on tau. The raw
+  _0000 frame does not yield the nova at DETECT_THRESH 2.0 at all; the calibrated one gives
+  SNR 4.87. Raw-frame SExtractor catalogs are bit-identical between tau and CI, so it was
+  never a CPU/build flip. To emulate CI on tau, point the factory's calibration search list
+  at nonexistent paths in a THROWAWAY copy (HOME alone is not enough: /var/www/nmw_calibration
+  is a symlink to the same dir).
+- A catalog needed by an early test_vast.sh section must be downloaded before that section:
+  on GitHub Actions the database query section ('lib/update_offline_catalogs.sh all') is
+  disabled, and the first download there is the 'force' call thousands of lines later.
+- Reproduction sandboxes: never put a VaST copy under a path containing "lib/" or "util/"
+  (e.g. /tmp/vast_repro_calib/vast). src/get_path_to_vast.c removeSubstring() strips EVERY
+  such substring from /proc/self/exe, so the tools chdir() to a wrong, nonexistent path.

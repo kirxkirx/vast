@@ -578,7 +578,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -1611,8 +1611,9 @@ fi # if [ "$GITHUB_ACTIONS" == "true" ];then # - enable the anove test for GitHu
 
 
 #### A missing OPTIONAL catalog must degrade the offline search, not abort it
-### This test is hermetic: it touches no network and needs no catalog download,
-### so unlike the database query test below it also runs on GitHub Actions.
+### Apart from making sure lib/catalogs/vsx.dat is there (see below), this test
+### touches no network, so unlike the database query test below it also runs on
+### GitHub Actions.
 ###
 ### lib/catalogs/asassnv.csv is an optional download (CATALOG_IS_OPTIONAL=1 in
 ### lib/update_offline_catalogs.sh) and will legitimately be absent whenever no
@@ -1633,6 +1634,28 @@ TEST_PASSED=1
 echo "Performing a test of the offline catalog search with a missing optional catalog"
 echo -n "Missing optional catalog degradation test: " >> vast_test_report.txt
 
+# Check (b) below needs the real lib/catalogs/vsx.dat, and this is the first
+# place in this script that uses it. On GitHub Actions the database query test
+# below (the one that runs 'lib/update_offline_catalogs.sh all') is disabled, so
+# the catalog used to arrive only with the 'lib/update_offline_catalogs.sh force'
+# call much further down - after this test had already run against a dangling
+# vsx.dat symlink and failed with CATALOGMISSING_VSX_FULLRADIUS_STILL_FOUND.
+# Download the catalog now if it is not there yet.
+if [ ! -s lib/catalogs/vsx.dat ];then
+ lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
+ if [ ! -s lib/catalogs/vsx.dat ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_VSX_DOWNLOAD_FAILED"
+  GREP_RESULT=$(cat update_offline_catalogs.out)
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CATALOGMISSING_VSX_DOWNLOAD_FAILED ######
+$GREP_RESULT"
+ fi
+ if [ -f update_offline_catalogs.out ];then
+  rm -f update_offline_catalogs.out
+ fi
+fi
+
 # A sandbox with vsx.dat and myMDV.dat but deliberately NO asassnv.csv, and a
 # do-nothing update script so nothing reaches for the network.
 CATALOGMISSING_SANDBOX="catalogmissing_sandbox$$"
@@ -1651,11 +1674,16 @@ if [ $? -ne 0 ];then
 fi
 
 # (b) V6594 Sgr sits 13" away - outside the 6" pre-pass, inside the 25" pass that
-# the old exit() prevented from ever running.
-(cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 282.2748750 -19.0342222 2>/dev/null) | grep -q 'V6594 Sgr'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_VSX_FULLRADIUS_STILL_FOUND"
+# the old exit() prevented from ever running. Skipped (not passed) when vsx.dat
+# could not be downloaded: that is already recorded as
+# CATALOGMISSING_VSX_DOWNLOAD_FAILED above, and a VaST-side failure code here
+# would point at the wrong culprit.
+if [ -s lib/catalogs/vsx.dat ];then
+ (cd "$CATALOGMISSING_SANDBOX" && "$WORKDIR"/lib/catalogs/check_catalogs_offline 282.2748750 -19.0342222 2>/dev/null) | grep -q 'V6594 Sgr'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CATALOGMISSING_VSX_FULLRADIUS_STILL_FOUND"
+ fi
 fi
 
 # (c) the exit status must mean "found", not "aborted"
@@ -14928,19 +14956,36 @@ fi
 # MIN_SNR_TRANSIENT_DETECTION is 4.0 (src/vast_limits.h).  Either change alone
 # is not enough - both are needed for the nova to appear in the candidate list.
 # The SNR of the deciding measurement is about 4.8 (4.87 straight from the
-# SExtractor catalog, 4.77 after VaST picks the best aperture), so the cut was
-# taken from 5.0 to 4.5 and then to 4.0: at 4.5 the margin was only 6% and the
-# recovery flipped between machines - found on the dev box, lost on the Ubuntu
-# CI runner for three runs in a row.  If this check ever fails again, the
-# instrumentation further down records the actual SNR on the failing machine.
+# SExtractor catalog, 4.77 after VaST picks the best aperture).  The margin is
+# thin on the detection side too: the vTTU pass extracts the nova on the first
+# second-epoch image at DETECT_THRESH 2.0 but loses it at 2.1.
+#
+# The second-epoch images of this dataset are dark-subtracted and flat-fielded,
+# like the two reference images and like the frames production actually
+# searches: the master dark mdark_TTUQ1b1x1_0C_20s_2026-08-12_multinight.fit
+# and the flat mff_TTUQ1b1x1_2026-08-12_multinight.fit were applied by
+# util/ccd/ms and util/ccd/md, as recorded in the FITS HISTORY. The files keep
+# their original names without the fd_ prefix, so the transient factory sees
+# the 'Dark frame subtraction' HISTORY record and does not calibrate them again.
+# That makes every host process identical pixels (the bad-region list and
+# neverexclude_list.txt still come from the NMW calibration directory where one
+# exists, but no candidate of this field is affected by them). The first
+# version of this test (dataset NMW-TexasTech__Sgr-04-Q1b1x1_nova_test) shipped
+# the RAW frames: the transient factory calibrated them only where it found an
+# NMW calibration directory (e.g. $HOME/nmw_calibration on the dev box), and
+# everywhere else it searched the raw frames, on which the nova is not
+# extracted at all on the first image. The test therefore passed on the dev box
+# and failed on every CI runner, which was misread as a machine-dependent SNR.
+# The dataset was renamed because the download below is skipped whenever the
+# directory already exists.
 # Download the test dataset if needed
-if [ ! -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
+if [ ! -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ];then
  cd .. || exit 1
- curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2" && tar -xvjf NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2 && rm -f NMW-TexasTech__Sgr-04-Q1b1x1_nova_test.tar.bz2
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test.tar.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test.tar.bz2" && tar -xvjf NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test.tar.bz2 && rm -f NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test.tar.bz2
  cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
-if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
+if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  util/clean_data.sh
@@ -14956,9 +15001,9 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
  fi
- SGR04NOVA_INPUT_DIR=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test/second_epoch_images
+ SGR04NOVA_INPUT_DIR=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test/second_epoch_images
  SGR04NOVA_WCS_BASELINE=$(cd "$SGR04NOVA_INPUT_DIR" && ls wcs_*.fits wcs_*.fits.fz 2>/dev/null | sort -u)
- REFERENCE_IMAGES=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test/reference_images/ run_transient_factory_test31_with_cleanup "$SGR04NOVA_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
+ REFERENCE_IMAGES=../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test/reference_images/ run_transient_factory_test31_with_cleanup "$SGR04NOVA_INPUT_DIR" &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_EXIT_CODE"
@@ -14972,9 +15017,12 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
  #
  if [ -f transient_report/index.html ];then
   # There SHOULD NOT be a field-matching error message.
-  # Note that the twilight second-epoch images of this test are just above the
-  # soft passing-clouds threshold, so the report legitimately contains an
-  # 'ERROR: passing clouds (SD ratio=...)' line - do not test for 'ERROR' here.
+  # Do not test for a bare 'ERROR' here: the RAW twilight frames of this night
+  # are just above the soft passing-clouds threshold (SD ratio 0.123 > 0.12), so
+  # production reports 'ERROR: passing clouds (SD ratio=...)' for them. The
+  # calibrated frames of this dataset give 0.074 and no such line, but that
+  # check runs before calibration and a change in the dataset or in the
+  # thresholds may bring the line back without anything being wrong.
   grep -q 'ERROR: distance between reference and second-epoch image centers' transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -15017,12 +15065,14 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SGR04NOVA_NO_VSTL_PASS"
   fi
-  # Candidate count sanity (baseline 2026-09-12: 78 candidates in this crowded
+  # Candidate count sanity (baseline 2026-09-24: 130 candidates in this crowded
   # bulge field with no per-camera exclusion list, running all three passes and
-  # with MIN_SNR_TRANSIENT_DETECTION at 4.0; it was 77 with the cut at 4.5 and
-  # 68 when the low-threshold pass replaced the usual faint pass instead of
-  # being added to it. The count varies with the success of the online
-  # Gaia/APASS exclusion queries)
+  # with MIN_SNR_TRANSIENT_DETECTION at 4.0 - the same count with and without an
+  # NMW calibration directory on the host. The raw frames of the first version
+  # of this dataset gave 170-175. The older 77/78/68 figures of 2026-09-10..12
+  # were measured on the dev box against a different mix of catalogs and
+  # exclusion data and are not comparable. The count varies with the success
+  # of the online Gaia/APASS exclusion queries)
   NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
   if [ "$NUMBER_OF_CANDIDATES" -lt 25 ] || [ "$NUMBER_OF_CANDIDATES" -gt 180 ];then
    TEST_PASSED=0
@@ -15043,9 +15093,10 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ];then
    # second-epoch image is what decides whether it becomes a candidate at all
    # (src/vast.c:545 applies MIN_SNR_TRANSIENT_DETECTION inside test_transient(),
    # and test_transient() is called only for the first second-epoch frame,
-   # src/vast.c:5048). On the dev machine that ratio is 4.77; a build on another
-   # CPU can land on the other side of the cut, and then the nova silently never
-   # enters the candidate list. So when this check fails, record WHY: whether
+   # src/vast.c:5048). On the calibrated first image that ratio is 4.77, and the
+   # nova is extracted there only just above DETECT_THRESH (see the comment at
+   # the top of this section); on raw, uncalibrated pixels it is not extracted at
+   # all. So when this check fails, record WHY: whether
    # SExtractor saw the object at all on each new image, with what signal-to-noise
    # ratio, and whether it survived into the lightcurves. Without this, a failure
    # on a remote runner is not diagnosable - the factory output of this section is
