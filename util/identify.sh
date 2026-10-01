@@ -278,6 +278,76 @@ function wcs_header_file_looks_valid {
  return 0
 }
 
+# Re-tweak a wide-field solve-field solution against ALL the index files,
+# working on the star list rather than on the image.
+#
+# solve-field fits its SIP distortion polynomial using only the stars of the
+# index file that contained the matching quad. On a wide field that quad is
+# often found in one of the coarse index files (index-4116 and up), which
+# hold only a few dozen stars within the frame. When too few of them verify,
+# the fit gives up ("fit-wcs.c: fit_sip_wcs: Too few correspondences for the
+# SIP order specified") and solve-field quietly keeps a rigid TAN solution
+# anchored at the matched quad: accurate there, tens of arcseconds off at the
+# far corners of the frame. The remedy is the one Dustin Lang describes
+# (quoted at the image-based re-tweak below): re-run solve-field with
+# --verify on that solution, so it skips the quad search, verifies the
+# solution against every index file and re-fits the polynomial with the
+# stars of the best-verifying index, which is a far denser one. Done on the
+# star list this takes seconds, while the image-based form has to extract
+# sources from the whole image first.
+# Test case: NMW-TexasTech Cas-04-Q2b1x1 frame 0094 of 2026-09-30. The quad
+# came from index-4116 with 8 of its 26 stars verified (5 correspondences
+# where the tweak needed 6), and the remote plate-solve server returned the
+# same TAN-only solution; this re-tweak picked index-4113 with 176 of its
+# 179 stars, after which the UCAC5 refit brought the frame to 0.49 arcsec.
+#
+# $1 - the star list (xyls) the solution was made from
+# $2 - solve-field WCS header file holding the solution to re-tweak
+# $3 - name for the output WCS header file (must end with .wcs)
+# Returns 0 if $3 was written and carries a SIP polynomial, 1 otherwise.
+function star_list_verify_retweak {
+ local VERIFY_XYLS="$1"
+ local VERIFY_INPUT_WCS="$2"
+ local VERIFY_OUTPUT_WCS="$3"
+ local VERIFY_OUTBASE VERIFY_IMAGE_SIZE VERIFY_TMP_FILE VERIFY_SIP_ORDER
+ if ! command -v solve-field > /dev/null 2>&1 ;then
+  echo "star_list_verify_retweak(): solve-field is not available locally - cannot re-tweak the solution"
+  return 1
+ fi
+ if [ ! -s "$VERIFY_XYLS" ] || [ ! -s "$VERIFY_INPUT_WCS" ];then
+  echo "star_list_verify_retweak(): the star list $VERIFY_XYLS or the WCS header $VERIFY_INPUT_WCS is missing"
+  return 1
+ fi
+ VERIFY_OUTBASE="${VERIFY_OUTPUT_WCS%.wcs}"
+ VERIFY_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE")
+ rm -f "$VERIFY_OUTBASE".wcs "$VERIFY_OUTBASE".solved
+ echo "Re-tweaking the solution against all the index files using the star list: solve-field --verify $VERIFY_INPUT_WCS --tweak-order $VAST_TWEAK_ORDER"
+ # The 120 s timeout is the same as for the image-based re-tweak below: when
+ # the verification scores badly, solve-field falls back to a blind quad
+ # search that may take many minutes, and a failed re-tweak costs nothing.
+ $TIMEOUT_COMMAND 120 solve-field "$VERIFY_XYLS" $VERIFY_IMAGE_SIZE --verify "$VERIFY_INPUT_WCS" --objs 10000 --tweak-order "$VAST_TWEAK_ORDER" --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --out "$VERIFY_OUTBASE"
+ # solve-field writes its usual companion files next to the WCS header
+ for VERIFY_TMP_FILE in "$VERIFY_OUTBASE".axy "$VERIFY_OUTBASE".corr "$VERIFY_OUTBASE".match "$VERIFY_OUTBASE".rdls "$VERIFY_OUTBASE"-indx.xyls ;do
+  if [ -f "$VERIFY_TMP_FILE" ];then
+   rm -f "$VERIFY_TMP_FILE"
+  fi
+ done
+ if [ ! -s "$VERIFY_OUTBASE".solved ] || [ ! -s "$VERIFY_OUTBASE".wcs ];then
+  echo "The star-list re-tweak did not produce a solution"
+  rm -f "$VERIFY_OUTBASE".wcs "$VERIFY_OUTBASE".solved
+  return 1
+ fi
+ rm -f "$VERIFY_OUTBASE".solved
+ VERIFY_SIP_ORDER=$("$VAST_PATH"util/listhead "$VERIFY_OUTBASE".wcs 2>/dev/null | awk -F'[= /]+' '$1=="A_ORDER"{print $2; exit}')
+ if [ -z "$VERIFY_SIP_ORDER" ];then
+  echo "The star-list re-tweak produced a solution that still carries no SIP distortion terms"
+  rm -f "$VERIFY_OUTBASE".wcs
+  return 1
+ fi
+ echo "The star-list re-tweak produced a solution with a SIP polynomial of order $VERIFY_SIP_ORDER"
+ return 0
+}
+
 # Function to check remote server availability and set up remote astrometry
 function setup_remote_astrometry {
  echo "Setting up remote astrometry servers..." 1>&2
@@ -1029,21 +1099,47 @@ fi
     # quad (few verified index stars clustered in one spot), the SIP tweak
     # of the requested --tweak-order quietly fails and the solution stays a
     # rigid TAN anchored at the matched quad - accurate there, but off by
-    # tens of arcseconds across the rest of a wide field. The downstream
-    # UCAC5-based refit cannot recover such a solution, because catalog
-    # matching against it is dominated by spurious pairs. A missing SIP
-    # polynomial in the final header is the telltale sign. Only wide fields
-    # are affected (narrow-field TAN-only solutions are fine), so reuse the
-    # same >5 deg threshold as the verify re-tweak above. Test case:
-    # NMW-TexasTech Cas-04-Q2b1x1 frames of 2026-08-24 and 2026-08-27.
+    # tens of arcseconds across the rest of a wide field. Catalog matching
+    # against such a solution is dominated by spurious pairs in the bad
+    # region, so the downstream UCAC5-based refit normally refuses it (its
+    # rescue path, see src/solve_plate_with_UCAC5.c, is the last resort).
+    # A missing SIP polynomial in the final header is the telltale sign.
+    # Only wide fields are affected (narrow-field TAN-only solutions are
+    # fine), so reuse the same >5 deg threshold as the verify re-tweak
+    # above. The cure is the star-list verify re-tweak, see
+    # star_list_verify_retweak(); only if that fails too is the solution
+    # discarded in favour of a remote plate-solve server - which, running
+    # the same solve-field on the same star list, may well return the same
+    # TAN-only solution, so the remote result is checked the same way below.
+    # Test cases: NMW-TexasTech Cas-04-Q2b1x1 frames of 2026-08-24,
+    # 2026-08-27 and 2026-09-30 (the last one is in test_vast.sh).
     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
     if [ $TEST -eq 1 ] && [ -s wcs_"$BASENAME_FITSFILE" ];then
      if [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
-      echo "WARNING: the local solve-field solution for $BASENAME_FITSFILE carries no SIP distortion terms while --tweak-order $VAST_TWEAK_ORDER was requested: the tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad. Discarding it and retrying with a remote plate-solve server."
-      rm -f wcs_"$BASENAME_FITSFILE"
-      ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-      # need the awk post-processing for curl request to work
-      IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
+      echo "WARNING: the local solve-field solution for $BASENAME_FITSFILE carries no SIP distortion terms while --tweak-order $VAST_TWEAK_ORDER was requested: the tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
+      if star_list_verify_retweak out$$.xyls out$$.wcs out$$_verify.wcs ;then
+       rm -f wcs_"$BASENAME_FITSFILE"
+       "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+       echo -n "Inserting WCS header (star-list re-tweak)...  "
+       "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
+       if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
+        echo " ERROR inserting the re-tweaked WCS header in $BASENAME_FITSFILE"
+        rm -f wcs_"$BASENAME_FITSFILE"
+       else
+        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
+        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
+        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
+        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "verify_retweak / astrometry.net run"
+       fi
+       rm -f out$$_verify.wcs
+      fi
+      if [ ! -s wcs_"$BASENAME_FITSFILE" ];then
+       echo "Discarding the TAN-only solution and retrying with a remote plate-solve server."
+       rm -f wcs_"$BASENAME_FITSFILE"
+       ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+       # need the awk post-processing for curl request to work
+       IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
+      fi
      fi
     fi
     # clean up
@@ -1289,6 +1385,41 @@ Retrying..."
       #     
      fi
      #
+     # The remote server runs the same solve-field on the same star list, so
+     # its solution can carry the same silently-failed SIP tweak as a local
+     # one (see the guard in the local branch above): on 2026-09-30 the
+     # server returned exactly the TAN-only solution the local solve-field
+     # had just been rejected for. Check it the same way. If solve-field is
+     # installed here, cure it with the star-list verify re-tweak; otherwise
+     # keep it with a warning - another server would return the same thing,
+     # and the UCAC5-based refit downstream may still rescue it.
+     if [ -s wcs_"$BASENAME_FITSFILE" ];then
+      REMOTE_FOV_MAJORAXIS_DEG=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }')
+      TEST=$(echo "${REMOTE_FOV_MAJORAXIS_DEG:-0}" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
+      if [ "$TEST" -eq 1 ] && [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
+       echo "WARNING: the solution from $PLATE_SOLVE_SERVER for $BASENAME_FITSFILE carries no SIP distortion terms: the SIP tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
+       if star_list_verify_retweak out$$.xyls out$$.wcs out$$_verify.wcs ;then
+        rm -f wcs_"$BASENAME_FITSFILE"
+        "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+        echo -n "Inserting WCS header (star-list re-tweak of the remote solution)...  "
+        "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
+        if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
+         echo " ERROR inserting the re-tweaked WCS header in $BASENAME_FITSFILE - keeping the solution from $PLATE_SOLVE_SERVER as received"
+         rm -f wcs_"$BASENAME_FITSFILE"
+         "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+         "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
+        else
+         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
+         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
+         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
+         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "verify_retweak_remote / astrometry.net run"
+        fi
+        rm -f out$$_verify.wcs
+       else
+        echo "WARNING: keeping the TAN-only solution from $PLATE_SOLVE_SERVER for $BASENAME_FITSFILE - the UCAC5-based refit will have to rescue it"
+       fi
+      fi
+     fi
      #
      # The output plate-solved image wcs_"$BASENAME_FITSFILE" will be produced by lib/astrometry/insert_wcs_header
      for FILE_TO_REMOVE in "$BASENAME_FITSFILE" out$$.wcs ;do

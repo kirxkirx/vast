@@ -661,3 +661,34 @@ Update this file as you learn new things.
 - Reproduction sandboxes: never put a VaST copy under a path containing "lib/" or "util/"
   (e.g. /tmp/vast_repro_calib/vast). src/get_path_to_vast.c removeSubstring() strips EVERY
   such substring from /proc/self/exe, so the tools chdir() to a wrong, nonexistent path.
+
+## solve-field silently keeps a TAN-only solution on wide fields; cure = --verify on the star list (2026-10-01)
+- Signature: a wcs_ header without A_ORDER on a >5 deg field, CRPIX off centre, and in the
+  solve-field log "fit-wcs.c:118:fit_sip_wcs: Too few correspondences for the SIP order specified
+  (5 < 6)" right before "solved with index index-4116.fits". The tweak uses only the stars of the
+  index that held the matching quad; a coarse index (4116+) has a few dozen stars in a 15 deg
+  frame, and when the quad verifies with only ~8 of them the SIP fit gives up. The result is
+  accurate near the quad and 10-30" off at the far corner (one quadrant loses half of its
+  UCAC5 matches -> the "large change in astrometric-star counts" ERROR). Deterministic for a
+  given star list: the retry with another tweak order and the remote server (same solve-field,
+  same list) return the identical header. Excluding the coarse index files does NOT help - the
+  tweak then fails on a finer index too ("2 < 3"). Case: Cas-04-Q2b1x1 0094, 2026-09-30.
+- What works: `solve-field <xyls> --verify <tan.wcs> --tweak-order 3 --objs 10000 ...` on the
+  star list - it verifies the solution against ALL index files and re-tweaks with the best one
+  (176/179 stars of index-4113 here), 2-17 s. Now in util/identify.sh as
+  star_list_verify_retweak(), run when the TAN-only guard fires, for local and remote results.
+  The image-based form (--fits-image) is slow and skipped under solve_plate_with_UCAC5.
+- The UCAC5 refit judges a candidate on the pairs made through the OLD solution; wrong pairs
+  in the bad quadrant inflate the worst-region metric (69") even when the fit is 0.5" overall,
+  so the refit was refused. src/solve_plate_with_UCAC5.c now rescues that case (overall RMS
+  < 0.5 px while the kept baseline is > 1 px): provisional apply of the lowest order that fits,
+  re-match, second refit, keep only if it beats the baseline (SIP_REFIT_RESCUED line), else the
+  backed-up header/.wcscat/star array are restored and SIP_REFIT_REJECTED is printed as before.
+- The plate-solve CGI (process_sextractor_list.py, deployed by hand on tau and scan, not in
+  git) needs the same --verify step after its hinted pass; prepared copy:
+  /home/kirx/vast_test/process_sextractor_list.py.verify_retweak.
+- Reproducing a plate solve offline: SExtractor with default.sex.telephoto_lens_onlybrightstars_v1
+  and the six VaST apertures (-PHOT_APERTURES A,A,0.9A,1.1A,1.2A,1.3A - with one aperture
+  make_outxyls_for_astrometric_calibration rejects every line), then
+  lib/make_outxyls_for_astrometric_calibration cat out.xyls W H, then solve-field with the
+  options from identify.sh; --out <base> keeps the input .wcs intact.

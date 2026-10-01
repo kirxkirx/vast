@@ -5836,6 +5836,29 @@ static void exit_when_parent_dies( void ) {
 // back to the worst of the four quadrants, so small or sparse fields behave
 // exactly as before.
 #define SIP_REFIT_MIN_STARS_IN_OUTER_ANNULUS 30
+// Rescue of a refused refit. The quality gate judges a refit on the catalog
+// pairs made BEFORE it, through the solution it is meant to replace. When
+// that solution is badly off in one region - a TAN-only solve-field solution
+// on a wide field, see the silently-failed-tweak guard in util/identify.sh -
+// the stars there were paired with wrong catalog neighbours. A refit fitted
+// to the frame as a whole then shows a tiny overall residual but an enormous
+// worst-region one (the wrong pairs), and the gate refuses it, leaving the
+// bad solution in place. That signature - overall residual well below a
+// pixel while the solution being kept is off by more than a pixel - is the
+// rescue trigger: the caller (main()) applies the refit provisionally,
+// re-matches the catalog through it, refits once more on the corrected pairs
+// and keeps the result only if it beats the solution it replaced on the usual
+// worst-region gate, restoring the original header and pairs otherwise.
+// Among the candidate orders the LOWEST one whose overall residual passes is
+// taken: into a region with no good anchors the polynomial is an
+// extrapolation, and a lower order extrapolates more gently.
+// Measured on the NMW-TexasTech Cas-04-Q2b1x1 frame 0094 of 2026-09-30
+// (5.9 arcsec/pix): kept baseline 19.0 arcsec (10.8 in the bad quadrant),
+// order-3 trial 0.52 arcsec overall but 69 arcsec in that quadrant; after the
+// provisional apply the re-match found 4735 pairs and the second refit gave
+// 0.56 arcsec with the worst region at 0.85 arcsec.
+#define SIP_REFIT_RESCUE_MAX_RMS_PIX 0.5
+#define SIP_REFIT_RESCUE_MIN_BASELINE_PIX 1.0
 
 // Gnomonic (TAN) projection of ra,dec (deg) about a0,d0 (rad) to xi,eta (deg)
 static void sip_refit_tan_project( double ra_deg, double dec_deg, double a0_rad, double d0_rad, double *xi_deg, double *eta_deg ) {
@@ -6024,17 +6047,139 @@ static void sip_refit_delete_key( fitsfile *fptr, char *keyname ) {
  return;
 }
 
+// Information exchanged with the caller about a refit that the quality gate
+// refused but that looks rescuable (see SIP_REFIT_RESCUE_MAX_RMS_PIX).
+// Filled by refit_sip_from_catalog_matches() when it returns 2; the caller
+// passes it back for the provisional (accept_if_not_worse == 2) pass.
+struct sip_refit_rescue_info {
+ int rescue_order;               // SIP order to apply provisionally, -1 = nothing to rescue
+ double worstq_baseline_arcsec;  // worst-region robust RMS of the solution being kept
+ double rms_baseline_arcsec;     // overall robust RMS of the solution being kept
+ double rescue_trial_rms_arcsec; // overall robust RMS of the rescue candidate
+ int nmatched;                   // catalog pairs the refused refit was fitted to
+ double img_center_x;            // NAXIS1/2 and NAXIS2/2 - the region split the gate uses
+ double img_center_y;
+};
+
+// The machine-readable line the calling pipeline keys on when the refit is
+// refused and the solution being kept is bad, see the comment where it is
+// printed. basename() may modify its argument, so it gets a private copy;
+// the name is formed exactly as in the WCS_QUALITY_DIAG line so the two can
+// be matched up by the pipeline.
+static void print_sip_refit_rejected_line( char *fits_image_filename, double worstq_baseline, double rms_baseline, int nmatched ) {
+ char image_basename_for_refit_log[FILENAME_LENGTH];
+ strncpy( image_basename_for_refit_log, fits_image_filename, sizeof( image_basename_for_refit_log ) - 1 );
+ image_basename_for_refit_log[sizeof( image_basename_for_refit_log ) - 1]= '\0';
+ fprintf( stderr, "SIP_REFIT_REJECTED: file=%s worst_region_rms_kept=%.3lf arcsec robust_rms_kept=%.3lf arcsec matched=%d\n", basename( image_basename_for_refit_log ), worstq_baseline, rms_baseline, nmatched );
+ return;
+}
+
+// Worst-region robust RMS (the gate metric) of the catalog pairs under the
+// solution the stars currently carry, taken on the corrected_mag chain - the
+// same chain the gate judges its baseline on. For the rescue decision in
+// main(). Returns -1.0 if it cannot be computed.
+static double worst_region_rms_of_current_pairs( struct detected_star *stars, int N, double img_cx, double img_cy ) {
+ double *sep_arcsec;
+ double *x_pix;
+ double *y_pix;
+ int i, n;
+ double cosd, dra, worst;
+ sep_arcsec= (double *)malloc( (size_t)N * sizeof( double ) );
+ x_pix= (double *)malloc( (size_t)N * sizeof( double ) );
+ y_pix= (double *)malloc( (size_t)N * sizeof( double ) );
+ if ( sep_arcsec == NULL || x_pix == NULL || y_pix == NULL ) {
+  if ( sep_arcsec != NULL )
+   free( sep_arcsec );
+  if ( x_pix != NULL )
+   free( x_pix );
+  if ( y_pix != NULL )
+   free( y_pix );
+  return -1.0;
+ }
+ n= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog != 1 ) {
+   continue;
+  }
+  cosd= cos( stars[i].catalog_dec * M_PI / 180.0 );
+  dra= ra_diff_normalized_for_wraparound( stars[i].corrected_mag_ra, stars[i].catalog_ra );
+  sep_arcsec[n]= 3600.0 * sqrt( dra * cosd * dra * cosd + ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) * ( stars[i].corrected_mag_dec - stars[i].catalog_dec ) );
+  x_pix[n]= stars[i].x_pix;
+  y_pix[n]= stars[i].y_pix;
+  n++;
+ }
+ worst= -1.0;
+ if ( n > 0 ) {
+  worst= sip_refit_worst_region_robust_rms( sep_arcsec, x_pix, y_pix, n, img_cx, img_cy, NULL );
+ }
+ free( sep_arcsec );
+ free( x_pix );
+ free( y_pix );
+ return worst;
+}
+
+// Byte-for-byte file copy, for the backup of the plate-solved image before a
+// provisional refit. Returns 0 on success; a partial copy is removed.
+static int copy_file_bytes( const char *source_filename, const char *destination_filename ) {
+ FILE *source_file;
+ FILE *destination_file;
+ char *buffer;
+ size_t bytes_read;
+ int copy_failed;
+ buffer= (char *)malloc( 1048576 );
+ if ( buffer == NULL ) {
+  return 1;
+ }
+ source_file= fopen( source_filename, "rb" );
+ if ( source_file == NULL ) {
+  free( buffer );
+  return 1;
+ }
+ destination_file= fopen( destination_filename, "wb" );
+ if ( destination_file == NULL ) {
+  fclose( source_file );
+  free( buffer );
+  return 1;
+ }
+ copy_failed= 0;
+ while ( ( bytes_read= fread( buffer, 1, 1048576, source_file ) ) > 0 ) {
+  if ( bytes_read != fwrite( buffer, 1, bytes_read, destination_file ) ) {
+   copy_failed= 1;
+   break;
+  }
+ }
+ if ( ferror( source_file ) ) {
+  copy_failed= 1;
+ }
+ fclose( source_file );
+ if ( 0 != fclose( destination_file ) ) {
+  copy_failed= 1;
+ }
+ free( buffer );
+ if ( copy_failed == 1 ) {
+  unlink( destination_filename );
+  return 1;
+ }
+ return 0;
+}
+
 // The main refit routine, see the block comment above.
 // Returns 0 if the refit was applied (header updated, star positions in
 // stars[] recomputed from the new solution), 1 otherwise (original solution
-// kept untouched).
+// kept untouched), 2 if it was refused but looks rescuable - nothing is
+// touched in that case either, and rescue (which must then be non-NULL)
+// describes the candidate, see SIP_REFIT_RESCUE_MAX_RMS_PIX.
 // accept_if_not_worse: 0 = the refit must beat the solution it replaces by
 // the usual margin (SIP_REFIT_MIN_IMPROVEMENT_FACTOR); 1 = the post-re-match
 // pass, accepted whenever it is not worse (the pairs it is fitted to are the
-// corrected ones, so a fit with more anchors is preferred at equal quality).
+// corrected ones, so a fit with more anchors is preferred at equal quality);
+// 2 = the provisional rescue pass: the order given in rescue->rescue_order is
+// applied without any gate, the caller judges the outcome after re-matching.
 // rms_after_out (may be NULL): the robust RMS of the applied solution in
 // arcsec, -1.0 when the refit was not applied.
-static int refit_sip_from_catalog_matches( char *fits_image_filename, struct detected_star *stars, int N, int accept_if_not_worse, double *rms_after_out ) {
+// rescue (may be NULL): see struct sip_refit_rescue_info; with NULL a refused
+// refit is never reported as rescuable.
+static int refit_sip_from_catalog_matches( char *fits_image_filename, struct detected_star *stars, int N, int accept_if_not_worse, double *rms_after_out, struct sip_refit_rescue_info *rescue ) {
  double *mx, *my, *mra, *mdec, *sep_arcsec, *sep_before;
  int *keep;
  double crval1, crval2, crpix1, crpix2;
@@ -6082,7 +6227,6 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
  char solved_image_filename[FILENAME_LENGTH + 32];
  // A private copy for basename(), which is allowed to modify its argument
- char image_basename_for_refit_log[FILENAME_LENGTH + 32];
  double *sep_before_corrected;
  double *sep_before_corrected_x;
  double *sep_before_corrected_y;
@@ -6109,6 +6253,11 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  double best_rms_after;
  double original_crval1, original_crval2;
  int refit_rejected;
+ // rescue of a refused refit, see SIP_REFIT_RESCUE_MAX_RMS_PIX
+ double header_cd11, header_cd12, header_cd21, header_cd22, pixel_scale_arcsec;
+ int cd_status;
+ int rescue_candidate_order;
+ double rescue_candidate_rms;
 
  if ( rms_after_out != NULL ) {
   *rms_after_out= -1.0;
@@ -6235,6 +6384,18 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  fits_read_key( fptr, TDOUBLE, "CRPIX2", &crpix2, NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxis1, NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxis2, NULL, &status );
+ // The pixel scale, for the rescue thresholds (which are in pixels so they
+ // mean the same on every camera). Read with its own status: a header
+ // without a CD matrix is not an error here, it just disables the rescue.
+ cd_status= 0;
+ pixel_scale_arcsec= -1.0;
+ fits_read_key( fptr, TDOUBLE, "CD1_1", &header_cd11, NULL, &cd_status );
+ fits_read_key( fptr, TDOUBLE, "CD1_2", &header_cd12, NULL, &cd_status );
+ fits_read_key( fptr, TDOUBLE, "CD2_1", &header_cd21, NULL, &cd_status );
+ fits_read_key( fptr, TDOUBLE, "CD2_2", &header_cd22, NULL, &cd_status );
+ if ( cd_status == 0 ) {
+  pixel_scale_arcsec= 3600.0 * sqrt( fabs( header_cd11 * header_cd22 - header_cd12 * header_cd21 ) );
+ }
  // Keywords identifying a TESS FFI carrying the mission plate solution.
  // Read here so we do not have to open the file a second time; a missing
  // keyword is not an error, it just means this is not a TESS FFI.
@@ -6437,6 +6598,13 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   n_order_candidates= 1;
   order_candidates[0]= deg;
  }
+ // the provisional rescue pass refits with the order chosen for it
+ if ( accept_if_not_worse == 2 && rescue != NULL && rescue->rescue_order >= 2 && rescue->rescue_order <= SIP_REFIT_MAX_ORDER ) {
+  n_order_candidates= 1;
+  order_candidates[0]= rescue->rescue_order;
+ }
+ rescue_candidate_order= -1;
+ rescue_candidate_rms= -1.0;
  best_deg= -1;
  best_rms_after= -1.0;
  best_worstq_after= -1.0;
@@ -6623,6 +6791,13 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   // annulus; outer_annulus_rms is that one region on its own (-1 = too few
   // stars in it, so only the quadrants were used)
   fprintf( stderr, "SIP_REFIT: SIP order %d trial: matched=%d robust_rms=%.3lf arcsec worst_region_rms=%.3lf arcsec outer_annulus_rms=%.3lf arcsec\n", deg, nmatched, rms_after, worstq_after, outer_annulus_rms_after );
+  // The lowest order whose overall residual is small is the rescue
+  // candidate, should the gate below refuse the winner (see
+  // SIP_REFIT_RESCUE_MAX_RMS_PIX); the candidates come in ascending order.
+  if ( rescue_candidate_order < 0 && rms_after > 0.0 && pixel_scale_arcsec > 0.0 && rms_after < SIP_REFIT_RESCUE_MAX_RMS_PIX * pixel_scale_arcsec ) {
+   rescue_candidate_order= deg;
+   rescue_candidate_rms= rms_after;
+  }
   if ( rms_after > 0.0 && worstq_after > 0.0 && ( best_deg < 0 || worstq_after < SIP_REFIT_HIGHER_ORDER_GAIN * best_worstq_after ) ) {
    best_deg= deg;
    best_worstq_after= worstq_after;
@@ -6672,6 +6847,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    if ( worstq_after > worstq_baseline ) {
     refit_rejected= 1;
    }
+  } else if ( accept_if_not_worse == 2 ) {
+   // provisional rescue pass: applied unconditionally, the caller judges
+   // the outcome after the catalog re-match (see SIP_REFIT_RESCUE_MAX_RMS_PIX)
+   refit_rejected= 0;
   } else {
    if ( worstq_after >= SIP_REFIT_MIN_IMPROVEMENT_FACTOR * worstq_baseline ) {
     refit_rejected= 1;
@@ -6681,6 +6860,8 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  if ( refit_rejected == 1 ) {
   if ( accept_if_not_worse == 1 ) {
    fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs is worse than the solution it would replace (worst-region %.3lf vs %.3lf arcsec) - keeping the current solution\n", worstq_after, worstq_baseline );
+  } else if ( accept_if_not_worse == 2 ) {
+   fprintf( stderr, "SIP_REFIT: the provisional rescue refit could not be evaluated - keeping the current solution\n" );
   } else {
    fprintf( stderr, "SIP_REFIT: refit does not sufficiently improve on the solution it would replace (best worst-region baseline %.3lf arcsec) - keeping the original\n", worstq_baseline );
    // Machine-readable companion to the line above, for the calling pipeline.
@@ -6694,22 +6875,37 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
    // The rare case that matters is a rejection where the solution being KEPT is
    // itself bad. Then the refusal is a symptom, not a verdict: the catalog
    // cross-match was made through a WCS too far off to pair stars with their
-   // real counterparts, so the pairs the refit was fitted to are wrong and no
-   // refit of those pairs can recover the frame. Re-matching does not help
-   // either, because the re-match radius is derived from the refit residual and
-   // is itself enormous. Only a fresh plate solve can fix it, and this program
-   // does not do plate solving - so state the fact and let the caller act. In
-   // the same night's data the two rejections with a bad baseline (21.2 and
-   // 24.5 arcsec) are exactly the two frames that needed re-solving.
+   // real counterparts in some region, so the pairs the refit was fitted to
+   // are wrong there and no refit of THOSE pairs can be judged fairly. When
+   // the refit nevertheless fits the frame as a whole to a small fraction of
+   // a pixel, the wrong pairs are the only thing standing in its way, and the
+   // caller can rescue the frame without a new plate solve: apply the refit
+   // provisionally, re-match the catalog through it, refit again and judge
+   // the result - see SIP_REFIT_RESCUE_MAX_RMS_PIX. That is reported with
+   // return code 2 and nothing is printed as a rejection yet; the caller
+   // prints the SIP_REFIT_REJECTED line itself if the rescue fails. When no
+   // candidate fits that well the frame needs a fresh plate solve, which this
+   // program does not do - so state the fact and let the caller act. In one
+   // night of NMW-TexasTech data the two rejections with a bad baseline (21.2
+   // and 24.5 arcsec) were exactly the two frames that needed re-solving.
    //
    // The caller decides what counts as "bad" because the caller knows the pixel
-   // scale; here we only report, in a form a script can grep. basename() is
-   // given a private copy because it is allowed to modify its argument, and the
-   // name is formed exactly as in the WCS_QUALITY_DIAG line so the two can be
-   // matched up by the pipeline.
-   strncpy( image_basename_for_refit_log, fits_image_filename, sizeof( image_basename_for_refit_log ) - 1 );
-   image_basename_for_refit_log[sizeof( image_basename_for_refit_log ) - 1]= '\0';
-   fprintf( stderr, "SIP_REFIT_REJECTED: file=%s worst_region_rms_kept=%.3lf arcsec robust_rms_kept=%.3lf arcsec matched=%d\n", basename( image_basename_for_refit_log ), worstq_baseline, rms_baseline, nmatched );
+   // scale; here we only report, in a form a script can grep.
+   if ( rescue != NULL && NULL == getenv( "VAST_SIP_REFIT_NO_RESCUE" ) && pixel_scale_arcsec > 0.0 && rescue_candidate_order >= 2 && worstq_baseline > SIP_REFIT_RESCUE_MIN_BASELINE_PIX * pixel_scale_arcsec ) {
+    rescue->rescue_order= rescue_candidate_order;
+    rescue->worstq_baseline_arcsec= worstq_baseline;
+    rescue->rms_baseline_arcsec= rms_baseline;
+    rescue->rescue_trial_rms_arcsec= rescue_candidate_rms;
+    rescue->nmatched= nmatched;
+    rescue->img_center_x= img_center_x;
+    rescue->img_center_y= img_center_y;
+    fprintf( stderr, "SIP_REFIT: the solution being kept is bad (worst region %.3lf arcsec, more than %.1lf pixel) while the order-%d trial fits the frame as a whole to %.3lf arcsec - the catalog pairs in the bad region are probably wrong rather than the model; attempting a rescue: provisional refit, catalog re-match, second refit\n", worstq_baseline, SIP_REFIT_RESCUE_MIN_BASELINE_PIX, rescue_candidate_order, rescue_candidate_rms );
+    free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+    gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+    gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+    return 2;
+   }
+   print_sip_refit_rejected_line( fits_image_filename, worstq_baseline, rms_baseline, nmatched );
   }
   free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
   gsl_matrix_free( X_design ); gsl_matrix_free( cov );
@@ -7043,6 +7239,19 @@ int main( int argc, char **argv ) {
  int stars_matched_before_rematch, stars_matched_after_rematch;
  int rematch_ok;
  struct detected_star_match_backup *match_backup;
+ // Rescue of a refused refit, see SIP_REFIT_RESCUE_MAX_RMS_PIX
+ int refit_result;
+ struct sip_refit_rescue_info rescue_info;
+ int rescue_attempted;
+ struct detected_star *rescue_backup_stars;
+ char rescue_solved_image_filename[FILENAME_LENGTH];
+ char rescue_wcs_catalog_filename[FILENAME_LENGTH];
+ char rescue_backup_image_filename[FILENAME_LENGTH + 32];
+ char rescue_backup_catalog_filename[FILENAME_LENGTH + 32];
+ char rescue_image_basename_for_log[FILENAME_LENGTH];
+ struct stat rescue_stat_of_solved_image;
+ double rescue_final_worstq_arcsec;
+ int rescue_nmatched_final;
 
  FILE *pipe_for_try_to_guess_image_fov;
  char command_string[2 * FILENAME_LENGTH + VAST_PATH_MAX];
@@ -7394,8 +7603,60 @@ int main( int argc, char **argv ) {
  // consistently describe the header WCS.
  refit_applied= 0;
  refit_rms_after_arcsec= -1.0;
- if ( 0 == refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 0, &refit_rms_after_arcsec ) ) {
+ rescue_attempted= 0;
+ rescue_backup_stars= NULL;
+ rescue_info.rescue_order= -1;
+ refit_result= refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 0, &refit_rms_after_arcsec, &rescue_info );
+ if ( refit_result == 0 ) {
   refit_applied= 1;
+ }
+
+ // Rescue of a refused refit (see SIP_REFIT_RESCUE_MAX_RMS_PIX): apply the
+ // candidate provisionally, so that the re-match block below runs on it,
+ // and judge the outcome after that block. Everything the provisional pass
+ // changes is backed up first - the star array as a whole (it holds no
+ // pointers), the plate-solved image whose header the refit rewrites and the
+ // .wcscat catalog it regenerates from that header - so a failed rescue can
+ // put the original solution back exactly. A plate-solved image that is a
+ // symbolic link is never rewritten (see header_write_blocked_symlink in the
+ // refit), so such an image is not rescued either.
+ if ( refit_result == 2 && rescue_info.rescue_order >= 2 ) {
+  guess_wcs_catalog_filename( rescue_wcs_catalog_filename, fits_image_filename );
+  strncpy( rescue_solved_image_filename, rescue_wcs_catalog_filename, sizeof( rescue_solved_image_filename ) - 1 );
+  rescue_solved_image_filename[sizeof( rescue_solved_image_filename ) - 1]= '\0';
+  rescue_solved_image_filename[strlen( rescue_solved_image_filename ) - strlen( ".wcscat" )]= '\0';
+  sprintf( rescue_backup_image_filename, "%s.sip_refit_rescue_backup", rescue_solved_image_filename );
+  sprintf( rescue_backup_catalog_filename, "%s.sip_refit_rescue_backup", rescue_wcs_catalog_filename );
+  if ( 0 != lstat( rescue_solved_image_filename, &rescue_stat_of_solved_image ) || !S_ISREG( rescue_stat_of_solved_image.st_mode ) ) {
+   fprintf( stderr, "SIP_REFIT: %s is not a regular file - not attempting the rescue\n", rescue_solved_image_filename );
+   print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
+  } else {
+   rescue_backup_stars= (struct detected_star *)malloc( (size_t)number_of_stars_in_wcs_catalog * sizeof( struct detected_star ) );
+   if ( rescue_backup_stars == NULL ) {
+    fprintf( stderr, "SIP_REFIT: cannot allocate memory for the rescue backup - not attempting the rescue\n" );
+    print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
+   } else if ( 0 != copy_file_bytes( rescue_solved_image_filename, rescue_backup_image_filename ) || 0 != copy_file_bytes( rescue_wcs_catalog_filename, rescue_backup_catalog_filename ) ) {
+    fprintf( stderr, "SIP_REFIT: cannot back up %s and its catalog - not attempting the rescue\n", rescue_solved_image_filename );
+    unlink( rescue_backup_image_filename );
+    unlink( rescue_backup_catalog_filename );
+    free( rescue_backup_stars );
+    rescue_backup_stars= NULL;
+    print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
+   } else {
+    memcpy( rescue_backup_stars, stars, (size_t)number_of_stars_in_wcs_catalog * sizeof( struct detected_star ) );
+    if ( 0 == refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 2, &refit_rms_after_arcsec, &rescue_info ) ) {
+     refit_applied= 1;
+     rescue_attempted= 1;
+    } else {
+     fprintf( stderr, "SIP_REFIT: the provisional refit could not be applied - keeping the original solution\n" );
+     unlink( rescue_backup_image_filename );
+     unlink( rescue_backup_catalog_filename );
+     free( rescue_backup_stars );
+     rescue_backup_stars= NULL;
+     print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
+    }
+   }
+  }
  }
 
  // Post-refit catalog re-match. The pairs the refit was fitted to were
@@ -7465,7 +7726,7 @@ int main( int argc, char **argv ) {
     // the second refit. That refit is accepted only if it is not worse
     // than the first one, whose solution the stars carry now.
     second_refit_rms_after_arcsec= -1.0;
-    if ( 0 != refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 1, &second_refit_rms_after_arcsec ) ) {
+    if ( 0 != refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 1, &second_refit_rms_after_arcsec, NULL ) ) {
      fprintf( stderr, "SIP_REFIT: the second refit on the re-matched pairs was not applied - keeping the first refit solution\n" );
     }
     // Recompute the local position corrections on the final solution
@@ -7488,6 +7749,43 @@ int main( int argc, char **argv ) {
    }
    free( match_backup );
   }
+ }
+
+ // Outcome of the rescue (see SIP_REFIT_RESCUE_MAX_RMS_PIX): the solution
+ // the stars carry now - the provisional refit, re-matched and refit again
+ // above when the re-match succeeded - has to beat the solution it replaced
+ // on the same worst-region gate as any refit; otherwise everything is put
+ // back as it was and the refusal is reported as usual.
+ if ( rescue_attempted == 1 ) {
+  rescue_final_worstq_arcsec= worst_region_rms_of_current_pairs( stars, number_of_stars_in_wcs_catalog, rescue_info.img_center_x, rescue_info.img_center_y );
+  for ( rescue_nmatched_final= 0, i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    rescue_nmatched_final++;
+   }
+  }
+  if ( rescue_final_worstq_arcsec > 0.0 && rescue_final_worstq_arcsec < SIP_REFIT_MIN_IMPROVEMENT_FACTOR * rescue_info.worstq_baseline_arcsec ) {
+   // Machine-readable companion of SIP_REFIT_REJECTED: the frame was
+   // recovered from a bad solution without a new plate solve. basename()
+   // gets a private copy as it may modify its argument.
+   strncpy( rescue_image_basename_for_log, fits_image_filename, sizeof( rescue_image_basename_for_log ) - 1 );
+   rescue_image_basename_for_log[sizeof( rescue_image_basename_for_log ) - 1]= '\0';
+   fprintf( stderr, "SIP_REFIT_RESCUED: file=%s worst_region_rms_before=%.3lf arcsec worst_region_rms_after=%.3lf arcsec matched_before=%d matched_after=%d\n", basename( rescue_image_basename_for_log ), rescue_info.worstq_baseline_arcsec, rescue_final_worstq_arcsec, rescue_info.nmatched, rescue_nmatched_final );
+   unlink( rescue_backup_image_filename );
+   unlink( rescue_backup_catalog_filename );
+  } else {
+   fprintf( stderr, "SIP_REFIT: the rescue did not beat the solution it replaced (worst region %.3lf vs %.3lf arcsec) - restoring the original solution and catalog pairs\n", rescue_final_worstq_arcsec, rescue_info.worstq_baseline_arcsec );
+   memcpy( stars, rescue_backup_stars, (size_t)number_of_stars_in_wcs_catalog * sizeof( struct detected_star ) );
+   if ( 0 != rename( rescue_backup_image_filename, rescue_solved_image_filename ) ) {
+    fprintf( stderr, "SIP_REFIT: ERROR restoring %s from %s\n", rescue_solved_image_filename, rescue_backup_image_filename );
+   }
+   if ( 0 != rename( rescue_backup_catalog_filename, rescue_wcs_catalog_filename ) ) {
+    fprintf( stderr, "SIP_REFIT: ERROR restoring %s from %s\n", rescue_wcs_catalog_filename, rescue_backup_catalog_filename );
+   }
+   refit_applied= 0;
+   print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
+  }
+  free( rescue_backup_stars );
+  rescue_backup_stars= NULL;
  }
 
  // Pre-local-correction astrometric residual diagnostic. Emits a single

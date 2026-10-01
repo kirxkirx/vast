@@ -578,7 +578,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -15570,6 +15570,156 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04PLATESOLVE_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ fail_early "Internet connection error"
+fi
+
+
+##### NMW-TexasTech Cas-04-Q2b1x1 TAN-only plate solution test #####
+# One dark/flat-corrected 20 s frame of the dense Milky Way field
+# Cas-04-Q2b1x1 (2026-09-30, frame 0094; visually a perfectly good frame)
+# on which the transient pipeline ended up with a WCS that had no SIP
+# distortion polynomial. solve-field matched a quad from the coarse index
+# file index-4116, which has only 26 stars in this 15.6x10.4 deg field; 8 of
+# them verified, the SIP tweak then had 5 correspondences where it needs 6
+# ("fit-wcs.c:118:fit_sip_wcs: Too few correspondences for the SIP order
+# specified (5 < 6)") and solve-field quietly kept a rigid TAN solution
+# anchored at the matched quad. That solution is fine near the quad and
+# tens of arcseconds off at the far corner of the frame: 10.5 arcsec scatter
+# in one quadrant and barely half of its stars matched to UCAC5, which the
+# pipeline reported as a "large change in astrometric-star counts" ERROR.
+# The remote plate-solve server, running the same solve-field on the same
+# star list, returned the identical TAN-only solution, and the UCAC5-based
+# refit refused to touch it because the catalog pairs in the bad quadrant
+# were wrong. The repairs under test, in the order they get a chance:
+#  - util/identify.sh re-tweaks a wide-field solution that carries no SIP
+#    terms against ALL the index files (solve-field --verify on the star
+#    list, see star_list_verify_retweak()), locally and for a solution
+#    received from a remote server;
+#  - the plate-solve server CGI does the same on its side;
+#  - the UCAC5-based refit in util/solve_plate_with_UCAC5 rescues a refused
+#    refit whose overall residual is tiny while the solution being kept is
+#    bad (SIP_REFIT_RESCUED, see SIP_REFIT_RESCUE_MAX_RMS_PIX in
+#    src/solve_plate_with_UCAC5.c).
+# The test runs the plate solver the way the transient pipeline does and
+# checks the OUTCOME only, so it passes whichever of the repairs applies on
+# this host: the final WCS must be TAN-SIP and the UCAC5 residuals must be
+# small and uniform across the frame (measured after the repair: 0.49 arcsec
+# overall with 0.51 in the formerly bad quadrant, against 1.87 and 10.5 for
+# the TAN-only solution), and no bad solution may have been kept.
+### Disable this test for GitHub Actions (same reasons as the Cas-02 test below: it needs a working solve-field or the remote plate-solve servers)
+if [ "$GITHUB_ACTIONS" != "true" ];then
+# Download the test dataset if needed
+if [ ! -d ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ];then
+ cd .. || exit 1
+ curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://tau.kirx.net/vast_test_data/NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test.tar.bz2" || curl --silent --show-error --retry 2 --retry-delay 30 --continue-at - -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test.tar.bz2" && tar -xvjf NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test.tar.bz2 && rm -f NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -s ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test/Cas-04-Q2b1x1_2026-09-30_23-36-19_20.00sec_-0.00C_LIGHT_0094.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "NMW-TexasTech Cas-04-Q2b1x1 TAN-only plate solution test "
+ echo -n "NMW-TexasTech Cas-04-Q2b1x1 TAN-only plate solution test: " >> vast_test_report.txt
+ # The SExtractor settings the transient pipeline solves plates with for
+ # this camera (its first pass), and the default bad-region list so the
+ # result does not depend on the NMW calibration directory of the host
+ cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
+ cp bad_region.lst_default bad_region.lst
+ CAS04Q2TANONLY_IMAGE=Cas-04-Q2b1x1_2026-09-30_23-36-19_20.00sec_-0.00C_LIGHT_0094.fits
+ rm -f wcs_"$CAS04Q2TANONLY_IMAGE" wcs_"$CAS04Q2TANONLY_IMAGE".*
+ # The pipeline runs the solver this way (util/transients/transient_factory_test31.sh),
+ # which triggers the blind plate solve in util/identify.sh and then the UCAC5 refit
+ FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test/"$CAS04Q2TANONLY_IMAGE" > cas04q2tanonly_solve$$.log 2>&1
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_EXIT_CODE"
+ fi
+ if [ ! -s wcs_"$CAS04Q2TANONLY_IMAGE" ] || [ ! -s wcs_"$CAS04Q2TANONLY_IMAGE".wcscat ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY001"
+ else
+  # (a) the final WCS has to be a TAN-SIP solution of order >= 2
+  CAS04Q2TANONLY_CTYPE1=$(util/listhead wcs_"$CAS04Q2TANONLY_IMAGE" | awk -F"'" '/^CTYPE1 /{print $2; exit}' | awk '{print $1}')
+  if [ "$CAS04Q2TANONLY_CTYPE1" != "RA---TAN-SIP" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_NO_SIP"
+  fi
+  CAS04Q2TANONLY_SIP_ORDER=$(util/listhead wcs_"$CAS04Q2TANONLY_IMAGE" | awk -F'[= /]+' '$1=="A_ORDER"{print $2; exit}')
+  re='^[0-9]+$'
+  if ! [[ $CAS04Q2TANONLY_SIP_ORDER =~ $re ]] ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_NO_A_ORDER"
+  elif [ "$CAS04Q2TANONLY_SIP_ORDER" -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_SIP_ORDER_$CAS04Q2TANONLY_SIP_ORDER"
+  fi
+  # (b) the UCAC5 residuals have to be small and uniform across the frame:
+  # the TAN-only solution gives sigma_overall 1.87 arcsec with 10.5 in its
+  # bad quadrant (ratio 5.6), a proper solution 0.5 arcsec everywhere
+  CAS04Q2TANONLY_DIAG=$(grep "WCS_QUALITY_DIAG: file=$CAS04Q2TANONLY_IMAGE " cas04q2tanonly_solve$$.log | tail -n 1)
+  CAS04Q2TANONLY_SIGMA=$(echo "$CAS04Q2TANONLY_DIAG" | tr ' ' '\n' | awk -F'=' '$1 == "sigma_overall_arcsec" {print $2}')
+  if [ -z "$CAS04Q2TANONLY_SIGMA" ] || ! echo "$CAS04Q2TANONLY_SIGMA" | awk '{ if ( $1+0 < 1.2 ) exit 0; exit 1 }' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_SIGMA_${CAS04Q2TANONLY_SIGMA:-none}"
+  fi
+  CAS04Q2TANONLY_QRATIO=$(echo "$CAS04Q2TANONLY_DIAG" | tr ' ' '\n' | awk -F'=' '$1 == "worst_quadrant_to_overall_ratio" {print $2}')
+  if [ -z "$CAS04Q2TANONLY_QRATIO" ] || ! echo "$CAS04Q2TANONLY_QRATIO" | awk '{ if ( $1+0 < 2.0 ) exit 0; exit 1 }' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_QRATIO_${CAS04Q2TANONLY_QRATIO:-none}"
+  fi
+  for CAS04Q2TANONLY_Q in 1 2 3 4 ;do
+   CAS04Q2TANONLY_QSIGMA=$(echo "$CAS04Q2TANONLY_DIAG" | tr ' ' '\n' | awk -F'=' -v K="sigma_q${CAS04Q2TANONLY_Q}_arcsec" '$1 == K {print $2}')
+   if [ -z "$CAS04Q2TANONLY_QSIGMA" ] || ! echo "$CAS04Q2TANONLY_QSIGMA" | awk '{ if ( $1+0 < 1.5 ) exit 0; exit 1 }' ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_Q${CAS04Q2TANONLY_Q}SIGMA_${CAS04Q2TANONLY_QSIGMA:-none}"
+   fi
+  done
+  # (c) no bad solution may have been kept: the solver reports that as a
+  # refused refit with a worst-region baseline above a pixel (5.9 arcsec)
+  CAS04Q2TANONLY_BAD_KEPT=$(grep "SIP_REFIT_REJECTED: file=$CAS04Q2TANONLY_IMAGE " cas04q2tanonly_solve$$.log | tail -n 1 | tr ' ' '\n' | awk -F'=' '$1 == "worst_region_rms_kept" {print $2}')
+  if [ -n "$CAS04Q2TANONLY_BAD_KEPT" ] && echo "$CAS04Q2TANONLY_BAD_KEPT" | awk '{ if ( $1+0 > 5.9 ) exit 0; exit 1 }' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_BAD_SOLUTION_KEPT_$CAS04Q2TANONLY_BAD_KEPT"
+  fi
+ fi
+ if [ $TEST_PASSED -ne 1 ];then
+  # which of the repairs ran, and what the solver saw
+  CAS04Q2TANONLY_DEBUG=$(grep -E "carries no SIP|star-list re-tweak|Too few correspondences|solved with index|log-odds ratio|VAST004|Discarding the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG" cas04q2tanonly_solve$$.log | tail -n 40)
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CAS04Q2TANONLY ######
+$CAS04Q2TANONLY_DEBUG
+#########################################################
+"
+ fi
+ rm -f cas04q2tanonly_solve$$.log wcs_"$CAS04Q2TANONLY_IMAGE" wcs_"$CAS04Q2TANONLY_IMAGE".*
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-04-Q2b1x1 TAN-only plate solution test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-TexasTech Cas-04-Q2b1x1 TAN-only plate solution test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CAS04Q2TANONLY_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
