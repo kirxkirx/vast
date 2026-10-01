@@ -94,10 +94,13 @@
 // FIRST second-epoch image, so a candidate is accepted or rejected on the strength
 // of that one measurement even though the pipeline later requires it to be present
 // on the second new image too. That makes the value sensitive: the faint Sgr-04 nova
-// of 2026-09-07 sits at SNR 4.77 on its first new image, so with the cut at 4.5 the
-// recovery of that nova depended on the last digits of the aperture photometry and
-// flipped between machines (found on the dev box, lost on the Ubuntu CI runner).
-// Lowered 4.5 -> 4.0 on 2026-09-12 to give such objects a real margin.
+// of 2026-09-07 sits at SNR 4.77 on its first new (dark+flat calibrated) image.
+// Lowered 4.5 -> 4.0 on 2026-09-12 to give such objects a margin. The reason given
+// at the time - that the recovery of that nova flipped between machines - turned out
+// to be wrong: the test passed on the dev box and failed on CI because only the dev
+// box calibrated the raw test frames (on raw pixels the nova is not extracted at all),
+// not because the SNR differed between builds. SExtractor catalogs of the same pixels
+// are bit-identical across platforms. Judge this value on production grounds only.
 #define MIN_SNR_TRANSIENT_DETECTION 4.0 // Discard transient candidates with signal-to-noise ratio < MIN_SNR_TRANSIENT_DETECTION
 
 #define MIN_SNR 3.0                   // Discard objects detected with signal-to-noise ratio < MIN_SNR

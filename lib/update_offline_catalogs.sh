@@ -88,9 +88,15 @@ forget_catalog_download_failure() {
 # $2 - the output file that command writes
 # Size of a file in bytes, GNU stat then BSD stat; empty if neither works.
 get_file_size_in_bytes() {
- FILE_SIZE_IN_BYTES=`stat -c '%s' "$1" 2>/dev/null`
+ # -L makes stat follow a symbolic link and report the size of the file it
+ # points to. This matters because a catalog is often a symlink: unmw links
+ # astorb.dat in every per-field working copy to the one in the reference VaST
+ # copy. Without -L stat reports the length of the link path itself (e.g. 24 bytes
+ # for /var/www/vast/astorb.dat), the catalog looks hopelessly incomplete, and
+ # every field run re-downloads the whole asteroid database over the link.
+ FILE_SIZE_IN_BYTES=`stat -L -c '%s' "$1" 2>/dev/null`
  if [ -z "$FILE_SIZE_IN_BYTES" ];then
-  FILE_SIZE_IN_BYTES=`stat -f '%z' "$1" 2>/dev/null`
+  FILE_SIZE_IN_BYTES=`stat -L -f '%z' "$1" 2>/dev/null`
  fi
  echo "$FILE_SIZE_IN_BYTES"
 }
