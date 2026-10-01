@@ -98,7 +98,9 @@ jobs:
       run: |
         util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
         exit ${PIPESTATUS[0]}
-      timeout-minutes: 300
+      # The 3-vCPU/7 GB arm64 macOS runners vary ~1.4x in speed from run to run and the
+      # full suite is estimated to take ~220-330 min there, so 300 min was too tight
+      timeout-minutes: 350
       if: env.SKIP != 'true'
     - name: Collect additional test artifacts
       run: |

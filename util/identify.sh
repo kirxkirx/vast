@@ -259,6 +259,25 @@ function determine_astrometry_method {
  fi
 }
 
+# Check that a WCS header file downloaded from a plate-solve server is a FITS header:
+# curl saves whatever the server returns (an HTTP error page, or a file the server is
+# still writing) and still exits with 0. A FITS header starts with SIMPLE and is made
+# of whole 2880-byte blocks.
+function wcs_header_file_looks_valid {
+ if [ ! -s "$1" ];then
+  return 1
+ fi
+ if ! head -c 9 "$1" | grep -q '^SIMPLE  =' ;then
+  return 1
+ fi
+ # cfitsio (lib/astrometry/insert_wcs_header) rejects a header that is not a whole
+ # number of 2880-byte blocks, like a file the server is still writing
+ if [ $(( $(wc -c < "$1") % 2880 )) -ne 0 ];then
+  return 1
+ fi
+ return 0
+}
+
 # Function to check remote server availability and set up remote astrometry
 function setup_remote_astrometry {
  echo "Setting up remote astrometry servers..." 1>&2
@@ -1199,6 +1218,33 @@ Retrying..."
      fi
     else
      echo "done"
+    fi
+    # A non-empty download that is not a FITS header would make insert_wcs_header fail
+    # below, which ends this script, while another plate-solve server may still solve
+    # the field. Re-download once (the server may have been still writing the file),
+    # then fall back to the next server.
+    if [ -s out$$.wcs ] && ! wcs_header_file_looks_valid out$$.wcs ;then
+     echo "WARNING: the WCS header downloaded from $PLATE_SOLVE_SERVER is not a FITS header ($(wc -c < out$$.wcs | awk '{print $1}') bytes) - downloading it again"
+     sleep 3
+     $TIMEOUT_COMMAND 300 $CURL "$EXPECTED_WCS_HEAD_URL" -o out$$.wcs --user vast48:khyzbaojMhztNkWd &>/dev/null
+     if [ $? -ge 130 ];then
+      # Exit if the process is killed by user
+      exit 1
+     fi
+     if ! wcs_header_file_looks_valid out$$.wcs ;then
+      if [ -s out$$.wcs ];then
+       # Show what the server sent, made safe for the HTML log this output may end up in:
+       # printable ASCII only, no HTML tags (an unclosed one would hide the rest of the log)
+       # and no 'ERROR' (a proxy error page must not fail a field the next server may solve)
+       echo "The server returned:"
+       head -c 1000 out$$.wcs | tr -c '\040-\176\n' ' ' | sed -e 's/</[/g' -e 's/>/]/g' -e 's/ERROR/Error/g'
+       echo
+      fi
+      rm -f out$$.wcs
+      echo "WARNING: the WCS header downloaded from $PLATE_SOLVE_SERVER is still not a FITS header - trying the next plate-solve server"
+      ERROR_STATUS=2
+      continue
+     fi
     fi
     if [ -s out$$.wcs ];then
      cp -v $FITSFILE "$BASENAME_FITSFILE"

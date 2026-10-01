@@ -38,9 +38,83 @@ Update this file as you learn new things.
 - `shellcheck` catches most issues but some warnings (SC2181, SC2034 for unused read vars) are intentional patterns
 - **Never use `gawk`** - rely only on portable `awk` functionality for maximum portability across platforms
 
+## bash 3.2 traps (macOS /bin/bash 3.2.57 runs every `#!/usr/bin/env bash` script on the macOS CI runner)
+
+- A `case` statement inside `$( ... )` fails to parse (`syntax error near unexpected token ;;`)
+  unless every pattern has the leading paren form `(pattern)`. bash reads a script as it
+  runs, so the error hits only when execution reaches that compound command - in test_vast.sh
+  this killed the macOS CI run 80 min in (Sep 19 and 24, 2026, SGR04NOVA_DEBUG=$( ... ) block).
+  Simplest: no `case` inside `$( )`; use `echo "$X" | grep -q ... || continue`. The first
+  test_vast.sh section now also runs `bash -n` on util/examples/*.sh, so on macOS such an
+  error fails the run in its first minute. Caveat: bash 3.2 `-n` does not parse the BODIES
+  of `$( )` blocks, it only catches this extraction failure.
+- A `/` inside a QUOTED pattern of `${var//pattern/repl}` still ends the pattern in bash 3.2:
+  `${R//"</a"/ }` on 'V0615 Vul</a' gives 'V0615 Vula"/ /a'. This garbled VSX names in
+  util/search_databases_with_curl.sh on macOS since 2019 and, whenever GCVS did not answer,
+  broke the CBA/AAVSO report file names (NMWNVUL24ST_CBASCRIPTTEST_NOOUTPUTFILE, Jun 27 and
+  Sep 12, 2026). Use `sed 's:</a:...:g'` for patterns containing '/'. (The common
+  `${VAST_PATH/'//'/'/'}` idiom is also a no-op under 3.2 but is followed by a sed fallback.)
+- To test for these on Linux, build bash 3.2.57 in a scratch dir: download
+  bash-3.2.57.tar.gz from ftp.gnu.org, `./configure --without-bash-malloc
+  CFLAGS='-O1 -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion' && make`
+  (works with gcc 11; gcc 14 needs `CC='gcc -std=gnu89'` because the build-helper programs
+  do not get CFLAGS), then run `./bash -n` on the scripts and run suspicious snippets with it.
+  The official Docker image `bash:3.2.57` is the same GNU bash (built on musl).
+- `bash -n` coverage: bash 3.2 and 5.1 do NOT parse the bodies of `$( )` / backticks / `<( )`
+  (a syntax error inside one surfaces only at run time); bash 5.2 does. A `case` inside a
+  DOUBLE-QUOTED "$( ... )" even passes 3.2 -n and then silently runs a truncated command.
+- shellcheck cannot target a bash version and passed the broken test_vast.sh; BASH_COMPAT=32
+  in a modern bash does not reject bash-4 syntax either.
+- CI guard (2026-09-24): the `bash32compatibility` job in build_and_test_ubuntu.yml runs
+  `lib/check_bash32_compatibility.sh <bash 3.2>` on every push to master, in parallel with the
+  long jobs. bash 3.2 comes from the official Docker image bash:3.2.57 pinned by digest (with
+  public.ecr.aws and mirror.gcr.io fallbacks for the same digest). The script runs bash 3.2 -n
+  and the runner's bash (5.2) -n over all tracked shell scripts outside src/, plus an awk lint
+  for bash 4+ features that 3.2 parses but runs differently (quoted '/' in ${VAR//pat/rep},
+  case inside "$( )", declare -A, ${v,,}, wait -n, ...). A line that is safe (e.g. guarded by
+  BASH_VERSINFO) is silenced with a trailing '# bash32-ok: reason' comment. Run it locally with
+  a self-built bash 3.2: `lib/check_bash32_compatibility.sh /path/to/bash-3.2.57/bash`.
+
+## Remote plate-solve WCS download (util/identify.sh, 2026-09-24)
+
+- curl without --fail saves an HTTP error page (or a file the server is still writing) and
+  exits 0. On 2026-09-24 tau.kirx.net solved c176.fits but the client got 341 bytes that
+  were not a FITS header; insert_wcs_header failed and identify.sh did `exit 1` without
+  trying the other server (the 'many hot pixels' test failed). wcs_header_file_looks_valid()
+  now requires 'SIMPLE  =' and a whole number of 2880-byte blocks (cfitsio rejects anything
+  else); an invalid download is fetched once more, then the next server is tried. Anything
+  echoed from a server reply must be sanitized (printable ASCII, no '<>' tags, no 'ERROR')
+  because identify.sh output can end up in index.html.
+- Known leftovers (not fixed): ERROR_STATUS=2 carries into the next field-of-view trial, so
+  with a single reachable/forced server the later trials skip it; failed jobs are not removed
+  from the server (remove_job.py) on the `continue` paths.
+- lib/bin/xy2sky (bundled WCSTools 3.9.7) segfaults when the input file does not exist.
+
+## `grep -C 'fd_'` typo disabled a test check for 3 years
+
+- test_vast.sh NMWCALIB0_no_calibration_in_filename used `grep -C` (context) instead of
+  `grep -c` (count) from 7abbf3ca (Dec 2023) until 2026-09-24: grep failed, N was empty and
+  `[ $N -ne 2 ]` errored, so the check never fired. When a check compares an unquoted
+  variable with -ne/-eq, a broken producer makes the test silently pass - look for
+  'unary operator expected' in test_vast.sh output. N=2 comes from the two NMW SExtractor
+  passes, each appending vast_summary.log ('Last  image:') to the report.
+- Never edit util/examples/test_vast.sh in place while a test_vast.sh run is using it (bash
+  reads it incrementally through fd 255). Replace it atomically instead: `cp` the new version
+  to a temp file in the same directory, then `mv` it over the original. The running bash keeps
+  reading the old inode.
+- shellcheck on the whole 36k-line test_vast.sh gets OOM-killed on a 15 GB machine. Check the
+  edited sections by extracting them into a separate file with a bash shebang.
+
 ## C Code
 
 - C89/C90 style required: all variables declared at the very start of the function, before any executable statements
+- `lib/check_no_for_loop_initial_declaration.sh` (run by `make`, GNUmakefile 'all' target) fails
+  the build on any `for (int i ...` / `for (size_t ...` in a .c file below the VaST root and
+  prints every finding. Until 2026-09-24 it always exited 0 (its failure flag was set inside a
+  `find | while` subshell). Known exceptions, allowed by path in is_allowed_exception(), are
+  bundled third-party files VaST does not compile: src/cfitsio-*/utilities/iter_image.c,
+  iter_var.c and src/zlib-*/examples/enough.c. If a library upgrade adds such loops to code
+  that IS compiled, fix that code (gcc 4.1 gnu89 rejects it) rather than adding an exception.
 - Do NOT use `{ }` block scopes to introduce new variable declarations mid-function - move them to the function top instead. This applies even though C89 technically allows declarations at the start of any block; the project style requires function-top only for uniformity.
 - Use `gcc -Wdeclaration-after-statement -fsyntax-only -I src` to find all mixed declarations and code violations. This catches declarations after executable statements, including inside `#if` preprocessor blocks.
 - GSL library is used for sorting and statistics (gsl_sort, gsl_stats_median_from_sorted_data)
@@ -103,6 +177,22 @@ Update this file as you learn new things.
   FFIs at 21"/pix have a NORMAL yield of ~0.6 percent (227-235 of 38129) with a healthy
   solution, so the TICA camera block exports 0.2. The STL plate-solve-failure dataset yields
   a deterministic 65/19893 = 0.33 percent (same numbers on every host).
+- Whitelisting is for messages a DATASET legitimately triggers. A message triggered by the
+  host environment (an optional catalog that no source can deliver, a mirror outage) must not
+  be an ERROR at all: since 2026-09-09 any ERROR line in index.html is a run status (unmw
+  combine_reports.sh marks the field red and shows the FIRST ERROR line; autoprocess.sh skips
+  the monitoring ingest). 'ERROR: ASASSN-V catalog ... is missing or empty' failed the VENUS,
+  NMWCALIB and STEREOA sections on the macOS runner on 2026-09-19, when the kirx.net mirror
+  served a 643888-byte stub that the 100 MB floor (8b776fbd) rightly refused. It is now a
+  WARNING; test_vast.sh records the missing catalog as the informational code
+  ASASSNV_CATALOG_UNAVAILABLE (not counted in the exit code). Do NOT repeat such a notice at
+  the end of the report: unmw combine_reports.sh shows only the LAST WARNING line of a field,
+  so a repeated catalog notice would hide field-specific warnings for the whole outage.
+  stderr of lib/update_offline_catalogs.sh reaches index.html too (make_report_in_HTML.sh,
+  and the system() call in check_catalogs_offline), so its failure messages use
+  CATALOG_FAILURE_LEVEL: WARNING for an optional catalog and for a failed refresh of a
+  required catalog whose installed copy is kept; ERROR only when a required catalog is
+  missing or unusable.
 
 ## Candidate HTML report block parsers (must not break when changing report output)
 

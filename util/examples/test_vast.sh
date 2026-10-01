@@ -1006,7 +1006,11 @@ echo "Syntax-check VaST shell scripts "
 echo -n "Syntax-check VaST shell scripts: " >> vast_test_report.txt 
 
 # First, use BASH itself to run the check
-for BASH_SCRIPT_TO_CHECK in lib/*.sh util/*.sh util/transients/*.sh ;do 
+# util/examples/*.sh (including this script) are checked here too: bash reads a script
+# as it runs, so a construct that the local bash cannot parse (like macOS /bin/bash 3.2
+# choking on a case statement inside a command substitution) otherwise surfaces only
+# when execution reaches it, hours into the test run
+for BASH_SCRIPT_TO_CHECK in lib/*.sh util/*.sh util/transients/*.sh util/examples/*.sh ;do
  /usr/bin/env bash -n "$BASH_SCRIPT_TO_CHECK"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -1805,8 +1809,12 @@ if [ $? -eq 0 ];then
 fi
 
 # This should specifically test VSX search with util/search_databases_with_curl.sh
-util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep -q 'ZTF J072919.68-132306.5'
-if [ $? -ne 0 ];then
+# Compare the whole name, not a substring: under bash 3.2 (macOS) a broken pattern
+# substitution in util/search_databases_with_curl.sh returned 'ZTF J072919.68-132306.5a"/ /a'
+# here (reproduced locally; this section does not run on GitHub Actions, but on the macOS
+# runner the same bug garbled the variable star name in the NMWNVUL24ST CBA report test)
+TEST_STRING=`util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | tail -n1 | while read A ;do echo $A ;done`
+if [ "$TEST_STRING" != "ZTF J072919.68-132306.5" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_VSX"
 fi
@@ -11272,6 +11280,13 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ###### Update the catalogs and asteroid database ######
 lib/update_offline_catalogs.sh force
+# The ASAS-SN variable star catalog is optional: when no source can deliver it, the transient
+# reports carry only a WARNING, which the report checks below do not flag. Record the missing
+# catalog here under its own name so the test report still shows it (informational only - it
+# is removed from the list that sets the exit code at the end of this script).
+if [ ! -s lib/catalogs/asassnv.csv ];then
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ASASSNV_CATALOG_UNAVAILABLE"
+fi
 
 
 
@@ -12741,10 +12756,14 @@ $GREP_RESULT"
   #
   # No transients are expected to be found in this field
   
-  N=$(grep 'Last  image:' transient_report/index.html | grep -C 'fd_')
+  N=$(grep 'Last  image:' transient_report/index.html | grep -c 'fd_')
   if [ $N -ne 2 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_no_calibration_in_filename"
+   GREP_RESULT=$(grep 'Last  image:' transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWCALIB0_no_calibration_in_filename ######
+$GREP_RESULT"
   fi
   
 
@@ -15114,10 +15133,10 @@ if [ -d ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ];then
     # 4=MAG_APER(1), 10=MAGERR_APER(1), 22=FLAGS, 23=FWHM_IMAGE.
     if [ -s vast_images_catalogs.log ];then
      while read -r SGR04NOVA_CAT SGR04NOVA_IMG ;do
-      case "$SGR04NOVA_IMG" in
-       *second_epoch_images*) ;;
-       *) continue ;;
-      esac
+      # Use grep, not a case statement, here: macOS /bin/bash 3.2 cannot parse
+      # case patterns inside a command substitution like this SGR04NOVA_DEBUG block
+      # and aborts the whole test script with a syntax error
+      echo "$SGR04NOVA_IMG" | grep -q 'second_epoch_images' || continue
       SGR04NOVA_WCSIMG="wcs_$(basename "$SGR04NOVA_IMG")"
       if [ ! -f "$SGR04NOVA_WCSIMG" ] || [ ! -s "$SGR04NOVA_CAT" ];then
        echo "-- $SGR04NOVA_CAT: cannot check ($SGR04NOVA_WCSIMG or the catalog is missing)"
@@ -16667,9 +16686,9 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 $TEST_CBA_REPORT_TERMINAL
 ----------------------------------------------------------------
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxx      CBA_V0615_Vul_29Jul2024_measurements.txt     xxxxxxxxxxxxx
+xxxxxxxxxxxxx      $CBA_V0615_VUL_MEASUREMENTS_FILE     xxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-$(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
+$(cat "$CBA_V0615_VUL_MEASUREMENTS_FILE")
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
        fi
@@ -16682,9 +16701,9 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 $TEST_CBA_REPORT_TERMINAL
 ----------------------------------------------------------------
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxx      CBA_V0615_Vul_29Jul2024_measurements.txt     xxxxxxxxxxxxx
+xxxxxxxxxxxxx      $CBA_V0615_VUL_MEASUREMENTS_FILE     xxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-$(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
+$(cat "$CBA_V0615_VUL_MEASUREMENTS_FILE")
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
        fi
@@ -16742,7 +16761,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_EMPTY_TEST_AAVSO_REPORT_TERMINAL"
      fi # if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
      #
-     for TEST_FILE_TO_REMOVE in CBA_report.txt CBA_V0615_Vul_29Jul2024_measurements.txt AAVSO_report.txt AAVSO_V0615_Vul_29Jul2024_*V_measurements.txt ;do
+     for TEST_FILE_TO_REMOVE in CBA_report.txt CBA_V0615_Vul_29Jul2024_*V_measurements.txt AAVSO_report.txt AAVSO_V0615_Vul_29Jul2024_*V_measurements.txt ;do
       if [ -f "$TEST_FILE_TO_REMOVE" ];then
        rm -f "$TEST_FILE_TO_REMOVE"
       fi
@@ -36272,6 +36291,9 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # retry-marker code survives into FAILED_TEST_CODES even when the retry
  # succeeds (external VizieR flakiness, not a VaST-side failure).
  FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_RETRY/}"
+ # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
+ # not a VaST code failure (the code stays in vast_test_report.txt)
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"

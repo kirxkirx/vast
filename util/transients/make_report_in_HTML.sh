@@ -132,7 +132,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if [ "$thread_count" -ge "$max_threads" ]; then
   if [ $USE_WAIT_N -eq 1 ]; then
    # Wait for any single job to finish, then continue launching
-   wait -n 2>/dev/null
+   wait -n 2>/dev/null # bash32-ok: USE_WAIT_N=1 only with bash 4.3+ (see the BASH_VERSINFO check above)
    thread_count=$((thread_count-1))
   else
    # Fallback: wait for all jobs in this batch to finish
