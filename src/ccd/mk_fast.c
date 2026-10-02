@@ -267,6 +267,8 @@ int main( int argc, char *argv[] ) {
  int ref_file_index;
  int loaded_file_counter;
  int good_file_counter;
+ int *loaded_argv_index; // argv[] index of each loaded image (after the cuts: of each image that is combined)
+ int header_file_index;
  double set_temp_image, ccd_temp_image;
  char **key;
  int No_of_keys;
@@ -390,26 +392,8 @@ int main( int argc, char *argv[] ) {
   have_cameraid_ref= 1;
  }
  status= 0;
- //
- fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
- // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
- No_of_keys++;
- // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- key= malloc( No_of_keys * sizeof( char * ) );
- if ( key == NULL ) {
-  handle_error( "Couldn't allocate memory for FITS header", status );
- }
- for ( ii= 1; ii < No_of_keys; ii++ ) {
-  key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
-  if ( key[ii] == NULL ) {
-   handle_error( "Couldn't allocate memory for key[ii]", status );
-   for ( j= 1; j < ii; j++ ) {
-    free( key[j] );
-   }
-   free( key );
-  }
-  fits_read_record( fptr, ii, key[ii], &status );
- }
+ // The output FITS header is copied later from the first image that passes the cuts,
+ // as the reference image itself may be rejected.
  /*
  fits_read_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
  if ( status != 0 ) {
@@ -441,6 +425,11 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
  image_array= NULL;
+ loaded_argv_index= malloc( argc * sizeof( int ) );
+ if ( loaded_argv_index == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for loaded_argv_index\n" );
+  exit( EXIT_FAILURE );
+ }
 
  /*
   image_array= malloc( sizeof( unsigned short * ) ); // this will be realloc'ed before use anyhow
@@ -563,6 +552,7 @@ int main( int argc, char *argv[] ) {
   if ( status != 0 ) {
    exit( EXIT_FAILURE );
   }
+  loaded_argv_index[loaded_file_counter]= file_counter;
   loaded_file_counter++;
  }
 
@@ -634,6 +624,7 @@ int main( int argc, char *argv[] ) {
     image_array[good_file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
    }
   }
+  loaded_argv_index[good_file_counter]= loaded_argv_index[file_counter];
   good_file_counter++;
  }
 
@@ -641,6 +632,41 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: only %d images passed the mean count cuts!\n", good_file_counter );
   exit( EXIT_FAILURE );
  }
+
+ fprintf( stderr, "Median-combining %d of %d input images\n", good_file_counter, argc - 1 );
+
+ // Copy the output FITS header from the first image that is actually combined
+ // (not from the reference image, which may have been rejected), so the keywords
+ // and the HISTORY the output inherits describe a frame that went into the stack.
+ header_file_index= loaded_argv_index[0];
+ if ( header_file_index != ref_file_index ) {
+  fprintf( stderr, "Copying the output FITS header from %s (the reference image %s is not combined)\n", argv[header_file_index], argv[ref_file_index] );
+ }
+ fits_open_file( &fptr, argv[header_file_index], 0, &status );
+ if ( status != 0 ) {
+  handle_error( "Cannot re-open the image to copy its FITS header", status );
+ }
+ fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
+ // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
+ No_of_keys++;
+ // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ key= malloc( No_of_keys * sizeof( char * ) );
+ if ( key == NULL ) {
+  handle_error( "Couldn't allocate memory for FITS header", status );
+ }
+ for ( ii= 1; ii < No_of_keys; ii++ ) {
+  key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
+  if ( key[ii] == NULL ) {
+   handle_error( "Couldn't allocate memory for key[ii]", status );
+   for ( j= 1; j < ii; j++ ) {
+    free( key[j] );
+   }
+   free( key );
+  }
+  fits_read_record( fptr, ii, key[ii], &status );
+ }
+ fits_close_file( fptr, &status );
+ fits_report_error( stderr, status ); // print out any error messages
 
  //
  for ( i= 0; i < img_size; i++ ) {
@@ -691,9 +717,11 @@ int main( int argc, char *argv[] ) {
   }
  */
 
+ // Record only the images that went into the median - not the rejected ones
+ fits_update_key( fptr, TINT, "NCOMBINE", &good_file_counter, "Number of images median-combined", &status );
  fits_write_history( fptr, "Median frame stacking:", &status );
- for ( ii= 1; ii < argc; ii++ ) {
-  fits_write_history( fptr, argv[ii], &status );
+ for ( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
+  fits_write_history( fptr, argv[loaded_argv_index[file_counter]], &status );
  }
  fits_report_error( stderr, status ); /* print out any error messages */
  fits_close_file( fptr, &status );
@@ -704,6 +732,7 @@ int main( int argc, char *argv[] ) {
   free( image_array[file_counter] );
  }
  free( image_array );
+ free( loaded_argv_index );
 
  fprintf( stderr, "Writing output to median.fit \n" );
  fits_report_error( stderr, status ); /* print out any error messages */

@@ -218,6 +218,21 @@ round_number() {
   printf "%.${places}f" "$num"
 }
 
+# Report a successfully stacked frame. mk_fast records in NCOMBINE how many of
+# the input frames actually went into the median (rejected frames excluded).
+report_stacked_frame() {
+  local output_name="$1"
+  local n_input="$2"
+  local n_combined
+
+  n_combined=$(get_header_value "$output_name" "NCOMBINE")
+  if [ -n "$n_combined" ]; then
+    echo "  SUCCESS: Created $output_name from $n_combined of $n_input frames ($((n_input - n_combined)) rejected)"
+  else
+    echo "  SUCCESS: Created $output_name"
+  fi
+}
+
 #################################
 # Process BIAS frames
 #################################
@@ -333,7 +348,7 @@ if [ -n "$BIAS_DIR" ]; then
         continue
       fi
 
-      echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
+      echo "  Stacking $FILE_COUNT frames into $OUTPUT_NAME..."
 
       # Prefix each filename with './' so leading '-' in filenames is not
       # taken for an option by mk_fast_noscaling (which doesn't use getopt).
@@ -351,7 +366,7 @@ if [ -n "$BIAS_DIR" ]; then
         # mk_fast_noscaling creates median.fit, rename it to our expected output name
         if [ -f "median.fit" ]; then
           mv median.fit "$OUTPUT_NAME"
-          echo "  SUCCESS: Created $OUTPUT_NAME"
+          report_stacked_frame "$OUTPUT_NAME" "$FILE_COUNT"
         else
           echo "  ERROR: mk_fast_noscaling succeeded but median.fit not found"
         fi
@@ -488,7 +503,7 @@ if [ -n "$DARK_DIR" ]; then
         continue
       fi
 
-      echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
+      echo "  Stacking $FILE_COUNT frames into $OUTPUT_NAME..."
 
       # Prefix each filename with './' so leading '-' in filenames is not
       # taken for an option by mk_fast_noscaling (which doesn't use getopt).
@@ -506,7 +521,7 @@ if [ -n "$DARK_DIR" ]; then
         # mk_fast_noscaling creates median.fit, rename it to our expected output name
         if [ -f "median.fit" ]; then
           mv median.fit "$OUTPUT_NAME"
-          echo "  SUCCESS: Created $OUTPUT_NAME"
+          report_stacked_frame "$OUTPUT_NAME" "$FILE_COUNT"
         else
           echo "  ERROR: mk_fast_noscaling succeeded but median.fit not found"
         fi
@@ -743,7 +758,7 @@ if [ -n "$FLAT_DIR" ]; then
           continue
         fi
 
-        echo "  Creating $OUTPUT_NAME from $FILE_COUNT frames..."
+        echo "  Stacking $FILE_COUNT frames into $OUTPUT_NAME..."
 
         # Prefix each filename with './' so leading '-' in filenames is not
         # taken for an option by mk_fast (which doesn't use getopt). Using a
@@ -761,7 +776,7 @@ if [ -n "$FLAT_DIR" ]; then
           # mk_fast creates median.fit, rename it to our expected output name
           if [ -f "median.fit" ]; then
             mv median.fit "$OUTPUT_NAME"
-            echo "  SUCCESS: Created $OUTPUT_NAME"
+            report_stacked_frame "$OUTPUT_NAME" "$FILE_COUNT"
           else
             echo "  ERROR: mk_fast succeeded but median.fit not found"
           fi

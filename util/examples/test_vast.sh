@@ -4108,6 +4108,57 @@ $GREP_RESULT"
   rm -f median.fit
  fi
  rm -f hundred.fit hundredten.fit hundredtwenty.fit
+ # -- mk/mk_fast: frames rejected by the flat-field count cuts must not be counted
+ #    in NCOMBINE or listed in HISTORY, and the output header must be copied from
+ #    a frame that was combined even when the first (reference) frame is rejected.
+ #    The 10000-count frame is between MAX_DARK_BIAS_COUNT and MIN_FLAT_FIELD_COUNT,
+ #    so it is rejected as too faint for a flat field.
+ for TEST_FILE_TO_REMOVE in flat10k.fit flat20k.fit flat21k.fit flat22k.fit median.fit ;do
+  if [ -f "$TEST_FILE_TO_REMOVE" ];then
+   rm -f "$TEST_FILE_TO_REMOVE"
+  fi
+ done
+ util/imarith nul.fit 10000.0 add flat10k.fit > /dev/null 2>&1
+ util/imarith nul.fit 20000.0 add flat20k.fit > /dev/null 2>&1
+ util/imarith nul.fit 21000.0 add flat21k.fit > /dev/null 2>&1
+ util/imarith nul.fit 22000.0 add flat22k.fit > /dev/null 2>&1
+ lib/bin/sethead flat10k.fit OBJECT="flat10k"
+ lib/bin/sethead flat20k.fit OBJECT="flat20k"
+ for MK_TO_TEST in mk mk_fast ;do
+  util/ccd/$MK_TO_TEST flat10k.fit flat20k.fit flat21k.fit flat22k.fit > /dev/null 2>&1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_rejected_exit"
+  elif [ ! -f median.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_rejected_nofile"
+  else
+   NCOMBINE_VALUE=$(util/listhead median.fit | grep '^NCOMBINE=' | awk -F'=' '{print $2}' | awk '{print $1}')
+   if [ "$NCOMBINE_VALUE" != "3" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_rejected_NCOMBINE_$NCOMBINE_VALUE"
+   fi
+   util/listhead median.fit | grep -q '^HISTORY flat10k.fit'
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_rejected_in_HISTORY"
+   fi
+   for ACCEPTED_FRAME in flat20k.fit flat21k.fit flat22k.fit ;do
+    util/listhead median.fit | grep -q "^HISTORY $ACCEPTED_FRAME"
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_accepted_not_in_HISTORY_$ACCEPTED_FRAME"
+    fi
+   done
+   util/listhead median.fit | grep '^OBJECT' | grep -q 'flat20k'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_${MK_TO_TEST}_rejected_header_source"
+   fi
+   rm -f median.fit
+  fi
+ done
+ rm -f flat10k.fit flat20k.fit flat21k.fit flat22k.fit
  # Test TELESCOP/CAMERA/CAMERAID keyword consistency checks in CCD tools
  # The tools should reject images with mismatched keywords but accept
  # images where only one has the keyword or neither has it.
