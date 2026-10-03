@@ -692,3 +692,63 @@ Update this file as you learn new things.
   make_outxyls_for_astrometric_calibration rejects every line), then
   lib/make_outxyls_for_astrometric_calibration cat out.xyls W H, then solve-field with the
   options from identify.sh; --out <base> keeps the input .wcs intact.
+
+## Run verdicts for the manual monitoring modes; frame-level forced photometry checks (2026-10-02)
+- Case: GK Per got clearly wrong upper limits from Per-02-Q1b1x1 frames 0111/0112 of
+  2026-09-17 (cloudy). The factory raised ERROR on that field and refused to measure,
+  autoprocess.sh did not ingest - but a later manual --reconcile/--rescan-recent found the same
+  wcs_ frames in the img_* directory and measured them: the manual path had no run-status gate.
+  The 2026-10-01 --reconcile leaked 12 more rows the same way, 4 of them from runs killed by
+  the power outage (their reports have no ERROR line, only no "Processing complete!").
+- Verdict store (unmw): autoprocess.sh appends one line per image of the upload to
+  $IMAGE_DATA_ROOT/transient_search_verdicts.txt - "pending" right before the factory starts
+  (wcs_ frames appear in the img_* dir mid-run), then ok/error/failed. Key = uploaded frame
+  name without wcs_/fd_/d_ and .fz, so the uploads, quarantine and archive copies all find it;
+  the newest line wins (reprocessing). Legacy fallback for older images: the newest report of
+  the run, found via the img_* name (results_* dirs stay in the workdir after the img_* dir moves
+  to quarantine; reprocess runs are results_<ts>_reprocess_img_<name>_<pid>[_<rand8>]) or, for
+  archive copies, via <frame>_preview.png in the run's results dir. About 11% of archive frames
+  come from rejected runs, so "the archive is vetted clean" does not hold for run status.
+  Manual modes: rejected -> run_error ledger row without measuring, pending -> skip.
+  The factory's refusal branch now writes run_error raw rows itself, and autoprocess.sh calls
+  `monitoring_update.py --ingest-rejected` for any non-ok run (the ledger then records the
+  images as processed and rejected). A run_error row is replaced only by --ingest of a later
+  successful reprocessing run.
+- Details that came out of the review: a manual run follows the verdict list as it grows (it
+  can last hours while uploads are processed); a successful run's "ok" is appended only AFTER
+  its own monitoring ingest (until then "pending"), else a manual rescan could measure the
+  frames first and bypass the ingest's frame-quality check; a later run that failed or never
+  finished does not override an earlier ok/error verdict of the frame; a rejected run's plate
+  solution is not trusted for on/off-frame decisions, so off-frame positions get NO row (never a
+  permanent 'edge') in the factory refusal branch and the manual path; sky2xy says "off image"
+  for every position on an fpack-compressed (.fz) file; results_* dirs also hold previews of
+  their REFERENCE frames, so the archive-copy match checks fits_images_for_download.txt.
+- Frame-level checks of util/forced_photometry are OPT-IN (FORCED_PHOTOMETRY_FRAME_CHECKS=yes),
+  set by the factory monitoring block and by unmw's run_forced_photometry_c. Default-on would
+  have changed report_transient.sh's reference-image filter (a TAN-only reference turns the
+  filter off for the whole field; no_nearby_stars makes it ignore a reference measurement)
+  and util/seestar_photometry.sh (it tells failures by mag 99.0000 while the new statuses keep
+  the measured magnitude). util/forced_photometry.py does not implement them.
+- no_nearby_stars calibration (797 TTU frames, last-pass catalogs, grid >= 100 px from edges):
+  clean frames never had fewer than 7 stars within 0.5 deg (2.9 million positions, 140 frames at
+  alt < 30 deg with the Moon up included), cloudy frames had 0.16% of positions with < 3. A
+  ratio-to-frame-median test was REJECTED: clean Milky Way frames have 20x real density contrasts
+  (dark nebulae; r_min down to 0.047), which would refuse a source in a dark cloud on every frame.
+  The gate uses the frame's MEAN cell density: the median collapses to 0 when clouds cover more
+  than half of the frame and switched the test off on the cloudiest frames (found in review).
+  Shallow catalogs (the brightest stars only) have clean-frame circles with < 3 stars; at the
+  mean-density gate 30 six such positions were refused, at 40 none -> MIN_EXPECTED 40. With the
+  deep catalogs no clean position had < 3 stars at all, so the gate only matters for shallow
+  catalogs. The img_*/<frame>.cat files are the LAST SExtractor pass (vSTL / vTTU on TTU), the
+  same catalog depth the monitoring callers see as .wcscat. A NaN or 1e30 X/Y in the catalog
+  used to index the density cells out of bounds (segfault) - now skipped when loading.
+- Test: util/examples/test_forced_photometry_frame_checks.sh (no network, synthetic catalogs,
+  TAN-only copy of the Sgr-05 test image; 6 s), called from test_vast.sh.
+- Pitfalls met on the way: bash reads a running script incrementally - editing
+  util/forced_photometry.sh while a run was in progress produced a bogus "syntax error near
+  unexpected token" at a random line (bash -n on the file was fine). lib/astrometry/strip_wcs_keywords
+  keeps the old values as _TYPE1/_TYPE2 cards, so "grep TAN-SIP" still matches a stripped header.
+  In the Claude Code shell on tau, grep is a shell function that runs ugrep (scripts use GNU
+  grep): a pattern that GNU grep matches may not match there. make in the dev tree fell back to
+  SExtractor 2.19.5 when the SExtractor 2.25.2 build tried to regenerate aclocal.m4
+  (Makefile:469, Error 127: aclocal is not installed).

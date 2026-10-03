@@ -1457,6 +1457,46 @@ function make_astrometric_residuals_plot {
  return 1
 }
 
+# Source monitoring: the pixel position of a monitored sky position on a
+# plate-solved image. Prints "X Y" when sky2xy puts the position on the image
+# and the round trip back to the sky lands within 30 arcsec of the target;
+# prints nothing otherwise, and the caller records the position as 'edge'.
+# The round-trip verification guards against the inverse SIP distortion
+# polynomial: evaluated for a position far outside the frame, it can fold
+# that position onto valid-looking pixel coordinates, and the aperture would
+# silently measure blank sky (GK Per got fake upper limits from Lac-01 frames
+# 50 deg away this way; the forward direction is safe). An empty separation
+# means the verification tooling itself failed - fail open and keep the
+# position. Arguments: image RA Dec source_id (the id is for the log only).
+function monitoring_position_on_image {
+ local IMAGE="$1"
+ local RA="$2"
+ local DEC="$3"
+ local SOURCE_ID="$4"
+ local S2X PX PY X2S X2S_RA X2S_DEC SEP_ARCSEC
+ S2X=$(lib/bin/sky2xy "$IMAGE" "$RA" "$DEC" 2>&1)
+ if echo "$S2X" | grep -q -e 'off image' -e 'offscale' ;then
+  return 0
+ fi
+ PX=$(echo "$S2X" | awk '{print $5}')
+ PY=$(echo "$S2X" | awk '{print $6}')
+ if [ -z "$PX" ] || [ -z "$PY" ];then
+  return 0
+ fi
+ X2S=$(lib/bin/xy2sky -d "$IMAGE" "$PX" "$PY" 2>/dev/null)
+ X2S_RA=$(echo "$X2S" | awk '{print $1}')
+ X2S_DEC=$(echo "$X2S" | awk '{print $2}')
+ SEP_ARCSEC=""
+ if [ -n "$X2S_RA" ] && [ -n "$X2S_DEC" ];then
+  SEP_ARCSEC=$(lib/bin/skycoor -r "$RA" "$DEC" "$X2S_RA" "$X2S_DEC" 2>/dev/null)
+ fi
+ if [ -n "$SEP_ARCSEC" ] && ! awk -v s="$SEP_ARCSEC" 'BEGIN{exit !(s+0<30.0)}' ;then
+  echo "Source monitoring: $SOURCE_ID failed the sky-to-pixel round-trip verification on $IMAGE (the computed pixel position maps back $SEP_ARCSEC arcsec away from the target) - recording as edge" | tee -a transient_factory_test31.txt >&2
+  return 0
+ fi
+ echo "$PX $PY"
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -4341,15 +4381,54 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
  # rule that turns the field red in the nightly summary), the monitored
  # positions are NOT measured on its images. The unmw ingest applies the same
  # rule to the finished report, which also covers ERRORs raised after this block.
+ # The hand-off file for the unmw ingest has one row per monitored position
+ # and image: source_id image_basename JD mag err status camera
+ MONITORING_RAW_OUTPUT="transient_report/monitoring_raw_measurements.txt"
  MONITORING_FIELD_ERROR_LINE=""
  if [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
   MONITORING_FIELD_ERROR_LINE=$(tail -n +"$((${MONITORING_FIELD_LOG_LINES_AT_START:-0} + 1))" transient_factory_test31.txt 2>/dev/null | grep 'ERROR' | head -n 1)
  fi
  if [ -n "$MONITORING_FIELD_ERROR_LINE" ];then
   echo "Source monitoring: NOT measuring the monitored positions on the field $FIELD - the transient search raised a processing error: $MONITORING_FIELD_ERROR_LINE" | tee -a transient_factory_test31.txt
+  # Record the refusal instead of measuring: a run_error row for every
+  # monitored position on each second-epoch image, so the unmw ingest lists
+  # the images as processed and rejected for every monitored source, and no
+  # manual rescan measures them later. A position off the field gets no row
+  # rather than a permanent 'edge' one: the plate solution of a rejected run
+  # may be the very thing that failed, and a run_error row is replaced when
+  # a later reprocessing of the upload succeeds. The plate-solved image may
+  # be gone (a failed VaST pass deletes all wcs_* files), so the on-field
+  # test falls back to the field's reference image, and the date comes from
+  # the original image.
+  for MONITORING_IMAGE_PATH in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
+   if [ -z "$MONITORING_IMAGE_PATH" ];then
+    continue
+   fi
+   MONITORING_BASENAME=$(basename "$MONITORING_IMAGE_PATH")
+   MONITORING_WCS="wcs_$MONITORING_BASENAME"
+   MONITORING_WCS="${MONITORING_WCS/wcs_wcs_/wcs_}"
+   MONITORING_WCS="${MONITORING_WCS/.fz/}"
+   MONITORING_ONFIELD_IMAGE="$MONITORING_WCS"
+   if [ ! -s "$MONITORING_ONFIELD_IMAGE" ];then
+    MONITORING_ONFIELD_IMAGE="$REFERENCE_EPOCH__FIRST_IMAGE"
+   fi
+   MONITORING_JD=$(util/get_image_date "$MONITORING_IMAGE_PATH" 2>&1 | grep '  JD ' | awk '{print $2}' | head -n1)
+   if [ -z "$MONITORING_JD" ];then
+    MONITORING_JD="na"
+   fi
+   while read -r MONITORING_RA MONITORING_DEC MONITORING_ID ;do
+    if [ -z "$MONITORING_ID" ];then
+     continue
+    fi
+    if [ -z "$(monitoring_position_on_image "$MONITORING_ONFIELD_IMAGE" "$MONITORING_RA" "$MONITORING_DEC" "$MONITORING_ID")" ];then
+     continue
+    fi
+    echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 run_error ${CAMERA_SETTINGS:-unknown}" >> "$MONITORING_RAW_OUTPUT"
+   done < "$MONITORING_POSITIONS_FILE"
+  done
+  echo "Source monitoring: the monitored positions on the field $FIELD are recorded as run_error (rejected by this run, never measured later)" | tee -a transient_factory_test31.txt
  elif [ -n "$MONITORING_POSITIONS_FILE" ] && [ -s "$MONITORING_POSITIONS_FILE" ];then
   echo "Source monitoring: measuring positions from $MONITORING_POSITIONS_FILE" | tee -a transient_factory_test31.txt
-  MONITORING_RAW_OUTPUT="transient_report/monitoring_raw_measurements.txt"
   # Minimum distance (pixels) from any frame edge for a monitored position to
   # be measured: util/forced_photometry reports closer positions as 'edge'
   # (never published, never re-measured). Override per camera block or from
@@ -4430,47 +4509,30 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
      if [ -z "$MONITORING_ID" ];then
       continue
      fi
-     MONITORING_S2X=$(lib/bin/sky2xy "$MONITORING_WCS" "$MONITORING_RA" "$MONITORING_DEC" 2>&1)
-     if echo "$MONITORING_S2X" | grep -q -e 'off image' -e 'offscale' ;then
-      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
+     # (monitoring_position_on_image verifies the sky-to-pixel conversion
+     # with a round trip, see the comment above the function)
+     MONITORING_PXY=$(monitoring_position_on_image "$MONITORING_WCS" "$MONITORING_RA" "$MONITORING_DEC" "$MONITORING_ID")
+     if [ -z "$MONITORING_PXY" ];then
+      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge ${CAMERA_SETTINGS:-unknown}" >> "$MONITORING_RAW_OUTPUT"
       continue
      fi
-     MONITORING_PX=$(echo "$MONITORING_S2X" | awk '{print $5}')
-     MONITORING_PY=$(echo "$MONITORING_S2X" | awk '{print $6}')
-     if [ -z "$MONITORING_PX" ] || [ -z "$MONITORING_PY" ];then
-      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
-      continue
-     fi
-     # Round-trip verification of the sky-to-pixel conversion: map the pixel
-     # position back to the sky with the forward transformation and require
-     # it to land within 30 arcsec of the target. The inverse SIP distortion
-     # polynomial, evaluated for a position far outside the frame, can fold
-     # that position onto valid-looking pixel coordinates and the aperture
-     # would silently measure blank sky (GK Per got fake upper limits from
-     # Lac-01 frames 50 deg away this way; the forward direction is safe).
-     MONITORING_X2S=$(lib/bin/xy2sky -d "$MONITORING_WCS" "$MONITORING_PX" "$MONITORING_PY" 2>/dev/null)
-     MONITORING_X2S_RA=$(echo "$MONITORING_X2S" | awk '{print $1}')
-     MONITORING_X2S_DEC=$(echo "$MONITORING_X2S" | awk '{print $2}')
-     MONITORING_ROUNDTRIP_SEP_ARCSEC=""
-     if [ -n "$MONITORING_X2S_RA" ] && [ -n "$MONITORING_X2S_DEC" ];then
-      MONITORING_ROUNDTRIP_SEP_ARCSEC=$(lib/bin/skycoor -r "$MONITORING_RA" "$MONITORING_DEC" "$MONITORING_X2S_RA" "$MONITORING_X2S_DEC" 2>/dev/null)
-     fi
-     # (an empty separation means the verification tooling itself failed -
-     # fail open and keep the position, preserving the old behavior)
-     if [ -n "$MONITORING_ROUNDTRIP_SEP_ARCSEC" ] && ! awk -v s="$MONITORING_ROUNDTRIP_SEP_ARCSEC" 'BEGIN{exit !(s+0<30.0)}' ;then
-      echo "Source monitoring: $MONITORING_ID failed the sky-to-pixel round-trip verification on $MONITORING_WCS (the computed pixel position maps back $MONITORING_ROUNDTRIP_SEP_ARCSEC arcsec away from the target) - recording as edge" | tee -a transient_factory_test31.txt
-      echo "$MONITORING_ID $MONITORING_WCS $MONITORING_JD 99.0000 99.0000 edge $CAMERA_SETTINGS" >> "$MONITORING_RAW_OUTPUT"
-      continue
-     fi
-     echo "$MONITORING_PX $MONITORING_PY $MONITORING_ID" >> "$MONITORING_PIXLIST"
+     echo "$MONITORING_PXY $MONITORING_ID" >> "$MONITORING_PIXLIST"
     done < "$MONITORING_POSITIONS_FILE"
     if [ ! -s "$MONITORING_PIXLIST" ];then
      rm -f "$MONITORING_PIXLIST"
      continue
     fi
-    # Measure all monitored positions on this image in one list-mode call
+    # Measure all monitored positions on this image in one list-mode call.
+    # The frame-level checks of util/forced_photometry are on: a would-be
+    # detection or upper limit comes back as bad_wcs (TAN-only plate solution
+    # of a wide field) or no_nearby_stars (no stars detected around the
+    # position in ${MONITORING_WCS}.wcscat - a thick cloud over it), which the
+    # unmw ingest records but never publishes.
     MONITORING_MEAS_TMP="monitoring_meas$$.tmp"
-    FORCED_PHOTOMETRY_EDGE_MARGIN_PIX="$MONITORING_EDGE_MARGIN_PIX" util/forced_photometry "$MONITORING_WCS" --list "$MONITORING_PIXLIST" "$MONITORING_AP" --calib calib.txt_param_monitoring > "$MONITORING_MEAS_TMP" 2>> transient_factory_test31.txt
+    # (empty FORCED_PHOTOMETRY_WCS_IMAGE and FORCED_PHOTOMETRY_STAR_CATALOG
+    # mean unset to the tool: values inherited from the environment must not
+    # point the checks at another image or catalog)
+    FORCED_PHOTOMETRY_FRAME_CHECKS="yes" FORCED_PHOTOMETRY_WCS_IMAGE="" FORCED_PHOTOMETRY_STAR_CATALOG="" FORCED_PHOTOMETRY_EDGE_MARGIN_PIX="$MONITORING_EDGE_MARGIN_PIX" util/forced_photometry "$MONITORING_WCS" --list "$MONITORING_PIXLIST" "$MONITORING_AP" --calib calib.txt_param_monitoring > "$MONITORING_MEAS_TMP" 2>> transient_factory_test31.txt
     # Apply the airmass zero-point term (clamped to the fitted airmass span)
     if [ "$(echo "$MONITORING_AIRMASS_LINE" | awk '{print $1}')" = "OK" ] && [ -s "$MONITORING_MEAS_TMP" ];then
      MONITORING_AMASS_TMP="monitoring_amass$$.tmp"
@@ -4490,7 +4552,7 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     # Emit the hand-off rows: source_id image_basename JD mag err status camera
     if [ -s "$MONITORING_MEAS_TMP" ];then
      # list-mode output rows are: label X Y mag err status
-     awk -v img="$MONITORING_WCS" -v jd="$MONITORING_JD" -v cam="$CAMERA_SETTINGS" \
+     awk -v img="$MONITORING_WCS" -v jd="$MONITORING_JD" -v cam="${CAMERA_SETTINGS:-unknown}" \
          'NF >= 6 {printf "%s %s %s %s %s %s %s\n", $1, img, jd, $4, $5, $6, cam}' "$MONITORING_MEAS_TMP" >> "$MONITORING_RAW_OUTPUT"
      echo "Source monitoring: $(grep -c '' "$MONITORING_PIXLIST") position(s) measured on $MONITORING_WCS (aperture $MONITORING_AP pix)" | tee -a transient_factory_test31.txt
     else

@@ -93,9 +93,14 @@ Fields:
   - `edge` -- aperture or background annulus extends beyond image boundary
   - `nan_pixel` -- NaN or Inf pixel(s) within the source aperture
   - `calib_fail` -- magnitude calibration file not found or unreadable
+  - `bad_wcs`, `no_nearby_stars` -- only with
+    `FORCED_PHOTOMETRY_FRAME_CHECKS=yes`, see "Frame-Level Sanity Checks"
+    below
 
 For failure statuses (saturated, bad_region, edge, nan_pixel), magnitude
-fields are set to `99.0`.
+fields are set to `99.0`. The `bad_wcs` and `no_nearby_stars` statuses
+replace a `detection` or an `upperlimit` and keep its magnitude fields: the
+measurement was made, but it is not to be trusted.
 
 The shell script prints both C and Python results, clearly labeled:
 
@@ -175,6 +180,55 @@ radius AND < outer radius). No fractional weighting for the annulus.
 4. **NaN/Inf check**: if any pixel within the source aperture (weight > 0)
    is NaN or Inf, report `nan_pixel` failure. NaN/Inf pixels in the
    background annulus are silently excluded before computing statistics.
+
+### Frame-Level Sanity Checks (C implementation only, opt-in)
+
+With `FORCED_PHOTOMETRY_FRAME_CHECKS=yes` in the environment, the C tool
+judges the frame around a position whose measurement came out as a
+`detection` or an `upperlimit` (other statuses are left alone), and replaces
+the status when a check fails, keeping the measured magnitude and error:
+
+1. **`bad_wcs`**: the plate solution used to place the aperture is a TAN
+   projection without distortion terms (no SIP polynomial, no PV terms) on
+   a field wider than `FORCED_PHOTOMETRY_TAN_ONLY_WIDE_FIELD_DEG` (5 deg).
+   This is what solve-field leaves behind when its SIP tweak silently fails
+   (see the TAN-only guard in `util/identify.sh`): accurate near the matched
+   quad, tens of arcseconds off at the far corners. The solution judged is
+   the one in the image named by `FORCED_PHOTOMETRY_WCS_IMAGE` (the image the
+   caller ran sky2xy on - `util/forced_photometry.sh` sets it), otherwise the
+   header of the measured image.
+
+2. **`no_nearby_stars`**: the image's own detection catalog holds fewer than
+   `FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_STARS` (3) stars within
+   `FORCED_PHOTOMETRY_STAR_COVERAGE_RADIUS_ARCSEC` (0.5 deg) of the position -
+   no stars are seen around it, a thick cloud over the position, typically.
+   The test is applied only where at least
+   `FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_EXPECTED` (40) stars are expected
+   within the part of the circle inside the frame at the frame's mean star
+   density (the mean count in square cells of side 2R): a sparse catalog
+   cannot tell a cloud from a sparse patch of sky. The mean rather than the
+   median, because clouds over more than half of the frame drive the median
+   to zero and would switch the test off on the cloudiest frames. The catalog is the file
+   named by `FORCED_PHOTOMETRY_STAR_CATALOG`, else `<WCS image>.wcscat`, else
+   `wcs_<basename>.wcscat` in the current directory (pixel X, Y in columns 4
+   and 5 of the VaST `.wcscat` layout); without a catalog the test is skipped
+   with a note; catalog lines with non-finite or absurd positions are
+   ignored. The thresholds were calibrated on 797 NMW-TexasTech frames; the
+   numbers are in the comment next to their definitions in
+   `src/vast_limits.h`. A test relative to the frame's density was
+   rejected: clean Milky Way frames show real density contrasts of 20 times
+   (dark nebulae), so a source in a dark cloud would be refused on every
+   frame.
+
+The checks are off by default because every caller must know the two
+statuses: the reference-image filter of `util/transients/report_transient.sh`
+must not lose its reference measurements this way, and
+`util/seestar_photometry.sh` tells a failed measurement by its 99.0
+magnitude. The source monitoring callers (the transient factory's
+monitoring block and the unmw forced photometry) turn them on. Neither check
+prints the word ERROR, which the pipelines scan their logs for. The Python
+implementation does not have the checks. Test:
+`util/examples/test_forced_photometry_frame_checks.sh`.
 
 ### Background Estimation
 

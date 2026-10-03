@@ -12,6 +12,11 @@
 #   # aperture_diameter_pix: <APERTURE>
 #   # target_pixel: <x> <y>
 # The default (variable unset) keeps the original both-implementations behaviour.
+# Set FORCED_PHOTOMETRY_FRAME_CHECKS=yes to have the C implementation report a
+# would-be detection or upper limit as bad_wcs (TAN-only plate solution of a
+# wide field) or no_nearby_stars (no catalog stars around the position), keeping
+# the measured values (see src/forced_photometry.c); the Python implementation
+# does not have these checks.
 #
 
 #################################
@@ -496,6 +501,11 @@ echo "  JD: $JD" >&2
 #################################
 # Step 6: Run C implementation
 #################################
+# The frame-level sanity checks of the C tool (FORCED_PHOTOMETRY_FRAME_CHECKS=yes
+# in the caller's environment) judge the plate solution the pixel positions
+# came from - the one sky2xy used above - and look for its detection catalog
+# (.wcscat) next to it
+export FORCED_PHOTOMETRY_WCS_IMAGE="$WCS_IMAGE_FOR_SKY2XY"
 echo "Step 6: Running C forced photometry..." >&2
 C_START=$(date +%s%N)
 if [ $LIST_MODE -eq 0 ];then

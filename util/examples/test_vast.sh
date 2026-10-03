@@ -36350,6 +36350,50 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOTLIST_TEST_NOT_PERFORMED"
 fi
 
+######### Forced photometry frame-level checks test
+# The bad_wcs (TAN-only plate solution of a wide field) and no_nearby_stars
+# (no catalog stars around the position) statuses of util/forced_photometry
+# that FORCED_PHOTOMETRY_FRAME_CHECKS=yes turns on, as the source monitoring
+# callers do. Delegates to the standalone runner, which needs no network: it
+# works with synthetic star catalogs, a fixed magnitude calibration and a
+# TAN-only copy of the same telephoto-lens test image.
+
+if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ echo "Forced photometry frame-level checks test "
+ echo -n "Forced photometry frame-level checks test: " >> vast_test_report.txt
+
+ FORCEDPHOTFRAMECHECKS_OUTPUT=$(util/examples/test_forced_photometry_frame_checks.sh 2>&1)
+ FORCEDPHOTFRAMECHECKS_EXIT=$?
+ if [ $FORCEDPHOTFRAMECHECKS_EXIT -ne 0 ];then
+  TEST_PASSED=0
+  # Surface the standalone runner's log for debugging
+  echo "$FORCEDPHOTFRAMECHECKS_OUTPUT" >&2
+  # Propagate its specific failure codes so outer reporting stays useful
+  FORCEDPHOTFRAMECHECKS_CODES=$(echo "$FORCEDPHOTFRAMECHECKS_OUTPUT" | awk '/^Failure codes:/ {sub(/^Failure codes:/, ""); print; exit}')
+  if [ -n "$FORCEDPHOTFRAMECHECKS_CODES" ];then
+   FAILED_TEST_CODES="${FAILED_TEST_CODES}${FORCEDPHOTFRAMECHECKS_CODES}"
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FPFC000_FAIL"
+  fi
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mForced photometry frame-level checks test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mForced photometry frame-level checks test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOTFRAMECHECKS_TEST_NOT_PERFORMED"
+fi
+
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -36479,6 +36523,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOT_TEST_NOT_PERFORMED/}"
  # forced photometry --list mode test uses the same specific test image
  FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOTLIST_TEST_NOT_PERFORMED/}"
+ # and so does the forced photometry frame-level checks test
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// FORCEDPHOTFRAMECHECKS_TEST_NOT_PERFORMED/}"
  # artificial-star insert-and-recovery test: silently skipped when the test data, the
  # built run_artificial_star_test_oneflux.sh symlink, python3, or numpy/astropy are absent
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nodata/}"

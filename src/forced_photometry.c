@@ -13,6 +13,15 @@
 // Environment: FORCED_PHOTOMETRY_EDGE_MARGIN_PIX (optional) = minimum distance
 // in pixels from any frame edge for a position to be measured; closer
 // positions get the 'edge' status (default 0: only the annulus must fit).
+// FORCED_PHOTOMETRY_FRAME_CHECKS=yes turns on the frame-level sanity checks
+// (see the comment above wcs_is_tan_only_wide_field): a would-be detection
+// or upper limit may then be reported as 'bad_wcs' or 'no_nearby_stars',
+// keeping the measured values. They are off by default because every caller
+// must know the two statuses: the source monitoring callers turn them on.
+// They read FORCED_PHOTOMETRY_WCS_IMAGE (the image whose WCS gave the pixel
+// positions, default: the measured image) and FORCED_PHOTOMETRY_STAR_CATALOG
+// (the detection catalog, default: <WCS image>.wcscat or
+// wcs_<basename>.wcscat in the current directory).
 // Output (single, stdout): cal_mag mag_err status
 // Output (list,   stdout): label center_x center_y cal_mag mag_err status
 //
@@ -577,6 +586,364 @@ static void photometry_at_position( const double *pix, long naxis1, long naxis2,
 }
 
 // ------------------------------------------------------------------
+// Frame-level sanity checks.
+//
+// Only with FORCED_PHOTOMETRY_FRAME_CHECKS=yes in the environment: every
+// caller must know the two statuses below. The reference-image filter of
+// util/transients/report_transient.sh, for one, must not lose its
+// reference measurements this way, and util/seestar_photometry.sh tells a
+// failed measurement by its 99.0000 magnitude. The source monitoring
+// callers (the transient factory's monitoring block and the unmw forced
+// photometry) turn the checks on. util/forced_photometry.py does not
+// implement them.
+//
+// They are applied to every position whose measurement came out as a
+// 'detection' or an 'upperlimit' - the only statuses the callers publish;
+// all other statuses (edge, bad_region, saturated, ...) are left alone. A
+// failed check replaces the status, while the measured magnitude and error
+// stay in the output (unlike the other refusals, which print 99.0000), so a
+// caller that keeps a record of the measurement can still see what was
+// measured there.
+//
+// 1. 'bad_wcs': the plate solution used to place the aperture is a rigid
+//    TAN projection without a distortion polynomial (no SIP, no PV terms)
+//    on a field wider than FORCED_PHOTOMETRY_TAN_ONLY_WIDE_FIELD_DEG. This
+//    is what solve-field leaves behind when its SIP tweak silently fails
+//    (see the TAN-only guard in util/identify.sh): accurate near the
+//    matched quad, tens of arcseconds off at the far corners, so the
+//    aperture may land on blank sky and give a bogus upper limit. The
+//    solution checked is the one in the image named by
+//    FORCED_PHOTOMETRY_WCS_IMAGE (the caller sets it to the image it ran
+//    sky2xy on), otherwise the header of the measured image.
+//
+// 2. 'no_nearby_stars': the image's own detection catalog (see
+//    find_star_catalog()) holds fewer than
+//    FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_STARS stars within
+//    FORCED_PHOTOMETRY_STAR_COVERAGE_RADIUS_ARCSEC of the position: no
+//    stars are seen around it - a thick cloud over the position,
+//    typically - and a magnitude or an upper limit measured there means
+//    nothing. An empty circle means something only when the catalog is
+//    deep enough to fill it, so the test judges only positions where at
+//    least FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_EXPECTED stars are expected
+//    at the mean star density of the frame (counting only the part of the
+//    circle that lies inside the frame); it is skipped altogether, with a
+//    note, when no catalog is found, the pixel scale is unknown or the
+//    frame is too small for its density to mean anything. The
+//    test is deliberately local: whole-frame transparency is the business
+//    of the calling pipeline. The thresholds and the data they come from
+//    are described where they are defined, in src/vast_limits.h.
+//
+// Neither check prints the word ERROR: pipeline logs are scanned for it,
+// and a refused position is a data condition, not a failure.
+// ------------------------------------------------------------------
+
+// 1 if the header of fitsfilename holds a TAN projection without distortion
+// terms (no SIP polynomial, no PV terms) on a field wider than
+// FORCED_PHOTOMETRY_TAN_ONLY_WIDE_FIELD_DEG along its longer side, 0
+// otherwise - including a header without a celestial WCS and one whose
+// pixel scale cannot be read. pixel_scale_arcsec_out gets the pixel scale
+// from the CD matrix (or CDELT) whenever it can be read, -1.0 otherwise.
+static int wcs_is_tan_only_wide_field( const char *fitsfilename, double *pixel_scale_arcsec_out ) {
+ fitsfile *fptr;
+ int status;
+ int key_status;
+ char ctype1[FLEN_VALUE];
+ char card[FLEN_CARD];
+ long a_order;
+ long naxes_wcs[2];
+ double cd11, cd12, cd21, cd22, cdelt1, cdelt2;
+ double pixel_scale_arcsec, fov_major_deg;
+ int has_tan, has_sip, has_pv;
+ int nkeys, i;
+
+ *pixel_scale_arcsec_out= -1.0;
+ status= 0;
+ if ( 0 != fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
+  return 0;
+ }
+ naxes_wcs[0]= 0;
+ naxes_wcs[1]= 0;
+ fits_get_img_size( fptr, 2, naxes_wcs, &status );
+ if ( status != 0 ) {
+  status= 0;
+  fits_close_file( fptr, &status );
+  return 0;
+ }
+ ctype1[0]= '\0';
+ key_status= 0;
+ fits_read_key( fptr, TSTRING, "CTYPE1", ctype1, NULL, &key_status );
+ if ( key_status != 0 ) {
+  // no celestial WCS at all - nothing to judge
+  status= 0;
+  fits_close_file( fptr, &status );
+  return 0;
+ }
+ has_tan= ( 0 == strncmp( ctype1, "RA---TAN", 8 ) ) ? 1 : 0;
+ has_sip= ( NULL != strstr( ctype1, "SIP" ) ) ? 1 : 0;
+ key_status= 0;
+ fits_read_key( fptr, TLONG, "A_ORDER", &a_order, NULL, &key_status );
+ if ( key_status == 0 ) {
+  has_sip= 1;
+ }
+ // PV distortion terms (TAN+PV as written by SCAMP): PV1_n / PV2_n, n >= 1
+ has_pv= 0;
+ nkeys= 0;
+ fits_get_hdrspace( fptr, &nkeys, NULL, &status );
+ for ( i= 1; i <= nkeys && status == 0; i++ ) {
+  if ( 0 != fits_read_record( fptr, i, card, &status ) ) {
+   break;
+  }
+  if ( 0 == strncmp( card, "PV1_", 4 ) || 0 == strncmp( card, "PV2_", 4 ) ) {
+   if ( atoi( card + 4 ) >= 1 ) {
+    has_pv= 1;
+   }
+  }
+ }
+ // pixel scale from the CD matrix, or from CDELT
+ pixel_scale_arcsec= -1.0;
+ key_status= 0;
+ fits_read_key( fptr, TDOUBLE, "CD1_1", &cd11, NULL, &key_status );
+ fits_read_key( fptr, TDOUBLE, "CD1_2", &cd12, NULL, &key_status );
+ fits_read_key( fptr, TDOUBLE, "CD2_1", &cd21, NULL, &key_status );
+ fits_read_key( fptr, TDOUBLE, "CD2_2", &cd22, NULL, &key_status );
+ if ( key_status == 0 ) {
+  pixel_scale_arcsec= 3600.0 * sqrt( fabs( cd11 * cd22 - cd12 * cd21 ) );
+ } else {
+  key_status= 0;
+  fits_read_key( fptr, TDOUBLE, "CDELT1", &cdelt1, NULL, &key_status );
+  fits_read_key( fptr, TDOUBLE, "CDELT2", &cdelt2, NULL, &key_status );
+  if ( key_status == 0 ) {
+   pixel_scale_arcsec= 3600.0 * sqrt( fabs( cdelt1 * cdelt2 ) );
+  }
+ }
+ status= 0;
+ fits_close_file( fptr, &status );
+ if ( pixel_scale_arcsec <= 0.0 ) {
+  return 0;
+ }
+ *pixel_scale_arcsec_out= pixel_scale_arcsec;
+ fov_major_deg= (double)( naxes_wcs[0] > naxes_wcs[1] ? naxes_wcs[0] : naxes_wcs[1] ) * pixel_scale_arcsec / 3600.0;
+ if ( has_tan == 1 && has_sip == 0 && has_pv == 0 && fov_major_deg > FORCED_PHOTOMETRY_TAN_ONLY_WIDE_FIELD_DEG ) {
+  fprintf( stderr, "NOTE: the plate solution in %s (%s, a %.1f deg field) has no distortion terms - it is unreliable away from the matched quad, so no measurement on this image will be reported as a detection or an upper limit (status bad_wcs)\n", fitsfilename, ctype1, fov_major_deg );
+  return 1;
+ }
+ return 0;
+}
+
+static int file_is_readable( const char *path ) {
+ FILE *f;
+ f= fopen( path, "r" );
+ if ( f == NULL ) {
+  return 0;
+ }
+ fclose( f );
+ return 1;
+}
+
+// The detection catalog for the local star coverage test: the file named
+// by FORCED_PHOTOMETRY_STAR_CATALOG; else <wcs_image>.wcscat; else the
+// catalog of the plate-solved copy wcs_<basename> in the current directory,
+// the name util/forced_photometry.sh and the transient pipeline give it (a
+// trailing .fz is dropped, as they do). The 10-column VaST .wcscat layout
+// (lib/correct_sextractor_wcs_catalog_using_xy2sky.sh) has the pixel
+// position in columns 4 and 5. Returns 0 and fills catalog_path_out when a
+// readable catalog was found, 1 otherwise.
+static int find_star_catalog( const char *wcs_image, char *catalog_path_out, size_t out_size ) {
+ const char *env_catalog;
+ const char *base;
+ char basename_buf[FILENAME_LENGTH];
+ size_t len;
+
+ env_catalog= getenv( "FORCED_PHOTOMETRY_STAR_CATALOG" );
+ if ( env_catalog != NULL && env_catalog[0] != '\0' ) {
+  snprintf( catalog_path_out, out_size, "%s", env_catalog );
+  return file_is_readable( catalog_path_out ) ? 0 : 1;
+ }
+ snprintf( catalog_path_out, out_size, "%s.wcscat", wcs_image );
+ if ( file_is_readable( catalog_path_out ) ) {
+  return 0;
+ }
+ base= strrchr( wcs_image, '/' );
+ base= ( base != NULL ) ? base + 1 : wcs_image;
+ strncpy( basename_buf, base, sizeof( basename_buf ) - 1 );
+ basename_buf[sizeof( basename_buf ) - 1]= '\0';
+ len= strlen( basename_buf );
+ if ( len > 3 && 0 == strcmp( basename_buf + len - 3, ".fz" ) ) {
+  basename_buf[len - 3]= '\0';
+ }
+ if ( 0 == strncmp( basename_buf, "wcs_", 4 ) ) {
+  snprintf( catalog_path_out, out_size, "%s.wcscat", basename_buf );
+ } else {
+  snprintf( catalog_path_out, out_size, "wcs_%s.wcscat", basename_buf );
+ }
+ if ( file_is_readable( catalog_path_out ) ) {
+  return 0;
+ }
+ catalog_path_out[0]= '\0';
+ return 1;
+}
+
+// Pixel positions (columns 4 and 5) of the stars in a .wcscat catalog.
+// Positions that are not finite numbers of a sane size are skipped (the
+// comparisons below are false for NaN): they would index the cell array of
+// the density cells out of bounds.
+// Returns 0 on success with malloc'ed arrays the caller frees.
+static int load_star_catalog_xy( char *catalog_path, double **x_out, double **y_out, int *n_out ) {
+ FILE *f;
+ char line[4096];
+ double x, y;
+ double *xs, *ys;
+ int n, nmax;
+
+ nmax= count_lines_in_ASCII_file( catalog_path ) + 1;
+ xs= (double *)malloc( (size_t)nmax * sizeof( double ) );
+ ys= (double *)malloc( (size_t)nmax * sizeof( double ) );
+ if ( xs == NULL || ys == NULL ) {
+  free( xs );
+  free( ys );
+  return 1;
+ }
+ f= fopen( catalog_path, "r" );
+ if ( f == NULL ) {
+  free( xs );
+  free( ys );
+  return 1;
+ }
+ n= 0;
+ while ( n < nmax && fgets( line, sizeof( line ), f ) != NULL ) {
+  if ( line[0] == '#' ) {
+   continue;
+  }
+  if ( 2 != sscanf( line, "%*s %*s %*s %lf %lf", &x, &y ) ) {
+   continue;
+  }
+  if ( !( x > -1.0e7 && x < 1.0e7 && y > -1.0e7 && y < 1.0e7 ) ) {
+   continue;
+  }
+  xs[n]= x;
+  ys[n]= y;
+  n++;
+ }
+ fclose( f );
+ *x_out= xs;
+ *y_out= ys;
+ *n_out= n;
+ return 0;
+}
+
+// The mean number of catalog stars in square cells of side 2*radius_pix,
+// over the cells that fit entirely inside the frame: the frame's typical
+// star density on the scale of the test. The mean rather than the median:
+// clouds that empty more than half of the frame drive the median to zero
+// and would turn the test off on the very frames it is for, while the mean
+// drops only in proportion to the clouded area. -1.0 when fewer than 4
+// cells fit (the frame is too small for its density to mean anything).
+static double mean_stars_per_cell( const double *xs, const double *ys, int n, long naxis1, long naxis2, double radius_pix ) {
+ double cell;
+ int ncx, ncy, i, n_in_cells;
+
+ cell= 2.0 * radius_pix;
+ if ( cell <= 0.0 ) {
+  return -1.0;
+ }
+ ncx= (int)( (double)naxis1 / cell );
+ ncy= (int)( (double)naxis2 / cell );
+ if ( ncx < 1 || ncy < 1 || ncx * ncy < 4 ) {
+  return -1.0;
+ }
+ n_in_cells= 0;
+ for ( i= 0; i < n; i++ ) {
+  // only the stars inside the cell grid (false for NaN, too)
+  if ( xs[i] >= 0.0 && xs[i] < (double)ncx * cell && ys[i] >= 0.0 && ys[i] < (double)ncy * cell ) {
+   n_in_cells++;
+  }
+ }
+ return (double)n_in_cells / (double)( ncx * ncy );
+}
+
+// Fraction of the circle of radius_pix around (center_x, center_y) that
+// lies inside the frame (1-based pixel coordinates, pixel edges at 0.5 and
+// naxis+0.5), estimated on a 41x41 grid of sample points.
+static double circle_fraction_inside_frame( double center_x, double center_y, double radius_pix, long naxis1, long naxis2 ) {
+ int i, j;
+ int n_in_circle, n_in_frame;
+ double dx, dy, px, py;
+
+ n_in_circle= 0;
+ n_in_frame= 0;
+ for ( i= -20; i <= 20; i++ ) {
+  for ( j= -20; j <= 20; j++ ) {
+   dx= (double)i / 20.0;
+   dy= (double)j / 20.0;
+   if ( dx * dx + dy * dy > 1.0 ) {
+    continue;
+   }
+   n_in_circle++;
+   px= center_x + dx * radius_pix;
+   py= center_y + dy * radius_pix;
+   if ( px >= 0.5 && px <= (double)naxis1 + 0.5 && py >= 0.5 && py <= (double)naxis2 + 0.5 ) {
+    n_in_frame++;
+   }
+  }
+ }
+ if ( n_in_circle == 0 ) {
+  return 0.0;
+ }
+ return (double)n_in_frame / (double)n_in_circle;
+}
+
+static int count_stars_within_radius( const double *xs, const double *ys, int n, double center_x, double center_y, double radius_pix ) {
+ int i, count;
+ double dx, dy, r2;
+
+ r2= radius_pix * radius_pix;
+ count= 0;
+ for ( i= 0; i < n; i++ ) {
+  dx= xs[i] - center_x;
+  dy= ys[i] - center_y;
+  if ( dx * dx + dy * dy <= r2 ) {
+   count++;
+  }
+ }
+ return count;
+}
+
+// The status that replaces a 'detection' or 'upperlimit' result of the
+// position (see the block comment above), or NULL when the result stands.
+// mean_per_cell <= 0 means the local star coverage test is not active.
+static const char *frame_level_status( const char *measured_status, int wcs_unreliable,
+                                       const double *xs, const double *ys, int n_stars,
+                                       long naxis1, long naxis2, double radius_pix, double mean_per_cell,
+                                       double center_x, double center_y, double cal_mag, double mag_err ) {
+ double expected;
+ int n_local;
+
+ if ( 0 != strcmp( measured_status, "detection" ) && 0 != strcmp( measured_status, "upperlimit" ) ) {
+  return NULL;
+ }
+ if ( wcs_unreliable == 1 ) {
+  return "bad_wcs";
+ }
+ if ( mean_per_cell <= 0.0 ) {
+  return NULL;
+ }
+ // Expected count in the part of the circle inside the frame: a density
+ // cell is a square of side 2r, the circle covers pi/4 of it
+ expected= mean_per_cell * M_PI / 4.0 * circle_fraction_inside_frame( center_x, center_y, radius_pix, naxis1, naxis2 );
+ if ( expected < FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_EXPECTED ) {
+  fprintf( stderr, "NOTE: local star coverage test not applied at (%.2f, %.2f): only %.1f catalog stars expected within %.0f pix at the frame's mean star density, the test needs %.0f\n", center_x, center_y, expected, radius_pix, FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_EXPECTED );
+  return NULL;
+ }
+ n_local= count_stars_within_radius( xs, ys, n_stars, center_x, center_y, radius_pix );
+ if ( n_local < FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_STARS ) {
+  fprintf( stderr, "NOTE: only %d catalog stars within %.0f pix of (%.2f, %.2f), where %.1f are expected at the frame's mean star density - no stars are seen around the position (a cloud?); the measured %s (%.4f %.4f) is reported with the status no_nearby_stars\n", n_local, radius_pix, center_x, center_y, expected, measured_status, cal_mag, mag_err );
+  return "no_nearby_stars";
+ }
+ fprintf( stderr, "Local star coverage at (%.2f, %.2f): %d catalog stars within %.0f pix, %.1f expected at the frame's mean star density\n", center_x, center_y, n_local, radius_pix, expected );
+ return NULL;
+}
+
+// ------------------------------------------------------------------
 // main
 // ------------------------------------------------------------------
 
@@ -631,6 +998,17 @@ int main( int argc, char **argv ) {
 
  // Optional edge margin from the environment
  char *edge_margin_env;
+
+ // Frame-level sanity checks (see the comment above wcs_is_tan_only_wide_field)
+ char *frame_checks_env;
+ const char *wcs_image;
+ int wcs_unreliable;
+ double pixel_scale_arcsec;
+ char coverage_catalog_path[FILENAME_LENGTH + 16];
+ double *coverage_star_x, *coverage_star_y;
+ int coverage_n_stars;
+ double coverage_radius_pix, coverage_mean_per_cell;
+ const char *replacement_status;
 
  // ------------------------------------------------------------------
  // Parse arguments
@@ -837,6 +1215,49 @@ int main( int argc, char **argv ) {
  }
 
  // ------------------------------------------------------------------
+ // Frame-level sanity checks (see the comment above wcs_is_tan_only_wide_field),
+ // only when the caller asks for them. With wcs_unreliable 0 and
+ // coverage_mean_per_cell -1 frame_level_status() changes nothing.
+ // ------------------------------------------------------------------
+ wcs_unreliable= 0;
+ wcs_image= fitsfilename;
+ pixel_scale_arcsec= -1.0;
+ coverage_star_x= NULL;
+ coverage_star_y= NULL;
+ coverage_n_stars= 0;
+ coverage_radius_pix= 0.0;
+ coverage_mean_per_cell= -1.0;
+ coverage_catalog_path[0]= '\0';
+ frame_checks_env= getenv( "FORCED_PHOTOMETRY_FRAME_CHECKS" );
+ if ( frame_checks_env != NULL && 0 == strcmp( frame_checks_env, "yes" ) ) {
+  // The plate solution to judge is the one the caller placed the apertures
+  // with: FORCED_PHOTOMETRY_WCS_IMAGE when set, the measured image otherwise
+  wcs_image= getenv( "FORCED_PHOTOMETRY_WCS_IMAGE" );
+  if ( wcs_image == NULL || wcs_image[0] == '\0' ) {
+   wcs_image= fitsfilename;
+  }
+  wcs_unreliable= wcs_is_tan_only_wide_field( wcs_image, &pixel_scale_arcsec );
+  if ( wcs_unreliable == 0 ) {
+   if ( pixel_scale_arcsec <= 0.0 ) {
+    fprintf( stderr, "NOTE: local star coverage test skipped - no pixel scale in the plate solution of %s\n", wcs_image );
+   } else if ( 0 != find_star_catalog( wcs_image, coverage_catalog_path, sizeof( coverage_catalog_path ) ) ) {
+    fprintf( stderr, "NOTE: local star coverage test skipped - no detection catalog (.wcscat) found for %s\n", wcs_image );
+   } else if ( 0 != load_star_catalog_xy( coverage_catalog_path, &coverage_star_x, &coverage_star_y, &coverage_n_stars ) ) {
+    fprintf( stderr, "NOTE: local star coverage test skipped - cannot read %s\n", coverage_catalog_path );
+   } else {
+    coverage_radius_pix= FORCED_PHOTOMETRY_STAR_COVERAGE_RADIUS_ARCSEC / pixel_scale_arcsec;
+    coverage_mean_per_cell= mean_stars_per_cell( coverage_star_x, coverage_star_y, coverage_n_stars, naxes[0], naxes[1], coverage_radius_pix );
+    if ( coverage_mean_per_cell <= 0.0 ) {
+     fprintf( stderr, "NOTE: local star coverage test skipped - the frame is too small, or too sparse in %s, to tell its typical star density on the %.0f pix scale of the test\n", coverage_catalog_path, 2.0 * coverage_radius_pix );
+     coverage_mean_per_cell= -1.0;
+    } else {
+     fprintf( stderr, "Local star coverage test: %d stars in %s, test radius %.0f pix (%.2f deg), %.1f stars per circle at the frame's mean density\n", coverage_n_stars, coverage_catalog_path, coverage_radius_pix, FORCED_PHOTOMETRY_STAR_COVERAGE_RADIUS_ARCSEC / 3600.0, coverage_mean_per_cell * M_PI / 4.0 );
+    }
+   }
+  }
+ }
+
+ // ------------------------------------------------------------------
  // Dispatch: single position vs list
  // ------------------------------------------------------------------
  if ( list_mode == 0 ) {
@@ -848,6 +1269,11 @@ int main( int argc, char **argv ) {
                           aperture_diameter,
                           annulus_vals, annulus_copy, abs_dev, n_annulus_alloc,
                           &cal_mag, &mag_err, status_str );
+  replacement_status= frame_level_status( status_str, wcs_unreliable, coverage_star_x, coverage_star_y, coverage_n_stars, naxes[0], naxes[1], coverage_radius_pix, coverage_mean_per_cell, center_x, center_y, cal_mag, mag_err );
+  if ( replacement_status != NULL ) {
+   strncpy( status_str, replacement_status, 31 );
+   status_str[31]= '\0';
+  }
   fprintf( stdout, "%.4f %.4f %s\n", cal_mag, mag_err, status_str );
  } else {
   listf= fopen( list_filename, "r" );
@@ -861,6 +1287,8 @@ int main( int argc, char **argv ) {
    free( annulus_vals );
    free( annulus_copy );
    free( abs_dev );
+   free( coverage_star_x );
+   free( coverage_star_y );
    return 1;
   }
   line_idx= 0;
@@ -890,6 +1318,11 @@ int main( int argc, char **argv ) {
                            aperture_diameter,
                            annulus_vals, annulus_copy, abs_dev, n_annulus_alloc,
                            &cal_mag, &mag_err, status_str );
+   replacement_status= frame_level_status( status_str, wcs_unreliable, coverage_star_x, coverage_star_y, coverage_n_stars, naxes[0], naxes[1], coverage_radius_pix, coverage_mean_per_cell, center_x, center_y, cal_mag, mag_err );
+   if ( replacement_status != NULL ) {
+    strncpy( status_str, replacement_status, 31 );
+    status_str[31]= '\0';
+   }
    fprintf( stdout, "%s %.4f %.4f %.4f %.4f %s\n",
             label, center_x, center_y, cal_mag, mag_err, status_str );
   }
@@ -904,6 +1337,8 @@ int main( int argc, char **argv ) {
  free( annulus_vals );
  free( annulus_copy );
  free( abs_dev );
+ free( coverage_star_x );
+ free( coverage_star_y );
 
  return 0;
 }

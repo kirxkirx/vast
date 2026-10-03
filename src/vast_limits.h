@@ -292,6 +292,35 @@
 #define AIRMASS_ZP_MIN_K -0.05            // fitted extinction coefficient sanity range:
 #define AIRMASS_ZP_MAX_K 0.6              // small negative values are noise around zero and pass, larger deviations indicate a broken fit
 
+// Frame-level sanity checks of util/forced_photometry (src/forced_photometry.c), active only
+// with FORCED_PHOTOMETRY_FRAME_CHECKS=yes: a would-be detection or upper limit is reported with
+// the status 'bad_wcs' or 'no_nearby_stars' instead (the measured values are kept in the output)
+// when
+// - the plate solution used to place the aperture is a TAN projection without distortion terms
+//   on a field wider than this (the solve-field SIP tweak silently failed, see util/identify.sh):
+#define FORCED_PHOTOMETRY_TAN_ONLY_WIDE_FIELD_DEG 5.0
+// - the image's own detection catalog has fewer than MIN_STARS stars within RADIUS of the
+//   position (a thick cloud over it). The test is applied only where at least MIN_EXPECTED stars
+//   are expected within the part of the circle inside the frame at the frame's MEAN star density
+//   (stars per square cell of side 2*RADIUS): a sparse catalog cannot tell a cloud from a sparse
+//   patch of sky. The mean, not the median: clouds over more than half of the frame drive the
+//   median to zero and would switch the test off on the cloudiest frames.
+//   Calibrated on 797 NMW-TexasTech frames from 2026-07..09 at all positions at least 100 pix from
+//   the frame edges. With the catalogs of the last SExtractor pass (the ones the source monitoring
+//   callers find next to the image): on the 559 frames the frame-quality cloud check passed, no
+//   position had fewer than 7 stars within 0.5 deg (2.9 million positions; the 140 frames taken
+//   below 30 deg altitude with the Moon up and 112 frames taken in astronomical twilight
+//   included), while on the 238 frames it condemned 1932 positions (0.16%) had fewer than 3, of
+//   which this gate judges 1931. With a shallow catalog (the brightest stars only, as many as the
+//   bright-star SExtractor pass detects) clean frames do have circles with fewer than 3 stars:
+//   the gate at 30 refused 6 such positions, at 40 none.
+//   A test relative to the frame's density was considered and rejected: clean Milky Way frames
+//   show real star density contrasts of 20 times (dark nebulae), so a source in a dark cloud
+//   would be refused on every frame.
+#define FORCED_PHOTOMETRY_STAR_COVERAGE_RADIUS_ARCSEC 1800.0
+#define FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_STARS 3
+#define FORCED_PHOTOMETRY_STAR_COVERAGE_MIN_EXPECTED 40.0
+
 #define MAX_STRING_LENGTH_AUTOCANDIDATESDETAILS 512
 
 ///////////////////////////////////////////////////////////
