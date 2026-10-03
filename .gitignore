@@ -11,3 +11,5 @@ lib/catalogs/.update_offline_catalogs.lock
 .claude/settings.local.json~
 .claude/projects/
 .claude/*~
+# left behind only if lib/compile_sextractor.sh is interrupted while it resets source-tree timestamps
+.vast_timestamp_reference

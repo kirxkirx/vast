@@ -749,6 +749,38 @@ Update this file as you learn new things.
   unexpected token" at a random line (bash -n on the file was fine). lib/astrometry/strip_wcs_keywords
   keeps the old values as _TYPE1/_TYPE2 cards, so "grep TAN-SIP" still matches a stripped header.
   In the Claude Code shell on tau, grep is a shell function that runs ugrep (scripts use GNU
-  grep): a pattern that GNU grep matches may not match there. make in the dev tree fell back to
-  SExtractor 2.19.5 when the SExtractor 2.25.2 build tried to regenerate aclocal.m4
-  (Makefile:469, Error 127: aclocal is not installed).
+  grep): a pattern that GNU grep matches may not match there.
+
+## SExtractor 2.25.2 never built on tau; fixed with one mtime per source tree (2026-10-03)
+- lib/compile_sextractor.sh touched aclocal.m4/configure/Makefile.in BEFORE m4/*.m4 (and never
+  man/Makefile.in). On btrfs with sub-second mtimes GNU make 4.4 then found m4/*.m4 newer than
+  aclocal.m4 and re-ran the exact automake version the shipped files came from
+  ('autoconf/missing aclocal-1.16'); Gentoo has only automake 1.18, so Error 127 (Makefile:469),
+  and the script silently fell back to sextractor-2.19.5. EVERY tau build since at least
+  2025-12 (all production reports with a version line) used 2.19.5. Ubuntu CI (automake 1.16.5
+  regenerates the files), FreeBSD and macOS built 2.25.2; WSL2, Docker and Alpine fell back.
+- Fix: set_the_same_mtime_for_all_files_in_source_tree() copies one reference mtime
+  (touch -r) to every file of each SExtractor tree before 'make clean' in both the clean and
+  build branches - equal times count as up to date for GNU and BSD make at any timestamp
+  resolution, and it also repairs trees left configured by a failed build (whose 'make clean'
+  hit the same Error 127). The script now prints a WARNING when it uses the fallback.
+- 2.19.5 vs 2.25.2 on the TTU test frame: same detections and FLAGS, MAG_APER within 0.01 mag;
+  the user chose to keep the factory's SExtractor catalog cache (2.19.5 catalogs, keyed on the
+  config md5 only) rather than purge it.
+
+## sky2xy/xy2sky segfault on unreadable, empty or non-FITS images (2026-10-03)
+- The bundled WCSTools 3.9.7 tools exit 139 (SIGSEGV), not 1, when the image cannot be read.
+  sky2xy.c:298 passes GetFITShead()'s NULL (open failed, or no END card in an empty file) to
+  GetFITSWCS(); ChangeFITSWCS dereferences it at libwcs/imgetwcs.c:395. xy2sky's isfits() is 0
+  for anything not starting with "SIMPLE", so it falls into the command-line-WCS branch with a
+  NULL filename (imgetwcs.c:390, then setwcsfile() wcs.c:2478). 'sky2xy RA Dec' and
+  'xy2sky X Y' with no file crash the same way. Unmodified upstream code since fcc9b22d.
+- Triggered on tau by the 4962 zero-byte root:root 0600 files that a 'sudo mv' left on the full
+  nmwttu2 disk (2026-09-13). util/listhead, util/forced_photometry, util/get_image_date and
+  util/forced_photometry.sh fail cleanly on the same input; callers of the two WCSTools tools
+  must test the exit code, because a crash prints no coordinates and looks like "off the image".
+- A two-guard patch (NULL header in ChangeFITSWCS, NULL filename in setwcsfile) turns every
+  such crash into exit 1 with unchanged output on valid frames; not applied as of 2026-10-03.
+- lib/compile_wcstools.sh:72 and lib/compile_gsl.sh:45,64,83 test 'if [ ! $? ]', which is never
+  true, so a failed make there is not reported (the later binary-exists check passes on a
+  stale binary from an earlier build).
