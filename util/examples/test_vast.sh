@@ -694,6 +694,70 @@ function test_internet_connection() {
  return 1
 }
 
+# Download one test-data file into the current directory and accept it only if
+# it is intact. Plain 'curl -O' saves an HTTP error page under the requested name
+# and exits 0 - in CI run 1156 one download from tau.kirx.net returned a body that
+# was not bzip2 (most likely the "502 Proxy Error" page of the reverse proxy in
+# front of tau.kirx.net), bunzip2 rejected it, and the test blamed the OMC
+# converter (AUXWEB_OMC2ASCII2_002). --fail turns 4xx/5xx into a curl error, the
+# integrity test catches whatever else is not the file (a 3xx or 200 HTML body,
+# a truncated file), --speed-limit stops a stalled transfer, and each URL gets three
+# attempts before the next URL (a mirror) is tried. This is a shell loop rather
+# than curl --retry because curl 7.15.5 (Scientific Linux 5.6) does not retry
+# a 5xx once --fail is given, and plain --retry never retries a refused or
+# dropped connection (--retry-connrefused needs curl 7.52, --retry-all-errors
+# needs curl 7.71).
+# $1 - the name of the file to create in the current directory
+# $2 and later - the URLs to try, in order
+# Returns 0 on success. On failure returns 1 and leaves no file behind, so that
+# a re-run downloads from scratch instead of resuming an error page.
+function download_test_data_file() {
+ local output_file="$1"
+ local url
+ local attempt
+ local curl_exit_code
+ shift
+ for url in "$@" ;do
+  attempt=1
+  while [ $attempt -le 3 ] ;do
+   rm -f "$output_file"
+   curl --fail --silent --show-error --connect-timeout 30 --speed-limit 1024 --speed-time 60 -o "$output_file" "$url"
+   curl_exit_code=$?
+   if [ $curl_exit_code -eq 0 ] ;then
+    case "$output_file" in
+     *.bz2)
+      if bunzip2 -t "$output_file" 2>/dev/null ;then
+       return 0
+      fi
+      ;;
+     *.gz)
+      if gzip -t "$output_file" 2>/dev/null ;then
+       return 0
+      fi
+      ;;
+     *)
+      if [ -s "$output_file" ] ;then
+       return 0
+      fi
+      ;;
+    esac
+    echo "WARNING: $url (attempt $attempt) delivered a file that fails the integrity test, it starts with:" >&2
+    head -c 300 "$output_file" | LC_ALL=C tr -cd '\011\012\040-\176' >&2
+    echo >&2
+   else
+    echo "WARNING: $url (attempt $attempt) failed with curl exit code $curl_exit_code" >&2
+   fi
+   attempt=$((attempt+1))
+   if [ $attempt -le 3 ] ;then
+    sleep 10
+   fi
+  done
+ done
+ rm -f "$output_file"
+ echo "ERROR: could not download an intact $output_file from: $*" >&2
+ return 1
+}
+
 function check_dates_consistency_in_vast_image_details_log() {
  if [ ! -f vast_image_details.log ];then
   echo "ERROR in $0 - no vast_image_details.log"
@@ -10949,8 +11013,7 @@ $GREP_RESULT"
    mv astorb.dat astorb.dat_backup
   fi
   if [ ! -f astorb_ceres.dat ];then
-   #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_ceres.dat.gz" 
-   curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_ceres.dat.gz" 
+   download_test_data_file astorb_ceres.dat.gz "http://tau.kirx.net/vast_test_data/astorb_ceres.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_ceres.dat.gz"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_downloading_custom_astorb_ceres.dat"
@@ -12437,8 +12500,7 @@ if [ -d ../NMW_Venus_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2020.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2020.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2020.dat.gz" 
+  download_test_data_file astorb_2020.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2020.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2020.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_error_downloading_custom_astorb_2020.dat"
@@ -20079,8 +20141,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_pallas.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_pallas.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_pallas.dat.gz" 
+  download_test_data_file astorb_pallas.dat.gz "http://tau.kirx.net/vast_test_data/astorb_pallas.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_pallas.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_error_downloading_custom_astorb_pallas.dat"
@@ -20259,8 +20320,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_error_downloading_custom_astorb_2023.dat"
@@ -20689,8 +20749,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -21157,8 +21216,7 @@ if [ -d ../NMW-STL__find_NovaVul24_compressed_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -21637,8 +21695,7 @@ if [ -d ../NMW-STL__find_NovaVul24_lacosmic_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -22328,8 +22385,7 @@ if [ -d ../NMW__NovaOph24N1_lacosmic_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_error_downloading_custom_astorb_2023.dat"
@@ -22788,8 +22844,7 @@ if [ -d ../NMW-STL__find_Neptune_lacosmic_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLNEPTUNE_error_downloading_astorb"
@@ -23112,8 +23167,7 @@ if [ -d ../NMW-STL__plate_solve_failure_lacosmic_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLPLATESOLVE_error_downloading_astorb"
@@ -23236,8 +23290,7 @@ if [ -d ../NMW-STL__NovaOph24N1_lacosmic_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLNOPH24_error_downloading_astorb"
@@ -24220,8 +24273,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -24494,8 +24546,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_error_downloading_custom_astorb_2023.dat"
@@ -24897,8 +24948,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_error_downloading_custom_astorb_2023.dat"
@@ -25240,8 +25290,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_error_downloading_custom_astorb_2023.dat"
@@ -25543,7 +25592,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_error_downloading_custom_astorb_2023.dat"
@@ -25767,8 +25816,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
-  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" 
+  download_test_data_file astorb_2023.dat.gz "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz" "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_error_downloading_custom_astorb_2023.dat"
@@ -33634,127 +33682,147 @@ echo -n "Performing auxiliary web services test: " >> vast_test_report.txt
 # OMC2ASCII converter test 1
 if [ ! -f ../vast_test_lightcurves/IOMC_4011000047.fits ];then
  cd ../vast_test_lightcurves || exit 1
- #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
+ download_test_data_file IOMC_4011000047.fits.bz2 "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/IOMC_4011000047.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
  cd "$WORKDIR" || exit 1
 fi
-RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
-if [ $? -ne 0 ];then
+if [ ! -s ../vast_test_lightcurves/IOMC_4011000047.fits ];then
+ # the converter is not contacted without its input - this is a test-data problem
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_001"
-fi
-if [ -z "$RESULTSURL" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_002"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_TEST_DATA_DOWNLOAD_FAILED"
 else
- # omc_converter behavior changed
- #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"IOMC_4011000047.txt | wc -l | awk '{print $1}'`
- NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
- if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 2110 ];then
+ RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
+ if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_003"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_001"
+ fi
+ if [ -z "$RESULTSURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_002"
+ else
+  # omc_converter behavior changed
+  #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"IOMC_4011000047.txt | wc -l | awk '{print $1}'`
+  NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 2110 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_003"
+  fi
  fi
 fi
 
 # OMC2ASCII converter test 2
 if [ ! -f ../vast_test_lightcurves/IOMC_2677000065.fits ];then
  cd ../vast_test_lightcurves || exit 1
- #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_2677000065.fits.bz2" && bunzip2 IOMC_2677000065.fits.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/IOMC_2677000065.fits.bz2" && bunzip2 IOMC_2677000065.fits.bz2
+ download_test_data_file IOMC_2677000065.fits.bz2 "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/IOMC_2677000065.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_2677000065.fits.bz2" && bunzip2 IOMC_2677000065.fits.bz2
  cd "$WORKDIR" || exit 1
 fi
-RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_2677000065.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
-if [ $? -ne 0 ];then
+if [ ! -s ../vast_test_lightcurves/IOMC_2677000065.fits ];then
+ # the converter is not contacted without its input - this is a test-data problem
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_001"
-fi
-if [ -z "$RESULTSURL" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_002"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_TEST_DATA_DOWNLOAD_FAILED"
 else
- curl --silent "$RESULTSURL" > IOMC_2677000065.txt
+ RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_2677000065.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_cannot_download_txt_lc"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_001"
+ fi
+ if [ -z "$RESULTSURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_002"
  else
-  NLINES_IN_OUTPUT_ASCII_FILE=`cat IOMC_2677000065.txt | wc -l | awk '{print $1}'`
-  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 6274 ];then
+  curl --silent "$RESULTSURL" > IOMC_2677000065.txt
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_cannot_download_txt_lc"
   else
-   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep 'LK' | grep -q '0.308703'
-   if [ $? -ne 0 ];then
+   NLINES_IN_OUTPUT_ASCII_FILE=`cat IOMC_2677000065.txt | wc -l | awk '{print $1}'`
+   if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 6274 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_LK_local_period_search_failed"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_003"
+   else
+    lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep 'LK' | grep -q '0.308703'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_LK_local_period_search_failed"
+    fi
    fi
   fi
- fi
- if [ -f IOMC_2677000065.txt ];then
-  rm -f IOMC_2677000065.txt
+  if [ -f IOMC_2677000065.txt ];then
+   rm -f IOMC_2677000065.txt
+  fi
  fi
 fi
 
 # SuperWASP converter
 if [ ! -f ../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits ];then
  cd ../vast_test_lightcurves || exit 1
- #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
+ download_test_data_file 1SWASP_J013623.20+480028.4.fits.bz2 "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
  cd "$WORKDIR" || exit 1
 fi
-RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
-if [ $? -ne 0 ];then
+if [ ! -s ../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits ];then
+ # the converter is not contacted without its input - this is a test-data problem
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_001"
-fi
-if [ -z "$RESULTSURL" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_002"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_TEST_DATA_DOWNLOAD_FAILED"
 else
- # swasp_converter changed behavior
- #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"out1SWASP_J013623.20+480028.4.dat | wc -l | awk '{print $1}'`
- NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
- if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 8358 ];then
+ RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
+ if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_003"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_001"
+ fi
+ if [ -z "$RESULTSURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_002"
+ else
+  # swasp_converter changed behavior
+  #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"out1SWASP_J013623.20+480028.4.dat | wc -l | awk '{print $1}'`
+  NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 8358 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_003"
+  fi
  fi
 fi
 
 # WWWUPSILON
 if [ ! -f ../vast_test_lightcurves/nsv14523hjd.dat ];then
  cd ../vast_test_lightcurves || exit 1
- #curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/nsv14523hjd.dat.bz2" && bunzip2 nsv14523hjd.dat.bz2
- curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/nsv14523hjd.dat.bz2" && bunzip2 nsv14523hjd.dat.bz2
+ download_test_data_file nsv14523hjd.dat.bz2 "http://tau.kirx.net/vast_test_data/vast_test_lightcurves/nsv14523hjd.dat.bz2" "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/nsv14523hjd.dat.bz2" && bunzip2 nsv14523hjd.dat.bz2
  cd "$WORKDIR" || exit 1
 fi
-RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
-if [ $? -ne 0 ];then
+if [ ! -s ../vast_test_lightcurves/nsv14523hjd.dat ];then
+ # the classifier is not contacted without its input - this is a test-data problem
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_001"
-elif [ -z "$RESULTSURL" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_002"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_TEST_DATA_DOWNLOAD_FAILED"
 else
- # Manual test http://scan.sai.msu.ru/wwwupsilon/
- #
- # The installation goes as folows:
- #
- # cd /var/www/scan.sai.msu.ru/venv_wwwupsilon
- # source /var/www/scan.sai.msu.ru/venv_wwwupsilon/bin/activate
- # pip install numpy==1.19.5
- # pip install --only-binary :all: scipy==1.5.4
- # pip install setuptools==57.5.0
- # pip install Cython==0.29.24
- # pip install Tempita
- # pip install scikit-learn==0.24.2
- # pip install upsilon
- #
- #
- # The new upsilon incorrectly classifies the test lightcurve as a cepheid, because it cannot correctly derive its period
- # but whatever, here we just want to check that the web service is working
- curl --silent "$RESULTSURL" | grep -q -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
+ RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_003"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_001"
+ elif [ -z "$RESULTSURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_002"
+ else
+  # Manual test http://scan.sai.msu.ru/wwwupsilon/
+  #
+  # The installation goes as folows:
+  #
+  # cd /var/www/scan.sai.msu.ru/venv_wwwupsilon
+  # source /var/www/scan.sai.msu.ru/venv_wwwupsilon/bin/activate
+  # pip install numpy==1.19.5
+  # pip install --only-binary :all: scipy==1.5.4
+  # pip install setuptools==57.5.0
+  # pip install Cython==0.29.24
+  # pip install Tempita
+  # pip install scikit-learn==0.24.2
+  # pip install upsilon
+  #
+  #
+  # The new upsilon incorrectly classifies the test lightcurve as a cepheid, because it cannot correctly derive its period
+  # but whatever, here we just want to check that the web service is working
+  curl --silent "$RESULTSURL" | grep -q -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_003"
+  fi
  fi
 fi
 
@@ -36014,10 +36082,25 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
  # Save full output to a log file for artifacts
  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" > gaia_dr2_test_output.log
 
- if [ $GAIA_TEST_EXIT_CODE -ne 0 ];then
+ # Exit code 3 (ESA TAP) or 4 (VizieR): the remote service gave no query result - no reply
+ # in time, an HTTP error or a non-table reply. That is an outage of the service, reported
+ # under its own code; any other non-zero exit code means the client failed or a service
+ # replied with the wrong number of sources, which points at the client.
+ GAIA_DR2_SERVICE_UNAVAILABLE=""
+ if [ $GAIA_TEST_EXIT_CODE -eq 3 ];then
+  TEST_PASSED=0
+  GAIA_DR2_SERVICE_UNAVAILABLE="ESA TAP"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS_ESA_UNAVAILABLE"
+ elif [ $GAIA_TEST_EXIT_CODE -eq 4 ];then
+  TEST_PASSED=0
+  GAIA_DR2_SERVICE_UNAVAILABLE="VizieR"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS_VIZIER_UNAVAILABLE"
+ elif [ $GAIA_TEST_EXIT_CODE -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS001"
+ fi
 
+ if [ $TEST_PASSED -ne 1 ];then
   # Print detailed diagnostics
   echo ""
   echo "========================================================================"
@@ -36027,26 +36110,18 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
   echo "Timestamp: $(date)"
   echo "System: $(uname -s) $(uname -r) $(uname -m)"
   echo ""
+  # No ping: GitHub-hosted runners drop ICMP, so ping shows 100% loss even for hosts that
+  # answer queries. No HEAD request to the sync endpoint either: ESA answers it with
+  # HTTP 500 even while queries work.
   echo "Network connectivity check:"
-  echo "  ESA TAP endpoint (gea.esac.esa.int):"
-  if command -v ping &>/dev/null; then
-    ping -c 2 gea.esac.esa.int 2>&1 | head -5 || echo "    Ping failed or not available"
-  else
-    echo "    Ping command not available"
-  fi
-  echo "  Curl test to ESA TAP:"
-  curl -s --max-time 5 -I "https://gea.esac.esa.int/tap-server/tap/sync" 2>&1 | head -3 || echo "    Curl test failed"
+  echo "  ESA TAP availability (VOSI; it may say true while queries hang):"
+  curl -s --max-time 10 "https://gea.esac.esa.int/tap-server/tap/availability" 2>&1 | grep -oE '<available>[a-z]*</available>|<note>[^<]*</note>' | sed 's/^/    /'
+  echo "  ESA TAP minimal query (SELECT TOP 1 source_id FROM gaiadr2.gaia_source):"
+  curl -s --max-time 30 -o /dev/null -w '    HTTP status %{http_code}, %{time_total} s\n' "https://gea.esac.esa.int/tap-server/tap/sync" -d "REQUEST=doQuery" -d "LANG=ADQL" -d "FORMAT=csv" --data-urlencode "QUERY=SELECT TOP 1 source_id FROM gaiadr2.gaia_source"
   echo ""
-  echo "  VizieR endpoint (vizier.cds.unistra.fr):"
-  if command -v ping &>/dev/null; then
-    ping -c 2 vizier.cds.unistra.fr 2>&1 | head -5 || echo "    Ping failed or not available"
-  else
-    echo "    Ping command not available"
-  fi
-  echo ""
-  echo "Test output (last 60 lines):"
+  echo "Test output:"
   echo "------------------------------------------------------------------------"
-  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" | tail -60
+  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT"
   echo "------------------------------------------------------------------------"
   echo "Full test output saved to: gaia_dr2_test_output.log"
   echo "========================================================================"
@@ -36060,6 +36135,9 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mGaia DR2 clients test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ elif [ -n "$GAIA_DR2_SERVICE_UNAVAILABLE" ];then
+  echo -e "\n\033[01;34mGaia DR2 clients test \033[01;33m$GAIA_DR2_SERVICE_UNAVAILABLE UNAVAILABLE\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "$GAIA_DR2_SERVICE_UNAVAILABLE UNAVAILABLE ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
   echo -e "\n\033[01;34mGaia DR2 clients test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
@@ -36531,9 +36609,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_noscript/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nopython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nonumpyastropy/}"
- # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR)
- # and frequently fails due to network timeouts unrelated to VaST code
- FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS001/}"
+ # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
+ # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
+ # client failed or a service replied with the wrong number of sources) does fail it.
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS_ESA_UNAVAILABLE/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS_VIZIER_UNAVAILABLE/}"
  # vizquery test uses an automatic retry on a missing '#END#' marker; the
  # retry-marker code survives into FAILED_TEST_CODES even when the retry
  # succeeds (external VizieR flakiness, not a VaST-side failure).

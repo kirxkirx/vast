@@ -4,6 +4,11 @@
 # Drop-in replacement for vizquery when querying I/345/gaia2
 # Output format matches vizquery: dist_arcsec Source RA_ICRS DE_ICRS Gmag RPmag Var
 #
+# Exit codes: 0 - the query result is printed (it ends with the #END# line);
+#             1 - error in the arguments, or the reply does not make sense (a client problem);
+#             2 - the ESA TAP service gave no query result: no complete reply in time,
+#                 an HTTP 5xx, 408 or 429 status or a web page instead of the table (a service problem)
+#
 
 #################################
 # Set the safe locale
@@ -17,6 +22,8 @@ MAX_RESULTS=3
 SEARCH_RADIUS_ARCSEC=""
 MAG_BRIGHT=0.0
 MAG_FAINT=99.0
+# Gaia column the magnitude range applies to: Gmag=... or RPmag=... on the command line
+MAG_COLUMN="phot_g_mean_mag"
 RA_DEG=""
 DEC_DEG=""
 SORT_BY="phot_g_mean_mag"
@@ -72,8 +79,14 @@ while [[ $# -gt 0 ]]; do
    MAX_RESULTS="${1#-out.max=}"
    shift
    ;;
-  Gmag=*|phot_g_mean_mag=*)
-   # Magnitude range: "Gmag=0.0..13.13"
+  Gmag=*|phot_g_mean_mag=*|RPmag=*|phot_rp_mean_mag=*)
+   # Magnitude range: "Gmag=0.0..13.13" or "RPmag=0.0..13.13" - util/transients/report_transient.sh
+   # passes "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=..." and the TICA TESS camera settings use RPmag
+   if [[ "$1" == RPmag=* ]] || [[ "$1" == phot_rp_mean_mag=* ]]; then
+    MAG_COLUMN="phot_rp_mean_mag"
+   else
+    MAG_COLUMN="phot_g_mean_mag"
+   fi
    MAG_RANGE="${1#*=}"
    MAG_BRIGHT=$(echo "$MAG_RANGE" | awk -F'[.][.]' '{print $1}')
    MAG_FAINT=$(echo "$MAG_RANGE" | awk -F'[.][.]' '{print $2}')
@@ -99,6 +112,12 @@ while [[ $# -gt 0 ]]; do
    # Ignore vizquery-specific options
    shift
    ;;
+  [!-]*=*)
+   # Never drop a constraint silently: without its magnitude range the query
+   # returns every star in the cone and each candidate looks like a known star
+   echo "ERROR: unsupported constraint '$1'" >&2
+   exit 1
+   ;;
   *)
    shift
    ;;
@@ -116,22 +135,56 @@ SEARCH_RADIUS_DEG=$(echo "$SEARCH_RADIUS_ARCSEC" | awk '{printf "%.9f", $1/3600}
 
 # Build ADQL query
 # Note: DISTANCE returns degrees, multiply by 3600 to get arcsec
-ADQL_QUERY="SELECT TOP ${MAX_RESULTS} source_id, ra, dec, phot_g_mean_mag, phot_rp_mean_mag, phot_variable_flag, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', ${RA_DEG}, ${DEC_DEG})) * 3600 AS dist_arcsec FROM gaiadr2.gaia_source WHERE 1=CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', ${RA_DEG}, ${DEC_DEG}, ${SEARCH_RADIUS_DEG})) AND phot_g_mean_mag >= ${MAG_BRIGHT} AND phot_g_mean_mag <= ${MAG_FAINT} ORDER BY ${SORT_BY}"
+ADQL_QUERY="SELECT TOP ${MAX_RESULTS} source_id, ra, dec, phot_g_mean_mag, phot_rp_mean_mag, phot_variable_flag, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', ${RA_DEG}, ${DEC_DEG})) * 3600 AS dist_arcsec FROM gaiadr2.gaia_source WHERE 1=CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', ${RA_DEG}, ${DEC_DEG}, ${SEARCH_RADIUS_DEG})) AND ${MAG_COLUMN} >= ${MAG_BRIGHT} AND ${MAG_COLUMN} <= ${MAG_FAINT} ORDER BY ${SORT_BY}"
 
 # Query ESA TAP endpoint
-RESPONSE=$(curl -s --max-time "$TIMEOUT_SEC" "https://gea.esac.esa.int/tap-server/tap/sync" \
+# -w appends the HTTP status code as the last line of the output
+RESPONSE=$(curl -s --max-time "$TIMEOUT_SEC" -w '\n%{http_code}' "https://gea.esac.esa.int/tap-server/tap/sync" \
  -d "REQUEST=doQuery" \
  -d "LANG=ADQL" \
  -d "FORMAT=csv" \
  --data-urlencode "QUERY=${ADQL_QUERY}" 2>/dev/null)
+CURL_EXIT_CODE=$?
+HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1)
+RESPONSE=$(echo "$RESPONSE" | sed '$d')
+
+# No complete reply: the time limit was reached, the connection failed or the transfer was cut short
+if [[ "$CURL_EXIT_CODE" -ne 0 ]]; then
+ echo "ERROR: no complete reply from the ESA TAP service within ${TIMEOUT_SEC}s (curl exit code $CURL_EXIT_CODE, HTTP status $HTTP_STATUS)" >&2
+ exit 2
+fi
+
+# The service replied, but not with a query result: 5xx, 408 and 429 (overload, rate limit)
+# are service problems, any other status (a malformed query, a missing table) is a client problem
+if [[ "$HTTP_STATUS" != "200" ]]; then
+ echo "ERROR: the ESA TAP service replied with HTTP status $HTTP_STATUS" >&2
+ echo "$RESPONSE" | head -n 5 >&2
+ if [[ "$HTTP_STATUS" == 5* ]] || [[ "$HTTP_STATUS" == "408" ]] || [[ "$HTTP_STATUS" == "429" ]]; then
+  exit 2
+ fi
+ exit 1
+fi
 
 if [[ -z "$RESPONSE" ]]; then
- exit 1
+ echo "ERROR: empty reply from the ESA TAP service" >&2
+ exit 2
 fi
 
 # Check for error response
 if echo "$RESPONSE" | grep -E -q "ERROR|Exception"; then
  echo "$RESPONSE" >&2
+ exit 1
+fi
+
+# The first line must be the header of the requested CSV table. Anything else (an HTML error
+# or maintenance page) would be converted line by line into fake sources by the loop below.
+if [[ "$(echo "$RESPONSE" | head -n 1)" != *source_id* ]]; then
+ echo "ERROR: the ESA TAP reply is not the requested CSV table:" >&2
+ echo "$RESPONSE" | head -n 5 >&2
+ # A web page (HTML/XML) is the service talking, anything else means the client misread the reply
+ if [[ "$(echo "$RESPONSE" | head -n 1)" == "<"* ]]; then
+  exit 2
+ fi
  exit 1
 fi
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Select the best Gaia DR2 client (VizieR or ESA TAP) based on availability and speed.
-# Uses a test query to a known bright star (Vega) to determine which service is faster.
+# Select the Gaia DR2 client (VizieR or ESA TAP) based on availability: VizieR whenever it
+# answers a test query for a known Gaia DR2 star, ESA TAP only when VizieR does not.
 #
 # Usage: lib/choose_gaia_dr2_client.sh [VIZIER_SITE]
 # Output: prints "vizquery" or "esa_tap" to stdout
@@ -32,19 +32,22 @@ if [ -n "$1" ]; then
  VIZIER_SITE="$1"
 fi
 
-# Test coordinates: Vega (Alpha Lyrae) - a well-known bright star guaranteed to be in Gaia DR2
-# RA = 18h 36m 56.34s, Dec = +38° 47' 01.3"
-TEST_RA="18:36:56.34"
-TEST_DEC="+38:47:01.3"
+# Test position: a G=12.2 star (Gaia DR2 3376888109148417664) 1.9" from the position used
+# by the "Single source - tight radius" case of util/examples/test_gaia_dr2_clients.sh.
+# Do not use Vega here: it is too bright to be in Gaia DR2 (I/345/gaia2 has no source within
+# 30" of it), so a healthy service returns no source and the probe can never succeed.
+TEST_RA="06:13:37.32"
+TEST_DEC="+21:54:26.0"
 TEST_RADIUS_ARCSEC=5
-TEST_MAG_LIMIT=1.0  # Vega is very bright (~0 mag)
+TEST_MAG_LIMIT=14.0
 PROBE_TIMEOUT=15  # seconds for each probe
+# macOS has no 'timeout' unless GNU coreutils is installed (as 'gtimeout'); without this the
+# VizieR probe always fails there. lib/find_timeout_command.sh falls back to lib/timeout
+TIMEOUT_COMMAND=$(lib/find_timeout_command.sh)
 
 # Temporary files for results (use process substitution where possible, but we need timing)
 VIZQUERY_RESULT=""
-VIZQUERY_TIME=""
 ESA_TAP_RESULT=""
-ESA_TAP_TIME=""
 
 # Function to check if vizquery is available and VIZIER_SITE is set
 can_use_vizquery() {
@@ -65,7 +68,7 @@ probe_vizquery() {
  local start_time end_time
  start_time=$(date +%s.%N 2>/dev/null || date +%s)
  local result
- result=$(timeout "$PROBE_TIMEOUT" lib/vizquery \
+ result=$($TIMEOUT_COMMAND "$PROBE_TIMEOUT" lib/vizquery \
   -site="$VIZIER_SITE" \
   -mime=text \
   -source=I/345/gaia2 \
@@ -156,17 +159,10 @@ ESA_TAP_RESULT=$(cat "$ESA_TAP_PROBE_FILE")
 
 # Parse results
 VIZQUERY_STATUS=$(echo "$VIZQUERY_RESULT" | awk '{print $1}')
-VIZQUERY_TIME=$(echo "$VIZQUERY_RESULT" | awk '{print $2}')
 ESA_TAP_STATUS=$(echo "$ESA_TAP_RESULT" | awk '{print $1}')
-ESA_TAP_TIME=$(echo "$ESA_TAP_RESULT" | awk '{print $2}')
 
-# Decision logic
-if [ "$VIZQUERY_STATUS" = "success" ] && [ "$ESA_TAP_STATUS" = "success" ]; then
- # Both succeeded - choose the faster one
- FASTER=$(echo "$VIZQUERY_TIME $ESA_TAP_TIME" | awk '{if ($1 <= $2) print "vizquery"; else print "esa_tap"}')
- echo "$FASTER"
-elif [ "$VIZQUERY_STATUS" = "success" ]; then
- # Only VizieR succeeded
+# Decision logic: VizieR whenever it answers, ESA TAP only as the fallback
+if [ "$VIZQUERY_STATUS" = "success" ]; then
  echo "vizquery"
 elif [ "$ESA_TAP_STATUS" = "success" ]; then
  # Only ESA TAP succeeded

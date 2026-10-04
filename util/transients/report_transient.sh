@@ -100,32 +100,35 @@ function query_gaia_dr2 {
  fi
 
  if [ "$GAIA_DR2_CLIENT" = "esa_tap" ] && [ -x lib/gaia_dr2_cone_search.sh ]; then
-  # Use ESA TAP endpoint
-  lib/gaia_dr2_cone_search.sh \
+  # Use ESA TAP endpoint. When ESA does not reply with a query result the client prints
+  # nothing on stdout and exits with a non-zero code: ask VizieR instead, otherwise the
+  # known-star check below would silently treat every candidate as "no Gaia star here".
+  if lib/gaia_dr2_cone_search.sh \
    -c="$coords" \
    -c.rs="$search_radius_arcsec" \
    -out.max="$max_results" \
    -sort="$sort_band" \
    "$sort_band=$mag_bright..$mag_faint" \
-   -timeout=30 2>/dev/null
- else
-  # Use VizieR (default)
-  if [ -z "$VIZIER_SITE" ]; then
-   return 1
+   -timeout=30 2>/dev/null ;then
+   return 0
   fi
-  $TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
-   -site="$VIZIER_SITE" \
-   -mime=text \
-   -source=I/345/gaia2 \
-   -out.max="$max_results" \
-   -out.add=_r \
-   -out.form=mini \
-   -sort="$sort_band" \
-   "$sort_band=$mag_bright..$mag_faint" \
-   -c="$coords" \
-   -c.rs="$search_radius_arcsec" \
-   -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null
  fi
+ # Use VizieR (default, and the fallback when the ESA TAP query failed)
+ if [ -z "$VIZIER_SITE" ]; then
+  return 1
+ fi
+ $TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
+  -site="$VIZIER_SITE" \
+  -mime=text \
+  -source=I/345/gaia2 \
+  -out.max="$max_results" \
+  -out.add=_r \
+  -out.form=mini \
+  -sort="$sort_band" \
+  "$sort_band=$mag_bright..$mag_faint" \
+  -c="$coords" \
+  -c.rs="$search_radius_arcsec" \
+  -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null
 }
 
 

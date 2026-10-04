@@ -784,3 +784,34 @@ Update this file as you learn new things.
 - lib/compile_wcstools.sh:72 and lib/compile_gsl.sh:45,64,83 test 'if [ ! $? ]', which is never
   true, so a failed make there is not reported (the later binary-exists check passes on a
   stale binary from an earlier build).
+
+## CI run 1156 (2026-10-03): proxy error pages in test-data downloads; ESA Gaia client bugs
+- tau.kirx.net is served by Apache mod_proxy on polaris.kirx.net (188.226.149.203) through an SSH
+  remote forward (autossh -R8890:localhost:80, started by ~/autoconnect_http.sh). polaris keeps
+  pooled backend connections after tau's KeepAliveTimeout 15 has closed them (CLOSE-WAIT sockets on
+  the tunnel ssh), so a request occasionally gets polaris's 341-byte "502 Proxy Error ... Error
+  reading from remote server" page. tau's own error pages end with "Apache Server at tau.kirx.net
+  Port 80"; polaris's do not. Confirmed 2026-10-04: tau's access log has 200 lines for the files
+  fetched just before and after the failed IOMC_2677000065 download but no line for it, and
+  polaris's 'ProxyPass / http://localhost:8890/' (sites-enabled/tau.kirx.net.conf, both vhosts)
+  has no ttl. The remedy on polaris is ttl=10 (below tau's 15 s keep-alive).
+- 'curl -O' without --fail saves such a page under the requested name and exits 0; bunzip2 then
+  prints "is not a bzip2 file." (an empty or truncated download prints "Compressed file ends
+  unexpectedly" instead). In run 1156 this hit IOMC_2677000065.fits.bz2 and the test blamed the OMC
+  converter (AUXWEB_OMC2ASCII2_002); run 1102 went red the same way on astorb_2023.dat.gz.
+  'curl --retry' retries 5xx (curl 7.15.5 only without --fail); '--continue-at -' completes a
+  leftover error page with the tail of the real file, so the file stays corrupt on later runs.
+- ESA Gaia TAP: a HEAD request to /tap-server/tap/sync always returns 500 and GitHub runners drop
+  ping, so the GAIADR2CLIENTS001 network diagnostics prove nothing. lib/gaia_dr2_cone_search.sh
+  drops 'RPmag=a..b' ranges silently, turns an HTML error page into fake sources with exit 0, and
+  never checks curl's exit status. lib/choose_gaia_dr2_client.sh probes Vega, which is not in Gaia
+  DR2, so only the fake rows of an ESA error page make a probe succeed: 276 production runs in
+  2026 used esa_tap exactly while ESA was serving error pages, and lost most Gaia known-star
+  exclusions (3.4% vs 11.9% of runs).
+- Fixed 2026-10-04: test_vast.sh download_test_data_file() (--fail, 3 tries per URL, bunzip2/gzip
+  integrity test, scan.sai.msu.ru/~kirx/pub mirror) for the auxiliary web services files and the
+  17 astorb downloads, with *_TEST_DATA_DOWNLOAD_FAILED codes; the client honours RPmag and exits 2
+  when ESA gives no query result; report_transient.sh falls back to VizieR; the chooser probes
+  Gaia DR2 3376888109148417664 and prefers VizieR; test_gaia_dr2_clients.sh exits 3/4 for an ESA/
+  VizieR outage (GAIADR2CLIENTS_ESA/VIZIER_UNAVAILABLE, stripped), so GAIADR2CLIENTS001 now means
+  a client failure and is no longer stripped. Keep the RPmag fix whenever the chooser may pick ESA.

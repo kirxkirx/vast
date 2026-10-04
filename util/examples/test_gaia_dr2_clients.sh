@@ -62,6 +62,17 @@ TEST_COUNT=0
 PASS_COUNT=0
 FAIL_COUNT=0
 
+# lib/gaia_dr2_cone_search.sh exits with code 2 when ESA TAP gave no query result (no reply
+# in time, an HTTP 5xx status or a web page instead of the table): a problem of the remote
+# service. Any other failure of the client, or a source count outside the expected range, is a
+# client (or catalog) problem. VizieR has no such exit code: a VizieR query without the #END#
+# marker counts as no reply. The exit code of this script tells the two apart.
+ESA_NO_REPLY_COUNT=0
+VIZIER_NO_REPLY_COUNT=0
+WRONG_COUNT_FAILURES=0
+EXIT_CODE_ESA_UNAVAILABLE=3
+EXIT_CODE_VIZIER_UNAVAILABLE=4
+
 # Function to run a single test
 run_test() {
  local test_name="$1"
@@ -89,6 +100,7 @@ run_test() {
  local esa_start esa_end esa_time esa_output esa_count
  esa_start=$(date +%s)
  esa_output=$(lib/gaia_dr2_cone_search.sh -out.max=10 -sort=Gmag "$mag_range" "-c=$coords" "-c.rs=$radius" 2>&1)
+ local esa_exit_code=$?
  esa_end=$(date +%s)
  esa_time=$(echo "$esa_end $esa_start" | awk '{printf "%.3f", $1 - $2}')
  ESA_TIMES+=("$esa_time")
@@ -101,6 +113,16 @@ run_test() {
  fi
 
  echo "  [ESA TAP] Time: ${esa_time}s, Sources found: $esa_count"
+ local esa_replied=1
+ local esa_client_failed=0
+ if [[ "$esa_exit_code" -eq 2 ]]; then
+  esa_replied=0
+  ESA_NO_REPLY_COUNT=$((ESA_NO_REPLY_COUNT + 1))
+ elif [[ "$esa_exit_code" -ne 0 ]] || ! echo "$esa_output" | grep -q "#END#"; then
+  # The client failed although ESA did not report a problem: count it as a client failure
+  esa_client_failed=1
+  WRONG_COUNT_FAILURES=$((WRONG_COUNT_FAILURES + 1))
+ fi
  if [[ -n "$esa_output" ]]; then
   echo "$esa_output" | head -5 | sed 's/^/    /'
   if [[ $(echo "$esa_output" | grep -c "^") -gt 6 ]]; then
@@ -128,6 +150,11 @@ run_test() {
  fi
 
  echo "  [VizieR] Time: ${vizier_time}s, Sources found: $vizier_count"
+ local vizier_replied=1
+ if ! echo "$vizier_output" | grep -q "#END#"; then
+  vizier_replied=0
+  VIZIER_NO_REPLY_COUNT=$((VIZIER_NO_REPLY_COUNT + 1))
+ fi
  if [[ -n "$vizier_output" ]]; then
   echo "$vizier_output" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | head -5 | sed 's/^/    /'
   if [[ $(echo "$vizier_output" | grep -cE "NOT_AVAILABLE|CONSTANT|VARIABLE") -gt 5 ]]; then
@@ -140,19 +167,30 @@ run_test() {
  local test_pass=1
 
  # Check ESA count is in expected range
- if [[ "$esa_count" -ge "$expected_min" ]] && [[ "$esa_count" -le "$expected_max" ]]; then
+ if [[ "$esa_replied" -eq 0 ]]; then
+  echo -e "  ${RED}NO REPLY${NC} ESA TAP returned no query result (client exit code 2 after ${esa_time}s)"
+  test_pass=0
+ elif [[ "$esa_client_failed" -eq 1 ]]; then
+  echo -e "  ${RED}CLIENT FAILURE${NC} lib/gaia_dr2_cone_search.sh exit code $esa_exit_code without an ESA TAP service problem"
+  test_pass=0
+ elif [[ "$esa_count" -ge "$expected_min" ]] && [[ "$esa_count" -le "$expected_max" ]]; then
   echo -e "  ${GREEN}✓${NC} ESA source count ($esa_count) in expected range [$expected_min-$expected_max]"
  else
   echo -e "  ${RED}✗${NC} ESA source count ($esa_count) NOT in expected range [$expected_min-$expected_max]"
   test_pass=0
+  WRONG_COUNT_FAILURES=$((WRONG_COUNT_FAILURES + 1))
  fi
 
  # Check VizieR count is in expected range
- if [[ "$vizier_count" -ge "$expected_min" ]] && [[ "$vizier_count" -le "$expected_max" ]]; then
+ if [[ "$vizier_replied" -eq 0 ]]; then
+  echo -e "  ${RED}NO REPLY${NC} VizieR returned no query result (no #END# marker after ${vizier_time}s)"
+  test_pass=0
+ elif [[ "$vizier_count" -ge "$expected_min" ]] && [[ "$vizier_count" -le "$expected_max" ]]; then
   echo -e "  ${GREEN}✓${NC} VizieR source count ($vizier_count) in expected range [$expected_min-$expected_max]"
  else
   echo -e "  ${RED}✗${NC} VizieR source count ($vizier_count) NOT in expected range [$expected_min-$expected_max]"
   test_pass=0
+  WRONG_COUNT_FAILURES=$((WRONG_COUNT_FAILURES + 1))
  fi
 
  # Check counts match between ESA and VizieR
@@ -213,16 +251,26 @@ run_parallel_test() {
  lib/gaia_dr2_cone_search.sh -out.max=3 -sort=Gmag "Gmag=0.0..14.0" "-c=06:00:00.00 +23:00:00.0" -c.rs=30 > "$tmpdir/esa5.out" 2>&1 &
  pids+=($!)
 
- # Wait for all to complete
+ # Wait for all to complete and keep the exit code of each query
+ local -a exit_codes
+ local i=0
  for pid in "${pids[@]}"; do
-  wait "$pid" || true
+  i=$((i + 1))
+  wait "$pid"
+  exit_codes[i]=$?
  done
 
  # Check results
  local valid_count=0
  for i in 1 2 3 4 5; do
-  if grep -q "#END#" "$tmpdir/esa$i.out" 2>/dev/null; then
+  if [[ "${exit_codes[$i]}" -eq 0 ]] && grep -q "#END#" "$tmpdir/esa$i.out" 2>/dev/null; then
    valid_count=$((valid_count + 1))
+  elif [[ "${exit_codes[$i]}" -eq 2 ]]; then
+   ESA_NO_REPLY_COUNT=$((ESA_NO_REPLY_COUNT + 1))
+   echo "  query $i got no query result: $(head -n 1 "$tmpdir/esa$i.out" 2>/dev/null)"
+  else
+   WRONG_COUNT_FAILURES=$((WRONG_COUNT_FAILURES + 1))
+   echo "  query $i: client failure (exit code ${exit_codes[$i]}): $(head -n 1 "$tmpdir/esa$i.out" 2>/dev/null)"
   fi
  done
 
@@ -322,6 +370,21 @@ echo "╚═══════════════════════�
 echo ""
 echo "Starting tests at $(date)"
 
+# ESA TAP health check: one minimal query with a short time limit, sent with curl directly and
+# not through lib/gaia_dr2_cone_search.sh, so a broken client cannot pass for an ESA outage.
+# If ESA does not answer it, the comparison below would only spend 10 x 90 s + 90 s waiting.
+echo ""
+echo "ESA TAP health check (SELECT TOP 1, 30 s time limit)..."
+esa_check_status=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' "https://gea.esac.esa.int/tap-server/tap/sync" -d "REQUEST=doQuery" -d "LANG=ADQL" -d "FORMAT=csv" --data-urlencode "QUERY=SELECT TOP 1 source_id FROM gaiadr2.gaia_source" 2>/dev/null)
+if [[ "$esa_check_status" != "200" ]]; then
+ echo "ESA TAP returned no query result (HTTP status $esa_check_status)."
+ echo "The ESA TAP service is unavailable - skipping the ESA TAP vs VizieR comparison."
+ echo ""
+ echo "Tests completed at $(date)"
+ exit "$EXIT_CODE_ESA_UNAVAILABLE"
+fi
+echo "ESA TAP replied."
+
 # Test cases with different expected source counts
 # Format: run_test "name" "coords" "radius_arcsec" "mag_range" "min_expected" "max_expected"
 
@@ -357,6 +420,12 @@ run_test "Faint sources" \
 run_test "Bright sources only" \
  "06:13:37.32 +21:54:26.0" "120" "Gmag=0.0..12.0" 1 5
 
+# Magnitude range in the RP band, as util/transients/report_transient.sh passes it for
+# TICA TESS (GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=RPmag). A client that drops the RPmag
+# range returns all 10 requested stars here.
+run_test "Bright sources only - RP band" \
+ "06:13:37.32 +21:54:26.0" "120" "RPmag=0.0..12.0" 1 3
+
 # Zero result test (very tight constraints)
 run_test "No sources expected" \
  "06:13:37.32 +21:54:26.0" "1" "Gmag=0.0..8.0" 0 0
@@ -367,6 +436,19 @@ run_parallel_test
 # Print summary
 print_summary
 exit_code=$?
+
+# Exit codes: 0 - all checks passed; 1 - the client failed or a service replied with an unexpected
+# number of sources (a client or catalog problem); 3 - the only failures are queries ESA TAP gave
+# no result for; 4 - the same for VizieR. util/examples/test_vast.sh reports 3 and 4 as outages.
+if [[ "$exit_code" -ne 0 ]] && [[ "$WRONG_COUNT_FAILURES" -eq 0 ]]; then
+ if [[ "$ESA_NO_REPLY_COUNT" -gt 0 ]]; then
+  echo "ESA TAP gave no query result for $ESA_NO_REPLY_COUNT queries - reporting a service outage"
+  exit_code=$EXIT_CODE_ESA_UNAVAILABLE
+ elif [[ "$VIZIER_NO_REPLY_COUNT" -gt 0 ]]; then
+  echo "VizieR gave no query result for $VIZIER_NO_REPLY_COUNT queries - reporting a service outage"
+  exit_code=$EXIT_CODE_VIZIER_UNAVAILABLE
+ fi
+fi
 
 echo ""
 echo "Tests completed at $(date)"
