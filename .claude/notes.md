@@ -815,3 +815,55 @@ Update this file as you learn new things.
   Gaia DR2 3376888109148417664 and prefers VizieR; test_gaia_dr2_clients.sh exits 3/4 for an ESA/
   VizieR outage (GAIADR2CLIENTS_ESA/VIZIER_UNAVAILABLE, stripped), so GAIADR2CLIENTS001 now means
   a client failure and is no longer stripped. Keep the RPmag fix whenever the chooser may pick ESA.
+
+## The post-refit catalog re-match must be iterated until the pair set describes the final header (2026-10-06)
+- Case: NMW-TexasTech Cyg-04-Q2b1x1 frame 0078 of 2026-10-05 (results_20261005_220644_...AGVuK51D).
+  ERROR "large change in astrometric-star counts between the two new images (q4: 662 -> 1036)",
+  run rejected, SS Cyg monitoring rows of both frames recorded as run_error. The image was fine
+  (the same field one minute earlier was clean) and the final header was sub-arcsec over the
+  used frame. The raw solve-field solution was ~20" off in the upper-right; the refit was
+  refused and the rescue path applied order 5 provisionally (worst region 294"), re-matched at
+  3" (4284 pairs - none in the upper-right band, the provisional model diverged there) and refit
+  again (0.459"). main() ran the re-match + refit cycle ONCE: WCS_QUALITY_DIAG, the residual file
+  and the .wcscat.ucac5 catalog all described the holed 4284-pair set (n_q4=662), although the
+  final header paired ~1040 q4 stars within 3". The same single-cycle structure bites the NORMAL
+  path when the first refit still has a bad region (Cyg-06-Q2 0072 of 2026-10-01: 3965 -> 3296
+  pairs, n_q3 393 vs 1420 on the sibling). Reproduced bit-for-bit offline (same quad, same
+  log-odds, same header): SExtractor star list via util/wcs_image_calibration.sh with the
+  camera's bad_region.lst and default.sex.telephoto_lens_onlybrightstars_v1, then
+  util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 on the raw wcs_ state.
+- Archive 2026-10-01..06 (1239 runs): 88 distinct quadrant-count ERROR events in 52 runs; 17
+  (11 runs, 10 fields) have this mechanism and ALL were contradicted by the later SExtractor
+  pass; 30 rescued frames in 27 runs, 11 of them raised the ERROR. Every affected run with
+  monitored positions was refused.
+- The second refit, fitted without the hole, extrapolates into it: the on-disk 0078 header had
+  a coherent ~2" (0.35 px) offset at x>7000, y>5900 only (frame-to-frame star pairing in pixel
+  space plus a local-UCAC5 match; a header-only grid comparison with a constant pixel shift is
+  INVALID on these frames, the gnomonic shift varies by +-0.3 px). The x>=7500 strip is masked
+  by TTUQ2_bad_region.lst and must be excluded from any such check - counting it turns a 3%
+  q4 deficit into "8 arcsec, 25% paired" and a wrong refutation.
+- Fix: loop the re-match + refit while the refit was applied and the re-match changed the pair
+  count by more than SIP_REFIT_REMATCH_CONVERGENCE_FRACTION (0.05), cap
+  SIP_REFIT_MAX_REMATCH_CYCLES (4), radius recomputed from the last applied refit, match backup
+  re-saved per cycle, local corrections via recompute_local_corrections_after_rematch(). On the
+  real frames: 0078 three cycles -> 4764 pairs, n_q4=1036 (= sibling), header moved 0.7-3.5"
+  only in the far corner; Cyg-04-Q1 0041 four cycles -> n_q4 203 -> 1364, sigma 0.51 -> 0.36";
+  Cyg-06-Q2 0072 three cycles -> n_q3 377 -> 1459. A normal frame (0079) and the Cas-04-Q2
+  TAN-only test frame are bit-identical to the old code (no extra cycle, no extra cost); a
+  holed frame pays 8-13 s more with the local UCAC5 copy.
+- The loop alone stalls when the provisional solution is more than the re-match radius off
+  over a whole quadrant: nothing pairs there, the next refit is refused for lack of coverage
+  ("do not cover the frame") and the rescue outcome gate - worst-region RMS of the pairs that
+  EXIST - still declared the rescue a success with a header tens of arcsec off in the empty
+  quadrant (Aql-01-Q2 0052 of 2026-10-01: 166 of 385 initial q4 pairs left, header 51" off
+  there, production kept it and never retried; Cyg-05-Q2 0085, Cyg-06-Q1 0038, Cas-04-Q2 0129
+  with 479 of 934 q1 pairs). SIP_REFIT_RESCUE_MIN_QUADRANT_RETENTION (0.7) now refuses such a
+  rescue: the original solution is restored and SIP_REFIT_REJECTED is printed with the ~20"
+  baseline, which is exactly what the factory's bad-refit-baseline retry trigger (1 pixel)
+  listens for. Calibration on the replayed rescues: every quadrant of a recovered frame kept
+  at least 96% of its initial pairs, the unmeasured quadrants kept 23-51%.
+- Not covered: the diagnostic
+  pair set has a different depth after an accepted refit (3" re-match) than after a rejected
+  one (46.9" initial match), a separate source of count asymmetry between sibling frames;
+  stars that lose their pair keep the stale catalog_mag/catalog_ra of the initial pairing
+  (pre-existing).
