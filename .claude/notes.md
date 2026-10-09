@@ -867,3 +867,114 @@ Update this file as you learn new things.
   one (46.9" initial match), a separate source of count asymmetry between sibling frames;
   stars that lose their pair keep the stale catalog_mag/catalog_ra of the initial pairing
   (pre-existing).
+
+## The re-match loop must stop on the header, not on the pair count (2026-10-08)
+- Case: NMW-TexasTech Cyg-05-Q1b1x1 frame 0037 of 2026-10-08 (results_20261008_204440_...TSZiUYxn),
+  ERROR "large change in astrometric-star counts (q4: 995 -> 648)", with d5bdb823 (the iterated
+  re-match) already deployed. Normal path, no rescue: the raw solve-field solution came from a
+  strong index-4113 quad but was 18.5" off in the worst region; the initial matching already had
+  only 609 q4 pairs; the first refit extrapolated 13-26" off in an upper-right wedge. The cycle-1
+  re-match went 4169 -> 4299 pairs (+3.1%), the refit on them was applied, and the loop stopped
+  because the TOTAL count had moved less than 5% - although that refit moved 9827 of 50544 stars
+  by more than 1". The total stays flat because the 3" re-match drops 3-7% of the spurious
+  wide-radius pairs everywhere while the repaired region gains.
+- This time the saved header itself was bad, not just the diagnostic: 0.3" at the wedge edge
+  growing to 6.2" (1.07 px) at the far corner, more than 1" over 41% of the wedge (pixel-space
+  star pairing against the sibling frame plus local UCAC5). The later vSTL pass does NOT prove a
+  header good: its worst-region figures are MAD-clipped (the deep-wedge stars are dropped) and its
+  per-quadrant counts come from a catalog-only refit applied in memory to a symlinked image. A
+  telltale of a stale saved header: the vSTL pass accepts such a refit (3 of 3 hole frames, 0 of
+  273 other one-cycle stops in the 10-06..10-08 archive).
+- Fix: after every applied refit count ALL detections (matched or not - a hole is where no
+  matched star can show the shift) moved by more than SIP_REFIT_SETTLE_RADIUS_FRACTION (1/3) of
+  that cycle's re-match radius; re-match again unless their number is at most
+  SIP_REFIT_SETTLE_MAX_MOVED_PER_PAIR (1%) of the pair count; a refused refit stops the loop (the
+  header did not change since the re-match); the cycle limit ends on a re-match without a refit.
+  0037: three cycles, n_q4 1006 against 995 on the sibling, header within 0.19" of the sibling's
+  everywhere (was 6.24"). Normal frames: the refit on the re-matched pairs moves stars by
+  hundredths of an arcsec, so they still pay exactly one re-match - and good frames that the
+  total-count rule had sent into a useless second cycle (a cycle-1 change of -5..-7%) now stop
+  after one.
+- The other two stale-pair cases after the deployment (rescues Lac-01-Q2 0086 of 2026-10-07 and
+  Cyg-08-Q2 0063) also had wrong SAVED headers, measured against the local UCAC5 in 1200-px corner
+  boxes: 0063 upper-left median 8.4" (p90 12.8") where the settled solution gives 0.65" and the
+  independently solved sibling 0.74"; 0086 1.9" in both upper corners against 0.60-0.65". 0063 hit
+  the four-cycle limit, but forcing eight cycles gives the identical solution (the fourth refit
+  is refused), so the limit costs nothing there.
+- Post-deployment audit of d5bdb823 (1265 runs 10-06..10-08 vs 1265 before): quadrant-count ERROR
+  runs 4.4% -> 0.95%; 13 rescue-coverage refusals, all followed by a WCS_QUALITY_RETRY (8 repaired,
+  4 genuinely unsolvable that night); no cycle-limit hits, no crashes, no solver-time rise. The
+  three remaining stale-pair cases (Cyg-05-Q1 0037, Lac-01-Q2 0086, Cyg-08-Q2 0063) all took the
+  cycle-1 exit. The two rescues among them passed the 0.7 coverage gate because their initial
+  matching was already depleted in the hole quadrant (retention 0.78 and 0.92).
+- Replaying: the img_* directories are deleted after a few days, so offline replays only work for
+  recent runs. Raw state = util/wcs_image_calibration.sh on the fd_ frame with the camera's
+  bad_region.lst and default.sex.telephoto_lens_onlybrightstars_v1 as default.sex; then
+  util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2. Solve-field is
+  deterministic, the replay reproduces production bit for bit.
+
+## WCS retry keep rule and the absolute worst-quadrant ERROR (2026-10-09)
+- Case: NMW-TexasTech Her-09-Q1b1x1 2026-10-08 (results_20261008_220920_...XxnKXyJs). The
+  factory's tweak-order-2 retry kept the re-solve of frame 0113 as "improved" because sigma*ratio
+  went 27.55 -> 27.48 arcsec, while the overall sigma went 5.925 -> 15.191 and the matched stars
+  1990 -> 1673. sigma*ratio IS the worst quadrant's sigma (print_wcs_quality_diagnostic() divides
+  the largest quadrant sigma by the overall sigma); when one quadrant is broken in both solutions
+  it saturates near the matching radius and the comparison is noise. The log printed only the
+  overall sigma, so "improved" sat next to a sigma that nearly tripled.
+- Archive check before choosing the rule (233 retry decisions 2026-09-01..10-09): a 10% margin on
+  the score is WRONG - it flips 16 decisions and discards real partial repairs (For-04-Q1 09-21
+  0254 improved all four quadrants yet raised sigma 1.34x because 201 more stars were matched in
+  the broken quadrants; also For-04-Q1 0454, Cnc-02-Q1 0410, Lyn-02-Q1 0345). "Sigma must not
+  rise", a geometric mean of the quadrant sigmas and a per-quadrant star-count guard are wrong for
+  the same reason. Chosen: keep only if the worst-quadrant sigma falls AND the overall sigma does
+  not double, unless the new sigma is inside the floor. It changes exactly the two Her-09 decisions
+  (10-06 0104, 10-08 0113), both for the better; the largest rise among the other keeps is 1.344x.
+  A NaN re-solve diagnostic now reverts (awk read NaN as 0, a perfect score).
+- The keep fix alone would have REMOVED the only ERROR of the Her-09 run: with 0113 reverted both
+  frames are equally bad, and the quadrant-count check compares the two new images with each other.
+  So report_new_image_bad_worst_quadrant() raises an ERROR when a new image's final worst quadrant is
+  above one pixel (TTU cameras only, like the count check). Over the 2026-09..10 archive it fires on
+  16 runs, all with retried frames; no frame that was not retried ended above one pixel; 5 of the
+  16 runs had no other ERROR. util/examples/test_wcs_quality_retry.sh (standalone, not in
+  test_vast.sh) pins all of this with real numbers: 32 cases.
+- Her-09-Q1 itself was a bad RAW plate solve, which the settle rule cannot touch: identify.sh's
+  hinted pass (--radius = FOV major axis, 15.5 deg) accepted a marginal quad from index-4115 (quads
+  340-480 arcmin, 8 index stars, anchored at the left edge), the SIP tweak failed (TAN-only, rotated
+  ~1.5 deg) and the star-list re-tweak failed too (5 stars). The star list was fine (stars in all
+  quadrants) and the field solves to 0.3 arcsec on other nights. The same pass with --radius 2 found
+  index-4113/4112 quads with 189-366 index stars (raw 1.0-1.4 arcsec vs UCAC5) on all three bad
+  frames (0112/0113 of 10-08, 0104 of 10-06), but failed to solve 5 of 16 ordinary frames at
+  --depth 100 - usable only as a fallback. The TAN-only guard has also not escalated to the remote
+  solver since ca23497b (a failed re-tweak leaves the TAN-only wcs_ file in place).
+- Reading report pages: re.sub('<[^>]*>','',...) eats text when a log line contains a bare '<'
+  (e.g. "(<100)") - it runs to the next '>' such as the "->" in the decision line. Strip real tag
+  names only.
+
+## TAN-only repair: small-radius re-solve and the restored escalation (2026-10-09)
+- The repair chain of the silently-failed-tweak guard in util/identify.sh is now: star-list verify
+  re-tweak, then small_radius_hinted_resolve(), then escalation to a remote plate-solve server; the
+  remote result's TAN-only check runs the same chain (repair_tan_only_solution()), minus the
+  small-radius step when it already failed locally on the same star list.
+- Small-radius re-solve: the hinted pass again on the star list with --radius = FOV major axis / 8
+  (1.94 deg on NMW-TTU) around the solution centre, pixel scale from the CD matrix +-10% (the
+  "Image scale" of an edge-anchored TAN solution is a few per cent low), --depth stepped to 500
+  objects (at --depth 100 the small circle failed 5 of 16 ordinary frames), --odds-to-solve 1e50
+  (good solutions score log-odds 1150-2250, the marginal coarse quads 32-34), --cpulimit 120, own
+  work files. Her-09-Q1b1x1 0112/0113 (2026-10-08) and 0104 (2026-10-06): index-4113/4112 quads with
+  189-366 index stars, raw 1.0-1.4 arcsec median against UCAC5, final 0.28-0.32 arcsec - the
+  production solutions were 6-15 arcsec. Disable with VAST_SKIP_SMALL_RADIUS_RESOLVE=1.
+- Why the hinted pass picks the marginal quad: its --radius is the full field (15.5 deg), and
+  solve-field tries the largest-quad index first and accepts the first match above log-odds 20.7 -
+  an index-4115 quad (340-480 arcmin) verified by 8 stars, anchored near the frame edge, whose tweak
+  then fails. The plate-solve CGI's hinted pass uses --radius 5 and solved the same frame (scan
+  returned an order-3 solution, 2.9 arcsec raw median, 0.315 after the UCAC5 refit).
+- Escalation bug (ca23497b, 2026-10-01): a failed re-tweak left the TAN-only wcs_ file in place, so
+  "if [ ! -s wcs_... ]" never escalated. Fixed - and the TAN-only solution is now set aside
+  (out$$_tan_only_wcs.fits) instead of deleted, and put back after the solve loop when no server
+  returns a solution (unreachable, NOT SOLVED), so an offline host behaves as before. The internal
+  abort paths of the remote branch (exit 1) still lose it, as the 2026-08-28 escalation did.
+- Known limitation: under VAST_TWEAK_ORDER=2 (the factory's WCS retry) the star-list re-tweak can
+  "succeed" with an order-2 fit to ~5 index stars (Her-09-Q1 0113: final 15.2 arcsec), which bypasses
+  the small-radius re-solve; the factory's keep rule reverts such a retry (overall sigma doubled).
+  The re-tweak's printed log-odds is the pre-tune-up value (the good Cas-04-Q2 0094 re-tweak also
+  prints 10 matches), so it cannot be used as an acceptance cut as it stands.

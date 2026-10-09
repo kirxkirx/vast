@@ -1191,6 +1191,41 @@ function report_new_image_quadrant_count_changes {
  return 0
 }
 
+# Absolute check of a new image's final plate solution, made after the
+# WCS-quality retries: a worst quadrant whose sigma exceeds the limit (one
+# pixel at the call site) means positions there are off by more than the soft
+# astrometric limit, whatever the reference images or the sibling frame look
+# like. The count comparison above cannot see a run in which BOTH new images
+# are solved equally badly, because it compares the two images with each
+# other: on Her-09-Q1b1x1 2026-10-08 both frames had two quadrants about 27
+# arcsec off, and the only ERRORs the run raised came from the retry keeping a
+# worse re-solve of one frame, which changed its counts; once the retry stops
+# doing that, nothing else flags the run. In the 2026-09..10 NMW-TexasTech
+# archive a new image ended with a worst quadrant above one pixel in 16 runs,
+# all of them frames that had been retried, and 11 of those runs raised an
+# ERROR for another reason anyway. Limited to the two NMW-TTU cameras, the only
+# ones it was calibrated on, as the quadrant-count check is.
+# Args: 1=diag basename  2=human label  3=limit in arcsec
+function report_new_image_bad_worst_quadrant {
+ case "${CAMERA_SETTINGS:-}" in
+  TTUQ1b1x1|TTUQ2b1x1) ;;
+  *) return 0 ;;
+ esac
+ local diag_basename="$1" image_label="$2" limit_arcsec="$3"
+ local sigma ratio
+ sigma=$(extract_wcs_quality_field "$diag_basename" "sigma_overall_arcsec")
+ ratio=$(extract_wcs_quality_field "$diag_basename" "worst_quadrant_to_overall_ratio")
+ awk -v s="$sigma" -v r="$ratio" -v t="$limit_arcsec" -v img="$diag_basename" -v lab="$image_label" '
+  BEGIN {
+   # NaN or a missing value means there is nothing to judge
+   if (s !~ /^[0-9]+([.][0-9]*)?$/ || r !~ /^[0-9]+([.][0-9]*)?$/ || t !~ /^[0-9]+([.][0-9]*)?$/) { exit }
+   if (t+0 > 0 && (s+0)*(r+0) > t+0) {
+    printf "ERROR: bad plate solution of the %s (%s): the sigma of its worst quadrant is %.2f arcsec (overall sigma %s arcsec, ratio %s), above the %.2f arcsec (one pixel) limit - positions in that part of the image are unreliable\n", lab, img, (s+0)*(r+0), s, r, t+0
+   }
+  }' | tee -a transient_factory_test31.txt transient_factory.log
+ return 0
+}
+
 # Average two numeric values; if only one is present, return it; if both empty,
 # return empty. Used to combine the two reference-image diagnostics.
 function average_two_numbers {
@@ -1271,9 +1306,11 @@ function retry_wcs_with_lower_tweak_order {
  # diverges in one corner barely moves the overall sigma while the quadrant
  # ratio explodes, and those are the retries most worth making: on 2026-09-13
  # one image with sigma 1.198 but ratio 12.595 was repaired to 0.391/1.103, and
- # another with sigma 0.691 and ratio 4.424 had its worst quadrant brought back
- # to 2.883. A floor on sigma alone would have thrown both of those away in
- # order to save the four pointless re-solves it was written to prevent.
+ # another with sigma 0.691 and ratio 4.424 (a worst quadrant of 3.06 arcsec,
+ # with only 10 matched stars) was retried too - its re-solve lowered that
+ # quadrant to 2.64 arcsec while the other three got 27-36% worse. A floor on
+ # sigma alone would have thrown away both retries in order to save the four
+ # pointless re-solves it was written to prevent.
  local trigger
  trigger=$(awk -v s="$current_sigma" -v r="$current_ratio" \
                -v rs="$ref_sigma_avg" -v rr="$ref_ratio_avg" \
@@ -1372,22 +1409,39 @@ function retry_wcs_with_lower_tweak_order {
  new_sigma=$(extract_wcs_quality_field "$diag_basename" "sigma_overall_arcsec")
  new_ratio=$(extract_wcs_quality_field "$diag_basename" "worst_quadrant_to_overall_ratio")
 
- # Scalar score: sigma * ratio. Lower is better. If either side is missing
- # we keep the order-3 result so we never make things worse via a parse
- # failure.
+ # Score: sigma * ratio, which is the worst quadrant's sigma (the diagnostic
+ # defines the ratio as the worst quadrant's sigma over the overall sigma).
+ # Lower is better. On its own it is not enough: when one quadrant is broken
+ # in both solutions its sigma saturates near the matching radius and the
+ # comparison is decided by noise, while the rest of the frame can get much
+ # worse. Her-09-Q1b1x1 frames of 2026-10-06 and 2026-10-08 kept re-solves
+ # whose worst quadrant went 27.70->26.97 and 27.55->27.48 arcsec while the
+ # overall sigma went 5.93->14.31 and 5.93->15.19 and a quadrant that had
+ # been 3.5 arcsec became 18-20 arcsec. So a re-solve that more than doubles
+ # the overall sigma is refused too, unless that sigma is still inside the
+ # floor. Over the 230 retry decisions of 2026-09-01..10-08 no other kept
+ # re-solve raised the overall sigma by more than 1.34x.
+ # If either side is missing we keep the order-3 result so we never make
+ # things worse via a parse failure.
  # Note: avoid awk variable name `or` -- it collides with gawk's builtin.
- local keep_retry
- keep_retry=$(awk -v ns="$new_sigma" -v nr="$new_ratio" \
-                  -v cur_s="$current_sigma" -v cur_r="$current_ratio" '
+ local retry_verdict old_worst_quadrant_sigma new_worst_quadrant_sigma
+ retry_verdict=$(awk -v ns="$new_sigma" -v nr="$new_ratio" \
+                     -v cur_s="$current_sigma" -v cur_r="$current_ratio" \
+                     -v f="$sigma_floor_arcsec" '
    BEGIN {
-    if (ns == "" || nr == "" || cur_s == "" || cur_r == "") { print 0; exit }
+    # a NaN would read as 0 and look like a perfect score
+    if (ns !~ /^[0-9]+([.][0-9]*)?$/ || nr !~ /^[0-9]+([.][0-9]*)?$/ || cur_s !~ /^[0-9]+([.][0-9]*)?$/ || cur_r !~ /^[0-9]+([.][0-9]*)?$/) { print "no_diagnostic"; exit }
     new_score= (ns+0) * (nr+0)
     old_score= (cur_s+0) * (cur_r+0)
-    print (new_score < old_score) ? 1 : 0
+    if (new_score >= old_score) { print "worst_quadrant_not_lower"; exit }
+    if (ns+0 >= 2.0 * (cur_s+0) && !(f != "" && f+0 > 0 && ns+0 <= f+0)) { print "overall_sigma_doubled"; exit }
+    print "keep"
    }')
+ old_worst_quadrant_sigma=$(awk -v s="$current_sigma" -v r="$current_ratio" 'BEGIN { if (s != "" && r != "") printf "%.2f", s * r; else printf "N/A" }')
+ new_worst_quadrant_sigma=$(awk -v s="$new_sigma" -v r="$new_ratio" 'BEGIN { if (s != "" && r != "") printf "%.2f", s * r; else printf "N/A" }')
 
- if [ "$keep_retry" = 1 ]; then
-  echo "WCS_QUALITY_RETRY: --tweak-order 2 improved $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma}, ratio ${current_ratio}->${new_ratio}; keeping retry result" | tee -a transient_factory_test31.txt
+ if [ "$retry_verdict" = keep ]; then
+  echo "WCS_QUALITY_RETRY: --tweak-order 2 lowered the worst-quadrant sigma of $image_label ($diag_basename) from $old_worst_quadrant_sigma to $new_worst_quadrant_sigma arcsec (overall sigma ${current_sigma}->${new_sigma} arcsec, ratio ${current_ratio}->${new_ratio}); keeping retry result" | tee -a transient_factory_test31.txt
   # The brightstar pass cached the order-3 WCS to local_wcs_cache/ BEFORE
   # this retry ran (see "Saving ... to local_wcs_cache/" upstream). The next
   # SExtractor pass repopulates wcs_<image>.fts in cwd as a symlink into
@@ -1403,7 +1457,16 @@ function retry_wcs_with_lower_tweak_order {
   if [ -n "$new_sigma" ] && [ "$new_sigma" = "$current_sigma" ] && [ "$new_ratio" = "$current_ratio" ];then
    echo "WCS_QUALITY_RETRY: the retry reproduced the identical solution for $image_label ($diag_basename) - the plate solve is deterministic for this image and the tweak order is not the problem (suspect a marginal quad match; see the silently-failed-tweak guard in util/wcs_image_calibration.sh)" | tee -a transient_factory_test31.txt
   fi
-  echo "WCS_QUALITY_RETRY: --tweak-order 2 did NOT improve $image_label ($diag_basename): sigma ${current_sigma}->${new_sigma:-N/A}, ratio ${current_ratio}->${new_ratio:-N/A}; reverting to order 3" | tee -a transient_factory_test31.txt
+  local retry_rejection_reason
+  case "$retry_verdict" in
+   overall_sigma_doubled)
+    retry_rejection_reason="the worst-quadrant sigma went $old_worst_quadrant_sigma->$new_worst_quadrant_sigma arcsec but the overall sigma more than doubled, ${current_sigma}->${new_sigma} arcsec" ;;
+   worst_quadrant_not_lower)
+    retry_rejection_reason="worst-quadrant sigma $old_worst_quadrant_sigma->$new_worst_quadrant_sigma arcsec, overall sigma ${current_sigma}->${new_sigma} arcsec" ;;
+   *)
+    retry_rejection_reason="no usable diagnostic for the re-solve (overall sigma ${current_sigma}->${new_sigma:-N/A} arcsec)" ;;
+  esac
+  echo "WCS_QUALITY_RETRY: --tweak-order 2 did NOT improve $image_label ($diag_basename): $retry_rejection_reason, ratio ${current_ratio}->${new_ratio:-N/A}; reverting to order 3" | tee -a transient_factory_test31.txt
   for f in "$wcs_basename" "$wcs_basename".wcscat "$wcs_basename".wcscat.ucac5 "$wcs_basename".wcscat.ds9.reg "$wcs_basename".wcscat.astrometric_residuals ; do
    if [ -f "$backup_dir/$(basename "$f")" ]; then
     cp -p "$backup_dir/$(basename "$f")" "$f"
@@ -4229,6 +4292,9 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     # retry_wcs_with_lower_tweak_order now re-states the diagnostic of the
     # solution it restores.
     report_new_image_quadrant_count_changes "$NEW1_DIAG_NAME" "$NEW2_DIAG_NAME"
+    # ... and the absolute check, which also catches two equally bad images
+    report_new_image_bad_worst_quadrant "$NEW1_DIAG_NAME" "1st new image" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
+    report_new_image_bad_worst_quadrant "$NEW2_DIAG_NAME" "2nd new image" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
 
     warn_if_wcs_quality_worse_than_reference "1st new image" "$NEW1_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"
     warn_if_wcs_quality_worse_than_reference "2nd new image" "$NEW2_SIGMA" "$REF_SIGMA_AVG" "sigma_overall_arcsec"

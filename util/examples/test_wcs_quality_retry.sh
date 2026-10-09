@@ -27,7 +27,7 @@ trap 'rm -rf -- "$TEST_DIR"' EXIT
 
 # Extract only the self-contained functions under test; sourcing the pipeline
 # would run it.
-for FUNCTION_NAME in image_basename_for_wcs_quality_diag extract_wcs_quality_field retry_wcs_with_lower_tweak_order ; do
+for FUNCTION_NAME in image_basename_for_wcs_quality_diag extract_wcs_quality_field retry_wcs_with_lower_tweak_order report_new_image_bad_worst_quadrant ; do
  awk -v want="$FUNCTION_NAME" '
   $0 ~ ("^function " want "[[:space:]]*\\{") { copying=1 }
   copying { print }
@@ -92,8 +92,9 @@ finish_case
 
 # The floor must NEVER suppress a blown-up worst quadrant. These are the real
 # 2026-09-13 numbers of two images whose overall sigma was inside the floor but
-# whose worst quadrant was 4.4x and 12.6x the frame average; both were repaired
-# by the retry, so both must still be retried.
+# whose worst quadrant was 12.6x and 4.4x the frame average. The first was
+# repaired by the retry; the second traded a 14% lower worst quadrant (10 stars)
+# for three quadrants 27-36% worse. Both must still be retried.
 start_case floor_does_not_hide_a_bad_quadrant 1.198 12.595 0.391 1.103
 retry_wcs_with_lower_tweak_order "$IMAGE" "1st new image" 1.198 12.595 0.314 1.089 2.0 2 1.47
 grep -q 'flagged: sigma=' transient_factory_test31.txt || fail 'a 12.6x worst-quadrant ratio was suppressed by the sigma floor'
@@ -155,6 +156,51 @@ grep -qx 'order-3 WCS' "wcs_$IMAGE" || fail 'the order-3 WCS was not restored'
 [ "$(extract_wcs_quality_field "$IMAGE" sigma_overall_arcsec)" = 3.000 ] || fail 'the kept diagnostic was not restated'
 finish_case
 
+# Both solutions broken in the same quadrants: the worst-quadrant sigma
+# saturates near the matching radius (27.55 vs 27.48 arcsec) and the score
+# comparison is noise, while the re-solve turned a 3.5 arcsec quadrant into a
+# 19.9 arcsec one. Real Her-09-Q1b1x1 numbers of 2026-10-08 (frame 0113) and
+# 2026-10-06 (frame 0104); the later pass confirmed the re-solve was worse.
+for broken_case in '5.925 4.650 15.191 1.809' '5.926 4.675 14.307 1.885' ; do
+ set -- $broken_case
+ start_case "both_broken_sigma_doubled_$1_$3" "$1" "$2" "$3" "$4"
+ retry_wcs_with_lower_tweak_order "$IMAGE" "2nd new image" "$1" "$2" 0.4315 1.193 2.0 2 1.48 5.92
+ grep -q 'did NOT improve' transient_factory_test31.txt || fail "a re-solve that more than doubled the overall sigma ($1->$3) was kept"
+ grep -q 'overall sigma more than doubled' transient_factory_test31.txt || fail 'the reason for the rejection was not logged'
+ grep -qx 'order-3 WCS' "wcs_$IMAGE" || fail 'the order-3 WCS was not restored'
+ [ "$(extract_wcs_quality_field "$IMAGE" sigma_overall_arcsec)" = "$1" ] || fail 'the kept diagnostic was not restated'
+ finish_case
+done
+
+# Genuine repairs that RAISE the overall sigma must still be kept: more stars
+# get matched in the repaired region. Real For-04-Q1 (2026-09-21 0254: all four
+# quadrants improved, sigma 3.027->4.067; 2026-09-01 0454), Lyn-02-Q1 (2026-10-07
+# 0345) and For-04-Q1 (2026-10-01 0165) numbers.
+for repair_case in '3.027 6.391 4.067 4.560 0.283 1.067' '4.507 5.148 4.193 5.503 0.283 1.067' '5.605 4.893 2.471 10.835 0.361 1.237' '3.479 9.918 3.771 5.648 0.283 1.067' ; do
+ set -- $repair_case
+ start_case "repair_kept_$1_$3" "$1" "$2" "$3" "$4"
+ retry_wcs_with_lower_tweak_order "$IMAGE" "1st new image" "$1" "$2" "$5" "$6" 2.0 2 1.48 5.92
+ grep -q 'keeping retry result' transient_factory_test31.txt || fail "the repair $1/$2 -> $3/$4 was not kept"
+ grep -qx 'order-2 WCS' "wcs_$IMAGE" || fail 'the retried WCS was not kept on disk'
+ finish_case
+done
+
+# A re-solve that doubles a sigma which is still inside the floor is not a
+# reason to refuse it (synthetic: worst quadrant 4.00 -> 0.99 arcsec).
+start_case doubled_sigma_inside_floor_is_kept 0.400 10.000 0.900 1.100
+retry_wcs_with_lower_tweak_order "$IMAGE" "1st new image" 0.400 10.000 0.314 1.089 2.0 2 1.47 5.87
+grep -q 'keeping retry result' transient_factory_test31.txt || fail 'a re-solve inside the floor was refused for doubling its sigma'
+finish_case
+
+# A re-solve whose diagnostic could not be computed (NaN) is no better: awk
+# would read NaN as 0, a perfect score, and keep it.
+start_case nan_retry_diagnostic_reverts 5.925 4.650 NaN NaN
+retry_wcs_with_lower_tweak_order "$IMAGE" "2nd new image" 5.925 4.650 0.4315 1.193 2.0 2 1.48 5.92
+grep -q 'keeping retry result' transient_factory_test31.txt && fail 'a NaN re-solve diagnostic was kept'
+grep -q 'no usable diagnostic for the re-solve' transient_factory_test31.txt || fail 'the NaN rejection was not explained'
+grep -qx 'order-3 WCS' "wcs_$IMAGE" || fail 'the order-3 WCS was not restored'
+finish_case
+
 # Nothing at all happens when neither metric exceeds the threshold.
 start_case below_threshold_no_retry 0.55 1.10 '' ''
 retry_wcs_with_lower_tweak_order "$IMAGE" "1st new image" 0.55 1.10 0.50 1.05 2.0 2 0.10
@@ -210,6 +256,41 @@ start_case solver_rejection_needs_a_limit 0.55 1.10 '' ''
 printf 'SIP_REFIT_REJECTED: file=%s worst_region_rms_kept=24.537 arcsec robust_rms_kept=18.160 arcsec matched=3216\n' "$IMAGE" >> transient_factory_test31.txt
 retry_wcs_with_lower_tweak_order "$IMAGE" "1st new image" 0.55 1.10 0.50 1.05 2.0 2 1.47
 grep -q 'flagged' transient_factory_test31.txt && fail 'the solver rejection fired without a limit'
+finish_case
+
+# The absolute check after the retries. Real Her-09-Q1b1x1 2026-10-08 frame 0112
+# numbers: both new images ended about 27 arcsec off in their worst quadrant,
+# which the count comparison between the two images cannot see.
+start_case bad_final_worst_quadrant_is_an_error 5.983 4.410 '' ''
+CAMERA_SETTINGS=TTUQ1b1x1 report_new_image_bad_worst_quadrant "$IMAGE" "1st new image" 5.92
+grep -q '^ERROR: bad plate solution of the 1st new image' transient_factory_test31.txt || fail 'a 26.4 arcsec worst quadrant raised no ERROR'
+grep -q '^ERROR: bad plate solution' transient_factory.log || fail 'the ERROR did not reach transient_factory.log'
+finish_case
+
+# A good solution (the repaired Lac-01-Q2b1x1 2026-09-13 frame, 0.574 arcsec
+# worst quadrant) and the worst quadrant of an ordinary frame stay silent.
+for good_case in '0.516 1.113' '0.540 1.155' ; do
+ set -- $good_case
+ start_case "good_final_worst_quadrant_is_silent_$1" "$1" "$2" '' ''
+ CAMERA_SETTINGS=TTUQ2b1x1 report_new_image_bad_worst_quadrant "$IMAGE" "2nd new image" 5.92
+ grep -q 'ERROR' transient_factory_test31.txt && fail "a $1 arcsec solution raised an ERROR"
+ finish_case
+done
+
+# Other cameras are not judged: the limit was calibrated on NMW-TTU data only.
+start_case bad_final_worst_quadrant_other_camera_silent 5.983 4.410 '' ''
+CAMERA_SETTINGS=STL-11000M report_new_image_bad_worst_quadrant "$IMAGE" "1st new image" 5.92
+grep -q 'ERROR' transient_factory_test31.txt && fail 'the check fired for a camera it was not calibrated on'
+finish_case
+
+# A NaN diagnostic or a missing limit is not something to judge.
+start_case nan_diagnostic_is_silent NaN NaN '' ''
+CAMERA_SETTINGS=TTUQ1b1x1 report_new_image_bad_worst_quadrant "$IMAGE" "1st new image" 5.92
+grep -q 'ERROR' transient_factory_test31.txt && fail 'a NaN diagnostic raised an ERROR'
+finish_case
+start_case missing_limit_is_silent 5.983 4.410 '' ''
+CAMERA_SETTINGS=TTUQ1b1x1 report_new_image_bad_worst_quadrant "$IMAGE" "1st new image" ''
+grep -q 'ERROR' transient_factory_test31.txt && fail 'the check fired without a limit'
 finish_case
 
 echo "All $N_CASES WCS-quality retry tests passed."

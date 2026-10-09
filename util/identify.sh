@@ -348,6 +348,164 @@ function star_list_verify_retweak {
  return 0
 }
 
+# Re-solve a wide-field star list with the search restricted to a small
+# circle around the centre of an existing solution - the second repair of a
+# TAN-only solution (see the silently-failed-tweak guard below), tried when
+# the star-list re-tweak cannot fix it.
+#
+# The hinted second solve-field pass searches a circle as wide as the field
+# itself (--radius $FOV_MAJORAXIS_DEG). On a sparse or hazy wide-field frame
+# that lets solve-field accept a marginal quad from a coarse index, anchored
+# near the edge of the frame and verified by a handful of index stars; its SIP
+# tweak fails, and the star-list re-tweak fails with it because the solution
+# verifies against too few index stars anywhere. A circle of an eighth of the
+# field around the centre leaves no room for such quads, and the same pass
+# then finds a fine-index quad verified by hundreds of index stars. With a
+# circle this small the 100 brightest objects of a 15-degree field may hold
+# too few stars inside it for a quad, so the search goes on in steps down to
+# the 500th object (that failed 5 of 16 ordinary NMW-TexasTech frames at
+# --depth 100; with the steps all of them solved, in under 2 s).
+# Test cases: NMW-TexasTech Her-09-Q1b1x1 frames 0112 and 0113 of 2026-10-08
+# and 0104 of 2026-10-06. The hinted pass took index-4115 quads (340-480
+# arcmin) with 8 index stars - TAN-only, rotated by 1.5 deg, a median error
+# of 10 arcsec - and the star-list re-tweak reached only 5 index stars; this
+# re-solve found index-4113 and index-4112 quads with 189-366 index stars and
+# a raw solution good to 1.0-1.4 arcsec (median, against UCAC5).
+# Only a strong match is accepted (--odds-to-solve 1e50, a log-odds of 115,
+# where the default accepts 20.7): a marginal match inside the small circle
+# would be no better than the one being replaced. Those good solutions scored
+# log-odds 1160-2200, the marginal index-4115 quads 32-34.
+# Sets SMALL_RADIUS_RESOLVE_RETWEAKED to 1 when the result needed the
+# star-list re-tweak to get its SIP polynomial, to 0 otherwise.
+# Disable with VAST_SKIP_SMALL_RADIUS_RESOLVE=1.
+#
+# $1 - the star list (xyls) the solution was made from
+# $2 - a FITS image carrying the solution; its centre and pixel scale seed the search
+# $3 - name for the output WCS header file (must end with .wcs)
+# Returns 0 if $3 was written and carries a SIP polynomial, 1 otherwise.
+function small_radius_hinted_resolve {
+ local RESOLVE_XYLS="$1"
+ local RESOLVE_SEED_IMAGE="$2"
+ local RESOLVE_OUTPUT_WCS="$3"
+ local RESOLVE_OUTBASE RESOLVE_IMAGE_SIZE RESOLVE_FOV_INFO RESOLVE_RADEC RESOLVE_FOV_MAJORAXIS_DEG RESOLVE_RADIUS_DEG
+ local RESOLVE_SCALE RESOLVE_SCALE_LOW RESOLVE_SCALE_HIGH RESOLVE_QUAD_OPTION RESOLVE_TMP_FILE RESOLVE_SIP_ORDER RESOLVE_CD_SCALE
+ SMALL_RADIUS_RESOLVE_RETWEAKED=0
+ if [ "$VAST_SKIP_SMALL_RADIUS_RESOLVE" = "1" ];then
+  echo "small_radius_hinted_resolve(): disabled by VAST_SKIP_SMALL_RADIUS_RESOLVE=1"
+  return 1
+ fi
+ if ! command -v solve-field > /dev/null 2>&1 ;then
+  echo "small_radius_hinted_resolve(): solve-field is not available locally - cannot re-solve"
+  return 1
+ fi
+ if [ ! -s "$RESOLVE_XYLS" ] || [ ! -s "$RESOLVE_SEED_IMAGE" ];then
+  echo "small_radius_hinted_resolve(): the star list $RESOLVE_XYLS or the image $RESOLVE_SEED_IMAGE is missing"
+  return 1
+ fi
+ RESOLVE_FOV_INFO=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh "$RESOLVE_SEED_IMAGE" 2>/dev/null)
+ RESOLVE_RADEC=$(echo "$RESOLVE_FOV_INFO" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}')
+ RESOLVE_FOV_MAJORAXIS_DEG=$(echo "$RESOLVE_FOV_INFO" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g" | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }')
+ RESOLVE_SCALE=$(echo "$RESOLVE_FOV_INFO" | grep 'Image scale:' | awk '{print $3}' | awk -F '"' '{print $1}')
+ if [ -z "$RESOLVE_RADEC" ] || [ -z "$RESOLVE_FOV_MAJORAXIS_DEG" ] || [ -z "$RESOLVE_SCALE" ];then
+  echo "small_radius_hinted_resolve(): cannot read the centre, size and pixel scale of the solution in $RESOLVE_SEED_IMAGE"
+  return 1
+ fi
+ RESOLVE_RADIUS_DEG=$(echo "$RESOLVE_FOV_MAJORAXIS_DEG" | awk '{printf "%.2f", $1/8.0}')
+ # The "Image scale" above is an edge length over the image width, which for
+ # a TAN solution anchored at a quad near the edge of a wide field comes out a
+ # few per cent low (5.82 against 5.99 arcsec/pix on Her-09-Q1b1x1). The CD
+ # matrix gives the scale at the reference point; use it when the header has
+ # one, and search +-10% around it.
+ RESOLVE_CD_SCALE=$("$VAST_PATH"util/listhead "$RESOLVE_SEED_IMAGE" 2>/dev/null | awk -F'[= /]+' '$1=="CD1_1"{a=$2} $1=="CD1_2"{b=$2} $1=="CD2_1"{c=$2} $1=="CD2_2"{d=$2} END{det=a*d-b*c; if (det<0) det=-det; if (det>0) printf "%f", sqrt(det)*3600.0}')
+ if [ -n "$RESOLVE_CD_SCALE" ];then
+  RESOLVE_SCALE="$RESOLVE_CD_SCALE"
+ fi
+ RESOLVE_SCALE_LOW=$(echo "$RESOLVE_SCALE" | awk '{printf "%f",0.90*$1}')
+ RESOLVE_SCALE_HIGH=$(echo "$RESOLVE_SCALE" | awk '{printf "%f",1.10*$1}')
+ # the quad options of the hinted second pass, which this repeats
+ RESOLVE_QUAD_OPTION=""
+ if [ "$(echo "$RESOLVE_FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')" -eq 1 ];then
+  RESOLVE_QUAD_OPTION="--quad-size-max 0.5 --uniformize 0"
+ fi
+ # Work files of their own (not the output name, which the re-tweak tried
+ # just before uses as its work base): with a timeout that kills only the
+ # solve-field process (busybox, lib/timeout) an engine left over from a
+ # timed-out run could otherwise write into this run's files. --cpulimit makes
+ # such an engine stop by itself as well.
+ RESOLVE_OUTBASE="${RESOLVE_OUTPUT_WCS%.wcs}_resolve"
+ RESOLVE_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE")
+ rm -f "$RESOLVE_OUTPUT_WCS" "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE".solved "$RESOLVE_OUTBASE"_retweak.wcs
+ echo "Re-solving with the search restricted to $RESOLVE_RADIUS_DEG deg around the solution centre: solve-field $RESOLVE_RADEC --radius $RESOLVE_RADIUS_DEG --tweak-order $VAST_TWEAK_ORDER"
+ # The same 120 s timeout as the re-tweak caps the cost of a failure (240 s
+ # with the re-tweak below); what happens then is up to the caller.
+ $TIMEOUT_COMMAND 120 solve-field "$RESOLVE_XYLS" $RESOLVE_IMAGE_SIZE $RESOLVE_QUAD_OPTION --crpix-center $RESOLVE_RADEC --radius "$RESOLVE_RADIUS_DEG" --scale-low "$RESOLVE_SCALE_LOW" --scale-high "$RESOLVE_SCALE_HIGH" --scale-units arcsecperpix --objs 10000 --depth 10,20,30,40,50,100,200,300,500 --odds-to-solve 1e50 --cpulimit 120 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order "$VAST_TWEAK_ORDER" --out "$RESOLVE_OUTBASE"
+ # solve-field writes its usual companion files next to the WCS header
+ for RESOLVE_TMP_FILE in "$RESOLVE_OUTBASE".axy "$RESOLVE_OUTBASE".corr "$RESOLVE_OUTBASE".match "$RESOLVE_OUTBASE".rdls "$RESOLVE_OUTBASE"-indx.xyls ;do
+  if [ -f "$RESOLVE_TMP_FILE" ];then
+   rm -f "$RESOLVE_TMP_FILE"
+  fi
+ done
+ if [ ! -s "$RESOLVE_OUTBASE".solved ] || [ ! -s "$RESOLVE_OUTBASE".wcs ];then
+  echo "The small-radius re-solve did not produce a solution"
+  rm -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE".solved
+  return 1
+ fi
+ rm -f "$RESOLVE_OUTBASE".solved
+ RESOLVE_SIP_ORDER=$("$VAST_PATH"util/listhead "$RESOLVE_OUTBASE".wcs 2>/dev/null | awk -F'[= /]+' '$1=="A_ORDER"{print $2; exit}')
+ if [ -z "$RESOLVE_SIP_ORDER" ];then
+  # A fine-index quad with a failed tweak is still a far better start for
+  # the re-tweak than the marginal coarse quad was.
+  echo "The small-radius re-solve produced a solution without SIP terms - re-tweaking it"
+  if star_list_verify_retweak "$RESOLVE_XYLS" "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE"_retweak.wcs ;then
+   mv -f "$RESOLVE_OUTBASE"_retweak.wcs "$RESOLVE_OUTPUT_WCS"
+   rm -f "$RESOLVE_OUTBASE".wcs
+   SMALL_RADIUS_RESOLVE_RETWEAKED=1
+   echo "The small-radius re-solve, re-tweaked, produced a solution with a SIP polynomial"
+   return 0
+  fi
+  rm -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE"_retweak.wcs
+  return 1
+ fi
+ mv -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTPUT_WCS"
+ echo "The small-radius re-solve produced a solution with a SIP polynomial of order $RESOLVE_SIP_ORDER"
+ return 0
+}
+
+# Repair a wide-field solution whose SIP tweak silently failed (see the guard
+# below): the star-list verify re-tweak first, then the small-radius re-solve.
+# Sets TAN_ONLY_REPAIR_DESCRIPTION (for the log) and TAN_ONLY_REPAIR_TAG (for
+# the VAST004 header card) to the repair that worked.
+# $1 - the star list (xyls) the solution was made from
+# $2 - solve-field WCS header file holding the TAN-only solution
+# $3 - a FITS image carrying that solution
+# $4 - name for the output WCS header file (must end with .wcs)
+# $5 - optional: "no_resolve" skips the small-radius re-solve
+# Returns 0 if $4 was written and carries a SIP polynomial, 1 otherwise.
+function repair_tan_only_solution {
+ TAN_ONLY_REPAIR_DESCRIPTION=""
+ TAN_ONLY_REPAIR_TAG=""
+ if star_list_verify_retweak "$1" "$2" "$4" ;then
+  TAN_ONLY_REPAIR_DESCRIPTION="star-list re-tweak"
+  TAN_ONLY_REPAIR_TAG="verify_retweak"
+  return 0
+ fi
+ if [ "$5" = "no_resolve" ];then
+  echo "Not repeating the small-radius re-solve, which already failed on this star list"
+  return 1
+ fi
+ if small_radius_hinted_resolve "$1" "$3" "$4" ;then
+  if [ "$SMALL_RADIUS_RESOLVE_RETWEAKED" = "1" ];then
+   TAN_ONLY_REPAIR_DESCRIPTION="small-radius re-solve and star-list re-tweak"
+   TAN_ONLY_REPAIR_TAG="small_radius_resolve_retweak"
+  else
+   TAN_ONLY_REPAIR_DESCRIPTION="small-radius re-solve"
+   TAN_ONLY_REPAIR_TAG="small_radius_resolve"
+  fi
+  return 0
+ fi
+ return 1
+}
+
 # Function to check remote server availability and set up remote astrometry
 function setup_remote_astrometry {
  echo "Setting up remote astrometry servers..." 1>&2
@@ -517,6 +675,13 @@ cd "$VAST_PATH" || exit 1
 # Set the correct path to 'timeout'
 TIMEOUT_COMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 export TIMEOUT_COMMAND
+
+# Set by the silently-failed-tweak guard when no repair of a TAN-only local
+# solution worked and the frame was escalated to a remote server: the local
+# solution set aside meanwhile, and whether the small-radius re-solve has
+# already been tried on this star list
+TAN_ONLY_FALLBACK_IMAGE=""
+TAN_ONLY_LOCAL_REPAIR_FAILED=0
 
 
 # Set SExtractor executable
@@ -1107,31 +1272,46 @@ fi
     # Only wide fields are affected (narrow-field TAN-only solutions are
     # fine), so reuse the same >5 deg threshold as the verify re-tweak
     # above. The cure is the star-list verify re-tweak, see
-    # star_list_verify_retweak(); only if that fails too is the solution
-    # discarded in favour of a remote plate-solve server - which, running
-    # the same solve-field on the same star list, may well return the same
-    # TAN-only solution, so the remote result is checked the same way below.
+    # star_list_verify_retweak(), and if that fails the small-radius
+    # re-solve, see small_radius_hinted_resolve(); only if both fail is the
+    # solution discarded in favour of a remote plate-solve server - which,
+    # running the same solve-field on the same star list, may well return the
+    # same TAN-only solution, so the remote result is checked the same way below.
     # Test cases: NMW-TexasTech Cas-04-Q2b1x1 frames of 2026-08-24,
-    # 2026-08-27 and 2026-09-30 (the last one is in test_vast.sh).
+    # 2026-08-27 and 2026-09-30 (the last one is in test_vast.sh; the
+    # re-tweak repairs it), Her-09-Q1b1x1 frames of 2026-10-06 and 2026-10-08
+    # (the re-tweak fails, the small-radius re-solve repairs them).
     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
     if [ $TEST -eq 1 ] && [ -s wcs_"$BASENAME_FITSFILE" ];then
      if [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
       echo "WARNING: the local solve-field solution for $BASENAME_FITSFILE carries no SIP distortion terms while --tweak-order $VAST_TWEAK_ORDER was requested: the tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
-      if star_list_verify_retweak out$$.xyls out$$.wcs out$$_verify.wcs ;then
+      if repair_tan_only_solution out$$.xyls out$$.wcs wcs_"$BASENAME_FITSFILE" out$$_verify.wcs ;then
        rm -f wcs_"$BASENAME_FITSFILE"
        "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-       echo -n "Inserting WCS header (star-list re-tweak)...  "
+       echo -n "Inserting WCS header ($TAN_ONLY_REPAIR_DESCRIPTION)...  "
        "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
        if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
-        echo " ERROR inserting the re-tweaked WCS header in $BASENAME_FITSFILE"
+        echo " ERROR inserting the repaired WCS header in $BASENAME_FITSFILE"
         rm -f wcs_"$BASENAME_FITSFILE"
        else
         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "verify_retweak / astrometry.net run"
+        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "$TAN_ONLY_REPAIR_TAG / astrometry.net run"
        fi
        rm -f out$$_verify.wcs
+      else
+       # No repair worked: take the TAN-only solution out of the way so that
+       # the test below hands the frame to a remote plate-solve server. (From
+       # ca23497b until this fix the TAN-only solution was left in place here,
+       # so a failed re-tweak never reached the remote server at all.) It is
+       # set aside rather than deleted: if no server can be reached or none
+       # solves the frame, it is put back after the loop, so the UCAC5 refit
+       # downstream still gets its chance to rescue it.
+       echo "No repair of the TAN-only solution of $BASENAME_FITSFILE succeeded (see above)"
+       TAN_ONLY_LOCAL_REPAIR_FAILED=1
+       TAN_ONLY_FALLBACK_IMAGE="out$$_tan_only_wcs.fits"
+       mv -f wcs_"$BASENAME_FITSFILE" "$TAN_ONLY_FALLBACK_IMAGE"
       fi
       if [ ! -s wcs_"$BASENAME_FITSFILE" ];then
        echo "Discarding the TAN-only solution and retrying with a remote plate-solve server."
@@ -1390,21 +1570,30 @@ Retrying..."
      # one (see the guard in the local branch above): on 2026-09-30 the
      # server returned exactly the TAN-only solution the local solve-field
      # had just been rejected for. Check it the same way. If solve-field is
-     # installed here, cure it with the star-list verify re-tweak; otherwise
-     # keep it with a warning - another server would return the same thing,
-     # and the UCAC5-based refit downstream may still rescue it.
+     # installed here, repair it as the local branch does (star-list verify
+     # re-tweak, then the small-radius re-solve); otherwise keep it with a
+     # warning - another server would return the same thing, and the
+     # UCAC5-based refit downstream may still rescue it.
      if [ -s wcs_"$BASENAME_FITSFILE" ];then
       REMOTE_FOV_MAJORAXIS_DEG=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }')
       TEST=$(echo "${REMOTE_FOV_MAJORAXIS_DEG:-0}" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
       if [ "$TEST" -eq 1 ] && [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
        echo "WARNING: the solution from $PLATE_SOLVE_SERVER for $BASENAME_FITSFILE carries no SIP distortion terms: the SIP tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
-       if star_list_verify_retweak out$$.xyls out$$.wcs out$$_verify.wcs ;then
+       # After an escalation from the local guard the small-radius re-solve
+       # has already failed on this very star list around nearly the same
+       # centre; only the re-tweak, whose starting solution is the server's,
+       # is worth repeating.
+       TAN_ONLY_REPAIR_OPTION=""
+       if [ "$TAN_ONLY_LOCAL_REPAIR_FAILED" = "1" ];then
+        TAN_ONLY_REPAIR_OPTION="no_resolve"
+       fi
+       if repair_tan_only_solution out$$.xyls out$$.wcs wcs_"$BASENAME_FITSFILE" out$$_verify.wcs $TAN_ONLY_REPAIR_OPTION ;then
         rm -f wcs_"$BASENAME_FITSFILE"
         "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-        echo -n "Inserting WCS header (star-list re-tweak of the remote solution)...  "
+        echo -n "Inserting WCS header ($TAN_ONLY_REPAIR_DESCRIPTION of the remote solution)...  "
         "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
         if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
-         echo " ERROR inserting the re-tweaked WCS header in $BASENAME_FITSFILE - keeping the solution from $PLATE_SOLVE_SERVER as received"
+         echo " ERROR inserting the repaired WCS header in $BASENAME_FITSFILE - keeping the solution from $PLATE_SOLVE_SERVER as received"
          rm -f wcs_"$BASENAME_FITSFILE"
          "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
          "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
@@ -1412,7 +1601,7 @@ Retrying..."
          "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
          "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
          "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "verify_retweak_remote / astrometry.net run"
+         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "${TAN_ONLY_REPAIR_TAG}_remote / astrometry.net run"
         fi
         rm -f out$$_verify.wcs
        else
@@ -1483,6 +1672,21 @@ Retrying..."
  fi
  
  done # for TRIAL_FIELD_OF_VIEW_ARCMIN in ...
+
+ # The local TAN-only solution the silently-failed-tweak guard set aside for
+ # a remote solve: if that produced nothing (no server reachable, or the
+ # server could not solve the frame), a TAN-only solution is still better
+ # than none - put it back, as the guard behaved before the escalation was
+ # restored, and clear the error the failed remote attempt left.
+ if [ -n "$TAN_ONLY_FALLBACK_IMAGE" ] && [ -s "$TAN_ONLY_FALLBACK_IMAGE" ];then
+  if [ ! -s wcs_"$BASENAME_FITSFILE" ];then
+   echo "WARNING: no remote plate-solve server returned a solution for $BASENAME_FITSFILE - keeping the local TAN-only solution; the UCAC5-based refit will have to rescue it"
+   mv -f "$TAN_ONLY_FALLBACK_IMAGE" wcs_"$BASENAME_FITSFILE"
+   ERROR_STATUS=0
+  else
+   rm -f "$TAN_ONLY_FALLBACK_IMAGE"
+  fi
+ fi
 
  ########## Special clean-up for multiple tries with a remote server
  if [ -f out$$.xyls ];then

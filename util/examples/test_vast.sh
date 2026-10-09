@@ -15812,7 +15812,7 @@ if [ -s ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test/Cas-04-Q2b1x1_20
  fi
  if [ $TEST_PASSED -ne 1 ];then
   # which of the repairs ran, and what the solver saw
-  CAS04Q2TANONLY_DEBUG=$(grep -E "carries no SIP|star-list re-tweak|Too few correspondences|solved with index|log-odds ratio|VAST004|Discarding the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG" cas04q2tanonly_solve$$.log | tail -n 40)
+  CAS04Q2TANONLY_DEBUG=$(grep -E "carries no SIP|star-list re-tweak|small-radius re-solve|No repair of the TAN-only|Too few correspondences|solved with index|log-odds ratio|VAST004|Discarding the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG" cas04q2tanonly_solve$$.log | tail -n 40)
   DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### CAS04Q2TANONLY ######
 $CAS04Q2TANONLY_DEBUG
