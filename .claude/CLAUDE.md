@@ -19,7 +19,7 @@ Compatibility rule: changes in VaST must not break compatibility with `unmw` or 
 ## Git Workflow
 
 - Do not make git commits yourself. After successfully modifying files, run `git add` on the changed files, then suggest a one-line very short commit message for the user to use. Commit messages must ALWAYS be a single line - no multi-line bodies, no blank line + paragraph; if a longer rationale is needed, put it in the chat reply, not the commit message.
-- `.claude/CLAUDE.md`, `.claude/notes.md` and the design docs in `.claude/` are tracked in git so Claude can work on any machine that clones the repository. Stage them when they change. Never stage `.claude/settings.local.json`, `.claude/projects/` or editor backup files (`*~`) - they are per-machine.
+- Keep `.claude/CLAUDE.md`, the consolidated maintenance notes in `.claude/notes.md`, and existing permanent design docs up to date; stage them when they change. Keep temporary investigation reports, session notes, deployment checklists and handoff documents outside the repository tree. Do not add such temporary documents to git. Never stage `.claude/settings.local.json`, `.claude/projects/` or editor backup files (`*~`) - they are per-machine. Stage changed files by explicit path.
 
 ## Portability Requirements
 

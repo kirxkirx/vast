@@ -8,6 +8,9 @@ Update this file as you learn new things.
 - Tracked in git from the `.claude/` folder: `CLAUDE.md`, `notes.md` (this file) and the design docs
   `airmass_zeropoint_forced_photometry_design.md` and `forced_photometry_reference_filter_design.md`
   (tracked scripts cite them by their `.claude/` path, so do not move them). Stage them when they change.
+- Keep temporary investigation reports, session notes, deployment checklists and handoff documents
+  outside the repository tree; never stage or commit them. Keep durable lessons in this consolidated
+  maintenance-notes file instead (user preference, 2026-10-10).
 - **Never stage** `.claude/settings.local.json`, `.claude/projects/` or editor backup files (`*~`) -
   they are per-machine and are listed in `.gitignore`.
 - After making changes, use `git add` only on the source code files and docs that were modified
@@ -944,8 +947,8 @@ Update this file as you learn new things.
   quadrants) and the field solves to 0.3 arcsec on other nights. The same pass with --radius 2 found
   index-4113/4112 quads with 189-366 index stars (raw 1.0-1.4 arcsec vs UCAC5) on all three bad
   frames (0112/0113 of 10-08, 0104 of 10-06), but failed to solve 5 of 16 ordinary frames at
-  --depth 100 - usable only as a fallback. The TAN-only guard has also not escalated to the remote
-  solver since ca23497b (a failed re-tweak leaves the TAN-only wcs_ file in place).
+  --depth 100 - usable only as a fallback. At that point the TAN-only guard had not escalated to
+  the remote solver since ca23497b; 1a8c12b2 fixes that and adds the stepped-depth fallback below.
 - Reading report pages: re.sub('<[^>]*>','',...) eats text when a log line contains a bare '<'
   (e.g. "(<100)") - it runs to the next '>' such as the "->" in the decision line. Strip real tag
   names only.
@@ -978,3 +981,43 @@ Update this file as you learn new things.
   the small-radius re-solve; the factory's keep rule reverts such a retry (overall sigma doubled).
   The re-tweak's printed log-odds is the pre-tune-up value (the good Cas-04-Q2 0094 re-tweak also
   prints 10 matches), so it cannot be used as an acceptance cut as it stands.
+
+## Astrometry follow-up and regression coverage (2026-10-09)
+- The settle rule, retry keep rule and TAN-only repair are committed as 1a8c12b2.
+  /var/www/vast moved from d5bdb823 to 1a8c12b2 during this follow-up; its sources
+  match the commit and its binary contains the new settle-rule messages. Claude's two project memories
+  and their index entries must reflect committed status, not "not applied".
+- util/examples/test_vast.sh now contains CYG05Q1SETTLE and HER09Q1TANONLY beside
+  CAS04Q2TANONLY. Both real-frame archives include README.txt and SHA256SUMS;
+  their names are NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test.tar.bz2 and
+  NMW-TexasTech__Her-09-Q1b1x1_small_radius_test.tar.bz2. Prepared copies are in
+  /tmp/vast_astrometry_regression_20261009. Publish to tau's
+  /var/www/tau.kirx.net/htdocs/vast_test_data/ (apache:apache, mode 0644) and
+  scan's public_html/data/vast_tests/ as kirx; verify both public downloads
+  against SHA256SUMS_astrometry_20261009 before running the full system test.
+  Cyg replays the genuine pre-refit WCS/star list and checks the SAVED header;
+  scatter alone passes the old bad solution. Her starts from the unsolved image.
+  No reference-catalog fixtures are used. The user runs the full system test.
+- Forced remote solving already allowed local star-list repair in ca23497b;
+  1a8c12b2 adds a local small-radius repair of remote TAN-only results. Neither
+  VAST_SKIP_SMALL_RADIUS_RESOLVE nor VAST_SKIP_IMAGE_BASED_RETWEAK alone emulates
+  a client without local Astrometry.net.
+- The 120-second image-based verify cost occurs in direct identify.sh calls,
+  including the factory's initial parallel calibration; solve_plate_with_UCAC5
+  skips it by default. --verify can fall through to a blind search after failed
+  verification. The targeted TAN-only guard runs after that image-based pass.
+- Installed Astrometry.net writes post-tweak LOGODDS/NMATCH to .match and support
+  positions/weights to .corr. These are useful for investigating weak order-2
+  re-tweaks; the current helper deletes them before judging success. Do not use
+  the console's pre-tweak match count as a strength cut.
+- Unmatched stars' stale catalog_mag is exported without a status flag in
+  .wcscat.ucac5 columns 11/12. The legacy magnitude-calibration branch reads those
+  columns; astrometric diagnostics themselves filter by the match flag. Saved
+  patched 0078/0079 outputs have 192/203 such nonzero magnitudes on unmatched
+  detections. This does not establish an effect on the TTU Tycho-2 path.
+- Other proposed fixes concern pair-selection asymmetry after accepted/rejected
+  refits and remote/local failure-state inconsistencies. No solver behavior was
+  changed during this follow-up. Temporary detailed reports and deployment
+  instructions are outside git in /tmp/vast_cyg04_data/handoff/; preserved
+  evidence is /tmp/vast_cyg04_data/evidence. The housekeeping README in handoff/
+  explains the removed disposable builds.
