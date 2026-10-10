@@ -1021,3 +1021,39 @@ Update this file as you learn new things.
   instructions are outside git in /tmp/vast_cyg04_data/handoff/; preserved
   evidence is /tmp/vast_cyg04_data/evidence. The housekeeping README in handoff/
   explains the removed disposable builds.
+
+## Deeper astrometry review (2026-10-10)
+- insert_wcs_header reports final CFITSIO write/close errors but returns 0.
+  Reproduced with the existing binary under a child-only file-size limit:
+  status 106 (write error), truncated output, "All done!", exit 0. Fix the writer
+  as well as shell checks. The C SIP refit also only warns on header-write or
+  .wcscat regeneration failure; write_wcs_catalog cannot propagate write errors.
+  These can leave saved outputs inconsistent with successful in-memory fits.
+- Short probes of the current repair helpers show success after a simulated
+  solver exit 124 with output artifacts, acceptance of A_ORDER=0 or missing
+  B_ORDER, and success with no output after an injected failed rename. Preserve
+  the old usable solution until replacement succeeds; check status, header and
+  moves, and make factory calibration waits consume every child exit status.
+- Astrometry.net's fresh .wcs COMMENT cards contain post-tweak "log odds:" and
+  "nmatch:"; 76 saved headers agree with their .match rows within rounding.
+  util/listhead can read these without a new dependency. Read fresh solver output:
+  the comments in a later UCAC5-refitted image describe the earlier solver fit.
+  .corr row counts differ from NMATCH, and a wide bounding box alone does not
+  establish strong spatial support. Calibrate any acceptance threshold first.
+- UCAC5 ingestion assigns zero catalog_mag_err to valid matches too. The C-band
+  preliminary N_COMP_STARS filter rejects every such row, but its calibration
+  loop accepts them; saved Cyg-05 0037/0036 outputs give count 0 despite 4963/4961
+  nonzero catalog magnitudes. Suppress unmatched magnitudes at export and use
+  the same explicit candidate selection for count and calibration. Do not reject
+  all zero catalog errors. No TTU Tycho-2 calibration error was demonstrated.
+- WCS_QUALITY_DIAG is median-centered scatter AFTER global plane/magnitude
+  corrections, not a direct test of the saved FITS header. A separate final-header
+  diagnostic should measure bias, absolute errors and coverage on consistently
+  selected pairs; audit it before changing factory ERROR decisions.
+- In the installed Astrometry.net solver every quad vertex must be within the
+  hinted radius. FOV/8 therefore constrains centrality and excludes coarse quads
+  wider than FOV/4. It is not equivalent to reducing quad-size-max alone. Keep
+  the smaller radius a fallback pending broader validation. All proposed fixes
+  remain unapplied; temporary report and probe details are outside the tree in
+  /tmp/vast_cyg04_data/handoff/astrometry_deeper_review_2026-10-10.md and
+  /tmp/vast_astrometry_review_20261010/.
