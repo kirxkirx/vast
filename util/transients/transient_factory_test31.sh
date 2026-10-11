@@ -3271,7 +3271,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   rm -f ucac5_server_status.log
   # WCS-calibration (plate-solving)
   # This modified code should allow us to wait for plate solutions while allowing util/comets.sh et al. to run in the background
-  declare -a calibrationPIDs  # Declare an array to hold PIDs
+  declare -a calibrationPIDs calibrationImages
+  calibrationPIDs=()
+  calibrationImages=()
 
   for i in $(awk '{print $17}' vast_image_details.log | sort | uniq); do
    # can't do parallell solving for compresed images
@@ -3283,12 +3285,17 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
     # do it parallel
     util/wcs_image_calibration.sh "$i" &
     calibrationPIDs+=($!)  # Append PID of the background process to the array
+    calibrationImages+=("$i")
    #fi
   done
 
   # Wait for all wcs_image_calibration.sh processes to end processing
-  for pid in "${calibrationPIDs[@]}"; do
-   wait "$pid"
+  CALIBRATION_FAILED=0
+  for calibrationIndex in "${!calibrationPIDs[@]}"; do
+   if ! wait "${calibrationPIDs[$calibrationIndex]}";then
+    CALIBRATION_FAILED=1
+    echo "ERROR: WCS calibration failed for ${calibrationImages[$calibrationIndex]}" | tee -a transient_factory_test31.txt transient_factory.log
+   fi
   done
   record_timing "    WCS_CALIBRATION_AND_EPHEMERIS" "$WCS_EPHEMERIS_START_UNIXSEC"
   #
@@ -3317,7 +3324,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
     # stale header to the next SExtractor pass.
    fi
   done | grep -q 'UNSOLVED_PLATE'
-  if [ $? -eq 0 ];then
+  if [ $? -eq 0 ] || [ "$CALIBRATION_FAILED" -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log

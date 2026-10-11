@@ -7,6 +7,20 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Use this same selection for the C-band candidate count and calibration.
+# UCAC5 currently supplies zero magnitude errors; zero is valid here and is
+# combined with the measured lightcurve scatter below. A zero magnitude is
+# the missing-match sentinel in columns 11/12 of the exported catalog.
+function select_ucac5_calibration_candidates {
+ awk '
+ function finite_number(s) {
+  return s ~ /^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$/ && s+0 < 1e100 && s+0 > -1e100
+ }
+ NF >= 12 && $1 ~ /^[0-9]+$/ && $1 > 0 && finite_number($8) && finite_number($11) && $11+0 != 0 && finite_number($12) && $12+0 >= 0 {
+  printf "out%05d.dat %f %f %f\n", $1, $8, $11, $12
+ }' "$1"
+}
+
 if [ -f calib.txt ];then
  rm -f calib.txt
 fi
@@ -100,14 +114,9 @@ else
  # Parse the catalog match file
  case "$BAND" in
  "C")
-  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | grep -v '0.000000' | wc -l)
-  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | while read OUTDATFILE A B C ;do 
-   if [ -z $C ];then
-    continue
-   fi
-   if [ "$B" == "0.000000" ];then
-    continue
-   fi
+  N_COMP_STARS=$(select_ucac5_calibration_candidates "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" | wc -l)
+  export N_COMP_STARS
+  select_ucac5_calibration_candidates "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" | while read -r OUTDATFILE A B C ;do
    # strict variability check only if we have many comparison stars
    # The likely-constant-star list is written by lib/index_vs_mag, which
    # transient-mode runs skip (VAST_SKIP_INDEX_VS_MAG in util/nopgplot.sh);

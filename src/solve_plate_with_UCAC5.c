@@ -483,20 +483,45 @@ int check_if_the_output_catalog_already_exist( char *fits_image_filename ) {
  return 0;
 }
 
-void write_wcs_catalog( char *fits_image_filename, struct detected_star *stars, int number_of_stars_in_wcs_catalog ) {
+int write_wcs_catalog( char *fits_image_filename, struct detected_star *stars, int number_of_stars_in_wcs_catalog ) {
  FILE *f;
- int i;
+ int i, fd, write_failed;
+ mode_t catalog_mode, saved_umask;
+ struct stat catalog_stat;
  char wcs_catalog_filename[FILENAME_LENGTH];
+ char temporary_catalog_filename[FILENAME_LENGTH + 32];
  guess_wcs_catalog_filename( wcs_catalog_filename, fits_image_filename );
  strncat( wcs_catalog_filename, ".ucac5", FILENAME_LENGTH - strlen( wcs_catalog_filename ) - 1 );
  if ( number_of_stars_in_wcs_catalog < 1 ) {
   fprintf( stderr, "ERROR: in write_wcs_catalog()  number_of_stars_in_wcs_catalog=%d\n", number_of_stars_in_wcs_catalog );
-  return;
+  return 1;
  }
- f= fopen( wcs_catalog_filename, "w" );
+ // Build beside the destination so a failed write leaves the previous
+ // catalog intact and the final rename stays on the same filesystem.
+ sprintf( temporary_catalog_filename, "%s.tmp.XXXXXX", wcs_catalog_filename );
+ fd= mkstemp( temporary_catalog_filename );
+ if ( fd < 0 ) {
+  fprintf( stderr, "ERROR creating temporary catalog for %s\n", wcs_catalog_filename );
+  return 1;
+ }
+ if ( 0 == stat( wcs_catalog_filename, &catalog_stat ) ) {
+  catalog_mode= catalog_stat.st_mode & 0777;
+ } else {
+  saved_umask= umask( 0 );
+  umask( saved_umask );
+  catalog_mode= 0666 & ~saved_umask;
+ }
+ if ( 0 != fchmod( fd, catalog_mode ) ) {
+  close( fd );
+  unlink( temporary_catalog_filename );
+  return 1;
+ }
+ f= fdopen( fd, "w" );
  if ( f == NULL ) {
   fprintf( stderr, "ERROR opening %s for writing!\n", wcs_catalog_filename );
-  return;
+  close( fd );
+  unlink( temporary_catalog_filename );
+  return 1;
  }
  for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
   fprintf( f, "%6d %11.7lf %+10.7lf %9.4lf %9.4lf  %9.1lf %9.1lf %+7.4lf %6.4lf %3d    %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf %6.3lf %5.3lf  %6.3lf %5.3lf\n",
@@ -510,8 +535,8 @@ void write_wcs_catalog( char *fits_image_filename, struct detected_star *stars, 
            stars[i].mag,
            stars[i].mag_err,
            stars[i].flag,
-           stars[i].catalog_mag,
-           stars[i].catalog_mag_err,
+           stars[i].matched_with_astrometric_catalog == 1 ? stars[i].catalog_mag : 0.0,
+           stars[i].matched_with_astrometric_catalog == 1 ? stars[i].catalog_mag_err : 0.0,
            stars[i].APASS_B,
            stars[i].APASS_B_err,
            stars[i].APASS_V,
@@ -527,9 +552,17 @@ void write_wcs_catalog( char *fits_image_filename, struct detected_star *stars, 
            stars[i].APASS_g,
            stars[i].APASS_g_err );
  }
- fclose( f );
+ write_failed= ferror( f );
+ if ( 0 != fclose( f ) ) {
+  write_failed= 1;
+ }
+ if ( write_failed != 0 || 0 != rename( temporary_catalog_filename, wcs_catalog_filename ) ) {
+  fprintf( stderr, "ERROR writing catalog %s - previous catalog kept\n", wcs_catalog_filename );
+  unlink( temporary_catalog_filename );
+  return 1;
+ }
  fprintf( stderr, "The image catalog is written to %s\n", wcs_catalog_filename );
- return;
+ return 0;
 }
 
 void write_matched_stars_to_ds9_region( char *fits_image_filename, struct detected_star *stars, int number_of_stars_in_wcs_catalog ) {
@@ -611,6 +644,10 @@ void write_astrometric_residuals_vector_field( char *fits_image_filename, struct
 //
 // Output is a single greppable stderr line tagged "WCS_QUALITY_DIAG:" so
 // downstream scripts can extract values per image with grep + awk.
+// This diagnostic is now partly redundant with the refit and saved-header
+// diagnostics. Keep it for historical comparisons and the factory's existing
+// decisions. Its median-centered scatter removes bias and, before a refit,
+// includes global corrections: it is not an absolute saved-header error.
 void print_wcs_quality_diagnostic( char *fits_image_filename, struct detected_star *stars, int N ) {
  double *resid_ra_arcsec_all;
  double *resid_dec_arcsec_all;
@@ -757,6 +794,109 @@ void print_wcs_quality_diagnostic( char *fits_image_filename, struct detected_st
   free( resid_ra_arcsec_q[q] );
   free( resid_dec_arcsec_q[q] );
  }
+}
+
+// Measure the actual saved header with WCSTools, without changing any pairs
+// or applying the in-memory corrections. The reference positions are already
+// propagated to the image epoch by the catalog matcher. This deliberately
+// reports selection=current_pairs: missing or wrongly matched stars can bias
+// it, so it must not be used as an independent whole-frame acceptance test.
+static void print_saved_header_diagnostic( char *fits_image_filename, struct detected_star *stars, int N ) {
+ char catalog_filename[FILENAME_LENGTH + 32];
+ char image_filename[FILENAME_LENGTH + 32];
+ char image_basename[FILENAME_LENGTH];
+ char directory[FILENAME_LENGTH + 64];
+ char positions_filename[FILENAME_LENGTH + 96];
+ char command[2 * FILENAME_LENGTH + VAST_PATH_MAX + 256];
+ char path_to_vast[VAST_PATH_MAX];
+ char line[512], equinox[32];
+ FILE *positions, *conversion;
+ fitsfile *image;
+ int status, write_failed, i, j, n, selected, q, cell, occupied;
+ int n_q[4], cells[16];
+ long width, height;
+ double ra, dec, x, y, dx, dy;
+ double *dra, *ddec, *separation;
+ unsigned char *seen;
+
+ if ( N < 1 ) return;
+ guess_wcs_catalog_filename( catalog_filename, fits_image_filename );
+ strcpy( image_filename, catalog_filename );
+ image_filename[strlen( image_filename ) - strlen( ".wcscat" )]= '\0';
+ strncpy( image_basename, fits_image_filename, sizeof( image_basename ) - 1 );
+ image_basename[sizeof( image_basename ) - 1]= '\0';
+ status= 0;
+ if ( 0 != fits_open_file( &image, image_filename, READONLY, &status ) ) return;
+ fits_read_key( image, TLONG, "NAXIS1", &width, NULL, &status );
+ fits_read_key( image, TLONG, "NAXIS2", &height, NULL, &status );
+ fits_close_file( image, &status );
+ if ( status != 0 || width < 1 || height < 1 ) return;
+ sprintf( directory, "%s.header_diag.XXXXXX", image_filename );
+ if ( NULL == mkdtemp( directory ) ) return;
+ sprintf( positions_filename, "%s/positions.txt", directory );
+ dra= (double *)malloc( (size_t)N * sizeof( double ) );
+ ddec= (double *)malloc( (size_t)N * sizeof( double ) );
+ separation= (double *)malloc( (size_t)N * sizeof( double ) );
+ seen= (unsigned char *)calloc( (size_t)N, 1 );
+ if ( dra == NULL || ddec == NULL || separation == NULL || seen == NULL ) goto header_diag_cleanup;
+ positions= fopen( positions_filename, "w" );
+ if ( positions == NULL ) goto header_diag_cleanup;
+ selected= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog == 1 && isfinite( stars[i].catalog_ra ) && isfinite( stars[i].catalog_dec ) ) {
+   fprintf( positions, "%.8lf %.8lf %d\n", stars[i].x_pix, stars[i].y_pix, i );
+   selected++;
+  }
+ }
+ write_failed= ferror( positions );
+ if ( 0 != fclose( positions ) ) write_failed= 1;
+ if ( write_failed || selected == 0 ) goto header_diag_cleanup;
+ get_path_to_vast( path_to_vast );
+ sprintf( command, "\"%s\"lib/bin/xy2sky -a -k 1 -j -d -n 9 \"%s\" \"@%s\"", path_to_vast, image_filename, positions_filename );
+ conversion= popen( command, "r" );
+ if ( conversion == NULL ) goto header_diag_cleanup;
+ n= 0;
+ for ( q= 0; q < 4; q++ ) n_q[q]= 0;
+ for ( cell= 0; cell < 16; cell++ ) cells[cell]= 0;
+ while ( NULL != fgets( line, sizeof( line ), conversion ) ) {
+  if ( 6 != sscanf( line, "%lf %lf %31s %lf %lf %d", &ra, &dec, equinox, &x, &y, &i ) ) continue;
+  if ( i < 0 || i >= N || seen[i] || stars[i].matched_with_astrometric_catalog != 1 ) continue;
+  if ( !isfinite( ra ) || !isfinite( dec ) || dec < -90.0 || dec > 90.0 ) continue;
+  if ( strcmp( equinox, "J2000" ) != 0 || !isfinite( x ) || !isfinite( y ) ) continue;
+  if ( fabs( x - stars[i].x_pix ) > 0.01 || fabs( y - stars[i].y_pix ) > 0.01 ) continue;
+  seen[i]= 1;
+  dx= ra_diff_normalized_for_wraparound( ra, stars[i].catalog_ra ) * cos( stars[i].catalog_dec * M_PI / 180.0 );
+  dy= dec - stars[i].catalog_dec;
+  dra[n]= 3600.0 * dx;
+  ddec[n]= 3600.0 * dy;
+  separation[n]= 3600.0 * compute_distance_on_sphere( ra, dec, stars[i].catalog_ra, stars[i].catalog_dec );
+  q= ( x < width / 2.0 ? 0 : 1 ) + ( y < height / 2.0 ? 0 : 2 );
+  n_q[q]++;
+  if ( x >= 0.0 && y >= 0.0 && x < width && y < height ) {
+   cell= (int)( 4.0 * x / width ) + 4 * (int)( 4.0 * y / height );
+   cells[cell]++;
+  }
+  n++;
+ }
+ status= ferror( conversion );
+ if ( 0 != pclose( conversion ) ) status= 1;
+ if ( status == 0 && n > 0 ) {
+  gsl_sort( dra, 1, (size_t)n );
+  gsl_sort( ddec, 1, (size_t)n );
+  gsl_sort( separation, 1, (size_t)n );
+  occupied= 0;
+  for ( j= 0; j < 16; j++ ) if ( cells[j] > 0 ) occupied++;
+  fprintf( stderr, "WCS_HEADER_DIAG: file=%s selection=current_pairs N_selected=%d N_valid=%d bias_ra_arcsec=%.3lf bias_dec_arcsec=%.3lf median_sep_arcsec=%.3lf p95_sep_arcsec=%.3lf n_q1=%d n_q2=%d n_q3=%d n_q4=%d occupied_cells_4x4=%d/16\n", basename( image_basename ), selected, n,
+           gsl_stats_median_from_sorted_data( dra, 1, (size_t)n ), gsl_stats_median_from_sorted_data( ddec, 1, (size_t)n ),
+           gsl_stats_median_from_sorted_data( separation, 1, (size_t)n ), gsl_stats_quantile_from_sorted_data( separation, 1, (size_t)n, 0.95 ),
+           n_q[0], n_q[1], n_q[2], n_q[3], occupied );
+ } else {
+  fprintf( stderr, "WCS_HEADER_DIAG: file=%s selection=current_pairs status=unavailable\n", basename( image_basename ) );
+ }
+header_diag_cleanup:
+ free( dra ); free( ddec ); free( separation ); free( seen );
+ unlink( positions_filename );
+ rmdir( directory );
 }
 
 int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, int *number_of_stars_in_wcs_catalog ) {
@@ -6097,10 +6237,16 @@ static double sip_refit_worst_region_robust_rms( double *sep_values, double *x_p
 }
 
 // Delete a FITS header keyword if present (ignoring 'not found' errors)
-static void sip_refit_delete_key( fitsfile *fptr, char *keyname ) {
- int status;
- status= 0;
- fits_delete_key( fptr, keyname, &status );
+static void sip_refit_delete_key( fitsfile *fptr, char *keyname, int *status ) {
+ int key_status;
+ if ( *status != 0 ) {
+  return;
+ }
+ key_status= 0;
+ fits_delete_key( fptr, keyname, &key_status );
+ if ( key_status != 0 && key_status != KEY_NO_EXIST ) {
+  *status= key_status;
+ }
  return;
 }
 
@@ -6226,6 +6372,7 @@ static int copy_file_bytes( const char *source_filename, const char *destination
 // kept untouched), 2 if it was refused but looks rescuable - nothing is
 // touched in that case either, and rescue (which must then be non-NULL)
 // describes the candidate, see SIP_REFIT_RESCUE_MAX_RMS_PIX.
+// Returns -1 on a failed publication/rollback that needs the caller to abort.
 // accept_if_not_worse: 0 = the refit must beat the solution it replaces by
 // the usual margin (SIP_REFIT_MIN_IMPROVEMENT_FACTOR); 1 = the post-re-match
 // pass, accepted whenever it is not worse (the pairs it is fitted to are the
@@ -6279,7 +6426,7 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  gsl_multifit_linear_workspace *fit_wg;
  int gk;
  long order_long;
- char regen_command[2 * FILENAME_LENGTH + VAST_PATH_MAX];
+ char regen_command[2 * FILENAME_LENGTH + VAST_PATH_MAX + 512];
  char path_to_vast_string[VAST_PATH_MAX];
  char wcs_catalog_filename_for_regen[FILENAME_LENGTH + 32];
  char solved_image_filename[FILENAME_LENGTH + 32];
@@ -6315,6 +6462,11 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  int cd_status;
  int rescue_candidate_order;
  double rescue_candidate_rms;
+ char refit_directory[FILENAME_LENGTH + 64];
+ char candidate_image[FILENAME_LENGTH + 128];
+ char candidate_catalog[FILENAME_LENGTH + 128];
+ char original_image_link[FILENAME_LENGTH + 128];
+ int refit_write_result;
 
  if ( rms_after_out != NULL ) {
   *rms_after_out= -1.0;
@@ -7067,13 +7219,33 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  // header_write_blocked_symlink comment above; the in-memory star position
  // recompute below still runs so the output catalog carries the refit)
  if ( header_write_blocked_symlink == 0 ) {
+ // Work beside the original. The hard link saves its old inode without a
+ // second image copy; it is retained if rollback ever fails. Neither the
+ // published header nor stars[] changes until regeneration has succeeded.
+ refit_write_result= 1;
+ sprintf( refit_directory, "%s.sip_refit.XXXXXX", solved_image_filename );
+ if ( NULL == mkdtemp( refit_directory ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot create a private directory - keeping the original solution\n" );
+  goto refit_write_failed;
+ }
+ sprintf( candidate_image, "%s/candidate.fits", refit_directory );
+ sprintf( candidate_catalog, "%s/candidate.wcscat", refit_directory );
+ sprintf( original_image_link, "%s/original.fits", refit_directory );
+ if ( 0 != copy_file_bytes( solved_image_filename, candidate_image ) ||
+      0 != copy_file_bytes( wcs_catalog_filename_for_regen, candidate_catalog ) ||
+      0 != link( solved_image_filename, original_image_link ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot prepare the candidate and backup - keeping the original solution\n" );
+  goto refit_candidate_failed;
+ }
+ if ( 0 == stat( solved_image_filename, &stat_of_solved_image ) ) {
+  if ( 0 != chmod( candidate_image, stat_of_solved_image.st_mode & 0777 ) ) {
+   goto refit_candidate_failed;
+  }
+ }
  status= 0;
- if ( 0 != fits_open_file( &fptr, solved_image_filename, READWRITE, &status ) ) {
-  fprintf( stderr, "SIP_REFIT: cannot reopen %s for writing - keeping the original solution\n", solved_image_filename );
-  free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
-  gsl_matrix_free( X_design ); gsl_matrix_free( cov );
-  gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
-  return 1;
+ if ( 0 != fits_open_file( &fptr, candidate_image, READWRITE, &status ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot open the candidate for writing - keeping the original solution\n" );
+  goto refit_candidate_failed;
  }
  fits_update_key( fptr, TSTRING, "CTYPE1", (void *)"RA---TAN-SIP", NULL, &status );
  fits_update_key( fptr, TSTRING, "CTYPE2", (void *)"DEC--TAN-SIP", NULL, &status );
@@ -7089,29 +7261,29 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  for ( ii= 0; ii <= 9; ii++ ) {
   for ( jj= 0; jj <= 9; jj++ ) {
    sprintf( keyname, "A_%d_%d", ii, jj );
-   sip_refit_delete_key( fptr, keyname );
+   sip_refit_delete_key( fptr, keyname, &status );
    sprintf( keyname, "B_%d_%d", ii, jj );
-   sip_refit_delete_key( fptr, keyname );
+   sip_refit_delete_key( fptr, keyname, &status );
    sprintf( keyname, "AP_%d_%d", ii, jj );
-   sip_refit_delete_key( fptr, keyname );
+   sip_refit_delete_key( fptr, keyname, &status );
    sprintf( keyname, "BP_%d_%d", ii, jj );
-   sip_refit_delete_key( fptr, keyname );
+   sip_refit_delete_key( fptr, keyname, &status );
   }
  }
  for ( ii= 0; ii <= 39; ii++ ) {
   sprintf( keyname, "PV1_%d", ii );
-  sip_refit_delete_key( fptr, keyname );
+  sip_refit_delete_key( fptr, keyname, &status );
   sprintf( keyname, "PV2_%d", ii );
-  sip_refit_delete_key( fptr, keyname );
+  sip_refit_delete_key( fptr, keyname, &status );
  }
- sip_refit_delete_key( fptr, (char *)"CDELT1" );
- sip_refit_delete_key( fptr, (char *)"CDELT2" );
- sip_refit_delete_key( fptr, (char *)"CROTA1" );
- sip_refit_delete_key( fptr, (char *)"CROTA2" );
- sip_refit_delete_key( fptr, (char *)"A_ORDER" );
- sip_refit_delete_key( fptr, (char *)"B_ORDER" );
- sip_refit_delete_key( fptr, (char *)"AP_ORDER" );
- sip_refit_delete_key( fptr, (char *)"BP_ORDER" );
+ sip_refit_delete_key( fptr, (char *)"CDELT1", &status );
+ sip_refit_delete_key( fptr, (char *)"CDELT2", &status );
+ sip_refit_delete_key( fptr, (char *)"CROTA1", &status );
+ sip_refit_delete_key( fptr, (char *)"CROTA2", &status );
+ sip_refit_delete_key( fptr, (char *)"A_ORDER", &status );
+ sip_refit_delete_key( fptr, (char *)"B_ORDER", &status );
+ sip_refit_delete_key( fptr, (char *)"AP_ORDER", &status );
+ sip_refit_delete_key( fptr, (char *)"BP_ORDER", &status );
  order_long= (long)deg;
  fits_update_key( fptr, TLONG, "A_ORDER", &order_long, NULL, &status );
  fits_update_key( fptr, TLONG, "B_ORDER", &order_long, NULL, &status );
@@ -7139,8 +7311,30 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
  fits_write_history( fptr, history_string, &status );
  fits_close_file( fptr, &status );
  if ( status != 0 ) {
-  fprintf( stderr, "SIP_REFIT: WARNING - FITS status %d while updating the header\n", status );
+  fprintf( stderr, "SIP_REFIT: FITS status %d while writing the candidate - keeping the original solution\n", status );
+  goto refit_candidate_failed;
  }
+ get_path_to_vast( path_to_vast_string );
+ sprintf( regen_command, "\"%s\"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh \"%s\" \"%s\"", path_to_vast_string, candidate_image, candidate_catalog );
+ if ( 0 != system( regen_command ) ) {
+  fprintf( stderr, "SIP_REFIT: failed to regenerate the candidate catalog - keeping the original solution\n" );
+  goto refit_candidate_failed;
+ }
+ if ( 0 != rename( candidate_image, solved_image_filename ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot publish the candidate image - keeping the original solution\n" );
+  goto refit_candidate_failed;
+ }
+ if ( 0 != rename( candidate_catalog, wcs_catalog_filename_for_regen ) ) {
+  fprintf( stderr, "SIP_REFIT: cannot publish the candidate catalog - restoring the original image\n" );
+  if ( 0 != rename( original_image_link, solved_image_filename ) ) {
+   fprintf( stderr, "SIP_REFIT: ERROR restoring %s; the original is retained in %s\n", solved_image_filename, original_image_link );
+   refit_write_result= -1;
+   goto refit_write_failed;
+  }
+  goto refit_candidate_failed;
+ }
+ unlink( original_image_link );
+ rmdir( refit_directory );
  } // if ( header_write_blocked_symlink == 0 ) - end of the FITS header write
 
  // ---- Recompute the star positions from the refit solution ----
@@ -7175,19 +7369,10 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   stars[i].corrected_dec_local= dec_model;
  }
 
- // Regenerate the SExtractor WCS catalog from the updated header using the
- // same xy2sky-based script that created it, so the .wcscat file consumed by
- // the magnitude calibration and the transient pipeline carries the refit
- // positions (and so the header round-trips through the pipeline's own WCS
- // interpreter rather than only through this program's in-memory model).
- // Skipped when the header write was blocked (symbolic link): regenerating
- // from the stale header behind the link would poison the .wcscat instead.
+ // The candidate header and catalog were published with checked rollback
+ // above (two renames, not an atomic transaction for concurrent readers). A
+ // protected symlink deliberately uses catalog-only in-memory coordinates.
  if ( header_write_blocked_symlink == 0 ) {
-  get_path_to_vast( path_to_vast_string );
-  sprintf( regen_command, "\"%s\"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh \"%s\" \"%s\"", path_to_vast_string, solved_image_filename, wcs_catalog_filename_for_regen );
-  if ( 0 != system( regen_command ) ) {
-   fprintf( stderr, "SIP_REFIT: WARNING - failed to regenerate the WCS catalog from the updated header\n" );
-  }
   fprintf( stderr, "SIP_REFIT: applied the refit solution (order %d, robust RMS %.3lf -> %.3lf arcsec)\n", deg, rms_before, rms_after );
  } else {
   fprintf( stderr, "SIP_REFIT: applied the refit solution to the output catalog positions only (order %d, robust RMS %.3lf -> %.3lf arcsec); the image header was NOT rewritten as %s is a symbolic link\n", deg, rms_before, rms_after, solved_image_filename );
@@ -7200,6 +7385,17 @@ static int refit_sip_from_catalog_matches( char *fits_image_filename, struct det
   *rms_after_out= rms_after;
  }
  return 0;
+
+refit_candidate_failed:
+ unlink( candidate_image );
+ unlink( candidate_catalog );
+ unlink( original_image_link );
+ rmdir( refit_directory );
+refit_write_failed:
+ free( mx ); free( my ); free( mra ); free( mdec ); free( sep_arcsec ); free( sep_before ); free( keep ); free( row );
+ gsl_matrix_free( X_design ); gsl_matrix_free( cov );
+ gsl_vector_free( y_xi ); gsl_vector_free( y_eta ); gsl_vector_free( c_xi ); gsl_vector_free( c_eta );
+ return refit_write_result;
 }
 
 // Catalog-match fields of a detected star, saved before the post-refit
@@ -7729,6 +7925,10 @@ int main( int argc, char **argv ) {
  rescue_backup_stars= NULL;
  rescue_info.rescue_order= -1;
  refit_result= refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 0, &refit_rms_after_arcsec, &rescue_info );
+ if ( refit_result < 0 ) {
+  free( stars );
+  return 1;
+ }
  if ( refit_result == 0 ) {
   refit_applied= 1;
  }
@@ -7777,7 +7977,14 @@ int main( int argc, char **argv ) {
      }
      rescue_initial_quadrant_count[quadrant_index_of_pixel_position( stars[i].x_pix, stars[i].y_pix, rescue_info.img_center_x, rescue_info.img_center_y )]++;
     }
-    if ( 0 == refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 2, &refit_rms_after_arcsec, &rescue_info ) ) {
+    refit_result= refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 2, &refit_rms_after_arcsec, &rescue_info );
+    if ( refit_result < 0 ) {
+     // Keep the rescue backups for recovery after an I/O failure.
+     free( rescue_backup_stars );
+     free( stars );
+     return 1;
+    }
+    if ( refit_result == 0 ) {
      refit_applied= 1;
      rescue_attempted= 1;
     } else {
@@ -7893,7 +8100,15 @@ int main( int argc, char **argv ) {
    }
   }
   second_refit_rms_after_arcsec= -1.0;
-  if ( 0 != refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 1, &second_refit_rms_after_arcsec, NULL ) ) {
+  refit_result= refit_sip_from_catalog_matches( fits_image_filename, stars, number_of_stars_in_wcs_catalog, 1, &second_refit_rms_after_arcsec, NULL );
+  if ( refit_result < 0 ) {
+   free( settle_previous_ra_deg );
+   free( settle_previous_dec_deg );
+   free( rescue_backup_stars );
+   free( stars );
+   return 1;
+  }
+  if ( refit_result != 0 ) {
    // header unchanged since the re-match: the pairs just matched describe it
    fprintf( stderr, "SIP_REFIT: the refit on the re-matched pairs was not applied - keeping the current solution\n" );
    recompute_local_corrections_after_rematch( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters );
@@ -7976,9 +8191,15 @@ int main( int argc, char **argv ) {
    memcpy( stars, rescue_backup_stars, (size_t)number_of_stars_in_wcs_catalog * sizeof( struct detected_star ) );
    if ( 0 != rename( rescue_backup_image_filename, rescue_solved_image_filename ) ) {
     fprintf( stderr, "SIP_REFIT: ERROR restoring %s from %s\n", rescue_solved_image_filename, rescue_backup_image_filename );
+    free( rescue_backup_stars );
+    free( stars );
+    return 1;
    }
    if ( 0 != rename( rescue_backup_catalog_filename, rescue_wcs_catalog_filename ) ) {
     fprintf( stderr, "SIP_REFIT: ERROR restoring %s from %s\n", rescue_wcs_catalog_filename, rescue_backup_catalog_filename );
+    free( rescue_backup_stars );
+    free( stars );
+    return 1;
    }
    refit_applied= 0;
    print_sip_refit_rejected_line( fits_image_filename, rescue_info.worstq_baseline_arcsec, rescue_info.rms_baseline_arcsec, rescue_info.nmatched );
@@ -7992,6 +8213,7 @@ int main( int argc, char **argv ) {
  // grep this image's residual statistics and compare against other images
  // (e.g. reference vs new in transient_factory_test31.sh).
  print_wcs_quality_diagnostic( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
+ print_saved_header_diagnostic( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
 
 #ifdef DEBUGFILES
  // Inspect the output
@@ -8037,7 +8259,10 @@ int main( int argc, char **argv ) {
  } // if ( use_photometric_catalog == 1 ) {
 
  // Write output
- write_wcs_catalog( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
+ if ( 0 != write_wcs_catalog( fits_image_filename, stars, number_of_stars_in_wcs_catalog ) ) {
+  free( stars );
+  return 1;
+ }
  write_matched_stars_to_ds9_region( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
  write_astrometric_residuals_vector_field( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
 

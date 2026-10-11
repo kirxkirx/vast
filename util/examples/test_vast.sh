@@ -15851,6 +15851,23 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### Astrometry failure handling and calibration selection #####
+# Fast, offline tests use isolated temporary files and injected solver/file
+# failures. Keep them in the system suite as well as runnable on their own.
+THIS_TEST_START_UNIXSEC=$(date +%s)
+echo -n "Astrometry output safety test: " >> vast_test_report.txt
+if util/examples/test_astrometry_safety.sh > "astrometry_safety_$$.log" 2>&1 ;then
+ echo "Astrometry output safety test PASSED"
+ echo "PASSED" >> vast_test_report.txt
+else
+ echo "Astrometry output safety test FAILED"
+ echo "FAILED" >> vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ASTROMETRY_OUTPUT_SAFETY"
+ DEBUG_OUTPUT="$DEBUG_OUTPUT
+$(cat "astrometry_safety_$$.log")"
+fi
+rm -f "astrometry_safety_$$.log"
+
 ##### NMW-TexasTech Cyg-05 re-match and Her-09 TAN-only regressions #####
 # Cyg-05-Q1 0037 (2026-10-08): the old total-pair-count stop left only
 # 648 q4 matches and a saved header about 6 arcsec wrong in the far corner,
@@ -15941,7 +15958,7 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
    if ! (
     # Exercise the normal repair policy regardless of experimental overrides
     # inherited by the test runner; retain its local/remote solver selection.
-    unset VAST_DISABLE_UCAC5_SIP_REFIT VAST_SIP_REFIT_NO_REMATCH VAST_SIP_REFIT_NO_RESCUE VAST_FORCE_SIP_REFIT VAST_SIP_REFIT_ORDER VAST_SKIP_SMALL_RADIUS_RESOLVE
+    unset VAST_DISABLE_UCAC5_SIP_REFIT VAST_SIP_REFIT_NO_REMATCH VAST_SIP_REFIT_NO_RESCUE VAST_FORCE_SIP_REFIT VAST_SIP_REFIT_ORDER VAST_SKIP_SMALL_RADIUS_RESOLVE VAST_SKIP_LOCAL_ASTROMETRY_REPAIR VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT
     VAST_TWEAK_ORDER=3 VAST_SKIP_IMAGE_BASED_RETWEAK=1 FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 "../$ASTROMETRY_REGRESSION_DATA/$ASTROMETRY_REGRESSION_IMAGE"
    ) >> "$ASTROMETRY_REGRESSION_LOG" 2>&1 ;then
     TEST_PASSED=0
@@ -15993,6 +16010,25 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_$ASTROMETRY_REGRESSION_BAD"
    done
+   # Unmatched detections must not export stale UCAC5 magnitudes. In these
+   # two real frames every accepted match has a nonzero magnitude and a
+   # legitimate zero catalog error. Count with the actual C-band selector.
+   ASTROMETRY_REGRESSION_MATCH_COUNT=$(echo "$ASTROMETRY_REGRESSION_DIAG" | awk '{for(i=1;i<=NF;i++) if($i ~ /^N_match=/) {sub(/^N_match=/,"",$i); print $i}}')
+   ASTROMETRY_REGRESSION_EXPORT_COUNT=$(awk '$11+0 != 0 {n++} END {print n+0}' "$ASTROMETRY_REGRESSION_WCS.wcscat.ucac5")
+   ASTROMETRY_REGRESSION_CANDIDATE_COUNT=$(
+    eval "$(awk '/^function select_ucac5_calibration_candidates / {copy=1} copy {print} copy && /^}/ {exit}' util/magnitude_calibration.sh)"
+    select_ucac5_calibration_candidates "$ASTROMETRY_REGRESSION_WCS.wcscat.ucac5" | wc -l
+   )
+   if [ "$ASTROMETRY_REGRESSION_EXPORT_COUNT" != "$ASTROMETRY_REGRESSION_MATCH_COUNT" ] || [ "$ASTROMETRY_REGRESSION_CANDIDATE_COUNT" -ne "$ASTROMETRY_REGRESSION_EXPORT_COUNT" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_UCAC5_EXPORT_SELECTION"
+   fi
+   # Retain the old diagnostic and require the new one to describe all of
+   # its selected pairs. The latter is informational, not a new quality gate.
+   if ! grep -F "WCS_HEADER_DIAG: file=$ASTROMETRY_REGRESSION_IMAGE selection=current_pairs N_selected=$ASTROMETRY_REGRESSION_MATCH_COUNT N_valid=$ASTROMETRY_REGRESSION_MATCH_COUNT " "$ASTROMETRY_REGRESSION_LOG" > /dev/null ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_HEADER_DIAG"
+   fi
    if [ "$ASTROMETRY_REGRESSION_CASE" = "CYG05Q1SETTLE" ];then
     ASTROMETRY_REGRESSION_NCHECKS=0
     while read -r ASTROMETRY_REGRESSION_X ASTROMETRY_REGRESSION_Y ASTROMETRY_REGRESSION_RA ASTROMETRY_REGRESSION_DEC _ASTROMETRY_REGRESSION_REST ;do
@@ -16016,7 +16052,7 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
    fi
   fi
   if [ "$TEST_PASSED" -ne 1 ];then
-   ASTROMETRY_REGRESSION_DEBUG=$(grep -E 'ERROR|WARNING|carries no SIP|star-list re-tweak|small-radius re-solve|No repair of the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG' "$ASTROMETRY_REGRESSION_LOG" | tail -n 60)
+   ASTROMETRY_REGRESSION_DEBUG=$(grep -E 'ERROR|WARNING|carries no SIP|star-list re-tweak|small-radius re-solve|No repair of the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG|WCS_HEADER_DIAG|ASTROMETRY_REPAIR_DIAG' "$ASTROMETRY_REGRESSION_LOG" | tail -n 60)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### $ASTROMETRY_REGRESSION_CASE ######
 $ASTROMETRY_REGRESSION_DEBUG

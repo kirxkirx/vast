@@ -102,7 +102,10 @@ fi
 #
 #echo "DEBUG: VAST_PATH=$VAST_PATH"
 
-TEMPORARY_CATALOG_NAME="$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
+TEMPORARY_CATALOG_NAME=$(mktemp "${INPUT_SEXTRACTOR_CATALOG}.xy2sky.XXXXXX") || exit 1
+trap 'rm -f "$TEMPORARY_CATALOG_NAME"' EXIT
+# Preserve the catalog permissions when replacing it atomically.
+cp -p "$INPUT_SEXTRACTOR_CATALOG" "$TEMPORARY_CATALOG_NAME" || exit 1
 
 WCS_IMAGE="$1"
 if [ ! -s "$WCS_IMAGE" ];then
@@ -153,8 +156,16 @@ echo "
  ### Converting SExtractor-derived pixel positions to celestial coordinates using xy2sky from WCSTools ###"
 
 # sed '/^\s*$/d' -- removes empty lines
-"$VAST_PATH"lib/bin/xy2sky -a -k 4 -j -d -n 7 "$WCS_IMAGE" "@$INPUT_SEXTRACTOR_CATALOG" | sed '/^\s*$/d' | grep -v 'Off map' | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n",$4,$1,$2,$7,$8,$9,$10,$11,$12,$13}' > "$TEMPORARY_CATALOG_NAME"
-if [ $? -ne 0 ];then
+if ! (
+ set -o pipefail
+ "$VAST_PATH"lib/bin/xy2sky -a -k 4 -j -d -n 7 "$WCS_IMAGE" "@$INPUT_SEXTRACTOR_CATALOG" | sed '/^[[:space:]]*$/d' | grep -v 'Off map' | awk '
+ function finite_number(s) {
+  return s ~ /^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$/ && s+0 < 1e100 && s+0 > -1e100
+ }
+ { if (NF != 13 || !finite_number($1) || !finite_number($2) || $2+0 < -90 || $2+0 > 90) exit 1
+   printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n",$4,$1,$2,$7,$8,$9,$10,$11,$12,$13 }
+ ' > "$TEMPORARY_CATALOG_NAME"
+) ;then
  echo "ERROR running xy2sky"
  exit 1
 fi
@@ -168,8 +179,8 @@ N_LINES_OUTPUT_CAT=`cat "$TEMPORARY_CATALOG_NAME" | wc -l`
 echo " ### Converted positions of $N_LINES_OUTPUT_CAT stars ###"
 
 ################### DEBUG
-cp -v $INPUT_SEXTRACTOR_CATALOG vast_debug_catalog_before_xy2sky_correction.cat.log
-cp -v "$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp vast_debug_catalog_after_xy2sky_correction.cat.log
+cp -v "$INPUT_SEXTRACTOR_CATALOG" "vast_debug_catalog_before_xy2sky_correction_$$.cat.log"
+cp -v "$TEMPORARY_CATALOG_NAME" "vast_debug_catalog_after_xy2sky_correction_$$.cat.log"
 #########################
 
 mv -f "$TEMPORARY_CATALOG_NAME" "$INPUT_SEXTRACTOR_CATALOG"

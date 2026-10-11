@@ -1053,7 +1053,63 @@ Update this file as you learn new things.
 - In the installed Astrometry.net solver every quad vertex must be within the
   hinted radius. FOV/8 therefore constrains centrality and excludes coarse quads
   wider than FOV/4. It is not equivalent to reducing quad-size-max alone. Keep
-  the smaller radius a fallback pending broader validation. All proposed fixes
-  remain unapplied; temporary report and probe details are outside the tree in
+  the smaller radius a fallback pending broader validation. The implementation
+  below addresses output consistency and adds instrumentation; broader policy
+  changes still need calibration. Temporary review and probe details are in
   /tmp/vast_cyg04_data/handoff/astrometry_deeper_review_2026-10-10.md and
   /tmp/vast_astrometry_review_20261010/.
+
+## Astrometry output consistency and diagnostics (2026-10-10)
+- insert_wcs_header now fails on final CFITSIO write/close errors and removes
+  its incomplete output. identify.sh prepares stripped images, inserts WCS and
+  verifies provenance privately before replacement; it preserves the first
+  pass after a failed second solve and checks offline TAN fallback restoration.
+  The factory drains all initial WCS calibration children and records failures
+  by image; the later UCAC5 collection still has legacy bare waits and log-based
+  failure handling, which deserves a separate audit.
+- Client repairs now check solver status, both SIP axes, finite WCS terms and
+  a nonsingular CD matrix. Attempt directories are unique. Pass --dir and a
+  plain --out basename separately: solve-field concatenates them even when
+  --out looks absolute. A real Her replay caught this with an absolute xyls
+  input. ASTROMETRY_REPAIR_DIAG reports final COMMENT log-odds and match count.
+- VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1 disables optional client repairs,
+  including the image verification. Combine with remote initial solving for
+  a genuinely remote-only Astrometry.net test, and remove cached WCS results
+  first. UCAC5 refinement is separate and retains its existing controls.
+  VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT defaults to 360 seconds, shared across
+  star-list repairs/escalations, with each solver capped at 120 wall/CPU seconds.
+  The retained image diagnostic has its own 120-second cap. It is documented
+  as redundant for TAN-only frames; VAST_SKIP_IMAGE_BASED_RETWEAK=1 still skips it.
+- SIP refits stage a full image copy and regenerated .wcscat before updating
+  stars[]. A hard link holds the original image for checked rollback. An
+  unrecoverable rollback returns failure and retains the original for recovery.
+  Symlink targets remain untouched in the intentional catalog-only mode.
+  Two publication renames are not atomic for concurrent readers or a crash
+  between them. There is one additional full image copy per applied refit.
+- The final .ucac5 writer checks writes/close and replaces the catalog by rename,
+  preserves permissions, and zeros UCAC5 magnitude/error for unmatched stars.
+  C-band count and selection share one explicit numeric filter; zero errors
+  are valid. Other photometric bands and factory quality thresholds are unchanged.
+- WCS_QUALITY_DIAG is retained with a human-readable redundancy/limitations
+  comment. WCS_HEADER_DIAG measures the saved header through WCSTools, reports
+  RA/Dec bias, median/p95 absolute separation and coverage. It explicitly uses
+  selection=current_pairs, not a new independent match or an acceptance rule.
+  On a protected old Cyg header, legacy scatter was 0.341 arcsec while saved-
+  header median separation was 8.077 arcsec; this distinction is intentional.
+- Validation: full serial build in /tmp/vast_astrometry_build_20261010;
+  32 short astrometry safety cases (also called by test_vast.sh), 32 existing
+  WCS retry cases, real Cyg replay (4719 matches, all 12 saved-header samples
+  within 1.5 arcsec, exported nonzero magnitudes exactly equal the match count),
+  and bounded writer/regeneration/publication/rollback/symlink probes passed.
+  Real Her small-radius and star-list helpers produced valid SIP output with
+  final match counts 196 and 1436. Full system tests and production deployment
+  remain for the user. Temporary logs/probes are outside the tree under
+  /tmp/vast_astrometry_implementation_20261010/.
+- Still open: calibrating post-tweak strength/spatial acceptance on broader
+  cameras and index sets; independent saved-header matching with a uniform
+  reference sample; portable process-tree termination (lib/timeout only kills
+  its child). CPU limits, cancellation markers and private work directories
+  reduce the orphan problem but do not guarantee prompt tree termination.
+  Failed solver work directories retain cancellation markers for late engines.
+  Do not delete them until those engines have stopped. Smaller-radius defaults
+  and the tau/scan CGI port remain separate, unvalidated policy changes.

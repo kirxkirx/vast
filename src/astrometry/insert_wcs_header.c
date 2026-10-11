@@ -515,8 +515,6 @@ int main( int argc, char **argv ) {
 
  fits_report_error( stderr, status ); // print out any error messages
 
- fprintf( stderr, "All done!\n" );
-
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   free( wcs_key[i] );
  }
@@ -525,5 +523,15 @@ int main( int argc, char **argv ) {
  //
  free( wcs_key );
 
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR: could not finish writing %s\n", outputfitsfilename );
+  // This invocation created the file. Do not leave a partial image that a
+  // subsequent invocation could mistake for an already completed result.
+  if ( 0 != unlink( outputfitsfilename ) ) {
+   fprintf( stderr, "ERROR: cannot remove incomplete output %s\n", outputfitsfilename );
+  }
+  return 1;
+ }
+ fprintf( stderr, "All done!\n" );
  return 0;
 }

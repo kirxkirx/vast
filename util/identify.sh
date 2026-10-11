@@ -278,6 +278,113 @@ function wcs_header_file_looks_valid {
  return 0
 }
 
+# Structural validation of fresh Astrometry.net TAN/SIP output. This is not
+# an accuracy test: the post-tweak match strength is logged separately below.
+# $2 = sip requires a usable forward SIP polynomial on both axes.
+function astrometry_wcs_is_valid {
+ local HEADER_TEXT
+ wcs_header_file_looks_valid "$1" || return 1
+ HEADER_TEXT=$("$VAST_PATH"util/listhead "$1" 2>/dev/null) || return 1
+ printf '%s\n' "$HEADER_TEXT" | awk -v require_sip="${2:-tan}" '
+ function finite_number(s) {
+  gsub(/[dD]/, "E", s)
+  return s ~ /^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$/ && s+0 < 1e100 && s+0 > -1e100
+ }
+ /^[A-Z0-9_]+ *=/ {
+  key=$1; sub(/=.*/, "", key)
+  value=$0; sub(/^[^=]*= */, "", value); sub(/ *\/.*/, "", value)
+  gsub(/[\047 ]/, "", value)
+  if (key ~ /^(CRVAL[12]|CRPIX[12]|CD[12]_[12]|[AB]P?_ORDER|[AB]P?_[0-9]+_[0-9]+)$/) gsub(/[dD]/, "E", value)
+  if (key ~ /^(CRVAL[12]|CRPIX[12]|CD[12]_[12]|[AB]P?_ORDER|[AB]P?_[0-9]+_[0-9]+)$/ && !finite_number(value)) bad=1
+  if (key in v) bad=1
+  v[key]=value
+ }
+ END {
+  if (bad) exit 1
+  split("CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2", keys, " ")
+  for (i=1; i<=8; i++) if (!(keys[i] in v)) exit 1
+  if (v["CRVAL2"]+0 < -90 || v["CRVAL2"]+0 > 90) exit 1
+  det=v["CD1_1"]*v["CD2_2"]-v["CD1_2"]*v["CD2_1"]
+  if (det==0 || det > 1e100 || det < -1e100) exit 1
+  sip=(v["CTYPE1"]=="RA---TAN-SIP" && v["CTYPE2"]=="DEC--TAN-SIP")
+  if (!sip) exit !(require_sip!="sip" && v["CTYPE1"]=="RA---TAN" && v["CTYPE2"]=="DEC--TAN" && !("A_ORDER" in v) && !("B_ORDER" in v))
+  split("A B", axes, " ")
+  for (i=1; i<=2; i++) {
+   order=v[axes[i] "_ORDER"]
+   if (order !~ /^[0-9]+$/ || order+0 < 2 || order+0 > 9) exit 1
+  }
+  for (key in v) {
+   if (key ~ /^[AB]P?_[0-9]+_[0-9]+$/) {
+    split(key, parts, "_")
+    if (!(parts[1] "_ORDER" in v) || parts[2]+parts[3] > v[parts[1] "_ORDER"]+0) exit 1
+   }
+  }
+  if (("AP_ORDER" in v) != ("BP_ORDER" in v)) exit 1
+  if ("AP_ORDER" in v) {
+   if (v["AP_ORDER"] !~ /^[0-9]+$/ || v["BP_ORDER"] !~ /^[0-9]+$/ || v["AP_ORDER"]+0 > 9 || v["BP_ORDER"]+0 > 9) exit 1
+  }
+ }'
+}
+
+# Astrometry.net writes the final (post-tweak) values in these COMMENT cards.
+# Missing metrics mean unknown, not zero; no uncalibrated rejection threshold
+# is imposed here. These comments must be read before any later UCAC5 refit.
+function log_astrometry_repair_strength {
+ "$VAST_PATH"util/listhead "$1" 2>/dev/null | awk -v route="$2" '
+ BEGIN { odds="unknown"; nmatch="unknown" }
+ /^COMMENT log odds:/ { odds=$4 }
+ /^COMMENT nmatch:/ { nmatch=$3 }
+ END { printf "ASTROMETRY_REPAIR_DIAG: site=local route=%s post_tweak_logodds=%s post_tweak_nmatch=%s\n", route, odds, nmatch }'
+}
+
+# A single deadline covers the optional client repairs, including escalation
+# to another server. Each individual solver still gets at most 120 seconds.
+# The default preserves the former maximum of three local repair calls; it
+# does not include the initial local or remote solve or the image diagnostic.
+function astrometry_repair_seconds_left {
+ local REMAINING=120
+ if [ -n "$ASTROMETRY_REPAIR_DEADLINE" ];then
+  REMAINING=$((ASTROMETRY_REPAIR_DEADLINE - $(date +%s)))
+ fi
+ [ "$REMAINING" -gt 0 ] || return 1
+ [ "$REMAINING" -le 120 ] || REMAINING=120
+ echo "$REMAINING"
+}
+
+# Prepare an image privately, including provenance, before replacing a usable
+# WCS. All work is beside the destination; a failed strip, insert, header write
+# or rename leaves the previous image intact. Never write through a symlink.
+# $1 header, $2 source image, $3 destination image, $4 VAST004 value.
+function install_astrometry_wcs {
+ local INSTALL_DIR INSTALL_HEADER INSTALL_SOURCE INSTALL_DESTINATION
+ INSTALL_HEADER=$(vastrealpath "$1") || return 1
+ INSTALL_SOURCE=$(vastrealpath "$2") || return 1
+ INSTALL_DESTINATION="$3"
+ [ ! -L "$INSTALL_DESTINATION" ] && [ ! -d "$INSTALL_DESTINATION" ] || return 1
+ astrometry_wcs_is_valid "$INSTALL_HEADER" || return 1
+ INSTALL_DIR=$(mktemp -d "${INSTALL_DESTINATION}.install.XXXXXX") || return 1
+ if (
+  cd "$INSTALL_DIR" || exit 1
+  cp "$INSTALL_SOURCE" input.fits &&
+   "$VAST_PATH"lib/astrometry/strip_wcs_keywords input.fits &&
+   "$VAST_PATH"lib/astrometry/insert_wcs_header "$INSTALL_HEADER" input.fits &&
+   "$VAST_PATH"util/modhead wcs_input.fits VAST001 "$(basename "$0") / VaST script name" &&
+   "$VAST_PATH"util/modhead wcs_input.fits VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE" &&
+   "$VAST_PATH"util/modhead wcs_input.fits VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER" &&
+   "$VAST_PATH"util/modhead wcs_input.fits VAST004 "$4 / astrometry.net run" &&
+   astrometry_wcs_is_valid wcs_input.fits &&
+   "$VAST_PATH"util/listhead wcs_input.fits | awk -F "'" -v script="$(basename "$0")" -v mode="$ASTROMETRYNET_LOCAL_OR_REMOTE" -v server="$PLATE_SOLVE_SERVER" -v tag="$4" '
+    /^VAST00[1234] / {value=$2; sub(/ *$/, "", value); key=substr($0,1,7); seen[key]=value}
+    END {exit !(seen["VAST001"]==script && seen["VAST002"]==mode && seen["VAST003"]==server && seen["VAST004"]==tag)}'
+ ) && mv -f "$INSTALL_DIR/wcs_input.fits" "$INSTALL_DESTINATION" ;then
+  rm -rf "$INSTALL_DIR"
+  return 0
+ fi
+ rm -rf "$INSTALL_DIR"
+ echo "WARNING: could not install the candidate WCS in $INSTALL_DESTINATION; the previous image was kept"
+ return 1
+}
+
 # Re-tweak a wide-field solve-field solution against ALL the index files,
 # working on the star list rather than on the image.
 #
@@ -290,7 +397,7 @@ function wcs_header_file_looks_valid {
 # anchored at the matched quad: accurate there, tens of arcseconds off at the
 # far corners of the frame. The remedy is the one Dustin Lang describes
 # (quoted at the image-based re-tweak below): re-run solve-field with
-# --verify on that solution, so it skips the quad search, verifies the
+# --verify on that solution, so it first verifies the
 # solution against every index file and re-fits the polynomial with the
 # stars of the best-verifying index, which is a far denser one. Done on the
 # star list this takes seconds, while the image-based form has to extract
@@ -309,7 +416,12 @@ function star_list_verify_retweak {
  local VERIFY_XYLS="$1"
  local VERIFY_INPUT_WCS="$2"
  local VERIFY_OUTPUT_WCS="$3"
- local VERIFY_OUTBASE VERIFY_IMAGE_SIZE VERIFY_TMP_FILE VERIFY_SIP_ORDER
+ local VERIFY_OUTBASE VERIFY_IMAGE_SIZE VERIFY_DIR VERIFY_SECONDS VERIFY_STATUS
+ [ ! -d "$VERIFY_OUTPUT_WCS" ] || return 1
+ if [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ];then
+  echo "star_list_verify_retweak(): disabled by VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1"
+  return 1
+ fi
  if ! command -v solve-field > /dev/null 2>&1 ;then
   echo "star_list_verify_retweak(): solve-field is not available locally - cannot re-tweak the solution"
   return 1
@@ -318,34 +430,37 @@ function star_list_verify_retweak {
   echo "star_list_verify_retweak(): the star list $VERIFY_XYLS or the WCS header $VERIFY_INPUT_WCS is missing"
   return 1
  fi
- VERIFY_OUTBASE="${VERIFY_OUTPUT_WCS%.wcs}"
- VERIFY_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE")
- rm -f "$VERIFY_OUTBASE".wcs "$VERIFY_OUTBASE".solved
+ VERIFY_SECONDS=$(astrometry_repair_seconds_left) || return 1
+ VERIFY_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE") || return 1
+ VERIFY_DIR=$(mktemp -d "${VERIFY_OUTPUT_WCS%.wcs}.verify.XXXXXX") || return 1
+ # solve-field joins --dir and --out; keep the directory separate from the
+ # basename so absolute input star-list paths work too.
+ VERIFY_DIR=$(cd "$VERIFY_DIR" && pwd) || return 1
+ VERIFY_OUTBASE="$VERIFY_DIR/solution"
  echo "Re-tweaking the solution against all the index files using the star list: solve-field --verify $VERIFY_INPUT_WCS --tweak-order $VAST_TWEAK_ORDER"
  # The 120 s timeout is the same as for the image-based re-tweak below: when
  # the verification scores badly, solve-field falls back to a blind quad
  # search that may take many minutes, and a failed re-tweak costs nothing.
- $TIMEOUT_COMMAND 120 solve-field "$VERIFY_XYLS" $VERIFY_IMAGE_SIZE --verify "$VERIFY_INPUT_WCS" --objs 10000 --tweak-order "$VAST_TWEAK_ORDER" --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --out "$VERIFY_OUTBASE"
- # solve-field writes its usual companion files next to the WCS header
- for VERIFY_TMP_FILE in "$VERIFY_OUTBASE".axy "$VERIFY_OUTBASE".corr "$VERIFY_OUTBASE".match "$VERIFY_OUTBASE".rdls "$VERIFY_OUTBASE"-indx.xyls ;do
-  if [ -f "$VERIFY_TMP_FILE" ];then
-   rm -f "$VERIFY_TMP_FILE"
+ VERIFY_STATUS=0
+ $TIMEOUT_COMMAND "$VERIFY_SECONDS" solve-field "$VERIFY_XYLS" $VERIFY_IMAGE_SIZE --verify "$VERIFY_INPUT_WCS" --objs 10000 --tweak-order "$VAST_TWEAK_ORDER" --cpulimit "$VERIFY_SECONDS" --cancel "$VERIFY_DIR/cancel" --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --dir "$VERIFY_DIR" --out solution || VERIFY_STATUS=$?
+ if [ "$VERIFY_STATUS" -eq 0 ] && [ -s "$VERIFY_OUTBASE.solved" ] && astrometry_wcs_is_valid "$VERIFY_OUTBASE.wcs" sip ;then
+  log_astrometry_repair_strength "$VERIFY_OUTBASE.wcs" verify
+  if mv -f "$VERIFY_OUTBASE.wcs" "$VERIFY_OUTPUT_WCS" ;then
+   rm -rf "$VERIFY_DIR"
+   echo "The star-list re-tweak produced a structurally valid SIP solution"
+   return 0
   fi
- done
- if [ ! -s "$VERIFY_OUTBASE".solved ] || [ ! -s "$VERIFY_OUTBASE".wcs ];then
-  echo "The star-list re-tweak did not produce a solution"
-  rm -f "$VERIFY_OUTBASE".wcs "$VERIFY_OUTBASE".solved
-  return 1
  fi
- rm -f "$VERIFY_OUTBASE".solved
- VERIFY_SIP_ORDER=$("$VAST_PATH"util/listhead "$VERIFY_OUTBASE".wcs 2>/dev/null | awk -F'[= /]+' '$1=="A_ORDER"{print $2; exit}')
- if [ -z "$VERIFY_SIP_ORDER" ];then
-  echo "The star-list re-tweak produced a solution that still carries no SIP distortion terms"
-  rm -f "$VERIFY_OUTBASE".wcs
-  return 1
+ echo "The star-list re-tweak did not produce a usable SIP solution (solver status $VERIFY_STATUS)"
+ if [ "$VERIFY_STATUS" -ne 0 ];then
+  # Keep the cancellation marker for an engine orphaned by lib/timeout.
+  # Its private directory cannot contaminate any subsequent attempt.
+  touch "$VERIFY_DIR/cancel"
+  echo "Cancelled repair work files retained in $VERIFY_DIR"
+ else
+  rm -rf "$VERIFY_DIR"
  fi
- echo "The star-list re-tweak produced a solution with a SIP polynomial of order $VERIFY_SIP_ORDER"
- return 0
+ return 1
 }
 
 # Re-solve a wide-field star list with the search restricted to a small
@@ -371,10 +486,10 @@ function star_list_verify_retweak {
 # of 10 arcsec - and the star-list re-tweak reached only 5 index stars; this
 # re-solve found index-4113 and index-4112 quads with 189-366 index stars and
 # a raw solution good to 1.0-1.4 arcsec (median, against UCAC5).
-# Only a strong match is accepted (--odds-to-solve 1e50, a log-odds of 115,
-# where the default accepts 20.7): a marginal match inside the small circle
-# would be no better than the one being replaced. Those good solutions scored
-# log-odds 1160-2200, the marginal index-4115 quads 32-34.
+# --odds-to-solve 1e50 requires a strong initial match (log-odds 115 versus
+# the default 20.7). Tweaking can weaken it afterwards, so this is not a
+# guarantee of final strength. Log the final COMMENT metrics below; a
+# post-tweak acceptance threshold still needs calibration on real fields.
 # Sets SMALL_RADIUS_RESOLVE_RETWEAKED to 1 when the result needed the
 # star-list re-tweak to get its SIP polynomial, to 0 otherwise.
 # Disable with VAST_SKIP_SMALL_RADIUS_RESOLVE=1.
@@ -388,8 +503,14 @@ function small_radius_hinted_resolve {
  local RESOLVE_SEED_IMAGE="$2"
  local RESOLVE_OUTPUT_WCS="$3"
  local RESOLVE_OUTBASE RESOLVE_IMAGE_SIZE RESOLVE_FOV_INFO RESOLVE_RADEC RESOLVE_FOV_MAJORAXIS_DEG RESOLVE_RADIUS_DEG
- local RESOLVE_SCALE RESOLVE_SCALE_LOW RESOLVE_SCALE_HIGH RESOLVE_QUAD_OPTION RESOLVE_TMP_FILE RESOLVE_SIP_ORDER RESOLVE_CD_SCALE
+ local RESOLVE_SCALE RESOLVE_SCALE_LOW RESOLVE_SCALE_HIGH RESOLVE_QUAD_OPTION RESOLVE_CD_SCALE
+ local RESOLVE_DIR RESOLVE_SECONDS RESOLVE_STATUS
+ [ ! -d "$RESOLVE_OUTPUT_WCS" ] || return 1
  SMALL_RADIUS_RESOLVE_RETWEAKED=0
+ if [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ];then
+  echo "small_radius_hinted_resolve(): disabled by VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1"
+  return 1
+ fi
  if [ "$VAST_SKIP_SMALL_RADIUS_RESOLVE" = "1" ];then
   echo "small_radius_hinted_resolve(): disabled by VAST_SKIP_SMALL_RADIUS_RESOLVE=1"
   return 1
@@ -402,6 +523,7 @@ function small_radius_hinted_resolve {
   echo "small_radius_hinted_resolve(): the star list $RESOLVE_XYLS or the image $RESOLVE_SEED_IMAGE is missing"
   return 1
  fi
+ astrometry_wcs_is_valid "$RESOLVE_SEED_IMAGE" || return 1
  RESOLVE_FOV_INFO=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh "$RESOLVE_SEED_IMAGE" 2>/dev/null)
  RESOLVE_RADEC=$(echo "$RESOLVE_FOV_INFO" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}')
  RESOLVE_FOV_MAJORAXIS_DEG=$(echo "$RESOLVE_FOV_INFO" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g" | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }')
@@ -432,42 +554,49 @@ function small_radius_hinted_resolve {
  # solve-field process (busybox, lib/timeout) an engine left over from a
  # timed-out run could otherwise write into this run's files. --cpulimit makes
  # such an engine stop by itself as well.
- RESOLVE_OUTBASE="${RESOLVE_OUTPUT_WCS%.wcs}_resolve"
- RESOLVE_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE")
- rm -f "$RESOLVE_OUTPUT_WCS" "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE".solved "$RESOLVE_OUTBASE"_retweak.wcs
+ RESOLVE_SECONDS=$(astrometry_repair_seconds_left) || return 1
+ RESOLVE_IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITSFILE") || return 1
+ RESOLVE_DIR=$(mktemp -d "${RESOLVE_OUTPUT_WCS%.wcs}.resolve.XXXXXX") || return 1
+ RESOLVE_DIR=$(cd "$RESOLVE_DIR" && pwd) || return 1
+ RESOLVE_OUTBASE="$RESOLVE_DIR/solution"
  echo "Re-solving with the search restricted to $RESOLVE_RADIUS_DEG deg around the solution centre: solve-field $RESOLVE_RADEC --radius $RESOLVE_RADIUS_DEG --tweak-order $VAST_TWEAK_ORDER"
  # The same 120 s timeout as the re-tweak caps the cost of a failure (240 s
  # with the re-tweak below); what happens then is up to the caller.
- $TIMEOUT_COMMAND 120 solve-field "$RESOLVE_XYLS" $RESOLVE_IMAGE_SIZE $RESOLVE_QUAD_OPTION --crpix-center $RESOLVE_RADEC --radius "$RESOLVE_RADIUS_DEG" --scale-low "$RESOLVE_SCALE_LOW" --scale-high "$RESOLVE_SCALE_HIGH" --scale-units arcsecperpix --objs 10000 --depth 10,20,30,40,50,100,200,300,500 --odds-to-solve 1e50 --cpulimit 120 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order "$VAST_TWEAK_ORDER" --out "$RESOLVE_OUTBASE"
- # solve-field writes its usual companion files next to the WCS header
- for RESOLVE_TMP_FILE in "$RESOLVE_OUTBASE".axy "$RESOLVE_OUTBASE".corr "$RESOLVE_OUTBASE".match "$RESOLVE_OUTBASE".rdls "$RESOLVE_OUTBASE"-indx.xyls ;do
-  if [ -f "$RESOLVE_TMP_FILE" ];then
-   rm -f "$RESOLVE_TMP_FILE"
-  fi
- done
- if [ ! -s "$RESOLVE_OUTBASE".solved ] || [ ! -s "$RESOLVE_OUTBASE".wcs ];then
-  echo "The small-radius re-solve did not produce a solution"
-  rm -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE".solved
+ RESOLVE_STATUS=0
+ $TIMEOUT_COMMAND "$RESOLVE_SECONDS" solve-field "$RESOLVE_XYLS" $RESOLVE_IMAGE_SIZE $RESOLVE_QUAD_OPTION --crpix-center $RESOLVE_RADEC --radius "$RESOLVE_RADIUS_DEG" --scale-low "$RESOLVE_SCALE_LOW" --scale-high "$RESOLVE_SCALE_HIGH" --scale-units arcsecperpix --objs 10000 --depth 10,20,30,40,50,100,200,300,500 --odds-to-solve 1e50 --cpulimit "$RESOLVE_SECONDS" --cancel "$RESOLVE_DIR/cancel" --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order "$VAST_TWEAK_ORDER" --dir "$RESOLVE_DIR" --out solution || RESOLVE_STATUS=$?
+ if [ "$RESOLVE_STATUS" -ne 0 ];then
+  touch "$RESOLVE_DIR/cancel"
+  echo "The small-radius re-solve failed (solver status $RESOLVE_STATUS); cancelled work files retained in $RESOLVE_DIR"
   return 1
  fi
- rm -f "$RESOLVE_OUTBASE".solved
- RESOLVE_SIP_ORDER=$("$VAST_PATH"util/listhead "$RESOLVE_OUTBASE".wcs 2>/dev/null | awk -F'[= /]+' '$1=="A_ORDER"{print $2; exit}')
- if [ -z "$RESOLVE_SIP_ORDER" ];then
+ if [ ! -s "$RESOLVE_OUTBASE.solved" ] || ! astrometry_wcs_is_valid "$RESOLVE_OUTBASE.wcs" ;then
+  echo "The small-radius re-solve did not produce a valid solution"
+  rm -rf "$RESOLVE_DIR"
+  return 1
+ fi
+ log_astrometry_repair_strength "$RESOLVE_OUTBASE.wcs" small_radius
+ if ! astrometry_wcs_is_valid "$RESOLVE_OUTBASE.wcs" sip ;then
   # A fine-index quad with a failed tweak is still a far better start for
   # the re-tweak than the marginal coarse quad was.
   echo "The small-radius re-solve produced a solution without SIP terms - re-tweaking it"
-  if star_list_verify_retweak "$RESOLVE_XYLS" "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE"_retweak.wcs ;then
-   mv -f "$RESOLVE_OUTBASE"_retweak.wcs "$RESOLVE_OUTPUT_WCS"
-   rm -f "$RESOLVE_OUTBASE".wcs
+  if star_list_verify_retweak "$RESOLVE_XYLS" "$RESOLVE_OUTBASE.wcs" "$RESOLVE_OUTBASE"_retweak.wcs && mv -f "$RESOLVE_OUTBASE"_retweak.wcs "$RESOLVE_OUTPUT_WCS" ;then
+   rm -rf "$RESOLVE_DIR"
    SMALL_RADIUS_RESOLVE_RETWEAKED=1
    echo "The small-radius re-solve, re-tweaked, produced a solution with a SIP polynomial"
    return 0
   fi
-  rm -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTBASE"_retweak.wcs
+  # A timed-out nested verifier retains its cancellation marker.
+  if [ -z "$(find "$RESOLVE_DIR" -name cancel -print)" ];then
+   rm -rf "$RESOLVE_DIR"
+  fi
   return 1
  fi
- mv -f "$RESOLVE_OUTBASE".wcs "$RESOLVE_OUTPUT_WCS"
- echo "The small-radius re-solve produced a solution with a SIP polynomial of order $RESOLVE_SIP_ORDER"
+ if ! mv -f "$RESOLVE_OUTBASE.wcs" "$RESOLVE_OUTPUT_WCS" ;then
+  rm -rf "$RESOLVE_DIR"
+  return 1
+ fi
+ rm -rf "$RESOLVE_DIR"
+ echo "The small-radius re-solve produced a structurally valid SIP solution"
  return 0
 }
 
@@ -482,11 +611,27 @@ function small_radius_hinted_resolve {
 # $5 - optional: "no_resolve" skips the small-radius re-solve
 # Returns 0 if $4 was written and carries a SIP polynomial, 1 otherwise.
 function repair_tan_only_solution {
+ local REPAIR_BUDGET
  TAN_ONLY_REPAIR_DESCRIPTION=""
  TAN_ONLY_REPAIR_TAG=""
+ if [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ];then
+  echo "Local astrometry repair disabled by VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1"
+  return 1
+ fi
+ if [ -z "$ASTROMETRY_REPAIR_DEADLINE" ];then
+  REPAIR_BUDGET=${VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT:-360}
+  case "$REPAIR_BUDGET" in ''|*[!0-9]*) echo "Invalid VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT"; return 1 ;; esac
+  # Avoid octal arithmetic and overflow on older shells.
+  if [ "${#REPAIR_BUDGET}" -gt 5 ] || [ "$REPAIR_BUDGET" -lt 1 ] || [ "$REPAIR_BUDGET" -gt 86400 ];then
+   echo "VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT must be 1..86400 seconds"
+   return 1
+  fi
+  ASTROMETRY_REPAIR_DEADLINE=$(( $(date +%s) + 10#$REPAIR_BUDGET ))
+ fi
  if star_list_verify_retweak "$1" "$2" "$4" ;then
   TAN_ONLY_REPAIR_DESCRIPTION="star-list re-tweak"
   TAN_ONLY_REPAIR_TAG="verify_retweak"
+  echo "Local repair succeeded: $TAN_ONLY_REPAIR_DESCRIPTION"
   return 0
  fi
  if [ "$5" = "no_resolve" ];then
@@ -501,6 +646,7 @@ function repair_tan_only_solution {
    TAN_ONLY_REPAIR_DESCRIPTION="small-radius re-solve"
    TAN_ONLY_REPAIR_TAG="small_radius_resolve"
   fi
+  echo "Local repair succeeded: $TAN_ONLY_REPAIR_DESCRIPTION"
   return 0
  fi
  return 1
@@ -678,10 +824,9 @@ export TIMEOUT_COMMAND
 
 # Set by the silently-failed-tweak guard when no repair of a TAN-only local
 # solution worked and the frame was escalated to a remote server: the local
-# solution set aside meanwhile, and whether the small-radius re-solve has
-# already been tried on this star list
+# solution set aside meanwhile, and the deadline shared by client repairs.
 TAN_ONLY_FALLBACK_IMAGE=""
-TAN_ONLY_LOCAL_REPAIR_FAILED=0
+ASTROMETRY_REPAIR_DEADLINE=""
 
 
 # Set SExtractor executable
@@ -1046,64 +1191,16 @@ fi
     if [ -n "$VAST_SAVE_ITER1_WCS" ];then
      cp out$$.wcs "$VAST_SAVE_ITER1_WCS"
     fi
-    echo -n "Inserting WCS header...  "
-    if [[ "$FITSFILE" -ef "$BASENAME_FITSFILE" ]];then
-     echo "Not creating a local copy of the FITS image as the input image is already in the current directory. The input image will be modified!"
-    else
-     cp -v "$FITSFILE" "$BASENAME_FITSFILE"
-     if [ $? -ne 0 ];then
-      echo "ERROR: cannot copy $FITSFILE to $BASENAME_FITSFILE"
-      exit 1
-     fi
-    fi
-    # Strip the input image from the old WCS header (if any)
-    lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-    if [ $? -ne 0 ];then
-     echo "ERROR: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
+    PLATE_SOLVE_SERVER="${PLATE_SOLVE_SERVER:-local}"
+    if ! install_astrometry_wcs out$$.wcs "$FITSFILE" "wcs_$BASENAME_FITSFILE" iteration01 ;then
+     echo "ERROR: cannot install the first local WCS for $FITSFILE"
      exit 1
     fi
-    # Double-check that the new WCS header is still here
-    ls -lh out$$.wcs "$BASENAME_FITSFILE"
-    # Insert the new WCS header from out$$.wcs
-    echo -n "Inserting WCS header (1st iteration local)...  "
-    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
-    if [ $? -ne 0 ];then
-     # This is a bad one, just exit
-     echo " ERROR inserting WCS header in $FITSFILE !!! Aborting further actions! "
-     WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
-     WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
-     if [ -f "$WCS_IMAGE_TO_CHECK" ];then
-      echo "The output file $WCS_IMAGE_TO_CHECK exist"
-      if [ -s "$WCS_IMAGE_TO_CHECK" ];then
-       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
-       util/listhead $WCS_IMAGE_TO_CHECK
-       echo "#### end of header of the existing image $WCS_IMAGE_TO_CHECK ####"
-      else
-       echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
-      fi
-     fi
-     echo "#### Header we wanted to insert ####"
-     util/listhead out$$.wcs
-     echo "#### end of header we wanted to insert ####"
-     exit 1
-    else   
-     ERROR_STATUS=0
-     echo "done"
-     echo "The WCS header appears to be added with no errors in $FITSFILE ($BASENAME_FITSFILE)"
-     # Insert VaST headers for debugging
-     if [ -z "$PLATE_SOLVE_SERVER" ];then
-      PLATE_SOLVE_SERVER="local"
-     fi
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration01 / astrometry.net run"
-     #
-    fi
+    ERROR_STATUS=0
     #
     # clean up
     #rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
-    # note that we will need "$BASENAME_FITSFILE" for the second iteration
+    # The original input is read only; each installation makes its own copy.
     rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
     ############
     # Attempt the second iteration with restricted parameters
@@ -1142,64 +1239,26 @@ fi
     # cleanly, matching what the reference-image pipeline produces and bringing per-pixel residuals
     # against the reference WCS down to ~25-30".
     $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER --tweak-order "$VAST_TWEAK_ORDER"
-    if [ $? -ne 0 ];then
-     echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
-     exit 1
+    SECOND_SOLVE_STATUS=$?
+    if [ "$SECOND_SOLVE_STATUS" -ge 130 ];then
+     echo "Second local solve interrupted; stopping with the first-pass image preserved"
+     exit "$SECOND_SOLVE_STATUS"
     fi
-    if [ ! -f out$$.solved ];then
-     echo "The second iteration of solve-field failed to solve the field for $BASENAME_FITSFILE"
-     exit 1
-    fi
-    if [ ! -f out$$.wcs ];then
-     echo "The second iteration of solve-field failed to produce out$$.wcs for $BASENAME_FITSFILE"
-     exit 1
-    fi
-    if [ ! -s out$$.wcs ];then
-     echo "The second iteration of solve-field produced an empty out$$.wcs for $BASENAME_FITSFILE"
-     exit 1
-    fi
-    # remove the plate-solved image produced by the 1st iteration
-    rm -f wcs_"$BASENAME_FITSFILE"
-    # We probably not need to strip_wcs_keywords again from $BASENAME_FITSFILE, but just in case
-    # Strip the input image from the old WCS header (if any)
-    lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-    if [ $? -ne 0 ];then
-     echo "ERROR at 2nd iteration: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
-     exit 1
-    fi
-    # Double-check that the new WCS header is still here
-    ls -lh out$$.wcs "$BASENAME_FITSFILE"
-    # Insert the new WCS header from out$$.wcs
-    echo -n "Inserting WCS header (2nd iteration local)...  "
-    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
-    if [ $? -ne 0 ];then
-     # This is a bad one, just exit
-     echo " ERROR inserting WCS header! Aborting further actions! "
-     WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
-     WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
-     if [ -f "$WCS_IMAGE_TO_CHECK" ];then
-      echo "The output file $WCS_IMAGE_TO_CHECK exist"
-      if [ -s "$WCS_IMAGE_TO_CHECK" ];then
-       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK (2nd iteration) ####"
-       util/listhead $WCS_IMAGE_TO_CHECK
-       echo "#### end of eader of the existing image $WCS_IMAGE_TO_CHECK (2nd iteration) ####"
-      else
-       echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
-      fi
-     fi
-     echo "#### Header we wanted to insert (2nd iteration) ####"
-     util/listhead out$$.wcs
-     echo "#### end of header we wanted to insert (2nd iteration) ####"
-     exit 1
-    else   
+    if [ "$SECOND_SOLVE_STATUS" -eq 0 ] && [ -s out$$.solved ] && astrometry_wcs_is_valid out$$.wcs && install_astrometry_wcs out$$.wcs "$FITSFILE" "wcs_$BASENAME_FITSFILE" iteration02 ;then
      ERROR_STATUS=0
-     echo "The WCS header appears to be added with no errors."
-     # Insert VaST headers for debugging
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration02 / astrometry.net run"
-     #
+    else
+     # The first pass remains a validated working solution. Send it through
+     # the same repair/fallback policy instead of leaving a failed job with
+     # an apparently successful first-pass image on disk.
+     echo "WARNING: second local solve or WCS installation failed (solver status $SECOND_SOLVE_STATUS); using the first-pass solution"
+     if ! astrometry_wcs_is_valid "wcs_$BASENAME_FITSFILE" || ! cp "wcs_$BASENAME_FITSFILE" out$$.wcs ;then
+      echo "ERROR: cannot retain the first-pass WCS"
+      exit 1
+     fi
+     ERROR_STATUS=0
+    fi
+    # Keep the image-based diagnostic as a separate optional attempt.
+    if [ -s "wcs_$BASENAME_FITSFILE" ];then
      ############
      ############
      # An absolute desperate move to get reliable astrometry with very wide-field images like STL
@@ -1217,17 +1276,19 @@ fi
      # below (used for experiments with alternative SIP refinement schemes;
      # on some very dense fields the verification scores near zero and the
      # step degenerates into a many-minute blind index search)
-     if [ "$VAST_SKIP_IMAGE_BASED_RETWEAK" = "1" ];then
+     # For TAN-only fields this diagnostic is now redundant with the
+     # star-list repair below. It is intentionally retained for comparison;
+     # --verify can fall back to quad search and still consume 120 seconds.
+     if [ "$VAST_SKIP_IMAGE_BASED_RETWEAK" = "1" ] || [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ];then
       TEST=0
      fi
      if [ $TEST -eq 1 ];then
       #if fasle ;then
       echo "The field of view is large: we'll try to run Astromety.net code on the image itself rather than a star list"
-      AN_WCS_BASE=wcs_"$BASENAME_FITSFILE"
-      AN_WCS_BASE="${AN_WCS_BASE%.*}"
+      AN_WORKDIR=$(mktemp -d "out$$_image_verify.XXXXXX") || exit 1
+      AN_WORKDIR=$(cd "$AN_WORKDIR" && pwd) || exit 1
+      AN_WCS_BASE="$AN_WORKDIR/solution"
       AN_NEW_FITS_WITH_UPDATED_WCS="$AN_WCS_BASE".new
-      AN_WCSONLY_FILE="$AN_WCS_BASE".wcs
-      AN_AXY_FILE="$AN_WCS_BASE".axy
       # Legacy "fresh solve" form. solve-field auto-verifies because
       # wcs_"$BASENAME_FITSFILE" already carries iter 2's WCS, but the
       # auto-verify behaviour is implicit and the command is also free to
@@ -1235,8 +1296,8 @@ fi
       # Kept commented out so the previous behaviour is recoverable.
       #echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order 3
       # Explicit --verify form, in line with Dustin Lang's recommendation
-      # quoted above: use iter 2's WCS file as the starting point, skip the
-      # quad-match step entirely, verify against all index files, and
+      # quoted above: use iter 2's WCS file as the starting point,
+      # verify against all index files first, and
       # re-tweak SIP using stars matched to the best-verifying index.
       # The 120 sec timeout guards against the failure mode where the
       # verification scores near-zero log-odds on a dense field and
@@ -1244,19 +1305,22 @@ fi
       # re-tweak is killed we keep the iteration 2 WCS, and the UCAC5-based
       # SIP refit in util/solve_plate_with_UCAC5 will fix the distortion
       # terms downstream.
-      echo wcs_"$BASENAME_FITSFILE" | $TIMEOUT_COMMAND 120 solve-field --files-on-stdin --fits-image --verify out$$.wcs --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order "$VAST_TWEAK_ORDER"
-      if [ $? -eq 0 ];then
+      echo wcs_"$BASENAME_FITSFILE" | $TIMEOUT_COMMAND 120 solve-field --files-on-stdin --fits-image --verify out$$.wcs --cpulimit 120 --dir "$AN_WORKDIR" --out solution --cancel "$AN_WORKDIR/cancel" --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order "$VAST_TWEAK_ORDER"
+      AN_VERIFY_STATUS=$?
+      if [ "$AN_VERIFY_STATUS" -eq 0 ];then
        # if there is an output file - replace the original with it
-       if [ -s "$AN_NEW_FITS_WITH_UPDATED_WCS" ];then
-        mv -v "$AN_NEW_FITS_WITH_UPDATED_WCS" wcs_"$BASENAME_FITSFILE"
+       if astrometry_wcs_is_valid "$AN_NEW_FITS_WITH_UPDATED_WCS" ;then
+        if ! mv -v "$AN_NEW_FITS_WITH_UPDATED_WCS" "wcs_$BASENAME_FITSFILE" ;then
+         echo "WARNING: could not install the image-based re-tweak; keeping the previous WCS"
+        fi
        fi
       fi # if [ $? -eq 0 ];then
-      # cleanup
-      for AN_TMP_FILE_TO_REMOVE in "$AN_NEW_FITS_WITH_UPDATED_WCS" "$AN_WCSONLY_FILE" "$AN_AXY_FILE" ;do
-       if [ -f "$AN_TMP_FILE_TO_REMOVE" ];then
-        rm -f "$AN_TMP_FILE_TO_REMOVE"
-       fi
-      done
+      if [ "$AN_VERIFY_STATUS" -eq 0 ];then
+       rm -rf "$AN_WORKDIR"
+      else
+       touch "$AN_WORKDIR/cancel"
+       echo "Cancelled image diagnostic work files retained in $AN_WORKDIR"
+      fi
      fi
      ############
     fi
@@ -1285,33 +1349,18 @@ fi
     if [ $TEST -eq 1 ] && [ -s wcs_"$BASENAME_FITSFILE" ];then
      if [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
       echo "WARNING: the local solve-field solution for $BASENAME_FITSFILE carries no SIP distortion terms while --tweak-order $VAST_TWEAK_ORDER was requested: the tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
-      if repair_tan_only_solution out$$.xyls out$$.wcs wcs_"$BASENAME_FITSFILE" out$$_verify.wcs ;then
-       rm -f wcs_"$BASENAME_FITSFILE"
-       "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-       echo -n "Inserting WCS header ($TAN_ONLY_REPAIR_DESCRIPTION)...  "
-       "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
-       if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
-        echo " ERROR inserting the repaired WCS header in $BASENAME_FITSFILE"
-        rm -f wcs_"$BASENAME_FITSFILE"
-       else
-        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
-        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
-        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-        "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "$TAN_ONLY_REPAIR_TAG / astrometry.net run"
-       fi
+      if repair_tan_only_solution out$$.xyls out$$.wcs "wcs_$BASENAME_FITSFILE" out$$_verify.wcs && install_astrometry_wcs out$$_verify.wcs "$FITSFILE" "wcs_$BASENAME_FITSFILE" "$TAN_ONLY_REPAIR_TAG" ;then
        rm -f out$$_verify.wcs
       else
-       # No repair worked: take the TAN-only solution out of the way so that
-       # the test below hands the frame to a remote plate-solve server. (From
-       # ca23497b until this fix the TAN-only solution was left in place here,
-       # so a failed re-tweak never reached the remote server at all.) It is
-       # set aside rather than deleted: if no server can be reached or none
-       # solves the frame, it is put back after the loop, so the UCAC5 refit
-       # downstream still gets its chance to rescue it.
        echo "No repair of the TAN-only solution of $BASENAME_FITSFILE succeeded (see above)"
-       TAN_ONLY_LOCAL_REPAIR_FAILED=1
-       TAN_ONLY_FALLBACK_IMAGE="out$$_tan_only_wcs.fits"
-       mv -f wcs_"$BASENAME_FITSFILE" "$TAN_ONLY_FALLBACK_IMAGE"
+       # Keep a checked fallback until a remote solution is installed. A
+       # failed move leaves this image in place for downstream UCAC5 rescue.
+       if mv -f "wcs_$BASENAME_FITSFILE" "out$$_tan_only_wcs.fits" ;then
+        TAN_ONLY_FALLBACK_IMAGE="out$$_tan_only_wcs.fits"
+       else
+        echo "WARNING: cannot set aside the TAN-only solution; keeping it for UCAC5 rescue"
+       fi
+       rm -f out$$_verify.wcs
       fi
       if [ ! -s wcs_"$BASENAME_FITSFILE" ];then
        echo "Discarding the TAN-only solution and retrying with a remote plate-solve server."
@@ -1323,14 +1372,6 @@ fi
      fi
     fi
     # clean up
-    # Remove the local working copy of the input image, but only if it IS a
-    # copy: when the input image is already in the current directory the
-    # "copy" is the input file itself and removing it would destroy the
-    # user's image (and break the callers that read the input image again
-    # after the solve, like util/solve_plate_with_UCAC5).
-    if [ ! "$FITSFILE" -ef "$BASENAME_FITSFILE" ];then
-     rm -f "$BASENAME_FITSFILE"
-    fi
     rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
     # Keep the star list out$$.xyls when the silently-failed-tweak guard
     # above escalated to a remote plate-solve server - the remote solve
@@ -1403,8 +1444,8 @@ fi
    # Note that the timeout is also enforced at the server side
    $TIMEOUT_COMMAND 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    CURL_EXIT_CODE=$?
-   cp -v out$$.xyls test.xyls
-   echo "$CURL -F file=@test.xyls -F submit='Upload Image' -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE \"http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py\" --user vast48:khyzbaojMhztNkWd > server_reply$$.html" > test.txt
+   cp -v out$$.xyls out$$_remote_debug.xyls
+   echo "$CURL -F file=@out$$_remote_debug.xyls -F submit='Upload Image' -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE \"http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py\" --user vast48:khyzbaojMhztNkWd > server_reply$$.html" > out$$_remote_debug.txt
    # A reminder from 'man timout':
    # If the command times out, and --preserve-status is not set, then exit with status 124.
    # Otherwise, exit with  the  status of  COMMAND.
@@ -1418,8 +1459,8 @@ fi
    if [ $CURL_EXIT_CODE -ne 0 ];then
     # something else went wrong
     echo "An ERROR has occured while uploading the star list to the server $PLATE_SOLVE_SERVER !"
-    echo "The failed command (see test.txt): "
-    cat test.txt
+    echo "The failed command (see out$$_remote_debug.txt): "
+    cat out$$_remote_debug.txt
     ERROR_STATUS=2
     continue
    fi
@@ -1523,47 +1564,12 @@ Retrying..."
      fi
     fi
     if [ -s out$$.wcs ];then
-     cp -v $FITSFILE "$BASENAME_FITSFILE"
-     # Strip the input image from the old WCS header (if any)
-     lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-     if [ $? -ne 0 ];then
-      echo "ERROR at 2nd iteration: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
-      exit 1
+     if ! install_astrometry_wcs out$$.wcs "$FITSFILE" "wcs_$BASENAME_FITSFILE" iteration01 ;then
+      echo "WARNING: could not install the WCS from $PLATE_SOLVE_SERVER - trying the next server"
+      ERROR_STATUS=2
+      continue
      fi
-     # Double-check that the new WCS header is still here
-     ls -lh out$$.wcs "$BASENAME_FITSFILE"
-     # Insert the new WCS header from out$$.wcs
-     echo -n "Inserting WCS header in $BASENAME_FITSFILE (remote) ...  "
-     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
-     if [ $? -ne 0 ];then
-      # This is a bad one, just exit
-      echo " ERROR inserting WCS header in $BASENAME_FITSFILE ! Aborting further actions! "
-      WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
-      WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
-      if [ -f "$WCS_IMAGE_TO_CHECK" ];then
-       echo "The output file $WCS_IMAGE_TO_CHECK exist"
-       if [ -s "$WCS_IMAGE_TO_CHECK" ];then
-        echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
-        util/listhead $WCS_IMAGE_TO_CHECK
-        echo "#### end of header of the existing image $WCS_IMAGE_TO_CHECK ####"
-       else
-        echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
-       fi
-      fi
-      echo "#### Header we wanted to insert ####"
-      util/listhead out$$.wcs
-      echo "#### end of header we wanted to insert ####"
-      exit 1
-     else
-      ERROR_STATUS=0
-      echo "The WCS header appears to be added with no errors."
-      # Insert VaST headers for debugging
-      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
-      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
-      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration01 / astrometry.net run"
-      #     
-     fi
+     ERROR_STATUS=0
      #
      # The remote server runs the same solve-field on the same star list, so
      # its solution can carry the same silently-failed SIP tweak as a local
@@ -1579,30 +1585,9 @@ Retrying..."
       TEST=$(echo "${REMOTE_FOV_MAJORAXIS_DEG:-0}" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
       if [ "$TEST" -eq 1 ] && [ "$("$VAST_PATH"util/listhead wcs_"$BASENAME_FITSFILE" 2>/dev/null | grep -c '^A_ORDER')" -eq 0 ];then
        echo "WARNING: the solution from $PLATE_SOLVE_SERVER for $BASENAME_FITSFILE carries no SIP distortion terms: the SIP tweak silently failed on a marginal quad match and the TAN-only solution is unreliable away from the matched quad."
-       # After an escalation from the local guard the small-radius re-solve
-       # has already failed on this very star list around nearly the same
-       # centre; only the re-tweak, whose starting solution is the server's,
-       # is worth repeating.
-       TAN_ONLY_REPAIR_OPTION=""
-       if [ "$TAN_ONLY_LOCAL_REPAIR_FAILED" = "1" ];then
-        TAN_ONLY_REPAIR_OPTION="no_resolve"
-       fi
-       if repair_tan_only_solution out$$.xyls out$$.wcs wcs_"$BASENAME_FITSFILE" out$$_verify.wcs $TAN_ONLY_REPAIR_OPTION ;then
-        rm -f wcs_"$BASENAME_FITSFILE"
-        "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-        echo -n "Inserting WCS header ($TAN_ONLY_REPAIR_DESCRIPTION of the remote solution)...  "
-        "$VAST_PATH"lib/astrometry/insert_wcs_header out$$_verify.wcs "$BASENAME_FITSFILE" 2>&1
-        if [ $? -ne 0 ] || [ ! -s wcs_"$BASENAME_FITSFILE" ];then
-         echo " ERROR inserting the repaired WCS header in $BASENAME_FITSFILE - keeping the solution from $PLATE_SOLVE_SERVER as received"
-         rm -f wcs_"$BASENAME_FITSFILE"
-         "$VAST_PATH"lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
-         "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
-        else
-         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
-         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
-         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
-         "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "${TAN_ONLY_REPAIR_TAG}_remote / astrometry.net run"
-        fi
+       # A server may return a different seed. The shared deadline bounds
+       # retries; failure of a previous seed does not suppress this one.
+       if repair_tan_only_solution out$$.xyls out$$.wcs "wcs_$BASENAME_FITSFILE" out$$_verify.wcs && install_astrometry_wcs out$$_verify.wcs "$FITSFILE" "wcs_$BASENAME_FITSFILE" "${TAN_ONLY_REPAIR_TAG}_remote" ;then
         rm -f out$$_verify.wcs
        else
         echo "WARNING: keeping the TAN-only solution from $PLATE_SOLVE_SERVER for $BASENAME_FITSFILE - the UCAC5-based refit will have to rescue it"
@@ -1610,18 +1595,7 @@ Retrying..."
       fi
      fi
      #
-     # The output plate-solved image wcs_"$BASENAME_FITSFILE" will be produced by lib/astrometry/insert_wcs_header
-     for FILE_TO_REMOVE in "$BASENAME_FITSFILE" out$$.wcs ;do
-      # do not remove the "local copy" if it is actually the input image itself
-      if [ "$FILE_TO_REMOVE" -ef "$FITSFILE" ];then
-       continue
-      fi
-      if [ -f "$FILE_TO_REMOVE" ];then
-       rm -f "$FILE_TO_REMOVE"
-      else
-       echo "Hmmm, the file $FILE_TO_REMOVE that we wanted to remove does not exist!"
-      fi
-     done
+     rm -f out$$.wcs out$$_verify.wcs
     else
      echo "ERROR: cannot download out.wcs for $BASENAME_FITSFILE"
      ERROR_STATUS=2
@@ -1681,8 +1655,12 @@ Retrying..."
  if [ -n "$TAN_ONLY_FALLBACK_IMAGE" ] && [ -s "$TAN_ONLY_FALLBACK_IMAGE" ];then
   if [ ! -s wcs_"$BASENAME_FITSFILE" ];then
    echo "WARNING: no remote plate-solve server returned a solution for $BASENAME_FITSFILE - keeping the local TAN-only solution; the UCAC5-based refit will have to rescue it"
-   mv -f "$TAN_ONLY_FALLBACK_IMAGE" wcs_"$BASENAME_FITSFILE"
-   ERROR_STATUS=0
+   if astrometry_wcs_is_valid "$TAN_ONLY_FALLBACK_IMAGE" && mv -f "$TAN_ONLY_FALLBACK_IMAGE" "wcs_$BASENAME_FITSFILE" ;then
+    ERROR_STATUS=0
+   else
+    echo "ERROR: cannot restore the TAN-only fallback from $TAN_ONLY_FALLBACK_IMAGE"
+    ERROR_STATUS=1
+   fi
   else
    rm -f "$TAN_ONLY_FALLBACK_IMAGE"
   fi
