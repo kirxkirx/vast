@@ -1137,3 +1137,14 @@ Update this file as you learn new things.
   the optional HJD comparison was skipped because vartools is not in PATH.
   Reports and reproduction logs are outside the tree in
   /tmp/vast_system_test_20261011/ (complete rerun: run2/).
+- Repeat verification on 2026-10-12 at fdaf4b0f: a fresh serial build and
+  full system rerun finished with exit 0 in 263.6 minutes. All 145 section
+  statuses matched the preceding run: 144 passed, with the database section
+  retaining only STANDALONEDBSCRIPT001b_GCVS. A subsequent unchanged database
+  lookup found BL Lac/BLLAC with exit 0 in 23 seconds. The GCVS assertions
+  make separate network requests, so one can pass while another reports
+  no result; the silent lookup does not retain enough detail to distinguish
+  the original transport failure from an empty server response. Local Solar
+  System comparisons still lack skyfield (and pandas); vartools is also
+  absent. No additional code changes were needed. Logs and the focused
+  lookup are in /tmp/vast_system_test_20261012/.
