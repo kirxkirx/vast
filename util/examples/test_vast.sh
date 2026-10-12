@@ -113,6 +113,10 @@ FAILED_TEST_CODES=$FAILED_TEST_CODES
 ___________________
 $DEBUG_OUTPUT"
  fi
+ # A fatal check can run before the next incremental checkpoint. Preserve
+ # its failure code in the saved reports as well as the console output.
+ printf '\nAborted: %s\nFailed test codes: %s\n' "${1:-fail_early}" "$FAILED_TEST_CODES" >> vast_test_report.txt
+ printf '%s\n' "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
  if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ] || [ -f ../THIS_IS_HPCC ];then
   email_vast_test_report
  fi

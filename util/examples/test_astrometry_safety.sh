@@ -182,6 +182,35 @@ if install_astrometry_wcs good.wcs image.fits protected.fits verify_retweak > ca
 [ -L protected.fits ] || fail 'protected symlink was removed'
 N_CASES=$((N_CASES+1))
 
+# Real camera images may already have DATE; Astrometry.net adds its own DATE
+# when the WCS is inserted. Repeated non-WCS metadata must not reject the fit.
+cp image.fits dated_image.fits
+dd if=good.wcs bs=80 count=21 of=dated_header.wcs 2>/dev/null
+printf '%-80s' "DATE    = '2026-10-11'" 'HISTORY dated WCS installation fixture' END >> dated_header.wcs
+pad_header dated_header.wcs
+"$REPO/util/modhead" dated_image.fits DATE '2019-11-03' >/dev/null
+if ! install_astrometry_wcs dated_header.wcs dated_image.fits dated_installed.fits iteration01 > case.log 2>&1 ;then
+ cat case.log
+ fail 'WCS installation rejected repeated DATE metadata'
+fi
+[ "$("$REPO/util/listhead" dated_installed.fits | grep -c '^DATE ')" -eq 2 ] || fail 'repeated DATE fixture was not exercised'
+astrometry_wcs_is_valid dated_installed.fits sip || fail 'repeated DATE metadata invalidated WCS'
+N_CASES=$((N_CASES+1))
+
+# Keep rejecting ambiguous WCS cards while ignoring unrelated image metadata.
+for duplicate_card in "CTYPE1  = 'RA---TAN'" 'CD1_1   =                 -0.1' 'A_ORDER =                    3' 'A_2_0   =                 1e-7' ;do
+ dd if=good.wcs bs=80 count=21 of=duplicate_wcs.wcs 2>/dev/null
+ printf '%-80s' "$duplicate_card" END >> duplicate_wcs.wcs
+ pad_header duplicate_wcs.wcs
+ if astrometry_wcs_is_valid duplicate_wcs.wcs ;then fail "accepted duplicate WCS card: $duplicate_card"; fi
+ cp image.fits duplicate_fallback.fits
+ if install_astrometry_wcs duplicate_wcs.wcs image.fits duplicate_fallback.fits iteration01 > case.log 2>&1 ;then
+  fail "installed duplicate WCS card: $duplicate_card"
+ fi
+ cmp image.fits duplicate_fallback.fits || fail 'duplicate WCS card changed fallback'
+ N_CASES=$((N_CASES+1))
+done
+
 # Test only candidate selection, not photometric calibration: malformed
 # numbers and the missing-match sentinel must not count as comparison stars.
 printf '%s\n' \

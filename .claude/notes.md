@@ -1102,8 +1102,8 @@ Update this file as you learn new things.
   within 1.5 arcsec, exported nonzero magnitudes exactly equal the match count),
   and bounded writer/regeneration/publication/rollback/symlink probes passed.
   Real Her small-radius and star-list helpers produced valid SIP output with
-  final match counts 196 and 1436. Full system tests and production deployment
-  remain for the user. Temporary logs/probes are outside the tree under
+  final match counts 196 and 1436. Full system test results follow below;
+  production deployment remains separate. Temporary logs/probes are under
   /tmp/vast_astrometry_implementation_20261010/.
 - Still open: calibrating post-tweak strength/spatial acceptance on broader
   cameras and index sets; independent saved-header matching with a uniform
@@ -1113,3 +1113,27 @@ Update this file as you learn new things.
   Failed solver work directories retain cancellation markers for late engines.
   Do not delete them until those engines have stopped. Smaller-radius defaults
   and the tau/scan CGI port remain separate, unvalidated policy changes.
+
+## WCS validation must allow repeated camera metadata (2026-10-11)
+- The full system test on 77b5f372 found ISONM31CCD005_exitcode and then
+  stopped with SATURN006_no_platesolved_img. Both solvers had succeeded:
+  install_astrometry_wcs rejected the assembled image because the camera's
+  DATE and Astrometry.net's creation DATE were both present. The validator
+  runs on complete images as well as standalone solver headers; duplicate
+  detection must be limited to the WCS cards it validates.
+- test_astrometry_safety.sh now has 37 cases, including installation with
+  both DATE cards and rejection of duplicate CTYPE, CD, SIP-order and SIP-
+  coefficient cards. The existing test_vast.sh invocation runs these cases.
+- fail_early() must save the current failure codes before copying report
+  artifacts. Otherwise a fatal check between checkpoints appears only in
+  the full console log, while the saved reports omit the stopping failure.
+- Validation: a fresh serial build, all 37 safety cases and both real-image
+  reproductions passed. The complete rerun finished in 284.8 minutes with
+  exit 0: 144 sections passed, including both Saturn tests, M31, Cyg-05,
+  Her-09, SIP policy and remote solving. The database section retained the
+  two already-exempt GCVS lookup codes; a later exact HTTP lookup returned
+  BL Lac/BLLAC, and the unchanged VaST wrapper also found it with exit 0.
+  Local Solar System comparisons were skipped because skyfield is absent;
+  the optional HJD comparison was skipped because vartools is not in PATH.
+  Reports and reproduction logs are outside the tree in
+  /tmp/vast_system_test_20261011/ (complete rerun: run2/).

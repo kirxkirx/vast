@@ -292,6 +292,10 @@ function astrometry_wcs_is_valid {
  }
  /^[A-Z0-9_]+ *=/ {
   key=$1; sub(/=.*/, "", key)
+  # The installed image also contains camera metadata. For example, DATE
+  # can occur both there and in the solver header; it does not describe WCS.
+  # Reject duplicate WCS cards without rejecting unrelated repeated cards.
+  if (key !~ /^(CTYPE[12]|CRVAL[12]|CRPIX[12]|CD[12]_[12]|[AB]P?_ORDER|[AB]P?_[0-9]+_[0-9]+)$/) next
   value=$0; sub(/^[^=]*= */, "", value); sub(/ *\/.*/, "", value)
   gsub(/[\047 ]/, "", value)
   if (key ~ /^(CRVAL[12]|CRPIX[12]|CD[12]_[12]|[AB]P?_ORDER|[AB]P?_[0-9]+_[0-9]+)$/) gsub(/[dD]/, "E", value)
