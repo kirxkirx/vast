@@ -345,6 +345,20 @@ function log_astrometry_repair_strength {
 # to another server. Each individual solver still gets at most 120 seconds.
 # The default preserves the former maximum of three local repair calls; it
 # does not include the initial local or remote solve or the image diagnostic.
+function start_astrometry_repair_budget {
+ local REPAIR_BUDGET
+ if [ -z "$ASTROMETRY_REPAIR_DEADLINE" ];then
+  REPAIR_BUDGET=${VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT:-360}
+  case "$REPAIR_BUDGET" in ''|*[!0-9]*) echo "Invalid VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT"; return 1 ;; esac
+  # Avoid octal arithmetic and overflow on older shells.
+  if [ "${#REPAIR_BUDGET}" -gt 5 ] || [ "$REPAIR_BUDGET" -lt 1 ] || [ "$REPAIR_BUDGET" -gt 86400 ];then
+   echo "VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT must be 1..86400 seconds"
+   return 1
+  fi
+  ASTROMETRY_REPAIR_DEADLINE=$(( $(date +%s) + 10#$REPAIR_BUDGET ))
+ fi
+}
+
 function astrometry_repair_seconds_left {
  local REMAINING=120
  if [ -n "$ASTROMETRY_REPAIR_DEADLINE" ];then
@@ -615,23 +629,13 @@ function small_radius_hinted_resolve {
 # $5 - optional: "no_resolve" skips the small-radius re-solve
 # Returns 0 if $4 was written and carries a SIP polynomial, 1 otherwise.
 function repair_tan_only_solution {
- local REPAIR_BUDGET
  TAN_ONLY_REPAIR_DESCRIPTION=""
  TAN_ONLY_REPAIR_TAG=""
  if [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ];then
   echo "Local astrometry repair disabled by VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1"
   return 1
  fi
- if [ -z "$ASTROMETRY_REPAIR_DEADLINE" ];then
-  REPAIR_BUDGET=${VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT:-360}
-  case "$REPAIR_BUDGET" in ''|*[!0-9]*) echo "Invalid VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT"; return 1 ;; esac
-  # Avoid octal arithmetic and overflow on older shells.
-  if [ "${#REPAIR_BUDGET}" -gt 5 ] || [ "$REPAIR_BUDGET" -lt 1 ] || [ "$REPAIR_BUDGET" -gt 86400 ];then
-   echo "VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT must be 1..86400 seconds"
-   return 1
-  fi
-  ASTROMETRY_REPAIR_DEADLINE=$(( $(date +%s) + 10#$REPAIR_BUDGET ))
- fi
+ start_astrometry_repair_budget || return 1
  if star_list_verify_retweak "$1" "$2" "$4" ;then
   TAN_ONLY_REPAIR_DESCRIPTION="star-list re-tweak"
   TAN_ONLY_REPAIR_TAG="verify_retweak"
@@ -654,6 +658,35 @@ function repair_tan_only_solution {
   return 0
  fi
  return 1
+}
+
+# A factory quality retry can start from valid but inaccurate SIP, not only
+# TAN. The factory keeps the original products and measures this candidate
+# against UCAC5 before accepting it. Failure here must not fall back to an
+# unbounded blind/remote search or silently reuse the old cached image.
+# Args: star list, seed WCS image, source image, destination image.
+function install_small_radius_retry {
+ local RETRY_DIR RETRY_STATUS=1 RETRY_TAG=small_radius_resolve
+ local ASTROMETRYNET_LOCAL_OR_REMOTE=local PLATE_SOLVE_SERVER=local
+ if [ "$VAST_SKIP_LOCAL_ASTROMETRY_REPAIR" = "1" ] || [ "$VAST_SKIP_SMALL_RADIUS_RESOLVE" = "1" ];then
+  echo "The requested small-radius retry is disabled"
+  return 1
+ fi
+ start_astrometry_repair_budget || return 1
+ RETRY_DIR=$(mktemp -d "out$$_small_radius_retry.XXXXXX") || return 1
+ if small_radius_hinted_resolve "$1" "$2" "$RETRY_DIR/candidate.wcs" ;then
+  if [ "$SMALL_RADIUS_RESOLVE_RETWEAKED" = "1" ];then
+   RETRY_TAG=small_radius_resolve_retweak
+  fi
+  if install_astrometry_wcs "$RETRY_DIR/candidate.wcs" "$3" "$4" "$RETRY_TAG" ;then
+   RETRY_STATUS=0
+  fi
+ fi
+ # A timed-out engine may still need its cancellation marker.
+ if [ -z "$(find "$RETRY_DIR" -name cancel -print)" ];then
+  rm -rf "$RETRY_DIR"
+ fi
+ return "$RETRY_STATUS"
 }
 
 # Function to check remote server availability and set up remote astrometry
@@ -1081,6 +1114,11 @@ fi
 
 # Now the interesting part...
 
+if [ -n "$VAST_ASTROMETRY_SMALL_RADIUS_SEED" ] && [ -e "$WCS_IMAGE_NAME" ];then
+ echo "ERROR: a requested small-radius retry needs the previous WCS set aside by its caller"
+ exit 1
+fi
+
 if [ ! -s "$WCS_IMAGE_NAME" ];then
  # Handle the situation where the file exist but is empty
  if [ -f "$WCS_IMAGE_NAME" ];then
@@ -1121,6 +1159,18 @@ field identification have good chances to fail. Sorry... :(
 "
 fi
 
+ # Explicit quality-retry mode: one bounded local attempt, with no blind
+ # solving or remote escalation. The normal catalog-generation path below
+ # still runs so UCAC5 can independently judge the resulting candidate.
+ if [ -n "$VAST_ASTROMETRY_SMALL_RADIUS_SEED" ];then
+  if install_small_radius_retry out$$.xyls "$VAST_ASTROMETRY_SMALL_RADIUS_SEED" "$FITSFILE" "$WCS_IMAGE_NAME" ;then
+   ERROR_STATUS=0
+  else
+   rm -f out$$.xyls
+   echo "ERROR: the requested small-radius quality retry failed"
+   exit 1
+  fi
+ else
  # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
  #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
@@ -1650,6 +1700,7 @@ Retrying..."
  fi
  
  done # for TRIAL_FIELD_OF_VIEW_ARCMIN in ...
+ fi # explicit small-radius quality retry or ordinary solving
 
  # The local TAN-only solution the silently-failed-tweak guard set aside for
  # a remote solve: if that produced nothing (no server reachable, or the

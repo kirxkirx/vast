@@ -1256,17 +1256,194 @@ function warn_if_wcs_quality_worse_than_reference {
  fi
 }
 
+# A valid SIP polynomial can still be grossly wrong away from the index stars
+# that verified it. Her-09-Q1 frame 0091 of 2026-10-12 reached this state after
+# a successful star-list re-tweak; repeating it at order 2 was worse. Try a
+# tightly hinted solve at order 3 before that fallback, but only for the two
+# cameras and the one-pixel failure threshold already calibrated here.
+# Args: original image, human label, one-pixel limit in arcsec, UCAC5 iterations.
+# A safe skip/rejection returns 0. Only an incomplete rollback returns 1.
+# WCS_SMALL_RADIUS_RETRY_KEPT distinguishes acceptance from a safe rejection.
+function retry_wcs_with_small_radius {
+ local image_path="$1" image_label="$2" pixel_limit="$3" plate_solve_iterations="$4"
+ # identify.sh discovers these installations in a child process; its PATH
+ # changes do not propagate back to the factory.
+ local PATH="$PATH:/usr/local/astrometry/bin:/usr/share/astrometry/bin"
+ local diag_basename wcs_basename original_diag original_header original_rejection
+ local rejected_baseline field_size backup_dir f attempt_status verdict cache_temp restore_failed
+ local products
+ WCS_SMALL_RADIUS_RETRY_KEPT=0
+ case "${CAMERA_SETTINGS:-}" in TTUQ1b1x1|TTUQ2b1x1) ;; *) return 0 ;; esac
+ if [ "${VAST_SKIP_LOCAL_ASTROMETRY_REPAIR:-}" = 1 ] || [ "${VAST_SKIP_SMALL_RADIUS_RESOLVE:-}" = 1 ]; then
+  return 0
+ fi
+ command -v solve-field >/dev/null 2>&1 || return 0
+ diag_basename=$(image_basename_for_wcs_quality_diag "$image_path")
+ wcs_basename="wcs_$(basename "$image_path")"
+ wcs_basename="${wcs_basename/wcs_wcs_/wcs_}"
+ wcs_basename="${wcs_basename/.fz/}"
+ [ -s "$wcs_basename" ] && [ ! -L "$wcs_basename" ] || return 0
+ original_diag=$(awk -v img="$diag_basename" '$1=="WCS_QUALITY_DIAG:" && $2==("file=" img) {line=$0} END {print line}' transient_factory_test31.txt)
+ original_header=$(awk -v img="$diag_basename" '$1=="WCS_HEADER_DIAG:" && $2==("file=" img) {line=$0} END {print line}' transient_factory_test31.txt)
+ original_rejection=$(awk -v img="$diag_basename" '$1=="SIP_REFIT_REJECTED:" && $2==("file=" img) {line=$0} END {print line}' transient_factory_test31.txt)
+ rejected_baseline=$(echo "$original_rejection" | awk '{for(i=1;i<=NF;i++) if($i~/^worst_region_rms_kept=/) {sub(/^worst_region_rms_kept=/,"",$i); print $i}}')
+ # Relative-to-reference warnings alone do not justify this extra solve. Both
+ # the old sample and an absolute failure must be measurable before touching it.
+ if ! echo "$original_diag" | awk -v limit="$pixel_limit" -v rejected="$rejected_baseline" '
+   function number(x) {return x ~ /^[0-9]+([.][0-9]+)?$/}
+   {for(i=1;i<=NF;i++) {split($i,p,"="); v[p[1]]=p[2]}}
+   END {
+    if(!number(limit) || limit+0<=0 || !number(v["sigma_overall_arcsec"]) || !number(v["worst_quadrant_to_overall_ratio"]) || v["N_match"] !~ /^[0-9]+$/ || v["N_match"]+0<=0) exit 1
+    if(v["sigma_overall_arcsec"]+0<=0 || v["worst_quadrant_to_overall_ratio"]+0<=0) exit 1
+    for(q=1;q<=4;q++) if(v["n_q" q] !~ /^[0-9]+$/) exit 1
+    exit !(v["sigma_overall_arcsec"]*v["worst_quadrant_to_overall_ratio"]>limit || (number(rejected) && rejected+0>limit+0))
+   }' ; then
+  return 0
+ fi
+ field_size=$(util/fov_of_wcs_calibrated_image.sh "$wcs_basename" 2>/dev/null | awk '
+   /^Image size:/ {gsub(/\047/,"",$3); if(split($3,s,"x")==2 && s[1]~/^[0-9]+([.][0-9]+)?$/ && s[2]~/^[0-9]+([.][0-9]+)?$/) print (s[1]>s[2] ? s[1] : s[2])/60}')
+ awk -v size="$field_size" 'BEGIN {exit !(size+0>5)}' || return 0
+
+ # Refuse shared/protected outputs. Snapshot every existing sidecar before
+ # removing any of them; a failed copy must leave the original set untouched.
+ products=("$wcs_basename")
+ for f in "$wcs_basename".* ; do
+  if [ -e "$f" ] || [ -L "$f" ]; then products+=("$f"); fi
+ done
+ for f in "${products[@]}" ; do
+  if [ ! -f "$f" ] || [ -L "$f" ]; then
+   echo "WCS_SMALL_RADIUS_RETRY: leaving protected output $f unchanged" | tee -a transient_factory_test31.txt
+   return 0
+  fi
+ done
+ if [ -e local_wcs_cache ] || [ -L local_wcs_cache ]; then
+  if [ ! -d local_wcs_cache ] || [ -L local_wcs_cache ] || [ -L "local_wcs_cache/$wcs_basename" ] || { [ -e "local_wcs_cache/$wcs_basename" ] && [ ! -f "local_wcs_cache/$wcs_basename" ]; }; then
+   echo "WCS_SMALL_RADIUS_RETRY: leaving protected local_wcs_cache unchanged" | tee -a transient_factory_test31.txt
+   return 0
+  fi
+ fi
+ backup_dir=$(mktemp -d wcs_small_radius_retry.XXXXXX) || return 0
+ backup_dir=$(cd "$backup_dir" && pwd) || return 0
+ for f in "${products[@]}" ; do
+  if ! cp -p "$f" "$backup_dir/"; then
+   echo "WCS_SMALL_RADIUS_RETRY: cannot back up $f; keeping the original solution" | tee -a transient_factory_test31.txt
+   rm -rf "$backup_dir"
+   return 0
+  fi
+ done
+ echo "WCS_SMALL_RADIUS_RETRY: $image_label ($diag_basename) has bad absolute astrometry; trying a bounded small-radius solve with --tweak-order 3" | tee -a transient_factory_test31.txt
+ attempt_status=1
+ if rm -f "${products[@]}"; then
+  attempt_status=0
+  VAST_ASTROMETRY_SMALL_RADIUS_SEED="$backup_dir/$wcs_basename" VAST_TWEAK_ORDER=3 util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations "$plate_solve_iterations" "$image_path" > "$backup_dir/attempt.log" 2>&1 || attempt_status=$?
+ else
+  echo "Could not remove the backed-up WCS products" > "$backup_dir/attempt.log"
+ fi
+ cat "$backup_dir/attempt.log" >> transient_factory_test31.txt || attempt_status=1
+ verdict=solver_failed
+ if [ "$attempt_status" -eq 0 ]; then
+  verdict=$(awk -v img="$diag_basename" -v old="$original_diag" -v limit="$pixel_limit" '
+    function number(x) {return x ~ /^[0-9]+([.][0-9]+)?$/}
+    function integer(x) {return x ~ /^[0-9]+$/}
+    BEGIN {n=split(old,a," "); for(i=1;i<=n;i++) {split(a[i],p,"="); previous[p[1]]=p[2]}}
+    $1=="WCS_QUALITY_DIAG:" && $2==("file=" img) {
+     for(key in current) delete current[key]
+     for(i=1;i<=NF;i++) {split($i,p,"="); current[p[1]]=p[2]} quality=1
+    }
+    $1=="WCS_HEADER_DIAG:" && $2==("file=" img) {
+     for(key in header) delete header[key]
+     for(i=1;i<=NF;i++) {split($i,p,"="); header[p[1]]=p[2]} saved=1
+    }
+    END {
+     s=current["sigma_overall_arcsec"]; r=current["worst_quadrant_to_overall_ratio"]
+     if(!quality || !saved || !number(s) || !number(r) || s+0<=0 || r+0<=0) {print "missing_or_invalid_diagnostic"; exit}
+     if(s*r>=previous["sigma_overall_arcsec"]*previous["worst_quadrant_to_overall_ratio"] || s*r>limit) {print "worst_quadrant_not_repaired"; exit}
+     n=current["N_match"]
+     if(!integer(n) || n+0<=0 || n<0.5*previous["N_match"]) {print "lost_matches"; exit}
+     if(header["selection"]!="current_pairs" || !integer(header["N_selected"]) || !integer(header["N_valid"]) || header["N_selected"]+0!=n+0 || header["N_valid"]+0!=n+0) {print "incomplete_header_diagnostic"; exit}
+     if(!number(header["p95_sep_arcsec"]) || header["p95_sep_arcsec"]+0>limit+0) {print "saved_header_inaccurate"; exit}
+     if(header["occupied_cells_4x4"]!="16/16") {print "lost_spatial_coverage"; exit}
+     total=0
+     for(q=1;q<=4;q++) {
+      count=current["n_q" q]; scatter=current["sigma_q" q "_arcsec"]
+      if(!integer(count) || count<0.7*previous["n_q" q] || count<n/16 || !integer(header["n_q" q]) || header["n_q" q]+0!=count+0) {print "lost_quadrant_coverage"; exit}
+      if(!number(scatter) || scatter+0>limit+0) {print "bad_quadrant_scatter"; exit}
+      total+=count
+     }
+     if(total!=n+0) {print "inconsistent_match_counts"; exit}
+     print "keep"
+    }' "$backup_dir/attempt.log")
+ fi
+ if [ "$verdict" = keep ]; then
+  for f in "$wcs_basename" "$wcs_basename.wcscat" "$wcs_basename.wcscat.ucac5"; do
+   if [ ! -s "$f" ] || [ ! -f "$f" ] || [ -L "$f" ]; then verdict=missing_or_protected_output; fi
+  done
+  for f in "$wcs_basename".* ; do
+   if [ -L "$f" ] || { [ -e "$f" ] && [ ! -f "$f" ]; }; then verdict=protected_sidecar; fi
+  done
+ fi
+ # Stage the cache replacement in its own directory and rename it only after
+ # every quality check passed. A copy/rename failure leaves the old cache intact
+ # and rejects the candidate, so the next extraction pass cannot resurrect it.
+ if [ "$verdict" = keep ] && [ -d local_wcs_cache ]; then
+  cache_temp=$(mktemp local_wcs_cache/.wcs_small_radius_retry.XXXXXX) || cache_temp=""
+  if [ -z "$cache_temp" ]; then
+   verdict=cache_update_failed
+  elif ! cp -p "$wcs_basename" "$cache_temp" || ! mv -f "$cache_temp" "local_wcs_cache/$wcs_basename"; then
+   rm -f "$cache_temp"
+   verdict=cache_update_failed
+  fi
+ fi
+ if [ "$verdict" = keep ]; then
+  WCS_SMALL_RADIUS_RETRY_KEPT=1
+  echo "WCS_SMALL_RADIUS_RETRY: keeping small-radius result for $image_label ($diag_basename); accurate saved header and full-frame coverage verified" | tee -a transient_factory_test31.txt
+  rm -rf "$backup_dir"
+  return 0
+ fi
+
+ echo "WCS_SMALL_RADIUS_RETRY: rejecting candidate for $image_label ($diag_basename): $verdict; restoring the original solution" | tee -a transient_factory_test31.txt
+ restore_failed=0
+ # Delete new-only sidecars too. Do not recursively remove an unexpected
+ # directory: retain the backup and stop processing if restoration is unsafe.
+ for f in "$wcs_basename" "$wcs_basename".* ; do
+  if [ -d "$f" ] && [ ! -L "$f" ]; then
+   restore_failed=1
+  elif ! rm -f "$f"; then
+   restore_failed=1
+  fi
+ done
+ for f in "${products[@]}" ; do
+  if [ -e "$f" ] || [ -L "$f" ] || ! cp -p "$backup_dir/$f" "$f"; then restore_failed=1; fi
+ done
+ if [ "$restore_failed" -ne 0 ]; then
+  echo "ERROR: WCS_SMALL_RADIUS_RETRY: rollback failed for $diag_basename; original files retained in $backup_dir" | tee -a transient_factory_test31.txt transient_factory.log
+  return 1
+ fi
+ # Both machine-readable diagnostics must describe the restored header. Clear
+ # a candidate-only rejection baseline as well, rather than leaving it current.
+ [ -n "$original_header" ] || original_header="WCS_HEADER_DIAG: file=$diag_basename selection=current_pairs status=unavailable"
+ [ -n "$original_rejection" ] || original_rejection="SIP_REFIT_REJECTED: file=$diag_basename worst_region_rms_kept=NaN status=not_reported_for_restored_wcs"
+ if ! printf '%s\n%s\n%s\n' "$original_rejection" "$original_diag" "$original_header" >> transient_factory_test31.txt; then
+  echo "ERROR: WCS_SMALL_RADIUS_RETRY: cannot restore diagnostics; original files retained in $backup_dir" >&2
+  return 1
+ fi
+ rm -rf "$backup_dir"
+ return 0
+}
+
 ###################################
 # WCS-quality retry helper.
 #
 # When the initial solve_plate_with_UCAC5 run on a new image yields a
 # pre-local-correction sigma or worst-quadrant-to-overall ratio more than
 # WCS_QUALITY_RATIO_THRESHOLD x the reference-image average, this function
-# re-runs the plate-solve for that one new image with VAST_TWEAK_ORDER=2.
+# first tries bounded small-radius recovery for an absolute TTU failure.
+# If that candidate is not accepted, it re-runs the plate-solve for that
+# one new image with VAST_TWEAK_ORDER=2, retaining the historical fallback.
 # The default order 3 is fine for fields with real distortion but
 # over-fits on fields whose underlying optics has very little distortion
 # (e.g., wide-field DSLR lenses); the lower order collapses the SIP fit
-# back to near-zero and recovers a uniform residual coverage. The retry
+# back to near-zero and recovers a uniform residual coverage. The order-2 retry
 # keeps the new WCS only if its sigma*ratio scalar improves on the
 # original; otherwise the order-3 WCS is restored from a per-image backup.
 # Reference images are not retried.
@@ -1368,6 +1545,14 @@ function retry_wcs_with_lower_tweak_order {
  if [ "$trigger" != "retry" ]; then
   return 0
  fi
+
+ # A structurally valid SIP is not necessarily accurate. Try the calibrated
+ # small-radius recovery before the historical order-2 fallback. An unsafe
+ # rollback must stop the caller rather than let it operate on mixed products.
+ if ! retry_wcs_with_small_radius "$image_path" "$image_label" "$bad_refit_baseline_arcsec" "$plate_solve_iterations"; then
+  return 1
+ fi
+ if [ "$WCS_SMALL_RADIUS_RETRY_KEPT" -eq 1 ]; then return 0; fi
 
  echo "WCS_QUALITY_RETRY: $image_label ($diag_basename) flagged: sigma=${current_sigma:-N/A} (ref avg ${ref_sigma_avg:-N/A}), ratio=${current_ratio:-N/A} (ref avg ${ref_ratio_avg:-N/A}), threshold=${threshold}x. Retrying with --tweak-order 2." | tee -a transient_factory_test31.txt
 
@@ -4263,12 +4448,12 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
 
     # If either new image's sigma or worst_quadrant_to_overall_ratio exceeds
     # the threshold relative to the reference average, retry that image's
-    # plate solve with VAST_TWEAK_ORDER=2. Reference images are not retried.
-    # The helper keeps the retry only if its sigma*ratio scalar improves.
-    # The last argument is an absolute floor below which no ratio, however
-    # large, is worth a re-solve: a quarter of a pixel, well under anything a
-    # transient search is limited by. Without it a night with unusually sharp
-    # reference images re-solves ordinary sub-arcsecond solutions for nothing.
+    # plate solve. Absolute TTU failures first get bounded small-radius
+    # recovery; order 2 remains the fallback. Reference images are not retried.
+    # The sigma floor suppresses only the overall-sigma trigger below a
+    # quarter of a pixel. The independent worst-quadrant trigger still applies.
+    # Without the floor, unusually sharp reference images would cause retries
+    # of ordinary sub-arcsecond solutions.
     WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC=$(echo "${IMAGE_SCALE_ARCSECPIX:-0}" | awk '{floor_arcsec= 0.25 * ($1+0); if (floor_arcsec <= 0) floor_arcsec= 1.0; printf "%.2f", floor_arcsec}')
     # The last argument is the absolute worst-region residual above which a
     # plate solver that REFUSED to refit the SIP is telling us the frame needs
@@ -4279,8 +4464,14 @@ warn-on-ratio threshold: ${WCS_QUALITY_RATIO_THRESHOLD}x reference
     # four frames that genuinely needed a fresh solve. One pixel sits in that
     # gap with a factor of five of clearance on either side.
     WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC=$(echo "${IMAGE_SCALE_ARCSECPIX:-0}" | awk '{limit_arcsec= 1.0 * ($1+0); if (limit_arcsec <= 0) limit_arcsec= 5.0; printf "%.2f", limit_arcsec}')
-    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__FIRST_IMAGE"  "1st new image" "$NEW1_SIGMA" "$NEW1_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
-    retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__SECOND_IMAGE" "2nd new image" "$NEW2_SIGMA" "$NEW2_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"
+    if ! retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__FIRST_IMAGE"  "1st new image" "$NEW1_SIGMA" "$NEW1_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"; then
+     echo "ERROR: cannot safely restore the plate solution after a quality retry; stopping processing" | tee -a transient_factory_test31.txt transient_factory.log
+     exit 1
+    fi
+    if ! retry_wcs_with_lower_tweak_order "$SECOND_EPOCH__SECOND_IMAGE" "2nd new image" "$NEW2_SIGMA" "$NEW2_RATIO" "$REF_SIGMA_AVG" "$REF_RATIO_AVG" "$WCS_QUALITY_RATIO_THRESHOLD" "$UCAC5_PLATESOLVE_ITERATIONS" "$WCS_QUALITY_RETRY_SIGMA_FLOOR_ARCSEC" "$WCS_QUALITY_RETRY_BAD_REFIT_BASELINE_ARCSEC"; then
+     echo "ERROR: cannot safely restore the plate solution after a quality retry; stopping processing" | tee -a transient_factory_test31.txt transient_factory.log
+     exit 1
+    fi
 
     # Re-extract metrics after possible retries so the warnings below
     # reflect the FINAL post-retry quality, not the pre-retry state.

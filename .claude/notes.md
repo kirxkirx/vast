@@ -1148,3 +1148,62 @@ Update this file as you learn new things.
   System comparisons still lack skyfield (and pandas); vartools is also
   absent. No additional code changes were needed. Logs and the focused
   lookup are in /tmp/vast_system_test_20261012/.
+
+## Valid SIP can still need small-radius recovery (2026-10-13)
+- Production Her-09-Q1b1x1 frame 0091 of 2026-10-12 fails on deployed
+  1a8c12b2 and current ac833127 (code identical to tested fdaf4b0f). Fresh
+  local replay, including the optional image-verification path, reproduces
+  all 54 WCS/SIP keywords of the bad production header exactly. Replaying
+  the saved header with current UCAC5 code also retains the bad astrometry.
+- A coarse index-4115 match with eight stars gives TAN-only WCS. Star-list
+  verification returns structurally valid order-3 SIP (index-4114, 49 final
+  matches, logodds 377.822), so repair_tan_only_solution returns before the
+  small-radius helper. UCAC5 rescue correctly rejects lost quadrant coverage;
+  the factory's order-2 retry worsens the result and restores the original.
+- Calling the existing small-radius helper explicitly with the same 8257-star
+  list finds index-4112, 374 final index matches and 4906 UCAC5 matches with
+  balanced quadrant counts 1400/1027/1451/1028. Worst-quadrant scatter is
+  0.347 arcsec instead of 17.076. No subsequent UCAC5 SIP refit was applied.
+- Comparing both saved headers on the same 4906 repaired-solution matches
+  gives median/p95 errors 25.457/1240.303 arcsec before and 0.905/2.664 after.
+  Diagnostics using the original selected pairs conceal the most displaced
+  stars; occupied grid cells alone do not establish adequate coverage.
+- Next improvement: bounded quality-triggered small-radius recovery even
+  for valid SIP, with candidate accuracy/coverage checks and rollback. Add
+  this exact frame beside the existing 2026-10-08 Her frame 0112 regression;
+  that older case's verifier fails outright and already reaches the helper.
+  Investigation only: no solver changes or production deployment performed.
+  Evidence and reproducible probes: /tmp/vast_her0091_20261013/.
+
+## Factory recovery for inaccurate SIP and Her-0091 regression (2026-10-13)
+- The factory's normal quality-retry entry point now tries one bounded
+  small-radius recovery before its order-2 fallback, limited to TTUQ1/TTUQ2,
+  fields wider than 5 degrees, a local solver, and measured absolute failure
+  above one pixel. Existing local-repair/small-radius opt-outs still apply.
+  Standalone solve_plate_with_UCAC5 policy is unchanged.
+- VAST_ASTROMETRY_SMALL_RADIUS_SEED is an internal explicit retry mode in
+  identify.sh. It consumes the retained bad WCS, shares the existing repair
+  deadline, installs a candidate transactionally, and fails without an
+  ordinary blind/remote fallback. The factory measures that candidate with
+  UCAC5, requiring improved worst-quadrant scatter and saved-header p95
+  within one pixel, all 16 spatial cells, and retained quadrant coverage.
+  Checked backups preserve all WCS sidecars; rejected candidates restore
+  both diagnostics. Cache replacement happens only after acceptance, and
+  a failed rollback stops the factory with recovery files retained.
+- test_vast.sh includes HER09Q1VALIDSIP, seeded from the real bad header and
+  detected-source catalog, then calls the actual factory retry entry point.
+  It checks 64 fixed UCAC5 reference positions, quadrant counts/scatter,
+  local_wcs_cache equality and small-radius provenance. Missing local
+  solve-field is an explicit optional skip; missing test data is a failure.
+  The system safety section also runs test_wcs_quality_retry.sh.
+- Validation: full serial build; 41 astrometry safety and 46 quality-retry
+  cases; existing Cyg settle and Her TAN-only real regressions passed. The
+  new case fails before the fix (57/64 fixed coordinates wrong) and passes
+  after it: 4908 matches, worst quadrant 0.340 arcsec, saved-header median/
+  p95 0.908/2.668 arcsec, all 64 reference positions within one pixel.
+  Full system suite was not rerun for this change.
+- New archive: NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test.tar.bz2, about
+  60 MiB, prepared with README and SHA256SUMS under
+  /tmp/vast_her0091_fix_20261013/data/. Publish to the same tau and scan
+  test-data directories as the earlier Cyg/Her cases. Deployment commands
+  and validation logs remain outside the tree in that investigation directory.

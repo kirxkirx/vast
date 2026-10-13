@@ -12,7 +12,7 @@ trap 'rm -rf -- "$TEST_DIR"' EXIT
 export REAL_VAST_PATH="$REPO/"
 export VAST_PATH="$TEST_DIR/stub/"
 mkdir -p "$VAST_PATH"lib/astrometry "$VAST_PATH"util "$TEST_DIR/bin"
-for name in vastrealpath wcs_header_file_looks_valid astrometry_wcs_is_valid log_astrometry_repair_strength astrometry_repair_seconds_left install_astrometry_wcs star_list_verify_retweak small_radius_hinted_resolve repair_tan_only_solution ;do
+for name in vastrealpath wcs_header_file_looks_valid astrometry_wcs_is_valid log_astrometry_repair_strength start_astrometry_repair_budget astrometry_repair_seconds_left install_astrometry_wcs star_list_verify_retweak small_radius_hinted_resolve repair_tan_only_solution install_small_radius_retry ;do
  awk -v name="$name" '
   $0=="function " name " {" { copy=1 }
   copy { print }
@@ -181,6 +181,35 @@ ln -s image.fits protected.fits
 if install_astrometry_wcs good.wcs image.fits protected.fits verify_retweak > case.log 2>&1 ;then fail 'replaced a protected symlink'; fi
 [ -L protected.fits ] || fail 'protected symlink was removed'
 N_CASES=$((N_CASES+1))
+
+# The explicit quality-retry route must report failure rather than publish
+# a partial/late solver result or silently keep the supplied bad SIP seed.
+for case_name in success timeout invalid_budget disabled ;do
+ export PROBE_EXIT=0 PROBE_PARTIAL=0 PROBE_MV_FAIL=0 PROBE_HEADER="$TEST_DIR/good.wcs"
+ unset ASTROMETRY_REPAIR_DEADLINE VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT VAST_SKIP_SMALL_RADIUS_RESOLVE
+ case "$case_name" in
+  timeout) PROBE_EXIT=124; PROBE_PARTIAL=1 ;;
+  invalid_budget) export VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT=invalid ;;
+  disabled) export VAST_SKIP_SMALL_RADIUS_RESOLVE=1 ;;
+ esac
+ : > "$SOLVER_CALLS"
+ cp image.fits retry_image.fits
+ status=0
+ install_small_radius_retry input.xyls good.wcs image.fits retry_image.fits > case.log 2>&1 || status=$?
+ if [ "$case_name" = success ];then
+  [ "$status" -eq 0 ] && astrometry_wcs_is_valid retry_image.fits sip || fail 'explicit small-radius installation'
+  "$REPO/util/listhead" retry_image.fits | grep -q 'VAST004.*small_radius_resolve' || fail 'small-radius retry provenance'
+ else
+  [ "$status" -ne 0 ] || fail "explicit small-radius retry accepted $case_name"
+  cmp image.fits retry_image.fits || fail "explicit retry changed image on $case_name"
+ fi
+ if [ "$case_name" = invalid_budget ] || [ "$case_name" = disabled ];then
+  [ ! -s "$SOLVER_CALLS" ] || fail 'disabled/invalid-budget retry invoked solver'
+ fi
+ N_CASES=$((N_CASES+1))
+done
+unset ASTROMETRY_REPAIR_DEADLINE VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT VAST_SKIP_SMALL_RADIUS_RESOLVE
+export PROBE_EXIT=0 PROBE_PARTIAL=0
 
 # Real camera images may already have DATE; Astrometry.net adds its own DATE
 # when the WCS is inserted. Repeated non-WCS metadata must not reject the fit.

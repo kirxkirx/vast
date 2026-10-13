@@ -582,7 +582,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -15860,7 +15860,8 @@ fi
 # failures. Keep them in the system suite as well as runnable on their own.
 THIS_TEST_START_UNIXSEC=$(date +%s)
 echo -n "Astrometry output safety test: " >> vast_test_report.txt
-if util/examples/test_astrometry_safety.sh > "astrometry_safety_$$.log" 2>&1 ;then
+if util/examples/test_astrometry_safety.sh > "astrometry_safety_$$.log" 2>&1 &&
+   util/examples/test_wcs_quality_retry.sh >> "astrometry_safety_$$.log" 2>&1 ;then
  echo "Astrometry output safety test PASSED"
  echo "PASSED" >> vast_test_report.txt
 else
@@ -15872,7 +15873,7 @@ $(cat "astrometry_safety_$$.log")"
 fi
 rm -f "astrometry_safety_$$.log"
 
-##### NMW-TexasTech Cyg-05 re-match and Her-09 TAN-only regressions #####
+##### NMW-TexasTech Cyg-05 re-match and Her-09 astrometry regressions #####
 # Cyg-05-Q1 0037 (2026-10-08): the old total-pair-count stop left only
 # 648 q4 matches and a saved header about 6 arcsec wrong in the far corner,
 # despite a reassuring 0.34 arcsec diagnostic on the remaining pairs.
@@ -15883,24 +15884,48 @@ rm -f "astrometry_safety_$$.log"
 # both returned TAN-only; the small-radius solve repairs it. Start this case
 # from the unsolved image, like CAS04Q2TANONLY, and accept any solving route
 # that produces good astrometry (including a remote server's own repair).
-# Both cases query the real UCAC5 catalog. The archived mask fixes the
+# Her-09-Q1 0091 (2026-10-12): verification returned valid SIP with
+# catastrophic distortion on the right side. Replay its preserved bad WCS
+# and source catalog, then invoke the actual factory quality retry. Fixed
+# UCAC5 positions across 64 cells check the saved image independently of
+# which source pairs the current run retained. This route needs local
+# Astrometry.net; absence is an explicit skip, not a missing-data exemption.
+# All cases query the real UCAC5 catalog. The archived mask fixes the
 # camera selection independently of calibration files installed on the host.
 # Each test-data archive includes a README.txt with its provenance.
 ### Disable these tests for GitHub Actions, like the adjacent plate-solve tests
 if [ "$GITHUB_ACTIONS" != "true" ];then
-for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
+for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY HER09Q1VALIDSIP ;do
+ ASTROMETRY_REGRESSION_EXPECTED_CHECKS=0
+ ASTROMETRY_REGRESSION_HEADER_LIMIT=1.5
  case "$ASTROMETRY_REGRESSION_CASE" in
   CYG05Q1SETTLE)
    ASTROMETRY_REGRESSION_DATA=NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test
    ASTROMETRY_REGRESSION_IMAGE=fd_Cyg-05-Q1b1x1_2026-10-08_20-42-44_20.00sec_0.00C_LIGHTs_0037.fits
    ASTROMETRY_REGRESSION_NAME="NMW-TexasTech Cyg-05-Q1b1x1 SIP re-match settle test"
    ASTROMETRY_REGRESSION_REQUIRED="raw_solution.wcs raw_solution.wcscat header_checks.txt"
+   ASTROMETRY_REGRESSION_EXPECTED_CHECKS=12
    ;;
   HER09Q1TANONLY)
    ASTROMETRY_REGRESSION_DATA=NMW-TexasTech__Her-09-Q1b1x1_small_radius_test
    ASTROMETRY_REGRESSION_IMAGE=fd_Her-09-Q1b1x1_2026-10-08_22-05-23_20.00sec_0.00C_LIGHTs_0112.fits
    ASTROMETRY_REGRESSION_NAME="NMW-TexasTech Her-09-Q1b1x1 TAN-only small-radius repair test"
    ASTROMETRY_REGRESSION_REQUIRED=""
+   ;;
+  HER09Q1VALIDSIP)
+   ASTROMETRY_REGRESSION_DATA=NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test
+   ASTROMETRY_REGRESSION_IMAGE=fd_Her-09-Q1b1x1_2026-10-12_22-01-02_20.00sec_0.00C_LIGHTs_0091.fits
+   ASTROMETRY_REGRESSION_NAME="NMW-TexasTech Her-09-Q1b1x1 inaccurate-SIP factory repair test"
+   ASTROMETRY_REGRESSION_REQUIRED="raw_solution.wcs raw_solution.wcscat header_checks.txt"
+   ASTROMETRY_REGRESSION_EXPECTED_CHECKS=64
+   ASTROMETRY_REGRESSION_HEADER_LIMIT=5.87
+   # identify.sh also searches these standard installation directories.
+   if ! ( PATH="$PATH:/usr/local/astrometry/bin:/usr/share/astrometry/bin"; command -v solve-field >/dev/null 2>&1 );then
+    echo "$ASTROMETRY_REGRESSION_NAME: NOT PERFORMED (no local solve-field)" | tee -a vast_test_report.txt
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_HER09Q1VALIDSIP_no_solve_field"
+    echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+    continue
+   fi
    ;;
  esac
  ASTROMETRY_REGRESSION_REQUIRED="$ASTROMETRY_REGRESSION_IMAGE TTUQ1_bad_region.lst $ASTROMETRY_REGRESSION_REQUIRED"
@@ -15946,7 +15971,7 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_SETUP"
   fi
-  if [ "$TEST_PASSED" -eq 1 ] && [ "$ASTROMETRY_REGRESSION_CASE" = "CYG05Q1SETTLE" ];then
+  if [ "$TEST_PASSED" -eq 1 ] && { [ "$ASTROMETRY_REGRESSION_CASE" = "CYG05Q1SETTLE" ] || [ "$ASTROMETRY_REGRESSION_CASE" = "HER09Q1VALIDSIP" ]; };then
    # insert_wcs_header writes to wcs_<basename> in the current directory.
    # Work on a copy; the archived input must keep its original header.
    if ! ( cp "../$ASTROMETRY_REGRESSION_DATA/$ASTROMETRY_REGRESSION_IMAGE" "$ASTROMETRY_REGRESSION_IMAGE" &&
@@ -15962,12 +15987,81 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
    if ! (
     # Exercise the normal repair policy regardless of experimental overrides
     # inherited by the test runner; retain its local/remote solver selection.
-    unset VAST_DISABLE_UCAC5_SIP_REFIT VAST_SIP_REFIT_NO_REMATCH VAST_SIP_REFIT_NO_RESCUE VAST_FORCE_SIP_REFIT VAST_SIP_REFIT_ORDER VAST_SKIP_SMALL_RADIUS_RESOLVE VAST_SKIP_LOCAL_ASTROMETRY_REPAIR VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT
+    unset VAST_DISABLE_UCAC5_SIP_REFIT VAST_SIP_REFIT_NO_REMATCH VAST_SIP_REFIT_NO_RESCUE VAST_FORCE_SIP_REFIT VAST_SIP_REFIT_ORDER VAST_SKIP_SMALL_RADIUS_RESOLVE VAST_SKIP_LOCAL_ASTROMETRY_REPAIR VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT VAST_ASTROMETRY_SMALL_RADIUS_SEED
     VAST_TWEAK_ORDER=3 VAST_SKIP_IMAGE_BASED_RETWEAK=1 FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 "../$ASTROMETRY_REGRESSION_DATA/$ASTROMETRY_REGRESSION_IMAGE"
    ) >> "$ASTROMETRY_REGRESSION_LOG" 2>&1 ;then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_EXIT_CODE"
    fi
+  fi
+  if [ "$TEST_PASSED" -eq 1 ] && [ "$ASTROMETRY_REGRESSION_CASE" = "HER09Q1VALIDSIP" ];then
+   # Use the production retry entry point on the measured bad solution. Do
+   # not invoke the new small-radius helper directly: that would miss a
+   # regression in its automatic selection. Preserve any earlier factory
+   # log and cache entry while testing the cache refresh as well as the WCS.
+   if ! (
+    ASTROMETRY_FACTORY_BACKUP=$(mktemp -d "astrometry_factory_regression_$$.XXXXXX") || exit 1
+    ASTROMETRY_FACTORY_NEW_CACHE=0
+    ASTROMETRY_FACTORY_LOG_READY=0
+    ASTROMETRY_FACTORY_CACHE_READY=0
+    function restore_astrometry_factory_regression {
+     local restore_status=0
+     if [ "$ASTROMETRY_FACTORY_LOG_READY" -eq 1 ];then rm -f transient_factory_test31.txt || restore_status=1; fi
+     if [ "$ASTROMETRY_FACTORY_CACHE_READY" -eq 1 ];then rm -f "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" || restore_status=1; fi
+     if [ -e "$ASTROMETRY_FACTORY_BACKUP/factory.log" ] || [ -L "$ASTROMETRY_FACTORY_BACKUP/factory.log" ];then
+      mv "$ASTROMETRY_FACTORY_BACKUP/factory.log" transient_factory_test31.txt || restore_status=1
+     fi
+     if [ -e "$ASTROMETRY_FACTORY_BACKUP/cache.fits" ] || [ -L "$ASTROMETRY_FACTORY_BACKUP/cache.fits" ];then
+      mv "$ASTROMETRY_FACTORY_BACKUP/cache.fits" "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" || restore_status=1
+     fi
+     if [ "$ASTROMETRY_FACTORY_NEW_CACHE" -eq 1 ];then rmdir local_wcs_cache || restore_status=1; fi
+     if [ "$restore_status" -ne 0 ];then
+      echo "ERROR: cannot restore factory test artifacts; backup retained in $ASTROMETRY_FACTORY_BACKUP" >&2
+      exit 1
+     fi
+     rm -rf "$ASTROMETRY_FACTORY_BACKUP"
+    }
+    trap restore_astrometry_factory_regression EXIT
+    if [ -e transient_factory_test31.txt ] || [ -L transient_factory_test31.txt ];then
+     mv transient_factory_test31.txt "$ASTROMETRY_FACTORY_BACKUP/factory.log" || exit 1
+    fi
+    [ ! -L local_wcs_cache ] || exit 1
+    if [ ! -d local_wcs_cache ];then
+     mkdir local_wcs_cache || exit 1
+     ASTROMETRY_FACTORY_NEW_CACHE=1
+    fi
+    if [ -e "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" ] || [ -L "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" ];then
+     mv "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" "$ASTROMETRY_FACTORY_BACKUP/cache.fits" || exit 1
+    fi
+    ASTROMETRY_FACTORY_LOG_READY=1
+    cp "$ASTROMETRY_REGRESSION_LOG" transient_factory_test31.txt || exit 1
+    ASTROMETRY_FACTORY_CACHE_READY=1
+    cp "$ASTROMETRY_REGRESSION_WCS" "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" || exit 1
+    for ASTROMETRY_FACTORY_FUNCTION in image_basename_for_wcs_quality_diag extract_wcs_quality_field retry_wcs_with_small_radius retry_wcs_with_lower_tweak_order ;do
+     ASTROMETRY_FACTORY_DEFINITION=$(awk -v name="$ASTROMETRY_FACTORY_FUNCTION" '
+       $1=="function" && $2==name {copy=1}
+       copy {print}
+       copy && /^}/ {found=1; exit}
+       END {if (!found) exit 1}' util/transients/transient_factory_test31.sh) || exit 1
+     eval "$ASTROMETRY_FACTORY_DEFINITION"
+    done
+    unset VAST_DISABLE_UCAC5_SIP_REFIT VAST_SIP_REFIT_NO_REMATCH VAST_SIP_REFIT_NO_RESCUE VAST_FORCE_SIP_REFIT VAST_SIP_REFIT_ORDER VAST_SKIP_SMALL_RADIUS_RESOLVE VAST_SKIP_LOCAL_ASTROMETRY_REPAIR VAST_LOCAL_ASTROMETRY_REPAIR_TIMEOUT VAST_ASTROMETRY_SMALL_RADIUS_SEED
+    export VAST_TWEAK_ORDER=3 VAST_SKIP_IMAGE_BASED_RETWEAK=1 FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2
+    CAMERA_SETTINGS=TTUQ1b1x1
+    ASTROMETRY_FACTORY_SIGMA=$(extract_wcs_quality_field "$ASTROMETRY_REGRESSION_IMAGE" sigma_overall_arcsec)
+    ASTROMETRY_FACTORY_RATIO=$(extract_wcs_quality_field "$ASTROMETRY_REGRESSION_IMAGE" worst_quadrant_to_overall_ratio)
+    retry_wcs_with_lower_tweak_order "../$ASTROMETRY_REGRESSION_DATA/$ASTROMETRY_REGRESSION_IMAGE" "regression image" "$ASTROMETRY_FACTORY_SIGMA" "$ASTROMETRY_FACTORY_RATIO" 0.4315 1.193 2 2 1.47 5.87 || exit 1
+    cp transient_factory_test31.txt "$ASTROMETRY_REGRESSION_LOG" || exit 1
+    [ "${WCS_SMALL_RADIUS_RETRY_KEPT:-0}" -eq 1 ] || exit 1
+    grep -F 'WCS_SMALL_RADIUS_RETRY: keeping small-radius result' "$ASTROMETRY_REGRESSION_LOG" >/dev/null || exit 1
+    cmp -s "$ASTROMETRY_REGRESSION_WCS" "local_wcs_cache/$ASTROMETRY_REGRESSION_WCS" || exit 1
+    util/listhead "$ASTROMETRY_REGRESSION_WCS" | grep '^VAST004 ' | grep -q small_radius || exit 1
+   ) > "$ASTROMETRY_REGRESSION_LOG.factory" 2>&1 ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_FACTORY_RETRY"
+   fi
+   cat "$ASTROMETRY_REGRESSION_LOG.factory" >> "$ASTROMETRY_REGRESSION_LOG"
+   rm -f "$ASTROMETRY_REGRESSION_LOG.factory"
   fi
   if [ ! -s "$ASTROMETRY_REGRESSION_WCS" ] || [ ! -s "$ASTROMETRY_REGRESSION_WCS.wcscat.ucac5" ];then
    TEST_PASSED=0
@@ -16015,7 +16109,7 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
     FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_$ASTROMETRY_REGRESSION_BAD"
    done
    # Unmatched detections must not export stale UCAC5 magnitudes. In these
-   # two real frames every accepted match has a nonzero magnitude and a
+   # real frames every accepted match has a nonzero magnitude and a
    # legitimate zero catalog error. Count with the actual C-band selector.
    ASTROMETRY_REGRESSION_MATCH_COUNT=$(echo "$ASTROMETRY_REGRESSION_DIAG" | awk '{for(i=1;i<=NF;i++) if($i ~ /^N_match=/) {sub(/^N_match=/,"",$i); print $i}}')
    ASTROMETRY_REGRESSION_EXPORT_COUNT=$(awk '$11+0 != 0 {n++} END {print n+0}' "$ASTROMETRY_REGRESSION_WCS.wcscat.ucac5")
@@ -16033,30 +16127,30 @@ for ASTROMETRY_REGRESSION_CASE in CYG05Q1SETTLE HER09Q1TANONLY ;do
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_HEADER_DIAG"
    fi
-   if [ "$ASTROMETRY_REGRESSION_CASE" = "CYG05Q1SETTLE" ];then
+   if [ "$ASTROMETRY_REGRESSION_EXPECTED_CHECKS" -gt 0 ];then
     ASTROMETRY_REGRESSION_NCHECKS=0
     while read -r ASTROMETRY_REGRESSION_X ASTROMETRY_REGRESSION_Y ASTROMETRY_REGRESSION_RA ASTROMETRY_REGRESSION_DEC _ASTROMETRY_REGRESSION_REST ;do
      case "$ASTROMETRY_REGRESSION_X" in ''|\#*) continue ;; esac
      ASTROMETRY_REGRESSION_NCHECKS=$((ASTROMETRY_REGRESSION_NCHECKS+1))
      ASTROMETRY_REGRESSION_RADEC=$(lib/bin/xy2sky -d -n 8 "$ASTROMETRY_REGRESSION_WCS" "$ASTROMETRY_REGRESSION_X" "$ASTROMETRY_REGRESSION_Y" | awk 'NR==1 { print $1, $2 }')
-     if ! echo "$ASTROMETRY_REGRESSION_RADEC $ASTROMETRY_REGRESSION_RA $ASTROMETRY_REGRESSION_DEC" | awk '
+     if ! echo "$ASTROMETRY_REGRESSION_RADEC $ASTROMETRY_REGRESSION_RA $ASTROMETRY_REGRESSION_DEC" | awk -v limit="$ASTROMETRY_REGRESSION_HEADER_LIMIT" '
        NF!=4 { exit 1 }
        { for (i=1; i<=4; i++) if ($i !~ /^[-+]?[0-9]+([.][0-9]+)?$/) exit 1
          dra=$1-$3; if (dra>180) dra-=360; if (dra< -180) dra+=360
          dra*=cos($4*atan2(0,-1)/180); ddec=$2-$4
-         exit !(3600*sqrt(dra*dra+ddec*ddec) < 1.5) }' ;then
+         exit !(3600*sqrt(dra*dra+ddec*ddec) < limit) }' ;then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_HEADER_${ASTROMETRY_REGRESSION_X}_${ASTROMETRY_REGRESSION_Y}"
      fi
     done < "../$ASTROMETRY_REGRESSION_DATA/header_checks.txt"
-    if [ "$ASTROMETRY_REGRESSION_NCHECKS" -ne 12 ];then
+    if [ "$ASTROMETRY_REGRESSION_NCHECKS" -ne "$ASTROMETRY_REGRESSION_EXPECTED_CHECKS" ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES ${ASTROMETRY_REGRESSION_CASE}_HEADER_CHECK_DATA"
     fi
    fi
   fi
   if [ "$TEST_PASSED" -ne 1 ];then
-   ASTROMETRY_REGRESSION_DEBUG=$(grep -E 'ERROR|WARNING|carries no SIP|star-list re-tweak|small-radius re-solve|No repair of the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG|WCS_HEADER_DIAG|ASTROMETRY_REPAIR_DIAG' "$ASTROMETRY_REGRESSION_LOG" | tail -n 60)
+   ASTROMETRY_REGRESSION_DEBUG=$(grep -E 'ERROR|WARNING|carries no SIP|star-list re-tweak|small-radius re-solve|No repair of the TAN-only|SIP_REFIT|WCS_QUALITY_DIAG|WCS_HEADER_DIAG|ASTROMETRY_REPAIR_DIAG|WCS_SMALL_RADIUS_RETRY' "$ASTROMETRY_REGRESSION_LOG" | tail -n 60)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### $ASTROMETRY_REGRESSION_CASE ######
 $ASTROMETRY_REGRESSION_DEBUG
@@ -36815,6 +36909,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # This has to go before kadar in order not to leave the lonely "2" in FAILED_TEST_CODES
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar/}"
+ # The valid-but-inaccurate SIP recovery needs a local Astrometry.net solver.
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_HER09Q1VALIDSIP_no_solve_field/}"
  # Astropy comparison results (many target machines will not have astropy)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"

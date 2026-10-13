@@ -27,7 +27,7 @@ trap 'rm -rf -- "$TEST_DIR"' EXIT
 
 # Extract only the self-contained functions under test; sourcing the pipeline
 # would run it.
-for FUNCTION_NAME in image_basename_for_wcs_quality_diag extract_wcs_quality_field retry_wcs_with_lower_tweak_order report_new_image_bad_worst_quadrant ; do
+for FUNCTION_NAME in image_basename_for_wcs_quality_diag extract_wcs_quality_field retry_wcs_with_small_radius retry_wcs_with_lower_tweak_order report_new_image_bad_worst_quadrant ; do
  awk -v want="$FUNCTION_NAME" '
   $0 ~ ("^function " want "[[:space:]]*\\{") { copying=1 }
   copying { print }
@@ -292,5 +292,103 @@ start_case missing_limit_is_silent 5.983 4.410 '' ''
 CAMERA_SETTINGS=TTUQ1b1x1 report_new_image_bad_worst_quadrant "$IMAGE" "1st new image" ''
 grep -q 'ERROR' transient_factory_test31.txt && fail 'the check fired without a limit'
 finish_case
+
+# Exercise the new candidate transaction independently of Astrometry.net.
+# The real-image system case covers accuracy; these failures cover preserving
+# all original products when a solver, quality check or publication fails.
+start_small_radius_case() {
+ start_case "$1" 3.000 6.000 '' ''
+ mkdir -p bin local_wcs_cache
+ printf '#!/bin/sh\nexit 0\n' > bin/solve-field
+ chmod +x bin/solve-field
+ cat > util/fov_of_wcs_calibrated_image.sh <<'EOF'
+#!/bin/sh
+echo "Image size: 900.0'x600.0' 15.0(deg)x10.0(deg) 9576x6388 pix"
+EOF
+ chmod +x util/fov_of_wcs_calibrated_image.sh
+ cp "wcs_$IMAGE" "local_wcs_cache/wcs_$IMAGE"
+ printf 'original sidecar\n' > "wcs_$IMAGE.original"
+ printf 'WCS_HEADER_DIAG: file=%s selection=current_pairs N_selected=4000 N_valid=4000 p95_sep_arcsec=45 n_q1=1000 n_q2=1000 n_q3=1000 n_q4=1000 occupied_cells_4x4=16/16\n' "$IMAGE" >> transient_factory_test31.txt
+ cat > util/solve_plate_with_UCAC5 <<'EOF'
+#!/usr/bin/env bash
+printf 'called\n' >> solver_calls
+[ -s "$VAST_ASTROMETRY_SMALL_RADIUS_SEED" ] || exit 9
+printf 'candidate WCS\n' > "wcs_$SMALL_TEST_IMAGE"
+printf 'candidate catalog\n' > "wcs_$SMALL_TEST_IMAGE.wcscat"
+printf 'candidate UCAC5\n' > "wcs_$SMALL_TEST_IMAGE.wcscat.ucac5"
+printf 'candidate-only sidecar\n' > "wcs_$SMALL_TEST_IMAGE.new_only"
+sigma=0.300; count=4000; q1=1000; p95=2.0; cells=16/16
+case "$SMALL_TEST_MODE" in
+ no_diagnostic) exit 0 ;;
+ nonfinite) sigma=NaN ;;
+ bad_header) p95=30 ;;
+ lost_quadrant) q1=1; count=3001 ;;
+ lost_cells) cells=15/16 ;;
+ missing_output) rm -f "wcs_$SMALL_TEST_IMAGE.wcscat.ucac5" ;;
+esac
+printf 'WCS_QUALITY_DIAG: file=%s N_match=%s sigma_overall_arcsec=%s sigma_q1_arcsec=0.36 sigma_q2_arcsec=0.36 sigma_q3_arcsec=0.36 sigma_q4_arcsec=0.36 n_q1=%s n_q2=1000 n_q3=1000 n_q4=1000 worst_quadrant_to_overall_ratio=1.2\n' "$SMALL_TEST_IMAGE" "$count" "$sigma" "$q1"
+printf 'WCS_HEADER_DIAG: file=%s selection=current_pairs N_selected=%s N_valid=%s p95_sep_arcsec=%s n_q1=%s n_q2=1000 n_q3=1000 n_q4=1000 occupied_cells_4x4=%s\n' "$SMALL_TEST_IMAGE" "$count" "$count" "$p95" "$q1" "$cells"
+[ "$SMALL_TEST_MODE" != failed_solver ] || exit 8
+exit 0
+EOF
+ chmod +x util/solve_plate_with_UCAC5
+ export SMALL_TEST_IMAGE="$IMAGE" SMALL_TEST_MODE="$1"
+}
+
+for mode in accepted failed_solver no_diagnostic nonfinite bad_header lost_quadrant lost_cells missing_output cache_failure backup_failure rollback_failure disabled no_local good_original ; do
+ start_small_radius_case "$mode"
+ # File operations are fault-injected in the caller, not in the child solver.
+ cp() {
+  local destination="" arg
+  for arg in "$@"; do
+   destination="$arg"
+  done
+  case "$SMALL_TEST_MODE:$destination" in
+   cache_failure:local_wcs_cache/.wcs_small_radius_retry.*) return 1 ;;
+   backup_failure:*/wcs_small_radius_retry.*/) return 1 ;;
+  esac
+  if [ "$SMALL_TEST_MODE" = rollback_failure ] && [ "$destination" = "wcs_$IMAGE" ];then return 1; fi
+  command cp "$@"
+ }
+ if [ "$mode" = rollback_failure ];then SMALL_TEST_MODE=failed_solver; fi
+ # The rollback fault must stay enabled while the child returns failure.
+ if [ "$mode" = rollback_failure ];then
+  cp() { if [ "${*: -1}" = "wcs_$IMAGE" ];then return 1; fi; command cp "$@"; }
+ fi
+ if [ "$mode" = good_original ];then diag_line 0.5 1.1 >> transient_factory_test31.txt; fi
+ status=0
+ if [ "$mode" = no_local ];then
+  command() { if [ "$1" = -v ] && [ "$2" = solve-field ];then return 1; fi; builtin command "$@"; }
+ fi
+ if [ "$mode" = disabled ];then export VAST_SKIP_LOCAL_ASTROMETRY_REPAIR=1; fi
+ CAMERA_SETTINGS=TTUQ1b1x1 PATH="$PWD/bin:$PATH" retry_wcs_with_small_radius "$IMAGE" "test image" 5.87 2 || status=$?
+ unset -f cp
+ if [ "$mode" = no_local ];then unset -f command; fi
+ unset VAST_SKIP_LOCAL_ASTROMETRY_REPAIR
+ if [ "$mode" = accepted ];then
+  [ "$status" -eq 0 ] && [ "$WCS_SMALL_RADIUS_RETRY_KEPT" -eq 1 ] || fail 'good small-radius candidate rejected'
+  grep -qx 'candidate WCS' "wcs_$IMAGE" || fail 'accepted WCS missing'
+  cmp -s "wcs_$IMAGE" "local_wcs_cache/wcs_$IMAGE" || fail 'cache did not follow accepted WCS'
+ elif [ "$mode" = rollback_failure ];then
+  [ "$status" -ne 0 ] || fail 'failed rollback reported success'
+  grep -q 'rollback failed' transient_factory_test31.txt || fail 'rollback failure not explained'
+  backup_image=$(echo wcs_small_radius_retry.*/"wcs_$IMAGE")
+  grep -qx 'order-3 WCS' "$backup_image" || fail 'rollback lost recovery copy'
+ else
+  [ "$status" -eq 0 ] && [ "$WCS_SMALL_RADIUS_RETRY_KEPT" -eq 0 ] || fail 'bad/skipped candidate reported accepted'
+  grep -qx 'order-3 WCS' "wcs_$IMAGE" || fail 'original WCS lost'
+  grep -qx 'order-3 catalog' "wcs_$IMAGE.wcscat" || fail 'original catalog lost'
+  grep -qx 'original sidecar' "wcs_$IMAGE.original" || fail 'original sidecar lost'
+  grep -qx 'order-3 WCS' "local_wcs_cache/wcs_$IMAGE" || fail 'rejected candidate changed cache'
+  [ ! -e "wcs_$IMAGE.new_only" ] && [ ! -e "wcs_$IMAGE.wcscat.ucac5" ] || fail 'candidate-only sidecar survived rollback'
+  kept_header=$(awk '$1=="WCS_HEADER_DIAG:" {line=$0} END {print line}' transient_factory_test31.txt)
+  echo "$kept_header" | grep -q 'p95_sep_arcsec=45 ' || fail 'header diagnostic describes discarded candidate'
+ fi
+ case "$mode" in
+  backup_failure|disabled|no_local|good_original) [ ! -e solver_calls ] || fail 'solver called for a skipped retry' ;;
+  *) [ "$(wc -l < solver_calls)" -eq 1 ] || fail 'retry was not bounded to one solver call' ;;
+ esac
+ finish_case
+done
 
 echo "All $N_CASES WCS-quality retry tests passed."
