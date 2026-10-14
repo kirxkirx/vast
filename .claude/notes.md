@@ -1207,3 +1207,19 @@ Update this file as you learn new things.
   /tmp/vast_her0091_fix_20261013/data/. Publish to the same tau and scan
   test-data directories as the earlier Cyg/Her cases. Deployment commands
   and validation logs remain outside the tree in that investigation directory.
+
+## All test-data downloads in test_vast.sh go through download_test_data_file() (2026-10-14)
+- 2026-10-13 ~21:52-22:01 UTC: polaris answered the tau.kirx.net vhost with its stock 299-byte
+  "503 Service Unavailable" page (mod_proxy without a backend; HTML 2.0 doctype, no server
+  signature, sha256 5764fed3...). Ubuntu CI run 38471824132 failed in the NMW_Venus_test download
+  ("bzip2: (stdin) is not a bzip2 file") and all five unmw science jobs failed the same way on
+  NMW__NovaVul24_Stas_test.tar.bz2; unmw now pins that archive's SHA256 (tests/fetch_fixture.sh).
+- The remaining 127 plain 'curl -O' downloads were converted to
+  download_test_data_file FILE "tau URL" "scan.sai.msu.ru URL" (tau first) and the 117 commented-out
+  mirror lines were folded into the calls. Every URL was HEAD-probed on 2026-10-14; five files exist
+  only on tau and are called with one URL (STEREO-A-H1__test, NMW-TexasTech__Aur-02-Q2b1x1,
+  NMW-TexasTech__Cas-04_platesolve_failure_test, NMW_Cyg5_astrometry_problem_test,
+  wcs_Sgr-05-Q2b1x1_2026-03-26_..._0682.fits.bz2). The seven 'timeout 300' wrappers were dropped
+  (a shell function cannot be wrapped; --speed-limit 1024/60 s already ends a stalled transfer), and
+  the dynamic edited_lightcurve_data.txt fetch of the period-search test only gained --fail.
+  No 'curl -O' without --fail remains in the file.
