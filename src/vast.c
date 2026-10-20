@@ -207,7 +207,7 @@ void write_obs_to_file( FILE *file_out, struct Observation *obs ) {
  char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 #ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
  snprintf( string_with_float_parameters_and_saved_FITS_keywords, sizeof( string_with_float_parameters_and_saved_FITS_keywords ),
-           "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %s",
+           "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  SE_FLAGS=%u %s",
            obs->float_parameters[2],
            obs->float_parameters[3],
            obs->float_parameters[4],
@@ -218,10 +218,11 @@ void write_obs_to_file( FILE *file_out, struct Observation *obs ) {
            obs->float_parameters[9],
            obs->float_parameters[10],
            obs->float_parameters[11],
+           (unsigned int)obs->sextractor_flag,
            obs->fits_header_keywords_to_be_recorded_in_lightcurve );
 #else
  snprintf( string_with_float_parameters_and_saved_FITS_keywords, sizeof( string_with_float_parameters_and_saved_FITS_keywords ),
-           "  %s", obs->fits_header_keywords_to_be_recorded_in_lightcurve );
+           "  SE_FLAGS=%u %s", (unsigned int)obs->sextractor_flag, obs->fits_header_keywords_to_be_recorded_in_lightcurve );
 #endif
  write_lightcurve_point( file_out, obs->JD, obs->mag, obs->mag_err, obs->X, obs->Y, obs->APER, obs->filename, string_with_float_parameters_and_saved_FITS_keywords );
  obs->is_used= 1;
@@ -3282,6 +3283,7 @@ int main( int argc, char **argv ) {
   ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[0];
   ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[0];
 
+  ptr_struct_Obs[obs_in_RAM - 1].sextractor_flag= (unsigned char)STAR1[i].sextractor_flag;
   ptr_struct_Obs[obs_in_RAM - 1].is_used= 0;
 
   //
@@ -5003,6 +5005,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[n];
       ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[n];
 
+      ptr_struct_Obs[obs_in_RAM - 1].sextractor_flag= (unsigned char)STAR2[Pos2[i]].sextractor_flag;
       ptr_struct_Obs[obs_in_RAM - 1].is_used= 0;
 
       //

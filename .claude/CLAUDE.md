@@ -77,6 +77,11 @@ The core functionality of VaST should be available on all of the above platforms
 
 ## Terminology
 
+- Preserve lightcurve trailing metadata when rewriting individual measurements.
+  Keep the ten optional aperture values first; `SE_FLAGS=N` follows them,
+  before captured FITS keywords. Do not insert warnings into the numeric
+  transient-table cells: downstream HTML and MPC parsers depend on them.
+
 - Do not use ad-hoc step-numbering labels like "Phase 1" / "Phase 2" / "Step A" in chat replies, commit messages, code comments, or variable names. They are context-dependent and only meaningful inside one specific function or one specific conversation turn - outside that scope nobody can tell what they refer to.
 - Refer to what the step actually does (e.g., "parallel plate-solving step", "forced-photometry measurement loop", "rsync of the working copy") rather than its ordinal position.
 

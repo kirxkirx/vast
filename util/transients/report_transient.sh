@@ -144,6 +144,7 @@ echo "<table style='font-family:monospace;font-size:12px;'>
 <tr><th></th><th>                     Date (UTC)   </th><th>    JD(UTC)  </th><th>    mag. </th><th> R.A. & Dec.(J2000)   </th><th>X & Y (pix)</th><th>    Image</th></tr>"
 
 N=0
+SEXTRACTOR_FLAGS_COMMENTS=""
 
 # Make sure there are no files with names we want to use
 clean_tmp_files
@@ -221,8 +222,22 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  X=$(printf "%04.0f" "$X") # purely for visualisation purposes
  Y=$(printf "%04.0f" "$Y") # purely for visualisation purposes
  echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" "$(lib/deg2hms $RADEC)" "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
+ # Keep annotations outside the table: unmw parses numeric cells and the
+ # MPC formatter parses the existing HTML tag positions.
+ # Match a complete token; old lightcurves without metadata are unchanged.
+ SE_FLAGS_VALUE=$(printf '%s\n' "$REST" | awk '{for (i=1;i<=NF;i++) if ($i ~ /^SE_FLAGS=[0-9]+$/) {split($i,a,"="); if (length(a[2])<=3 && a[2]+0<=255) print a[2]+0; exit}}')
+ if [ -n "$SE_FLAGS_VALUE" ];then
+  SE_FLAGS_NOTE=""
+  if [ "$((SE_FLAGS_VALUE & 4))" -ne 0 ];then
+   SE_FLAGS_NOTE=" <b>SATURATED - magnitude unreliable.</b>"
+  fi
+  SEXTRACTOR_FLAGS_COMMENTS="${SEXTRACTOR_FLAGS_COMMENTS}JD ${JD_SHORT}: SE_FLAGS=${SE_FLAGS_VALUE}.${SE_FLAGS_NOTE}<br>"
+ fi
 done < "$LIGHTCURVEFILE"
 echo "</table>"
+if [ -n "$SEXTRACTOR_FLAGS_COMMENTS" ];then
+ printf '<p>SExtractor measurement flags:<br>%s</p>\n' "$SEXTRACTOR_FLAGS_COMMENTS"
+fi
 
 # We need to reformat util/colstat output to make it look like a small shell script
 util/colstat < "$REPORT_TRANSIENT_TMPFILE_RA" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"

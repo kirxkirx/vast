@@ -1223,3 +1223,24 @@ Update this file as you learn new things.
   (a shell function cannot be wrapped; --speed-limit 1024/60 s already ends a stalled transfer), and
   the dynamic edited_lightcurve_data.txt fetch of the period-search test only gained --fail.
   No 'curl -O' without --fail remains in the file.
+## SExtractor flags in lightcurve metadata (2026-10-20)
+
+- `Observation.sextractor_flag` carries the current detection's complete
+  unsigned extraction flag through sorting and both lightcurve output paths.
+  `write_obs_to_file()` emits `SE_FLAGS=N` after the ten optional aperture
+  values and before FITS keywords. The existing 512-character metadata read
+  limit is unchanged; flags must precede potentially long FITS metadata.
+- `report_transient.sh` reads the named token, accepts decimal values 0-255,
+  and tests bit 4 for saturation. Notes are emitted AFTER the measurement
+  table. Keep its cells and numeric contents unchanged: unmw reads them,
+  and make_report_in_HTML.sh's MPC formatter uses HTML tag positions.
+  This annotation does not change candidate selection or export policy.
+- Fixed metadata loss in MagSize_filter_standalone, random-point selection,
+  and the lc editor (including both point-deletion paths). The old multi-image
+  identification script also needs a trailing REST variable so metadata
+  does not become part of the FITS filename. Simulation, binning and reduced
+  export formats have different semantics from rewriting original observations.
+- `python3 util/examples/test_lightcurve_metadata.py [build_directory]`
+  tests all 256 flags in both writer formats, aperture replacement,
+  calibration, sigma/MagSize filtering, random selection, legacy rows, and
+  exact HTML-table compatibility. All test data are temporary.

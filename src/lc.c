@@ -2061,6 +2061,8 @@ int main( int argc, char **argv ) {
  float *Y= NULL;
  float *APER= NULL;
  char **filename;
+ char (*measurement_metadata)[513]; // Existing reader limit: 512 characters plus NUL
+ char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  char unsanitized_filename[FILENAME_LENGTH];
  int Nobs= 0;
  int i, j;
@@ -2341,12 +2343,18 @@ int main( int argc, char **argv ) {
 
  // fprintf(stderr,"reading \x1B[34;47m %s \x1B[33;00m ... ",lightcurvefilename);
 
+ measurement_metadata= calloc( number_of_lines_in_lc_file_for_malloc, sizeof( *measurement_metadata ) );
+ if ( measurement_metadata == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate lightcurve metadata (lc.c)\n" );
+  exit( EXIT_FAILURE );
+ }
+
  Nobs= 0; // reset it here just in case
  dmag= dmerr= dx= dy= dap= 0.0;
  JD[Nobs]= 0.0; // initialize
  mag[Nobs]= mag_err[Nobs]= X[Nobs]= Y[Nobs]= APER[Nobs]= 0.0;
  // while( -1 < read_lightcurve_point(lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, filename[Nobs], NULL) ) {
- while ( -1 < read_lightcurve_point( lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, unsanitized_filename, NULL ) ) {
+ while ( -1 < read_lightcurve_point( lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, unsanitized_filename, comments_string ) ) {
   if ( JD[Nobs] != 0.0 ) {
    mag[Nobs]= (float)dmag;
    mag_err[Nobs]= (float)dmerr;
@@ -2354,6 +2362,7 @@ int main( int argc, char **argv ) {
    Y[Nobs]= (float)dy;
    APER[Nobs]= (float)dap;
    safely_encode_user_input_string( filename[Nobs], unsanitized_filename, FILENAME_LENGTH );
+   snprintf( measurement_metadata[Nobs], sizeof( *measurement_metadata ), "%s", comments_string );
    Nobs++;
    JD[Nobs]= 0.0; // initialize the next one
    mag[Nobs]= mag_err[Nobs]= X[Nobs]= Y[Nobs]= APER[Nobs]= 0.0;
@@ -3159,6 +3168,7 @@ int main( int argc, char **argv ) {
      Y[i]= Y[i + 1];
      APER[i]= APER[i + 1];
      strcpy( filename[i], filename[i + 1] );
+     strcpy( measurement_metadata[i], measurement_metadata[i + 1] );
     }
    }
   }
@@ -3202,6 +3212,7 @@ int main( int argc, char **argv ) {
         Y[i]= Y[i + 1];
         APER[i]= APER[i + 1];
         strcpy( filename[i], filename[i + 1] );
+        strcpy( measurement_metadata[i], measurement_metadata[i + 1] );
        } // if( lightcurve_format==0 )
        // the following works, I don't know why...
        if ( closest_num != -1 )
@@ -3308,6 +3319,8 @@ int main( int argc, char **argv ) {
      fprintf( lightcurvefile, " %.5f", mag_err[i] );
     if ( lightcurve_format == 0 )
      fprintf( lightcurvefile, " %8.3lf %8.3lf %4.1lf %s", X[i], Y[i], APER[i], filename[i] );
+    if ( lightcurve_format == 0 && measurement_metadata[i][0] != '\0' )
+     fprintf( lightcurvefile, " %s", measurement_metadata[i] );
     fprintf( lightcurvefile, "\n" );
    }
    fclose( lightcurvefile );
@@ -3662,6 +3675,7 @@ int main( int argc, char **argv ) {
  for ( i= 0; i < number_of_lines_in_lc_file_for_malloc; i++ )
   free( filename[i] );
  free( filename );
+ free( measurement_metadata );
  free( X );
  free( Y );
  free( APER );

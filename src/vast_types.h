@@ -14,6 +14,7 @@ struct Observation {
  char *filename;                                    // Pointer instead of array
  char *fits_header_keywords_to_be_recorded_in_lightcurve; // Pointer instead of array
  char is_used; 
+ unsigned char sextractor_flag; // Per-observation flags, preserved in lightcurve metadata
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS];
 };
 
