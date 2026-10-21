@@ -111,6 +111,7 @@ def test_report(tmp):
     for field in ('JD', 'RA', 'DEC', 'MAG', 'X', 'Y'):
         setup += 'REPORT_TRANSIENT_TMPFILE_{}=tmp_{}\n'.format(field, field)
     baseline = None
+    baseline_html = None
     for token in ('', 'SE_FLAGS=0', 'SE_FLAGS=2', 'SE_FLAGS=4', 'SE_FLAGS=20',
                   'SE_FLAGS=255', 'SE_FLAGS=004', 'SE_FLAGS=8',
                   'SE_FLAGS=256', 'SE_FLAGS=-4', 'SE_FLAGS=4x', 'XSE_FLAGS=4'):
@@ -122,13 +123,38 @@ def test_report(tmp):
         table = re.search(r'<table.*?</table>', html, re.S).group()
         if baseline is None:
             baseline = table
+            baseline_html = html
         assert table == baseline, token
+        # Existing grep -B consumers in test_vast.sh and unmw/autoprocess.sh
+        # must still reach the anchor and discovery rows from the mean line.
+        # Only the paragraph may differ, including its surrounding newlines.
+        without_flags = re.sub(r'<p>SExtractor measurement flags:<br>.*?</p>',
+                               '', html)
+        assert without_flags == baseline_html, token
         saturated = token in ('SE_FLAGS=4', 'SE_FLAGS=20', 'SE_FLAGS=255', 'SE_FLAGS=004')
         assert ('SATURATED - magnitude unreliable.' in html) == saturated, token
         if saturated:
             assert html.index('SATURATED') > html.index('</table>')
         if token == '':
             assert 'SExtractor measurement flags' not in html
+
+
+def test_no_fits_keywords(tmp):
+    source = (ROOT / 'util/examples/test_vast.sh').read_text()
+    # Exercise the actual no-header-recording assertion with metadata alone
+    # and with unwanted header keywords, in either order.
+    assertion = source.split(
+        "# Any other token containing '=' still indicates unwanted header recording.\n",
+        1)[1].splitlines()[0]
+    for metadata, unwanted in (
+            ('', False), ('0.01 .02 SE_FLAGS=0', False),
+            ('SE_FLAGS=255', False), ('CCD-TEMP= -15', True),
+            ('SE_FLAGS=4 CCD-TEMP= -15', True),
+            ('CCD-TEMP= -15 SE_FLAGS=0', True),
+            ('SE_FLAGS=bad', True)):
+        result = subprocess.run(['bash', '-c', assertion], cwd=tmp,
+                                env=dict(os.environ, A=metadata), timeout=10)
+        assert result.returncode == (0 if unwanted else 1), metadata
 
 
 def test_writer(tmp):
@@ -164,4 +190,5 @@ with tempfile.TemporaryDirectory(prefix='vast-metadata-test-') as directory:
     test_writer(temp)
     test_rewriters(temp)
     test_report(temp)
+    test_no_fits_keywords(temp)
 print('PASS: metadata preservation, unchanged photometry, and unchanged HTML table')

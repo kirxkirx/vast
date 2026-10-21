@@ -7564,8 +7564,9 @@ $GREP_RESULT"
    # Print everything statring from column 8
    cat $LIGHTCURVEFILE_TO_TEST | awk '{ for(i=8; i<NF; i++) printf "%s",$i OFS; if(NF) printf "%s",$NF; printf ORS}' | while read A ;do
     #if [ ! -z "$A" ];then
-    # The idea here is that if we save some FITS header keywords, the '=' sign will always be present in the string
-    echo "$A" | grep -q '='
+    # SE_FLAGS is per-detection metadata, not a captured FITS keyword.
+    # Any other token containing '=' still indicates unwanted header recording.
+    echo "$A" | awk '{for (i=1;i<=NF;i++) if ($i !~ /^SE_FLAGS=[0-9]+$/ && index($i,"=")) found=1} END {exit !found}'
     if [ $? -eq 0 ];then
      touch NO_KEYWORD_RECORDING_SMALLCCD013_problem.tmp
      break

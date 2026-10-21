@@ -234,10 +234,14 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   SEXTRACTOR_FLAGS_COMMENTS="${SEXTRACTOR_FLAGS_COMMENTS}JD ${JD_SHORT}: SE_FLAGS=${SE_FLAGS_VALUE}.${SE_FLAGS_NOTE}<br>"
  fi
 done < "$LIGHTCURVEFILE"
-echo "</table>"
+# Keep the closing tag and optional paragraph on the same output line.
+# test_vast.sh and unmw/autoprocess.sh look back a fixed number of lines
+# from the mean position to the candidate anchor and discovery rows.
+printf '</table>'
 if [ -n "$SEXTRACTOR_FLAGS_COMMENTS" ];then
- printf '<p>SExtractor measurement flags:<br>%s</p>\n' "$SEXTRACTOR_FLAGS_COMMENTS"
+ printf '<p>SExtractor measurement flags:<br>%s</p>' "$SEXTRACTOR_FLAGS_COMMENTS"
 fi
+printf '\n'
 
 # We need to reformat util/colstat output to make it look like a small shell script
 util/colstat < "$REPORT_TRANSIENT_TMPFILE_RA" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"

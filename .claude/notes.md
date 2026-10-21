@@ -1232,8 +1232,12 @@ Update this file as you learn new things.
   limit is unchanged; flags must precede potentially long FITS metadata.
 - `report_transient.sh` reads the named token, accepts decimal values 0-255,
   and tests bit 4 for saturation. Notes are emitted AFTER the measurement
-  table. Keep its cells and numeric contents unchanged: unmw reads them,
-  and make_report_in_HTML.sh's MPC formatter uses HTML tag positions.
+  table, on the same output line as `</table>`. Keep its cells and numeric
+  contents unchanged: unmw reads them, and make_report_in_HTML.sh's MPC
+  formatter uses HTML tag positions. Do not add a newline between the
+  table and the mean-position block: test_vast.sh's Nova Vul lookup uses
+  `grep -B13`, while unmw/autoprocess.sh's bright-candidate checks use
+  `grep -B6` and `grep -B17` to reach discovery rows and the candidate anchor.
   This annotation does not change candidate selection or export policy.
 - Fixed metadata loss in MagSize_filter_standalone, random-point selection,
   and the lc editor (including both point-deletion paths). The old multi-image
@@ -1243,4 +1247,6 @@ Update this file as you learn new things.
 - `python3 util/examples/test_lightcurve_metadata.py [build_directory]`
   tests all 256 flags in both writer formats, aperture replacement,
   calibration, sigma/MagSize filtering, random selection, legacy rows, and
-  exact HTML-table compatibility. All test data are temporary.
+  exact HTML-table and line-spacing compatibility. It also checks that
+  the no-FITS-keyword assertion permits `SE_FLAGS=N` but still rejects
+  captured header keywords. All test data are temporary.
