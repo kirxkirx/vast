@@ -58,7 +58,6 @@ def test_rewriters(tmp):
         for executable, args in (
                 ('lib/select_aperture_with_smallest_scatter_for_each_object', []),
                 ('util/calibrate_magnitude_scale', ['0', '1', '1']),
-                ('lib/new_lightcurve_sigma_filter', []),
                 ('lib/MagSize_filter_standalone', [])):
             run([str(BUILD / executable)] + args, work)
             lines = check_metadata(lc, expected)
@@ -80,6 +79,51 @@ def test_rewriters(tmp):
     lines = lc.read_text().splitlines()
     assert 'SE_FLAGS=4' in lines[0] and len(lines[1].split()) == 7
     assert 'SE_FLAGS=0' in lines[2]
+
+
+def test_sigma_filter(tmp):
+    # Needs real scatter, so it runs on fresh rows (aperture replacement makes
+    # every magnitude identical and sigma zero). Without a SIGMA argument the
+    # tool only prints its usage, so the injected outlier proves it ran.
+    kept = {}
+    for flagged in (False, True):
+        work = tmp / ('sigma_flagged' if flagged else 'sigma_control')
+        work.mkdir()
+        lc = work / 'out00001.dat'
+        text = rows(flagged)
+        fields = text.splitlines()[0].split(' ', 7)
+        text += ' '.join(['2461001.00000000', '15.0000'] + fields[2:6] +
+                         ['outlier.fits', fields[7]]) + '\n'
+        lc.write_text(text)
+        expected = {s.split()[6]: s.split(maxsplit=7)[7]
+                    for s in text.splitlines()}
+        run([str(BUILD / 'lib/new_lightcurve_sigma_filter'), '3'], work)
+        lines = check_metadata(lc, expected)
+        names = [s.split()[6] for s in lines]
+        assert len(lines) == 30 and 'outlier.fits' not in names, names
+        kept[flagged] = [s.split()[:7] for s in lines]
+    assert kept[False] == kept[True]
+
+
+def test_long_metadata(tmp):
+    # vast.c writes up to ~90 characters of aperture values, SE_FLAGS=N and
+    # up to FITS_KEYWORDS_IN_LC_LENGTH (810) characters of FITS keywords.
+    # The reader used to keep only 512 characters, silently cutting the last
+    # keyword value whenever a tool rewrote the line.
+    work = tmp / 'long_metadata'
+    work.mkdir()
+    lc = work / 'out00001.dat'
+    keywords = ' '.join("OBSERV{:02d}= '{}'".format(i, 'x' * 60)
+                        for i in range(10)) + ' CCD-TEMP= -34.761904761904759'
+    lc.write_text(rows(True).replace('CCD-TEMP= -15.0', keywords))
+    expected = {s.split()[6]: s.split(maxsplit=7)[7]
+                for s in lc.read_text().splitlines()}
+    assert min(len(v) for v in expected.values()) > 800
+    for executable, args in (
+            ('util/calibrate_magnitude_scale', ['0', '1', '1']),
+            ('lib/new_lightcurve_sigma_filter', ['3'])):
+        run([str(BUILD / executable)] + args, work)
+        assert len(check_metadata(lc, expected)) == 30, executable
 
 
 def test_report(tmp):
@@ -189,6 +233,8 @@ with tempfile.TemporaryDirectory(prefix='vast-metadata-test-') as directory:
     temp = Path(directory)
     test_writer(temp)
     test_rewriters(temp)
+    test_sigma_filter(temp)
+    test_long_metadata(temp)
     test_report(temp)
     test_no_fits_keywords(temp)
 print('PASS: metadata preservation, unchanged photometry, and unchanged HTML table')

@@ -2061,7 +2061,7 @@ int main( int argc, char **argv ) {
  float *Y= NULL;
  float *APER= NULL;
  char **filename;
- char (*measurement_metadata)[513]; // Existing reader limit: 512 characters plus NUL
+ char (*measurement_metadata)[1024]; // Reader limit in lightcurve_io.h: 1023 characters plus NUL
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  char unsanitized_filename[FILENAME_LENGTH];
  int Nobs= 0;

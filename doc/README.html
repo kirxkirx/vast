@@ -782,7 +782,7 @@ header values. A value with bit 4 set indicates saturation (for example,
 measurement table and warns that saturated magnitudes are unreliable.
 Older lightcurves without this token remain supported; a missing token does
 not establish that the measurement is unsaturated. The common lightcurve
-reader retains up to 512 characters of additional information. Tools that
+reader retains up to 1023 characters of additional information. Tools that
 rewrite individual measurements preserve this information; synthetic or
 binned data do not represent the metadata of a single original exposure.
 

@@ -135,8 +135,8 @@ static inline int read_lightcurve_point_raw(FILE *lc_file_descriptor, double *jd
  // experimental thing, does not work???
  //if( 7>sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additional_columns_in_lc_file) ){
  // Consistency check
- if( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE < 512 ) {
-  fprintf(stderr, "ERROR: MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE defined in src/vast_limits.h should be >512\n");
+ if( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE < 1024 ) {
+  fprintf(stderr, "ERROR: MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE defined in src/vast_limits.h should be at least 1024\n");
   exit( EXIT_FAILURE );
  }
 
@@ -152,7 +152,10 @@ static inline int read_lightcurve_point_raw(FILE *lc_file_descriptor, double *jd
  } else {
 
   // Warning! Max comment string length is hardcoded here!
-  if( 8 != sscanf(str, "%lf %lf %lf  %lf %lf %lf %s %512[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additional_columns_in_lc_file) ) {
+  // 1023 characters hold the longest metadata vast.c writes: the additional
+  // aperture values, SE_FLAGS=N and up to FITS_KEYWORDS_IN_LC_LENGTH of FITS
+  // keywords. A shorter limit silently cuts the last keyword value.
+  if( 8 != sscanf(str, "%lf %lf %lf  %lf %lf %lf %s %1023[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additional_columns_in_lc_file) ) {
    string_for_additional_columns_in_lc_file[0]= '\0';
    string[0]= '\0';                                     // just in case
    str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
@@ -168,7 +171,7 @@ static inline int read_lightcurve_point_raw(FILE *lc_file_descriptor, double *jd
      }                                                                                      // if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
     }                                                                                       // if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
    }                                                                                        // if ( 7 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s", jd, mag, mag_err, x, y, app, string ) ) {
-  }                                                                                         // if ( 8 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %512[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additio
+  }                                                                                         // if ( 8 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %1023[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additio
   string_for_additional_columns_in_lc_file[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
   // !!
   if( NULL != comments_string ) {

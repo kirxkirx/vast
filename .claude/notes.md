@@ -1228,8 +1228,13 @@ Update this file as you learn new things.
 - `Observation.sextractor_flag` carries the current detection's complete
   unsigned extraction flag through sorting and both lightcurve output paths.
   `write_obs_to_file()` emits `SE_FLAGS=N` after the ten optional aperture
-  values and before FITS keywords. The existing 512-character metadata read
-  limit is unchanged; flags must precede potentially long FITS metadata.
+  values and before FITS keywords, so flags are never cut off.
+- The shared reader in lightcurve_io.h keeps up to 1023 metadata characters
+  (512 until 2026-10-21; lc.c stores 1024 bytes per point). With 512, the
+  11-12 characters of SE_FLAGS pushed captured-keyword tails of 422-432
+  characters past the limit, and every tool that rewrites lightcurve lines
+  silently cut the last keyword value. 1023 covers the longest line vast.c
+  writes (aperture values, SE_FLAGS and FITS_KEYWORDS_IN_LC_LENGTH).
 - `report_transient.sh` reads the named token, accepts decimal values 0-255,
   and tests bit 4 for saturation. Notes are emitted AFTER the measurement
   table, on the same output line as `</table>`. Keep its cells and numeric
@@ -1250,3 +1255,59 @@ Update this file as you learn new things.
   exact HTML-table and line-spacing compatibility. It also checks that
   the no-FITS-keyword assertion permits `SE_FLAGS=N` but still rejects
   captured header keywords. All test data are temporary.
+- The sigma filter needs its own rows with scatter and an injected outlier:
+  without a SIGMA argument lib/new_lightcurve_sigma_filter prints its usage
+  and exits 0, and after aperture replacement every magnitude is identical
+  (sigma 0, so a real SIGMA clips every point). A chained no-argument call
+  passed vacuously until 2026-10-21.
+
+## bash 3.2 lint: the named-FD rule matched parameter expansions (2026-10-21)
+- BASH4_NAMED_FD in lib/check_bash32_compatibility.sh matched any `{NAME}<`
+  or `{NAME}>`, so HTML built in bash (`"...${SE_FLAGS_NOTE}<br>"` in
+  util/transients/report_transient.sh) failed the bash32compatibility CI job
+  on c906334b and 7444f4b1 while the system test itself passed. The rule now
+  requires the brace to start a word (the prefix class of the other rules):
+  `exec {fd}>`, `cat {fd}<`, `{fd}>&-` and `;{fd}>` are still reported.
+- To run the lint locally, build bash 3.2.57 as described in the bash 3.2
+  section above; the build takes about a minute with gcc 11.
+
+## Astrometry regression cases need the in-house local UCAC5 copy (2026-10-21)
+- The CYG05Q1SETTLE, HER09Q1TANONLY and HER09Q1VALIDSIP floors (N_match >= 4000,
+  n_q >= 800 per quadrant, 1.5 arcsec at fixed pixels) were set with
+  lib/catalogs/ucac5, which matches up to 5000 stars
+  (DEFAULT_UCAC5_LOCAL_QUERY_LIMIT). The remote UCAC5 servers return at most
+  1000 (MAX_STARS_IN_VIZQUERY). The block is skipped on GitHub Actions, so the
+  first remote-only host to run it (hawkeye: no local UCAC5, no solve-field)
+  failed both runnable cases on counts alone: Cyg-05 889-890 matches, n_q
+  190-272 and 1.56-2.85 arcsec at five corner pixels (centre and edges
+  0.05-0.65); Her-09 973 matches with sigma 0.39 arcsec.
+- test_vast.sh now reports each case as NOT_PERFORMED_<CASE>_no_local_ucac5
+  (exempt) when lib/catalogs/ucac5/z001 is missing. util/identify.sh in
+  identification mode (identify_transient.sh runs in the photographic plate
+  section) links lib/catalogs/ucac5 from the in-house paths (/home/kirx/UCAC5,
+  $HOME/UCAC5, ../UCAC5, ...), so on tau the link exists before this block.
+  lib/install_local_copy_of_UCAC5.sh downloads the 5.3 GB catalog.
+- Remote-only Her-09 side observation: the saved header measured median
+  2.6 / p95 5.9 arcsec (WCS_HEADER_DIAG) while the corrected positions gave
+  0.39 (WCS_QUALITY_DIAG). The refit (3.08 -> 0.55 arcsec on the raw header)
+  was rejected because its worst region (0.764) did not beat the corrected
+  baseline (0.633), so the header kept the remote solution's error. Tools
+  that use the header (xy2sky/sky2xy) see that error on remote-only hosts.
+
+## Full test_vast.sh run on hawkeye (2026-10-21, 7444f4b1)
+- hawkeye (RHEL 9.8, i7-12700, 15 GB; no solve-field, psfex, vartools,
+  astropy, skyfield, selenium, local UCAC5 or NMW calibration) ran the suite
+  from a fresh GitHub clone: 134 of 139 sections passed in 563 minutes.
+- Run it outside /tmp there: /tmp is on the 80 GB root disk, while the
+  14 GB of test data in /export/home/hawkeye/vast_test sit on XFS with
+  reflink, so `cp -a` makes an isolated copy in under a second. Unset
+  DISPLAY (the desktop is :0) and give the script stdin </dev/null (the
+  final report prompt reads a line).
+- Failures: Cyg-05/Her-09 (no local UCAC5, now skipped), the known GCVS
+  lookup, and two external problems that day: JPL Horizons refused
+  connections (the kirx.net proxy forwards to it, so the Solar System section
+  waited 88 minutes on timeouts and failed SOLAR_SYSTEM_INFO_Ganymede) and
+  https://www.kirx.net/~kirx/ answered 403 (AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING).
+- util/moons.sh exits 0 with empty output when Horizons is unreachable, so the
+  moons.txt format loop of the Solar System section passes vacuously; only
+  the MPCheck Ganymede lookup catches the outage.
