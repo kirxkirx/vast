@@ -14913,6 +14913,19 @@ if [ -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_TYCHO2_V"
   fi
+  # The N.I.N.A. headers of the NMW-TexasTech images carry CENTALT, so the
+  # factory logs the altitude of both second-epoch images (28.2 and 28.4 deg
+  # here) for the Altitude column of the unmw summary page
+  grep -q 'Field altitude during imaging: 28.2 deg (FITS keyword CENTALT)  Aql-03-Q1b1x1_2026-07-06_22-05-11_20.00sec_-0.00C_LIGHTs_0018.fits' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_FIELD_ALTITUDE_IMAGE1"
+  fi
+  grep -q 'Field altitude during imaging: 28.4 deg (FITS keyword CENTALT)  Aql-03-Q1b1x1_2026-07-06_22-06-04_20.00sec_-0.00C_LIGHTs_0019.fits' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_FIELD_ALTITUDE_IMAGE2"
+  fi
   # Candidate count sanity (baseline 2026-07-07: 94 candidates, all identified;
   # the count varies with the success of the online Gaia/APASS exclusion queries)
   NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
@@ -16996,6 +17009,18 @@ $CAT_RESULT"
   if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002a"
+  fi
+  # The MaxIm DL headers of the ST-8300M images carry no altitude keyword: the
+  # factory must say so for both second-epoch images and must not invent a value
+  NUMBER_OF_NO_FIELD_ALTITUDE_NOTES=`grep -c 'No field altitude in the FITS header (no CENTALT or OBJCTALT keyword)' transient_report/index.html`
+  if [ "$NUMBER_OF_NO_FIELD_ALTITUDE_NOTES" -ne 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_NO_FIELD_ALTITUDE_NOTES_$NUMBER_OF_NO_FIELD_ALTITUDE_NOTES"
+  fi
+  grep -q 'Field altitude during imaging:' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_UNEXPECTED_FIELD_ALTITUDE"
   fi
   #grep -q "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460520.33991 28.07.2024 20:09:18' 1 transient_report/index.html
