@@ -665,7 +665,8 @@ function single_internet_connection_probe() {
  fi
 
  # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
- lib/choose_vizier_mirror.sh 2>&1
+ # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
+ VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1
  if [ $? -ne 0 ];then
   echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
   echo "ERROR in test_internet_connection(): cannot connect to VizieR"
@@ -1308,6 +1309,108 @@ if command -v python3 &>/dev/null && python3 -c "import yaml" &>/dev/null; then
 else
  echo "Skipping YAML syntax check (python3 or PyYAML not available)"
  echo "SKIPPED (python3 or PyYAML not available)" >> vast_test_report.txt
+fi
+
+##### Local star catalog test (synthetic catalogs) #####
+# lib/catalogs/local_star_catalog builds and searches the local catalog copies used by the
+# known-star check of transient candidates. This part needs no network and no real
+# catalog, so it runs everywhere, GitHub Actions included.
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Local star catalog test "
+echo -n "Local star catalog test: " >> vast_test_report.txt
+LOCALSTARCAT_TEST_OUTPUT=$(util/examples/test_local_star_catalog.sh 2>&1)
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $(echo "$LOCALSTARCAT_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')"
+ echo "$LOCALSTARCAT_TEST_OUTPUT"
+fi
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mLocal star catalog test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mLocal star catalog test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+
+##### Local Gaia DR2 copy test (real catalog, local machines only) #####
+# The local Gaia DR2 copy (lib/install_local_copy_of_GaiaDR2.sh, the 568 million stars
+# brighter than G = 19, 13 GB, streamed from 588 GB of ESA files) is far too big for
+# GitHub Actions and is never downloaded there.
+# On a machine that has it, check that it is complete and answers like the online
+# services for a few stars. Where it is missing, the informational code
+# GAIADR2LOCAL_NOT_INSTALLED is recorded (not counted as a failure).
+if [ "$GITHUB_ACTIONS" != "true" ];then
+ if [ ! -e lib/catalogs/gaia_dr2 ] && [ ! -L lib/catalogs/gaia_dr2 ];then
+  # find it the way util/transients/transient_factory_test31.sh does
+  for TEST_THIS_DIR in /data_ssd/GaiaDR2 /mnt/usb/GaiaDR2 /dataX/kirx/GaiaDR2 /data/kirx/GaiaDR2 /home/kirx/GaiaDR2 /home/apache/gaia_dr2 "$HOME"/GaiaDR2 "$HOME"/gaia_dr2 ../GaiaDR2 ../gaia_dr2 ;do
+   if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+    TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+    if [ -n "$TEST_THIS_DIR" ];then
+     ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr2
+    fi
+    break
+   fi
+  done
+ fi
+ if [ -s lib/catalogs/gaia_dr2/catalog_info.txt ];then
+  THIS_TEST_START_UNIXSEC=$(date +%s)
+  TEST_PASSED=1
+  echo "Local Gaia DR2 copy test "
+  echo -n "Local Gaia DR2 copy test: " >> vast_test_report.txt
+  GAIADR2LOCAL_RECORDS=$(grep '^records=' lib/catalogs/gaia_dr2/catalog_info.txt | cut -d= -f2)
+  # The default build keeps the 568135077 Gaia DR2 sources brighter than G = 19
+  # (built 2026-11-04); a copy built with another GAIA_DR2_LOCAL_COPY_MAX_GMAG has
+  # another count, so only check that it is not nearly empty then.
+  if grep -q '^description=.*G < 19.0,' lib/catalogs/gaia_dr2/catalog_info.txt ;then
+   if [ "$GAIADR2LOCAL_RECORDS" != "568135077" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_RECORDS_$GAIADR2LOCAL_RECORDS"
+   fi
+  elif ! echo "$GAIADR2LOCAL_RECORDS" | awk '{exit ($1 > 1.0e8) ? 0 : 1}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_RECORDS_$GAIADR2LOCAL_RECORDS"
+  fi
+  # Known stars, as the known-star check of report_transient.sh asks for them. The
+  # first two are the test stars of lib/choose_gaia_dr2_client.sh and
+  # lib/choose_vizier_mirror.sh. The expected values were checked against Gaia DR2 at
+  # the GAVO Data Center (gaia.dr2light) on 2026-11-04.
+  GAIADR2LOCAL_OUT=$(lib/catalogs/local_star_catalog search -cat=gaia_dr2:lib/catalogs/gaia_dr2 -c="06:13:37.32 +21:54:26.0" -c.rs=5 -out.max=3 -sort=Gmag "Gmag=0.0..14.0" | grep -E 'NOT_AVAILABLE|VARIABLE')
+  if ! echo "$GAIADR2LOCAL_OUT" | awk '$2 == "3376888109148417664" && $1 > 1.8 && $1 < 1.9 && $5 > 12.15 && $5 < 12.25 {ok=1} END {exit ok ? 0 : 1}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_STAR_GEM"
+  fi
+  GAIADR2LOCAL_OUT=$(lib/catalogs/local_star_catalog search -cat=gaia_dr2:lib/catalogs/gaia_dr2 -c="18:02:32.82 -29:50:13.9" -c.rs=34.5 -out.max=3 -sort=Gmag "Gmag=0.0..13.52" | grep -E 'NOT_AVAILABLE|VARIABLE')
+  if ! echo "$GAIADR2LOCAL_OUT" | awk '$2 == "4050254215686154112" && $5 > 12.25 && $5 < 12.35 {ok=1} END {exit ok ? 0 : 1}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_STAR_SGR"
+  fi
+  # near the north celestial pole
+  GAIADR2LOCAL_OUT=$(lib/catalogs/local_star_catalog search -cat=gaia_dr2:lib/catalogs/gaia_dr2 -c="12:00:00.00 +89:55:00.0" -c.rs=120 -out.max=3 -sort=Gmag "Gmag=0.0..15.0" | grep -E 'NOT_AVAILABLE|VARIABLE' | awk '{printf "%s ", $2}')
+  if [ "$GAIADR2LOCAL_OUT" != "1729381539653214720 " ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_POLE"
+  fi
+  # a cone across RA=0: the three brightest stars come from both sides, sorted by G
+  GAIADR2LOCAL_OUT=$(lib/catalogs/local_star_catalog search -cat=gaia_dr2:lib/catalogs/gaia_dr2 -c="0.0 +60.0" -c.rs=30 -out.max=3 -sort=Gmag "Gmag=0.0..17.0" | grep -E 'NOT_AVAILABLE|VARIABLE' | awk '{printf "%s ", $2}')
+  if [ "$GAIADR2LOCAL_OUT" != "1999526736241020288 423302600791039872 1999526736241020544 " ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_RA0"
+  fi
+  THIS_TEST_STOP_UNIXSEC=$(date +%s)
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mLocal Gaia DR2 copy test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mLocal Gaia DR2 copy test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  fi
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2LOCAL_NOT_INSTALLED"
+ fi
 fi
 
 ##### Country code detection test #####
@@ -36878,6 +36981,9 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
  # not a VaST code failure (the code stays in vast_test_report.txt)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"
+ # The local Gaia DR2 copy is optional (lib/install_local_copy_of_GaiaDR2.sh, 13 GB):
+ # on a machine without it the known-star check uses the online services
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2LOCAL_NOT_INSTALLED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"

@@ -119,13 +119,32 @@ export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 # on a crowded field. Measured on 600 production fields (2026-09-08..10): with
 # the old 40/100 limits three fields would stop updating their exclusion list,
 # eight would with doubled counts, three again with these values.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD=80
+# All three limits below may be exported (in unmw's local_config.sh, for example) to
+# override the defaults on a particular host.
+if [ -z "$MAX_NUMBER_OF_CANDIDATES_PER_FIELD" ];then
+ MAX_NUMBER_OF_CANDIDATES_PER_FIELD=80
+fi
 # Higher limit when most candidates are already identified (known variable stars etc.)
 # This allows fields with many known objects to still update the exclusion list.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=200
+# Raised from 200 to 400 in 2026-11. On the night of 2026-11-03 CDS VizieR was down
+# and the ESA Gaia archive failed intermittently, so the Gaia known-star check found
+# nothing in many runs, and crowded Milky Way fields reported up to 222 candidates,
+# almost all of them known variable stars (Vul-01 8 unidentified of 222, Cyg-08 5 of
+# 217). Those two fields failed this limit, so their exclusion lists were not updated
+# and the same stars would have come back every night of the outage. In the 338
+# NMW-TexasTech summary pages of 2025-12..2026-11 (58969 field reports) no other field
+# with at most 19 unidentified candidates had more than 200 candidates, while all 166
+# fields with more than 200 candidates and more unidentified ones still fail the lower
+# limit above.
+if [ -z "$MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN" ];then
+ MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=400
+fi
 # Number of unidentified candidates up to which the higher limit above applies.
-# Keep this in step with the same threshold in the unmw combine_reports.sh gate.
-MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT=19
+# Keep this in step with the same threshold in the unmw combine_reports.sh gate
+# (both scripts read the same variable name from the environment).
+if [ -z "$MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT" ];then
+ MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT=19
+fi
 
 # The high-priority fields: crowded Galactic Center region fields where a real
 # transient is most likely to hide among the many known variable stars.
@@ -2077,6 +2096,23 @@ fi
 if [ ! -d lib/catalogs/ucac5 ];then
  echo "WARNING: no local copy of UCAC5 was found (will be using a remote one)" | tee -a transient_factory_test31.txt
 fi
+# Check for a local copy of Gaia DR2 (built by lib/install_local_copy_of_GaiaDR2.sh) for
+# the known-star check of transient candidates in util/transients/report_transient.sh.
+# Unlike UCAC5 its absence is not worth a warning: the check then asks the ESA Gaia
+# archive and VizieR, as before.
+# The link target is made absolute: a relative one like ../GaiaDR2 would be read from
+# lib/catalogs/. Anything already at lib/catalogs/gaia_dr2 (even a broken link) is left alone.
+if [ ! -e lib/catalogs/gaia_dr2 ] && [ ! -L lib/catalogs/gaia_dr2 ];then
+ for TEST_THIS_DIR in /data_ssd/GaiaDR2 /mnt/usb/GaiaDR2 /dataX/kirx/GaiaDR2 /data/kirx/GaiaDR2 /home/kirx/GaiaDR2 /home/apache/gaia_dr2 "$HOME"/GaiaDR2 "$HOME"/gaia_dr2 ../GaiaDR2 ../gaia_dr2 ;do
+  if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ] && ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr2 ;then
+    echo "Linking the local copy of Gaia DR2 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   fi
+   break
+  fi
+ done
+fi
 #####################################################################################################
 # This script should take care of updating astorb.dat and other catalogs
 lib/update_offline_catalogs.sh all
@@ -2108,22 +2144,85 @@ fi
 
 # We need it for the new transients check in util/transients/report_transient.sh
 VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
+VIZIER_MIRROR_PROBE_EXIT_CODE=$?
 export VIZIER_SITE
 echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
-# Select the best Gaia DR2 client (VizieR or ESA TAP)
-# GAIA_DR2_CLIENT can be set externally to force a specific client: "vizquery", "esa_tap", or "auto"
+# lib/choose_vizier_mirror.sh exits with a non-zero code when no VizieR mirror answered
+# its test query (it then prints the main CDS site anyway). report_transient.sh then
+# does not wait for VizieR for every candidate.
+if [ "$VIZIER_MIRROR_PROBE_EXIT_CODE" -ne 0 ];then
+ VIZIER_UNREACHABLE="yes"
+else
+ VIZIER_UNREACHABLE="no"
+fi
+export VIZIER_UNREACHABLE
+# Select the source for the known-star (Gaia DR2) check of the candidates. GAIA_DR2_CLIENT
+# can be set externally to force one: "local" (the local Gaia DR2 copy), "tycho2_ucac5"
+# (EXPERIMENTAL: the local Tycho-2 and UCAC5 copies), "esa_tap", "vizquery", "none" (no
+# known-star check), or "auto" (the default: the local Gaia DR2 copy if there is one,
+# otherwise the online service that answers lib/choose_gaia_dr2_client.sh first).
+LOCAL_GAIA_DR2_COPY_IS_USABLE="no"
+if [ -x lib/catalogs/local_star_catalog ] && [ -s lib/catalogs/gaia_dr2/catalog_info.txt ];then
+ LOCAL_GAIA_DR2_COPY_IS_USABLE="yes"
+fi
+if [ "$GAIA_DR2_CLIENT" = "local" ] && [ "$LOCAL_GAIA_DR2_COPY_IS_USABLE" != "yes" ];then
+ echo "The local Gaia DR2 copy lib/catalogs/gaia_dr2 is not usable - choosing an online Gaia client instead" | tee -a transient_factory_test31.txt
+ GAIA_DR2_CLIENT="auto"
+fi
+if [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ];then
+ # The Tycho-2 zones are built from the local Tycho-2 copy in a few seconds. Runs that
+ # share lib/catalogs (unmw's working copies) may do this at the same time: each stages
+ # in its own directory, and every zone file is replaced atomically.
+ if [ -x lib/catalogs/local_star_catalog ] && [ ! -s lib/catalogs/tycho2_zones/catalog_info.txt ] && [ -s lib/catalogs/tycho2/tyc2.dat.00 ];then
+  echo "Building lib/catalogs/tycho2_zones from the local Tycho-2 copy" | tee -a transient_factory_test31.txt
+  # The messages go to their own log: a failed build only means this optional client is
+  # not available, and an ERROR line in transient_factory_test31.txt would fail the field
+  if lib/catalogs/local_star_catalog tycho2-extract "lib/catalogs/tycho2_zones/.staging.$$" tycho2 lib/catalogs/tycho2/tyc2.dat.* >> local_star_catalog_build.log 2>&1 ;then
+   lib/catalogs/local_star_catalog finalize "lib/catalogs/tycho2_zones/.staging.$$" lib/catalogs/tycho2_zones tycho2 "Tycho-2 main catalog, positions at epoch 2016.0, V from BT and VT" >> local_star_catalog_build.log 2>&1
+  fi
+  rm -rf "lib/catalogs/tycho2_zones/.staging.$$"
+ fi
+ if [ ! -s lib/catalogs/tycho2_zones/catalog_info.txt ] || [ ! -s lib/catalogs/ucac5/z001 ];then
+  echo "The local Tycho-2 and UCAC5 copies are not both usable - choosing a Gaia client instead" | tee -a transient_factory_test31.txt
+  GAIA_DR2_CLIENT="auto"
+ fi
+fi
 if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
- if [ -x lib/choose_gaia_dr2_client.sh ];then
+ if [ "$LOCAL_GAIA_DR2_COPY_IS_USABLE" = "yes" ];then
+  GAIA_DR2_CLIENT="local"
+ elif [ -x lib/choose_gaia_dr2_client.sh ];then
   GAIA_DR2_CLIENT=$(lib/choose_gaia_dr2_client.sh "$VIZIER_SITE")
  else
   GAIA_DR2_CLIENT="vizquery"
  fi
 fi
 export GAIA_DR2_CLIENT
-if [ "$GAIA_DR2_CLIENT" = "esa_tap" ]; then
- echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/gaia_dr2_cone_search.sh -> ESA Gaia Archive TAP service)" | tee -a transient_factory_test31.txt
+case "$GAIA_DR2_CLIENT" in
+ local)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/catalogs/local_star_catalog -> local copy: $(grep '^description=' lib/catalogs/gaia_dr2/catalog_info.txt | cut -d= -f2-))" ;;
+ tycho2_ucac5)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (EXPERIMENTAL: lib/catalogs/local_star_catalog -> local Tycho-2 and UCAC5 copies)" ;;
+ esa_tap)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/gaia_dr2_cone_search.sh -> ESA Gaia Archive TAP service, then VizieR)" ;;
+ none)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (no known-star check of the candidates)" ;;
+ *)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/vizquery -> VizieR $VIZIER_SITE, then the ESA Gaia Archive TAP service)" ;;
+esac | tee -a transient_factory_test31.txt
+if [ "$APASS_KNOWN_STAR_CHECK" = "yes" ];then
+ echo "The APASS known-star check of the candidates is enabled with APASS_KNOWN_STAR_CHECK=yes (it needs CDS VizieR)" | tee -a transient_factory_test31.txt
 else
- echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/vizquery -> VizieR $VIZIER_SITE)" | tee -a transient_factory_test31.txt
+ echo "The APASS known-star check of the candidates is disabled (see the note in util/transients/report_transient.sh)" | tee -a transient_factory_test31.txt
+fi
+# Per .claude/notes.md a host-environment problem is a WARNING, never an ERROR (an ERROR
+# fails the field in unmw), and it is printed once, here, not repeated at the end of
+# the report, where it would hide the field-specific warnings on the unmw summary page.
+if [ "$VIZIER_UNREACHABLE" = "yes" ];then
+ if [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ];then
+  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+ else
+  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the known-star check relies on the ESA Gaia archive alone and the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+ fi
 fi
 ###
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)

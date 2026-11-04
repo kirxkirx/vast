@@ -82,10 +82,18 @@ function clean_tmp_files {
 }
 
 
-######### function to query Gaia DR2 using either VizieR or ESA TAP #########
-# Uses GAIA_DR2_CLIENT environment variable to select the client
-# Arguments are passed through to the selected client in vizquery-compatible format
-# Output format is the same for both clients
+######### function to query Gaia DR2 (or a local catalog standing in for it) #########
+# Uses the GAIA_DR2_CLIENT environment variable to select the source of the answer:
+#  local         the local Gaia DR2 copy lib/catalogs/gaia_dr2 (lib/install_local_copy_of_GaiaDR2.sh),
+#                the same release the online services are asked for
+#  tycho2_ucac5  EXPERIMENTAL: the local Tycho-2 (lib/catalogs/tycho2_zones, built from
+#                lib/catalogs/tycho2) and UCAC5 (lib/catalogs/ucac5) copies together
+#  esa_tap       the ESA Gaia archive, then VizieR
+#  vizquery      VizieR, then the ESA Gaia archive
+# A local catalog that cannot be read falls back to the online services. VizieR is not
+# asked when the factory found it unreachable (VIZIER_UNREACHABLE=yes).
+# Arguments are passed through to the selected client in vizquery-compatible format.
+# Output format is the same for all clients.
 function query_gaia_dr2 {
  local coords="$1"
  local search_radius_arcsec="$2"
@@ -93,17 +101,40 @@ function query_gaia_dr2 {
  local mag_faint="$4"
  local sort_band="$5"
  local max_results="$6"
+ local VIZIER_REPLY
 
  # Default to vizquery if GAIA_DR2_CLIENT is not set
  if [ -z "$GAIA_DR2_CLIENT" ]; then
   GAIA_DR2_CLIENT="vizquery"
  fi
 
- if [ "$GAIA_DR2_CLIENT" = "esa_tap" ] && [ -x lib/gaia_dr2_cone_search.sh ]; then
-  # Use ESA TAP endpoint. When ESA does not reply with a query result the client prints
-  # nothing on stdout and exits with a non-zero code: ask VizieR instead, otherwise the
-  # known-star check below would silently treat every candidate as "no Gaia star here".
-  if lib/gaia_dr2_cone_search.sh \
+ if [ "$GAIA_DR2_CLIENT" = "local" ] && [ -x lib/catalogs/local_star_catalog ]; then
+  if lib/catalogs/local_star_catalog search -cat=gaia_dr2:lib/catalogs/gaia_dr2 \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out.max="$max_results" \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" 2>/dev/null ;then
+   return 0
+  fi
+ fi
+ if [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] && [ -x lib/catalogs/local_star_catalog ]; then
+  if lib/catalogs/local_star_catalog search -cat=tycho2:lib/catalogs/tycho2_zones -cat=ucac5:lib/catalogs/ucac5 \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out.max="$max_results" \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" 2>/dev/null ;then
+   return 0
+  fi
+ fi
+
+ # Ask ESA first when it was chosen, when VizieR is known to be unreachable, and when a
+ # local catalog failed. When ESA does not reply with a query result the client prints
+ # nothing on stdout and exits with a non-zero code: ask VizieR instead, otherwise the
+ # known-star check below would silently treat every candidate as "no Gaia star here".
+ if [ "$GAIA_DR2_CLIENT" != "vizquery" ] || [ "$VIZIER_UNREACHABLE" = "yes" ]; then
+  if [ -x lib/gaia_dr2_cone_search.sh ] && lib/gaia_dr2_cone_search.sh \
    -c="$coords" \
    -c.rs="$search_radius_arcsec" \
    -out.max="$max_results" \
@@ -113,22 +144,40 @@ function query_gaia_dr2 {
    return 0
   fi
  fi
- # Use VizieR (default, and the fallback when the ESA TAP query failed)
- if [ -z "$VIZIER_SITE" ]; then
-  return 1
+ # VizieR
+ if [ -n "$VIZIER_SITE" ] && [ "$VIZIER_UNREACHABLE" != "yes" ]; then
+  VIZIER_REPLY=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
+   -site="$VIZIER_SITE" \
+   -mime=text \
+   -source=I/345/gaia2 \
+   -out.max="$max_results" \
+   -out.add=_r \
+   -out.form=mini \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null)
+  # A reply with the #END# marker is a complete answer, also when it lists no star
+  if echo "$VIZIER_REPLY" | grep -q '#END#' ;then
+   echo "$VIZIER_REPLY"
+   return 0
+  fi
  fi
- $TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
-  -site="$VIZIER_SITE" \
-  -mime=text \
-  -source=I/345/gaia2 \
-  -out.max="$max_results" \
-  -out.add=_r \
-  -out.form=mini \
-  -sort="$sort_band" \
-  "$sort_band=$mag_bright..$mag_faint" \
-  -c="$coords" \
-  -c.rs="$search_radius_arcsec" \
-  -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null
+ # VizieR gave no complete reply: when GAIA_DR2_CLIENT=vizquery was chosen at the start of
+ # the run, ESA has not been asked yet. (Until 2026-11 the check relied on VizieR alone
+ # whenever the per-run probe picked it, and found no star at all while CDS was down.)
+ if [ "$GAIA_DR2_CLIENT" = "vizquery" ] && [ "$VIZIER_UNREACHABLE" != "yes" ] && [ -x lib/gaia_dr2_cone_search.sh ]; then
+  lib/gaia_dr2_cone_search.sh \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out.max="$max_results" \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" \
+   -timeout=30 2>/dev/null
+  return $?
+ fi
+ return 1
 }
 
 
@@ -850,8 +899,9 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  fi
  # -------- End forced-photometry-on-reference-images filter --------
  ############
- # do this only if $VIZIER_SITE is set or GAIA_DR2_CLIENT is set to esa_tap
- if [ -n "$VIZIER_SITE" ] || [ "$GAIA_DR2_CLIENT" = "esa_tap" ];then
+ # Known-star check: do this unless it was switched off with GAIA_DR2_CLIENT=none, and only
+ # if some source of the answer is configured: VIZIER_SITE, ESA, or a local catalog
+ if [ "$GAIA_DR2_CLIENT" != "none" ] && { [ -n "$VIZIER_SITE" ] || [ "$GAIA_DR2_CLIENT" = "esa_tap" ] || [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ]; };then
   # if this is a new source
   NUBER_OF_LIGHTCURVE_POINTS=$(wc -l < "$LIGHTCURVEFILE")
   # Assume that two-reference-images detections are good match, check only new sources and one-reference-images detections to speed things up
@@ -904,28 +954,41 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     fi # if Gaia DR2 match found (single star or blend)
    fi # non-empty $GAIADR2_OUTPUT
    #
-   # The trouble is... Gaia catalog is missing many obvious bright stars
-   # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
-   # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
-   #NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | wc -l)
-   NETWORK_TIMING_START=$(date +%s)
-   NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | awk '{if (NF >= 2 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($2) > 0 && ($2 + 0) == $2 && $2 >= 0 && $2 < 360) print}' | wc -l | awk '{print $1}')
-   NETWORK_TIMING_END=$(date +%s)
-   if [ -n "$NETWORK_TIMING_LOG" ]; then
-    echo "APASS_QUERY $LIGHTCURVEFILE $((NETWORK_TIMING_END - NETWORK_TIMING_START))s" >> "$NETWORK_TIMING_LOG"
-   fi
-   # Ensure NUMBER_OF_NONEMPTY_LINES is a valid integer, default to 0 if not
-   # Note: BSD wc (macOS) pads output with leading spaces, so we use awk above to strip them
-   if ! [[ "$NUMBER_OF_NONEMPTY_LINES" =~ ^[0-9]+$ ]]; then
-    NUMBER_OF_NONEMPTY_LINES=0
-   fi
-   if [ "$NUMBER_OF_NONEMPTY_LINES" -gt 0 ];then
-    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
-    #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
-    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt__"$LIGHTCURVEFILE"
-    clean_tmp_files
-    exit 1
-   fi # if APASS match found  
+   # NOTE: the APASS known-star check below is disabled by default since 2026-11-04.
+   # It caught bright stars missing from Gaia DR2 with a per-candidate VizieR query of
+   # APASS (II/336), but APASS is available only from CDS VizieR - there is no local
+   # copy and no other server - and CDS stopped answering in 2026-10/11, so the check
+   # cost two failed 25 s queries per candidate and found nothing. Stars brighter than
+   # V = 9.1, where Gaia DR2 is least complete, are excluded earlier by the BSC and
+   # Tycho-2 exclusion lists. To use the check again once CDS VizieR answers, export
+   # APASS_KNOWN_STAR_CHECK=yes before running util/transients/transient_factory_test31.sh
+   # (in unmw's local_config.sh, for example). It is skipped anyway when the factory
+   # found VizieR unreachable. Without it, util/transients/make_report_in_HTML.sh finds
+   # exclusion_list_apass.txt empty.
+   if [ "$APASS_KNOWN_STAR_CHECK" = "yes" ] && [ -n "$VIZIER_SITE" ] && [ "$VIZIER_UNREACHABLE" != "yes" ];then
+    # The trouble is... Gaia catalog is missing many obvious bright stars
+    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
+    # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
+    #NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | wc -l)
+    NETWORK_TIMING_START=$(date +%s)
+    NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | awk '{if (NF >= 2 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($2) > 0 && ($2 + 0) == $2 && $2 >= 0 && $2 < 360) print}' | wc -l | awk '{print $1}')
+    NETWORK_TIMING_END=$(date +%s)
+    if [ -n "$NETWORK_TIMING_LOG" ]; then
+     echo "APASS_QUERY $LIGHTCURVEFILE $((NETWORK_TIMING_END - NETWORK_TIMING_START))s" >> "$NETWORK_TIMING_LOG"
+    fi
+    # Ensure NUMBER_OF_NONEMPTY_LINES is a valid integer, default to 0 if not
+    # Note: BSD wc (macOS) pads output with leading spaces, so we use awk above to strip them
+    if ! [[ "$NUMBER_OF_NONEMPTY_LINES" =~ ^[0-9]+$ ]]; then
+     NUMBER_OF_NONEMPTY_LINES=0
+    fi
+    if [ "$NUMBER_OF_NONEMPTY_LINES" -gt 0 ];then
+     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
+     #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
+     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt__"$LIGHTCURVEFILE"
+     clean_tmp_files
+     exit 1
+    fi # if APASS match found  
+   fi # if APASS_KNOWN_STAR_CHECK=yes
   fi # if this is a new source
  fi # if $VIZIER_SITE is set
  ############

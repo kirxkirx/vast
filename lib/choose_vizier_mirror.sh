@@ -131,23 +131,65 @@ if [ -n "$1" ];then
 fi
 
 
+# Shared, short-lived record of the probe result. The transient search runs this script
+# once per field, the online identification once per candidate, and the plate solver
+# before each remote UCAC5 or APASS query; when the mirrors are down every probe costs
+# minutes (162 s on 2026-11-03). The record is kept next to the offline catalogs, which
+# all VaST working copies of an unmw installation share, so the runs on one machine
+# reuse a recent answer: a success for VIZIER_MIRROR_RECORD_OK_SEC (default 900 s), a
+# failure only for VIZIER_MIRROR_RECORD_FAIL_SEC (default 300 s), so that a recovered
+# service is noticed within minutes. VIZIER_MIRROR_RECORD=no skips the record and probes
+# (the test suite's internet-connection check does that); the result is still recorded.
+VIZIER_MIRROR_RECORD_FILE="${VAST_PATH}lib/catalogs/.vizier_mirror_probe_${CATALOG_TO_TEST}"
+VIZIER_MIRROR_RECORD_OK_SEC="${VIZIER_MIRROR_RECORD_OK_SEC:-900}"
+VIZIER_MIRROR_RECORD_FAIL_SEC="${VIZIER_MIRROR_RECORD_FAIL_SEC:-300}"
+if [ "$VIZIER_MIRROR_RECORD" != "no" ] && [ -s "$VIZIER_MIRROR_RECORD_FILE" ];then
+ read -r RECORD_UNIXSEC RECORD_EXIT_CODE RECORD_MIRROR < "$VIZIER_MIRROR_RECORD_FILE"
+ if [[ "$RECORD_UNIXSEC" =~ ^[0-9]+$ ]] && [[ "$RECORD_EXIT_CODE" =~ ^[01]$ ]] && [ -n "$RECORD_MIRROR" ];then
+  RECORD_AGE_SEC=$(( $(date +%s) - RECORD_UNIXSEC ))
+  if [ "$RECORD_EXIT_CODE" -eq 0 ];then
+   RECORD_MAX_AGE_SEC="$VIZIER_MIRROR_RECORD_OK_SEC"
+  else
+   RECORD_MAX_AGE_SEC="$VIZIER_MIRROR_RECORD_FAIL_SEC"
+  fi
+  # a record from the future (clock change) is not trusted
+  if [ "$RECORD_AGE_SEC" -ge 0 ] && [ "$RECORD_AGE_SEC" -lt "$RECORD_MAX_AGE_SEC" ] 2>/dev/null ;then
+   echo "$RECORD_MIRROR"
+   exit "$RECORD_EXIT_CODE"
+  fi
+ fi
+fi
+
+# Write the record atomically; silently skip it where lib/catalogs is not writable
+remember_probe_result() {
+ local RECORD_TMP_FILE="${VIZIER_MIRROR_RECORD_FILE}.tmp$$"
+ if [ -d "${VAST_PATH}lib/catalogs" ] && [ -w "${VAST_PATH}lib/catalogs" ];then
+  if echo "$(date +%s) $1 $2" > "$RECORD_TMP_FILE" 2>/dev/null ;then
+   mv -f "$RECORD_TMP_FILE" "$VIZIER_MIRROR_RECORD_FILE" 2>/dev/null || rm -f "$RECORD_TMP_FILE"
+  fi
+ fi
+}
+
 # New code: choose VizieR mirror that serves Gaia DR2
 for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp ;do
  if [ "$CATALOG_TO_TEST" = "APASS" ];then
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep -q ' 15.0'
   if [ $? -eq 0 ];then
+   remember_probe_result 0 "$vizier_mirror"
    echo "$vizier_mirror"
    exit 0
   fi
  else
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep -q ' 4050254215686154112 '
   if [ $? -eq 0 ];then
+   remember_probe_result 0 "$vizier_mirror"
    echo "$vizier_mirror"
    exit 0
   fi
  fi # catalog
 done
 # If no mirror passed the catalog-specific test, fall back to the primary mirror
+remember_probe_result 1 "vizier.cds.unistra.fr"
 echo "vizier.cds.unistra.fr"
 exit 1
 

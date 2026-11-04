@@ -1311,3 +1311,74 @@ Update this file as you learn new things.
 - util/moons.sh exits 0 with empty output when Horizons is unreachable, so the
   moons.txt format loop of the Solar System section passes vacuously; only
   the MPCheck Ganymede lookup catches the outage.
+
+## Known-star check without CDS: local Gaia DR2 copy, VizieR probe record, APASS off (2026-11-04)
+- From 2026-11-03 CDS (VizieR, SIMBAD, cdsarc) dropped connections. The china-vo and
+  nao VizieR mirrors serve only small catalogs (china-vo answered a crowded bulge cone
+  with an empty Gaia DR3 table), the CfA mirror is HTTPS-only and returns empty tables
+  for I/345/gaia2, and the ESA Gaia archive answered intermittently.
+- Why the known-star check (query_gaia_dr2 in util/transients/report_transient.sh) found
+  nothing: lib/choose_gaia_dr2_client.sh picks the client once per run and returns
+  vizquery when both 15 s probes fail, and there was no VizieR-to-ESA fallback. Runs of
+  2026-11-02/03 used vizquery in about half the fields; crowded fields filled with known
+  variables and failed the candidate limit (Vul-01 8 unidentified of 222, Cyg-08 5 of 217).
+  ESA and VizieR now fall back to each other, and VizieR is not asked when the factory's
+  mirror probe failed (VIZIER_UNREACHABLE=yes, one WARNING line per run).
+- lib/choose_vizier_mirror.sh spent 162 s per run when no mirror answered. The result is
+  now shared through lib/catalogs/.vizier_mirror_probe_<CATALOG> for 900 s (success) or
+  300 s (failure); VIZIER_MIRROR_RECORD=no bypasses it (test_vast.sh's internet gate).
+- util/solve_plate_with_UCAC5 no longer asks VizieR for UCAC5 when lib/catalogs/ucac5
+  exists or one of our UCAC5 servers answered ("Not querying VizieR for UCAC5: ...").
+- Local catalogs: lib/catalogs/local_star_catalog (src/catalogs/local_star_catalog.c)
+  writes 900 Dec zones of 24-byte records with a 0.1 deg RA index and prints the vizquery
+  text format, so report_transient.sh parses its answer unchanged. GAIA_DR2_CLIENT=auto
+  picks it when lib/catalogs/gaia_dr2/catalog_info.txt exists; the factory links
+  /data_ssd/GaiaDR2 and similar directories (the list next to the UCAC5 one).
+- The local copy must be Gaia DR2, the release the online check and the test expectations
+  use. A DR3 copy, tried first, failed five test_vast.sh checks: the Miras V2407 Sgr,
+  V1858 Sgr, V6463 Sgr, WZ Aur and AT Cyg have DR3 mean G 0.03-0.46 mag brighter than
+  DR2 and fell under the MAG_MEAN+0.98 faint limit (V2407 Sgr: DR2 13.38, DR3 13.24, limit
+  13.29). This is a selection effect: the tests hold the Miras that DR2 lets through.
+- lib/install_local_copy_of_GaiaDR2.sh: 61234 files, 588 GB, from
+  https://cdn.gea.esac.esa.int/Gaia/gdr2/gaia_source/csv with checksums in MD5SUM.txt (the
+  DR3 list is _MD5SUM.txt). The CDN directory pages are JavaScript; list the files with the
+  S3 XML at https://gaia.eu-1.cdn77-storage.com/?prefix=Gaia/gdr2/gaia_source/csv/&delimiter=/
+  (1000 keys per page, NextMarker). DR2 CSV has no quotes and empty fields for nulls; DR3
+  quotes strings and writes null. G < 19: 568135077 stars, 13 GB, built in
+  2 h 8 min on tau with 12 parallel downloads. It refuses to run on GitHub Actions;
+  the test_vast.sh section "Local Gaia DR2 copy test" runs only elsewhere and records the
+  exempt code GAIADR2LOCAL_NOT_INSTALLED when there is no copy.
+- For all 747 candidates of the baseline system-test reports, the local copy and GAVO's
+  online Gaia DR2 returned the same stars (same source_id, G within 1 mmag); a DR3 copy
+  changed the reject/keep decision for 45 of them. A search takes about 1 ms.
+- Cross-checks while CDS and ESA are down: GAVO TAP (https://dc.zah.uni-heidelberg.de/tap,
+  table gaia.dr2light) answers DR2 cone searches in seconds. ARI
+  (https://gaia.ari.uni-heidelberg.de/tap, gaiadr2.gaia_source) answers source_id lookups
+  but took more than 30 s for every cone search, so it is no fallback for the check.
+- System test (2026-11-04, CDS down): 26 NMW sections of test_vast.sh plus the Gem-03
+  standalone test, run with GAIA_DR2_CLIENT forced. Candidates in total: no check 747,
+  local Gaia DR2 501, Tycho-2 + UCAC5 682, local Gaia DR3 480. With the DR2 copy every
+  section passed except Nova Sgr 2021 N1 and three that failed in all variants (the two
+  TICA TESS sections, whose APASS_I calibration needs CDS, and the selenium check of
+  Nova Vul 2024 ST). Nova Sgr 2021 N1 requires at least 6 candidates (a 2021 value; its
+  dataset is not downloaded by default) and got 5 both with the local copy and with the
+  ESA archive: the same four catalogued stars are rejected, so the bound is stale.
+- Tycho-2 + UCAC5 (GAIA_DR2_CLIENT=tycho2_ucac5, experimental) against DR2: it lost 15
+  known variables (14 Miras, 1 SR; AT Cyg fails the Cyg5 test) and kept 190 known
+  variables that DR2 rejects (Sgr-04 218 candidates instead of 132, Gem-03 standalone
+  19, over its limit of 17). No variant lost a nova, dwarf nova, planet, comet or
+  asteroid. UCAC5 (Gaia DR1 stars matched to UCAC4) lacks many bright red variables:
+  the G = 10.2 Mira at 17:43:02 -13:23:16 is in neither copy.
+- "The object was found in astcheck" is not an asteroid identification:
+  util/transients/MPCheck_v2.sh searches 600 arcsec. The "lost asteroids" of a first
+  comparison were Miras with an asteroid 8-10 arcmin away.
+- The APASS check is off unless APASS_KNOWN_STAR_CHECK=yes (and VizieR answers): APASS
+  exists only at CDS VizieR. Stars brighter than V = 9.1 are excluded earlier by the BSC
+  and Tycho-2 lists.
+- Candidate limits: factory 80, or 400 (was 200) when at most 19 are unidentified, all
+  three overridable from the environment; unmw combine_reports.sh 400. Deploy both: the
+  factory's own "too many candidates" ERROR line marks a field red whatever unmw accepts.
+- An optional build step in the factory must log to its own file
+  (local_star_catalog_build.log): an ERROR line in transient_factory_test31.txt fails the
+  field. The first tycho2_zones build failed because the parent of its staging
+  directory did not exist; make_dir now creates parents like mkdir -p.
