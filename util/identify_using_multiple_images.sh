@@ -26,7 +26,7 @@ LIGHTCURVEFILE=$1
 
 rm -f coordinates.tmp
 N=0
-while read JD MAG MERR X Y APP FITSFILE ;do
+while read -r JD MAG MERR X Y APP FITSFILE REST ;do
  util/wcs_image_calibration.sh $FITSFILE $FOV
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".wcscat

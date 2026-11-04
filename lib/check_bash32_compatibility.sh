@@ -299,7 +299,8 @@ FNR == 1 {
   report("BASH4_READ_OPTION", "bash 3.2 has no -N and -i options for read")
  if (line ~ /(^|[;&|({`[:space:]])read[[:space:]]+([^&;|]*[[:space:]])?-[A-Za-z]*t[[:space:]]*[0-9]*\.[0-9]/)
   report("BASH4_READ_OPTION", "bash 3.2 read -t accepts only a whole number of seconds")
- if (line ~ /\{[A-Za-z_][A-Za-z_0-9]*\}[<>]/)
+ # {VAR}> must start a word: "${VAR}<br>" is a parameter expansion followed by text
+ if (line ~ /(^|[;&|({`[:space:]])\{[A-Za-z_][A-Za-z_0-9]*\}[<>]/)
   report("BASH4_NAMED_FD", "the named file descriptor redirection ({VAR} followed by > or <) is not in bash 3.2")
  if (line ~ /shopt[[:space:]]+(-[A-Za-z]+[[:space:]]+)*(autocd|checkjobs|compat32|compat4[0-4]|compat5[0-9]|complete_fullquote|direxpand|dirspell|globasciiranges|globskipdots|globstar|inherit_errexit|lastpipe|localvar_inherit|localvar_unset|assoc_expand_once|array_expand_once|noexpand_translation|patsub_replacement|progcomp_alias|varredir_close)([^A-Za-z0-9_]|$)/)
   report("BASH4_SHOPT", "this shopt option is not in bash 3.2")

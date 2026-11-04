@@ -52,6 +52,7 @@ int main( int argc, char **argv ) {
  FILE *outlightcurvefile;
  double jd, mag, merr, x, y, app;
  char string[FILENAME_LENGTH];
+ char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
  double *jd_a;
  double *mag_a;
@@ -165,7 +166,7 @@ int main( int argc, char **argv ) {
     // Initialize to make GCC static analyzer happy
     jd= mag= merr= x= y= app= 0.0;
 
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
      if ( jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
      for ( image_counter= 0; image_counter < image_Number; image_counter++ ) {
@@ -237,7 +238,7 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
      exit( EXIT_FAILURE );
     }
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
      if ( jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
 
@@ -247,7 +248,7 @@ int main( int argc, char **argv ) {
        for ( i= 0; i < NUMBER1[image_counter]; i++ ) {
         if ( star_num == star[image_counter][i].n ) {
          if ( star[image_counter][i].vast_flag == 0 ) {
-          write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, NULL );
+          write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string );
          }
          // else{
          //  fprintf(stderr,"Rejecting an outlier!\n");
@@ -337,7 +338,7 @@ int main( int argc, char **argv ) {
      // The while cycle is needed to handle the situation that the first lines are comments
      jd= 0.0;
 
-     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
       if ( jd == 0.0 )
        continue; // if this line could not be parsed, try the next one
       is_this_image_good= 1;
@@ -349,7 +350,7 @@ int main( int argc, char **argv ) {
       }
       if ( is_this_image_good == 1 ) {
        // fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
-       write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, NULL );
+       write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string );
       }
      }
      fclose( outlightcurvefile );

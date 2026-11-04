@@ -58,6 +58,7 @@ int main( int argc, char **argv ) {
  FILE *outlightcurvefile;
  double jd, mag, merr, x, y, app;
  char string[FILENAME_LENGTH];
+ char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
  char lightcurve_tmp_filename[FILENAME_LENGTH];
 
@@ -166,12 +167,12 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Can't open file %s (lightcurve_tmp_filename) for writing\n", lightcurve_tmp_filename );
    return 1;
   }
-  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )
     continue; // if this line could not be parsed, try the next one
    for ( i= 0; i < N; i++ ) {
     if ( jd == selected_jd[i] ) {
-     write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, NULL );
+     write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string );
      break;
     }
    } // for(i=0;i<N;i++){
