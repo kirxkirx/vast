@@ -20571,11 +20571,20 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."
+  # The 'grep -B10000' below keeps only the part of the report above the end-of-report
+  # marker <H2>Processing complete!</H2> - the candidates table. The rejected candidates
+  # listed after the marker must not count. The pattern accepts both the current spelling
+  # and the old 'Processig complete!' (still written by transient_factory_test30.sh and
+  # NMW_transient_detection_test.sh, and by older versions of transient_factory_test31.sh).
+  # The '!' is required: without it the pattern would also match the "until the
+  # 'Processing complete' message appears" note at the top of the report.
+  # (Until 2026-11 these checks grepped only for 'Processig complete', which the
+  # current transient_factory_test31.sh no longer writes, so they could never fail.)
+  grep -E -B10000 'Process(ing|ig) complete!' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110a"
-   GREP_RESULT=`grep -B10000 'Processig complete' transient_report/index.html | grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."`
+   GREP_RESULT=`grep -E -B10000 'Process(ing|ig) complete!' transient_report/index.html | grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."`
    GREP_RESULT2=`cat ../exclusion_list.txt`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN0110a ######
@@ -20590,7 +20599,7 @@ $GREP_RESULT2"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314"
   fi
   # The line may appear in the logs as rejected candidate due to exclusion list, so we check lines before the log starts
-  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.."
+  grep -E -B10000 'Process(ing|ig) complete!' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314a"
@@ -20601,7 +20610,7 @@ $GREP_RESULT2"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.."
+  grep -E -B10000 'Process(ing|ig) complete!' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414a"
@@ -20612,7 +20621,7 @@ $GREP_RESULT2"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep -q -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:"
+  grep -E -B10000 'Process(ing|ig) complete!' transient_report/index.html | grep -q -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514a"

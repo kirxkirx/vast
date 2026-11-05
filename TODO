@@ -1,4 +1,18 @@
-----
+
+Make sure artificial star test is robust against multiple SExtractor passes.
+
+DONE 2026-11-04: NMW/unmw - where grep -B100000 'Processig complete' is used??
+ Only in the Sgr9 crash test of util/examples/test_vast.sh (5 checks that excluded variables
+ do not appear above the end-of-report marker). Since transient_factory_test31.sh writes the
+ corrected 'Processing complete!' these checks could never fail; they now accept both spellings.
+ unmw (combine_reports.sh, autoprocess.sh, nmw_monitoring_lib.py) already uses 'Processing complete!'.
+ Still writing the old 'Processig complete!': transient_factory_test30.sh, NMW_transient_detection_test.sh.
+
+Art star these - exactly how the stars are matched?
+
+Make sure fastplot reuses wcs_fd_ images when available.
+
+---
 
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.

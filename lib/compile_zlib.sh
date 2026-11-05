@@ -62,12 +62,15 @@ if [ -d $ZLIB_SOURCE ];then
  CC=$C_COMPILER ./configure --static --prefix="$TARGET_DIR"
  if [ $? -ne 0 ];then
   echo "WARNING: zlib configure failed, will rely on system zlib"
+  # restore the tracked Makefile and zconf.h in case configure got far enough to change them
+  make distclean 2>/dev/null || true
   cd $VAST_DIR || exit 1
  else
   # Try to compile
   make -j9
   if [ $? -ne 0 ];then
    echo "WARNING: zlib compilation failed, will rely on system zlib"
+   make distclean 2>/dev/null || true
    cd $VAST_DIR || exit 1
   else
    # Check if static library was created
@@ -82,8 +85,10 @@ if [ -d $ZLIB_SOURCE ];then
    else
     echo "WARNING: libz.a was not created"
    fi
-   # Clean up build files but keep the source
-   make clean 2>/dev/null || true
+   # Clean up the build files. 'make distclean', not 'make clean': only distclean
+   # restores the Makefile and zconf.h that ./configure rewrote, so the tracked
+   # files in src/zlib-*/ are left unmodified (libz.a has already been copied to lib/).
+   make distclean 2>/dev/null || true
    cd $VAST_DIR || exit 1
   fi
  fi
