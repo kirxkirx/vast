@@ -1427,6 +1427,31 @@ Update this file as you learn new things.
   8 arcmin away were classed as asteroids. Use the astcheck distance when analysing
   candidates.
 
+## Report marker spelling, zlib build leftovers, test data on GitHub (2026-11-04)
+
+- The end-of-report marker of transient_report/index.html is `<H2>Processing complete!</H2>`
+  (transient_factory_test31.sh; unmw's combine_reports.sh, autoprocess.sh and
+  nmw_monitoring_lib.py rely on exactly this string). transient_factory_test30.sh and
+  NMW_transient_detection_test.sh, and old versions of test31, write `Processig complete!`.
+  The Sgr9 crash test in test_vast.sh grepped only for the misspelling, so after the typo
+  fix its 5 "excluded variable is not above the marker" checks could never fail. Match
+  the marker as `grep -E -B10000 'Process(ing|ig) complete!'`: the '!' is required, the
+  report also says "until the 'Processing complete' message appears" at the top and
+  "Processing completed" after the marker.
+- lib/compile_zlib.sh must finish with `make distclean`, not `make clean`: only distclean
+  restores the tracked src/zlib-*/Makefile placeholder and zconf.h that ./configure rewrites.
+  Otherwise every build leaves them modified in git status.
+- The test data files of http://tau.kirx.net/vast_test_data/ are mirrored as assets of the
+  GitHub pre-release test-data-v1 (asset name = path with '/' -> '__', other characters
+  outside A-Za-z0-9._+- -> '_'); download_test_data_file() tries GitHub first. A new file
+  in vast_test_data/ must also be uploaded there (gh release upload test-data-v1 ...).
+- The build-product part of .gitignore was generated from a fresh clone + `make`
+  (git ls-files --others); regenerate it the same way when programs are added.
+- Building bash 3.2 (app-shells/bash:3.2) with gcc 16 fails in builtins/mkbuiltins.c
+  (C23 treats `f()` as taking no arguments). CFLAGS alone does not reach mkbuiltins (it is
+  compiled with CFLAGS_FOR_BUILD); CC="gcc -std=gnu89 -fpermissive" via package.env was
+  suggested but not yet confirmed to work.
+
 ## VizieR probed only when needed, online name lookup skipped while VizieR is down, TTU FWHM limit (2026-11-05)
 - After the 2026-11-04 deploy about half of the runs still waited 96-162 s at the start for
   lib/choose_vizier_mirror.sh: all three mirrors fail (CDS: two 10 s connect timeouts; china-vo
