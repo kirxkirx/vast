@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '*'
+      # test-data-* tags hold the test_vast.sh data files as release assets, not VaST releases
+      - '!test-data-*'
   workflow_dispatch:
 
 jobs:
