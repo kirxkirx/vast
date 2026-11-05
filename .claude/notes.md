@@ -1339,6 +1339,9 @@ Update this file as you learn new things.
   V1858 Sgr, V6463 Sgr, WZ Aur and AT Cyg have DR3 mean G 0.03-0.46 mag brighter than
   DR2 and fell under the MAG_MEAN+0.98 faint limit (V2407 Sgr: DR2 13.38, DR3 13.24, limit
   13.29). This is a selection effect: the tests hold the Miras that DR2 lets through.
+  WZ Aur (DR3 G = 12.8304, limit 12.83) failed only because the copy rounds to 0.001 mag;
+  local_star_catalog now leaves out a star within 0.0005 mag of a limit. These are the
+  losses in the 28 sections run with the DR3 copy, not an exhaustive list.
 - lib/install_local_copy_of_GaiaDR2.sh: 61234 files, 588 GB, from
   https://cdn.gea.esac.esa.int/Gaia/gdr2/gaia_source/csv with checksums in MD5SUM.txt (the
   DR3 list is _MD5SUM.txt). The CDN directory pages are JavaScript; list the files with the
@@ -1382,3 +1385,44 @@ Update this file as you learn new things.
   (local_star_catalog_build.log): an ERROR line in transient_factory_test31.txt fails the
   field. The first tycho2_zones build failed because the parent of its staging
   directory did not exist; make_dir now creates parents like mkdir -p.
+
+## Known-star check follow-up: what Tycho-2 + UCAC5 lets through, UCAC5 links, test margins (2026-11-04)
+- The 190 candidates of the NMW test sections that the Tycho-2 + UCAC5 check keeps and
+  Gaia DR2 drops are 151 distinct stars (39 reported twice): 150 VSX variables, mostly
+  Miras and semiregulars, and one star not known to vary (STL Neptune field, measured at
+  its Gaia G; the reference frames were too shallow). Gaia flags 188 of the 190 entries
+  as variable (DR2 phot_variable_flag 122, DR3 184). Caveats from an independent check:
+  one identification is weak (an "SRS:" ASAS-SN star with no Gaia flag), and 21 stars,
+  mostly in Aql-03, brightened by more than their catalogued amplitude, possibly a
+  photometry effect for very red stars.
+- Why UCAC5 misses them: the Gaia stars behind 188 of the drops (152 distinct, G 8.2-14.3,
+  median 12.6, median G - RP 1.87) have no UCAC5 entry within 2 arcsec (checked also
+  with a separate numpy reader of the zone files), and 150 of the 152 are not in Gaia
+  DR1, from which UCAC5 is built (gaiadr2.dr1_neighbourhood at the ARI Gaia TAP, cone
+  searches agree). Within 60 arcsec of them, UCAC5 has 5 of the 21 other Gaia DR2 stars
+  of similar G with G - RP > 1.3, and 162 of the 174 bluer ones. Tycho-2 does not reach
+  such red stars in V.
+- False candidates (not known to vary, no Gaia variability flag) are what matter: in the
+  same sections Gaia DR2 drops 12 of them and Tycho-2 + UCAC5 drops 11.
+- util/transients/search_for_transients_single_field.sh skips the known-star check by
+  unsetting VIZIER_SITE; the factory always sets it. So the gate in report_transient.sh
+  stays "VIZIER_SITE set, or GAIA_DR2_CLIENT=esa_tap" (and not none). Widening it to the
+  local clients made "Saturn/Iapetus test" (single-field) lose QY Sgr, V1234 Sgr and an
+  ASAS-SN variable when GAIA_DR2_CLIENT=local was exported.
+- The UCAC5 search lists of the factory and util/identify.sh contain ../UCAC5; it was
+  linked as is, and a relative link target is read from lib/catalogs/, so that link was
+  broken. Link targets are absolute now. A link pointing exactly at ../UCAC5 or ../ucac5
+  is replaced in one step with ln -s -n -f: removing it first let parallel runs on a
+  shared lib/catalogs briefly find no link and print a false "no local copy of UCAC5"
+  WARNING in a race test. Other broken links are kept (an unmounted disk).
+- Nova Sgr 2021 N1 now requires at least 5 candidates (the 2021 bound was 6): the Gaia
+  DR2 check drops the Miras V0358 Sgr, V2087 Sgr, V2048 Sgr and one of the two SV Sct
+  detections, online (ESA) and from the local copy alike.
+- Some Mira checks pass the Gaia DR2 check by a few hundredths of a magnitude: WZ Aur by
+  0.03 (Aur-02; with DR3 it would be 0.0004), AT Cyg by 0.05 on one of its two
+  detections (Cyg5). A small photometry change can fail them; the comments in
+  test_vast.sh give the numbers.
+- unmw's filter_report.py classes a candidate known_asteroid whenever the report says
+  "found in astcheck", and MPCheck_v2.sh searches 600 arcsec: Miras with an asteroid
+  8 arcmin away were classed as asteroids. Use the astcheck distance when analysing
+  candidates.

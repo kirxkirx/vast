@@ -39,6 +39,7 @@
 //     RA DEC are sexagesimal (hh:mm:ss.s +dd:mm:ss.s) or decimal degrees.
 //     Several catalogs are merged, sorted by magnitude in the requested band, and a
 //     star listed by more than one catalog within 2 arcsec is reported once.
+//     A star within 0.0005 mag of a magnitude limit is left out (see mag_passes()).
 //     For Tycho-2 the band is V for both Gmag and RPmag requests; for UCAC5 it is
 //     the Gaia DR1 G magnitude (UCAC f.mag when G is missing).
 // Exit codes: 0 success (also when nothing matches), 1 usage error, 2 a catalog is
@@ -71,6 +72,7 @@
 #define RA_BINS 3600
 #define RA_BIN_E7 1000000U // 0.1 deg in units of 1e-7 deg
 #define MAG_NULL ( -32768 )
+#define MAG_ROUNDING_TOLERANCE 0.0005 // half of the 0.001 mag precision of the stored magnitudes
 #define DEDUP_RADIUS_ARCSEC 2.0
 #define MAX_CATALOGS 8
 #define CATALOG_FORMAT "vast_local_star_catalog_v1"
@@ -951,12 +953,18 @@ static int ra_intervals( const query_t *q, double zone_dec_lo, double zone_dec_h
  return 1;
 }
 
+// The catalog magnitudes are stored rounded to 0.001 mag (MAG_ROUNDING_TOLERANCE is half
+// of that). A star whose rounded magnitude lies within the tolerance of a range limit
+// may be on either side of it in the full-precision catalog, so it is treated as outside
+// the range. The known-star check then never drops a candidate because of the rounding:
+// Gaia DR3 lists WZ Aur at G = 12.8304, the local copy stores 12.830, and a check with the
+// faint limit 12.83 must not take the star as brighter than the limit.
 static int mag_passes( const query_t *q, double mag ) {
  if ( !isfinite( mag ) || mag >= 99.0 )
   return !q->have_mag_range;
  if ( !q->have_mag_range )
   return 1;
- return mag >= q->mag_bright && mag <= q->mag_faint;
+ return mag >= q->mag_bright + MAG_ROUNDING_TOLERANCE && mag <= q->mag_faint - MAG_ROUNDING_TOLERANCE;
 }
 
 static int read_text_file( const char *path, char *buf, size_t size ) {

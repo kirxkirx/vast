@@ -89,6 +89,12 @@ echo "$DIST" | awk '{exit ($1 > 1.76 && $1 < 1.78) ? 0 : 1}' || fail LOCALSTARCA
 # the magnitude limit
 RESULT=$(search "$GAIA" -c="00:00:00.00 +10:00:00.0" -c.rs=5 -out.max=3 -sort=Gmag Gmag=0.0..12.5 | ids)
 [ "$RESULT" = "1001" ] || fail LOCALSTARCAT_GMAG_LIMIT "got #$RESULT#"
+# magnitudes are stored to 0.001 mag: a star exactly on the faint limit (1002, G = 13.000)
+# may be fainter than it in the full-precision catalog, so it is left out
+RESULT=$(search "$GAIA" -c="00:00:00.00 +10:00:00.0" -c.rs=5 -out.max=3 -sort=Gmag Gmag=0.0..13.0 | ids)
+[ "$RESULT" = "1001" ] || fail LOCALSTARCAT_LIMIT_ROUNDING "got #$RESULT#"
+RESULT=$(search "$GAIA" -c="00:00:00.00 +10:00:00.0" -c.rs=5 -out.max=3 -sort=Gmag Gmag=0.0..13.001 | ids)
+[ "$RESULT" = "1001 1002" ] || fail LOCALSTARCAT_LIMIT_ROUNDING_ABOVE "got #$RESULT#"
 # the RP band: a star without RP is not listed
 RESULT=$(search "$GAIA" -c="00:00:00.00 +10:00:00.0" -c.rs=5 -out.max=3 -sort=RPmag RPmag=0.0..20.0 | ids)
 [ "$RESULT" = "1001" ] || fail LOCALSTARCAT_RPMAG "got #$RESULT#"

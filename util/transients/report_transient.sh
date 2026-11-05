@@ -900,8 +900,10 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # -------- End forced-photometry-on-reference-images filter --------
  ############
  # Known-star check: do this unless it was switched off with GAIA_DR2_CLIENT=none, and only
- # if some source of the answer is configured: VIZIER_SITE, ESA, or a local catalog
- if [ "$GAIA_DR2_CLIENT" != "none" ] && { [ -n "$VIZIER_SITE" ] || [ "$GAIA_DR2_CLIENT" = "esa_tap" ] || [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ]; };then
+ # if VIZIER_SITE is set or the ESA client is forced. util/transients/transient_factory_test31.sh
+ # always sets VIZIER_SITE (also when VizieR is unreachable and a local catalog answers);
+ # util/transients/search_for_transients_single_field.sh unsets it to skip this check.
+ if [ "$GAIA_DR2_CLIENT" != "none" ] && { [ -n "$VIZIER_SITE" ] || [ "$GAIA_DR2_CLIENT" = "esa_tap" ]; };then
   # if this is a new source
   NUBER_OF_LIGHTCURVE_POINTS=$(wc -l < "$LIGHTCURVEFILE")
   # Assume that two-reference-images detections are good match, check only new sources and one-reference-images detections to speed things up

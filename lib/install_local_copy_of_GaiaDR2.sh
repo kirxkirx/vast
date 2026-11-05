@@ -23,10 +23,14 @@
 # Usage:
 #   lib/install_local_copy_of_GaiaDR2.sh [DESTINATION_DIR]
 #
-# DESTINATION_DIR defaults to lib/catalogs/gaia_dr2. To keep the catalog on a big disk,
-# give a directory there (for example /data_ssd/GaiaDR2) and either link it as
-# lib/catalogs/gaia_dr2 or let util/transients/transient_factory_test31.sh find it in
-# one of the directories it searches for the local catalog copies.
+# DESTINATION_DIR defaults to lib/catalogs/gaia_dr2, like lib/install_local_copy_of_UCAC5.sh
+# puts UCAC5 in lib/catalogs/ucac5. To keep the catalog on a big disk, give a directory
+# there (for example /data_ssd/GaiaDR2) and either link it as lib/catalogs/gaia_dr2 or let
+# util/transients/transient_factory_test31.sh find it in one of the directories it
+# searches for the local catalog copies. A copy outside the VaST tree survives
+# lib/prepare_vast_release.sh, which deletes everything in lib/catalogs/ (for a link
+# there it removes only the link). unmw's working copies of VaST share lib/catalogs/ of
+# the reference copy through a symlink, so the catalog is never copied per run.
 #
 # The download is resumable: after an interruption, run the script again with the same
 # DESTINATION_DIR and it continues with the files not processed yet.
