@@ -699,6 +699,55 @@ function test_internet_connection() {
  return 1
 }
 
+# The test data files served from http://tau.kirx.net/vast_test_data/ are also
+# published as assets of the GitHub release 'test-data-v1' of kirxkirx/vast
+# (a release that holds only test data, not a VaST release). GitHub serves them
+# fast and does not depend on the slow ssh tunnel behind tau.kirx.net, so
+# download_test_data_file() tries GitHub first and falls back to the mirrors
+# given by the caller. The asset name is the path under vast_test_data/ with '/'
+# replaced by '__' and every character outside A-Za-z0-9._+- (including a
+# URL-encoded %XX) replaced by '_' - the same mapping was used to upload the files.
+# A file added to vast_test_data/ must also be uploaded to the release, e.g.
+#  gh release upload test-data-v1 --repo kirxkirx/vast NEW_FILE.tar.bz2
+# (with the mapped name for a file in a subdirectory); until then it is simply
+# downloaded from the fallback mirrors.
+# Environment variables:
+#  VAST_TEST_DATA_NO_GITHUB=yes - do not try GitHub (e.g. for a very old curl
+#                                 that cannot talk to GitHub over HTTPS)
+#  VAST_TEST_DATA_CACHE=/absolute/path - a directory keeping a copy of every
+#                                 downloaded test data file under its GitHub
+#                                 asset name; a file found there is used instead
+#                                 of downloading it. CI keeps this directory with
+#                                 actions/cache (see build_and_test_ubuntu.yml).
+VAST_TEST_DATA_GITHUB_RELEASE_URL="https://github.com/kirxkirx/vast/releases/download/test-data-v1"
+
+# Print the GitHub release asset name for a tau.kirx.net/vast_test_data/ URL,
+# print nothing for any other URL.
+# $1 - the URL
+function test_data_asset_name_from_url() {
+ printf '%s\n' "$1" | grep -E '^https?://tau\.kirx\.net/vast_test_data/.' | sed -e 's#^https\{0,1\}://tau\.kirx\.net/vast_test_data/##' -e 's/%[0-9A-Fa-f][0-9A-Fa-f]/_/g' -e 's#/#__#g' -e 's/[^A-Za-z0-9._+-]/_/g'
+}
+
+# Return 0 if the file looks like an intact test data file (the bzip2 or gzip
+# integrity test passes, any other file just has to be non-empty).
+# $1 - the file name
+function test_data_file_is_intact() {
+ case "$1" in
+  *.bz2)
+   bunzip2 -t "$1" 2>/dev/null
+   return $?
+   ;;
+  *.gz)
+   gzip -t "$1" 2>/dev/null
+   return $?
+   ;;
+ esac
+ if [ -s "$1" ] ;then
+  return 0
+ fi
+ return 1
+}
+
 # Download one test-data file into the current directory and accept it only if
 # it is intact. Plain 'curl -O' saves an HTTP error page under the requested name
 # and exits 0 - in CI run 1156 one download from tau.kirx.net returned a body that
@@ -707,7 +756,8 @@ function test_internet_connection() {
 # converter (AUXWEB_OMC2ASCII2_002). --fail turns 4xx/5xx into a curl error, the
 # integrity test catches whatever else is not the file (a 3xx or 200 HTML body,
 # a truncated file), --speed-limit stops a stalled transfer, and each URL gets three
-# attempts before the next URL (a mirror) is tried. This is a shell loop rather
+# attempts before the next URL (a mirror) is tried (GitHub gets one: a missing
+# asset is a quick 404, and the mirrors still follow). This is a shell loop rather
 # than curl --retry because curl 7.15.5 (Scientific Linux 5.6) does not retry
 # a 5xx once --fail is given, and plain --retry never retries a refused or
 # dropped connection (--retry-connrefused needs curl 7.52, --retry-all-errors
@@ -720,32 +770,68 @@ function download_test_data_file() {
  local output_file="$1"
  local url
  local attempt
+ local max_attempts
  local curl_exit_code
+ local asset_name=""
+ local cached_file=""
  shift
+ # The GitHub asset name, if any of the URLs is a tau.kirx.net/vast_test_data/ one
  for url in "$@" ;do
+  asset_name=$(test_data_asset_name_from_url "$url")
+  if [ -n "$asset_name" ] ;then
+   break
+  fi
+ done
+ # Use the cached copy if there is an intact one
+ if [ -n "$asset_name" ] && [ -n "$VAST_TEST_DATA_CACHE" ] ;then
+  case "$VAST_TEST_DATA_CACHE" in
+   /*)
+    cached_file="$VAST_TEST_DATA_CACHE/$asset_name"
+    ;;
+   *)
+    echo "WARNING: VAST_TEST_DATA_CACHE=$VAST_TEST_DATA_CACHE is not an absolute path - not using the cache" >&2
+    ;;
+  esac
+ fi
+ if [ -n "$cached_file" ] && [ -f "$cached_file" ] ;then
+  rm -f "$output_file"
+  if cp "$cached_file" "$output_file" && test_data_file_is_intact "$output_file" ;then
+   echo "Using the cached copy $cached_file" >&2
+   return 0
+  fi
+  echo "WARNING: the cached copy $cached_file fails the integrity test - removing it" >&2
+  rm -f "$cached_file" "$output_file"
+ fi
+ # Try GitHub first
+ if [ -n "$asset_name" ] && [ "$VAST_TEST_DATA_NO_GITHUB" != "yes" ] ;then
+  set -- "$VAST_TEST_DATA_GITHUB_RELEASE_URL/$asset_name" "$@"
+ fi
+ for url in "$@" ;do
+  max_attempts=3
+  case "$url" in
+   https://github.com/*)
+    max_attempts=1
+    ;;
+  esac
   attempt=1
-  while [ $attempt -le 3 ] ;do
+  while [ $attempt -le $max_attempts ] ;do
    rm -f "$output_file"
-   curl --fail --silent --show-error --connect-timeout 30 --speed-limit 1024 --speed-time 60 -o "$output_file" "$url"
+   # -L: GitHub release downloads are a redirect to the actual file
+   curl -L --fail --silent --show-error --connect-timeout 30 --speed-limit 1024 --speed-time 60 -o "$output_file" "$url"
    curl_exit_code=$?
    if [ $curl_exit_code -eq 0 ] ;then
-    case "$output_file" in
-     *.bz2)
-      if bunzip2 -t "$output_file" 2>/dev/null ;then
-       return 0
+    if test_data_file_is_intact "$output_file" ;then
+     # Keep a copy in the cache (a failure to do so is not an error)
+     if [ -n "$cached_file" ] ;then
+      if mkdir -p "$VAST_TEST_DATA_CACHE" 2>/dev/null && cp "$output_file" "$cached_file.tmp$$" 2>/dev/null ;then
+       mv -f "$cached_file.tmp$$" "$cached_file"
+      else
+       rm -f "$cached_file.tmp$$"
+       echo "WARNING: could not save a copy of $output_file to $VAST_TEST_DATA_CACHE" >&2
       fi
-      ;;
-     *.gz)
-      if gzip -t "$output_file" 2>/dev/null ;then
-       return 0
-      fi
-      ;;
-     *)
-      if [ -s "$output_file" ] ;then
-       return 0
-      fi
-      ;;
-    esac
+     fi
+     return 0
+    fi
     echo "WARNING: $url (attempt $attempt) delivered a file that fails the integrity test, it starts with:" >&2
     head -c 300 "$output_file" | LC_ALL=C tr -cd '\011\012\040-\176' >&2
     echo >&2
@@ -753,7 +839,7 @@ function download_test_data_file() {
     echo "WARNING: $url (attempt $attempt) failed with curl exit code $curl_exit_code" >&2
    fi
    attempt=$((attempt+1))
-   if [ $attempt -le 3 ] ;then
+   if [ $attempt -le $max_attempts ] ;then
     sleep 10
    fi
   done
@@ -30059,7 +30145,7 @@ if [ ! -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
  fi
  cd ../individual_images_test || exit 1
  #curl --silent --show-error -o "NW-1B-BESSEL_15#3.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15%233.fits.bz2" && bunzip2 'NW-1B-BESSEL_15#3.fits.bz2'
- curl --silent --show-error -o "NW-1B-BESSEL_15#3.fits.bz2" "http://tau.kirx.net/vast_test_data/NW-1B-BESSEL_15%233.fits.bz2" && bunzip2 'NW-1B-BESSEL_15#3.fits.bz2'
+ download_test_data_file "NW-1B-BESSEL_15#3.fits.bz2" "http://tau.kirx.net/vast_test_data/NW-1B-BESSEL_15%233.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15%233.fits.bz2" && bunzip2 'NW-1B-BESSEL_15#3.fits.bz2'
  cd "$WORKDIR" || exit 1
 fi
 
