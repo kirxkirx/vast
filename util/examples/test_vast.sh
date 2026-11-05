@@ -1368,6 +1368,57 @@ if [ $TEST_PASSED -eq 0 ];then
  exit 1
 fi
 
+##### bash 3.2 compatibility check #####
+# bash 3.2 is /bin/bash on macOS. If a bash 3.2 binary is available, check all VaST
+# shell scripts with it using lib/check_bash32_compatibility.sh (the same check the
+# bash32compatibility CI job runs). The binary is looked for in this order:
+#  - $VAST_BASH32 (path to a bash 3.2 binary, set it to use a binary in a non-standard place)
+#  - 'bash-3.2' in $PATH (Gentoo: 'emerge app-shells/bash:3.2' installs /bin/bash-3.2)
+#  - /bin/bash if it is bash 3.2 (macOS)
+# The test is skipped (with a message, not a failure code) if no bash 3.2 is found.
+BASH32_FOR_TEST=""
+for BASH32_CANDIDATE in "$VAST_BASH32" "$(command -v bash-3.2 2>/dev/null)" /bin/bash ;do
+ if [ -z "$BASH32_CANDIDATE" ] || [ ! -x "$BASH32_CANDIDATE" ] ;then
+  continue
+ fi
+ # shellcheck disable=SC2016
+ if [ "$("$BASH32_CANDIDATE" -c 'echo "${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"' 2>/dev/null)" = "3.2" ] ;then
+  BASH32_FOR_TEST="$BASH32_CANDIDATE"
+  break
+ fi
+done
+if [ -n "$BASH32_FOR_TEST" ] && [ -x lib/check_bash32_compatibility.sh ] ;then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "bash 3.2 compatibility check using $BASH32_FOR_TEST "
+ echo -n "bash 3.2 compatibility check: " >> vast_test_report.txt
+ lib/check_bash32_compatibility.sh "$BASH32_FOR_TEST" > bash32_compatibility_check.out 2>&1
+ BASH32_CHECK_EXIT_CODE=$?
+ if [ $BASH32_CHECK_EXIT_CODE -eq 1 ] ;then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BASH32_COMPATIBILITY_CHECK_FAILED"
+  cat bash32_compatibility_check.out
+ elif [ $BASH32_CHECK_EXIT_CODE -ne 0 ] ;then
+  # exit code 2 - the check could not run (not a VaST problem)
+  echo "WARNING: lib/check_bash32_compatibility.sh could not run the checks (exit code $BASH32_CHECK_EXIT_CODE):"
+  cat bash32_compatibility_check.out
+ fi
+ rm -f bash32_compatibility_check.out
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ] ;then
+  echo -e "\n\033[01;34mbash 3.2 compatibility check \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mbash 3.2 compatibility check \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+ # Update the incremental list of failed test codes
+ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+else
+ echo "bash 3.2 compatibility check skipped: no bash 3.2 found (set VAST_BASH32, or on Gentoo: emerge app-shells/bash:3.2)"
+fi
+
 ##### Syntax-check GitHub workflow YAML files #####
 # This test is skipped if python3 or PyYAML is not available
 if command -v python3 &>/dev/null && python3 -c "import yaml" &>/dev/null; then
