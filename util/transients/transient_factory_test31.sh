@@ -95,6 +95,11 @@ export FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT
 # Limits on the size of stars in pixels
 # (star size is implied by the size of the automatically chosen aperture that is listed for each image in vast_image_details.log)
 # Images with very large or very small stars must have some problem.
+# The aperture limits are applied only when there are more than two second-epoch images (in the
+# preliminary VaST run that picks the best two). FILTER_BAD_IMG__MAX_FWHM_PIX, if set (in the
+# per-camera block below or in the environment), rejects a field whose second-epoch images have
+# a median FWHM of isolated stars larger than this, also when there are only two of them. A large
+# value (e.g. 99) switches that check off.
 FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX=2.0
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=9.6
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
@@ -430,6 +435,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=10000
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # Blurred images (focus drift, dew) flood the candidate list: on 2026-11-04 the TTUQ1 images
+  # went from 2.2 to 4.7-5.6 pix FWHM, and its fields got up to 74 candidates instead of 0-3.
+  if [ -z "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+   FILTER_BAD_IMG__MAX_FWHM_PIX=4.5
+  fi
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
@@ -536,6 +546,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=10000
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # Blurred images: see the TTUQ1b1x1 block
+  if [ -z "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+   FILTER_BAD_IMG__MAX_FWHM_PIX=4.5
+  fi
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
@@ -2010,6 +2024,7 @@ DARK_FRAMES_DIR_OR_FILE= $DARK_FRAMES_DIR_OR_FILE
 EXCLUSION_LIST= $EXCLUSION_LIST
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX= $FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX
+FILTER_BAD_IMG__MAX_FWHM_PIX= $FILTER_BAD_IMG__MAX_FWHM_PIX
 FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX
 FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH
 FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
@@ -2155,20 +2170,6 @@ if [ -z "$1" ]; then
  exit 1
 fi
 
-# We need it for the new transients check in util/transients/report_transient.sh
-VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
-VIZIER_MIRROR_PROBE_EXIT_CODE=$?
-export VIZIER_SITE
-echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
-# lib/choose_vizier_mirror.sh exits with a non-zero code when no VizieR mirror answered
-# its test query (it then prints the main CDS site anyway). report_transient.sh then
-# does not wait for VizieR for every candidate.
-if [ "$VIZIER_MIRROR_PROBE_EXIT_CODE" -ne 0 ];then
- VIZIER_UNREACHABLE="yes"
-else
- VIZIER_UNREACHABLE="no"
-fi
-export VIZIER_UNREACHABLE
 # Select the source for the known-star (Gaia DR2) check of the candidates. GAIA_DR2_CLIENT
 # can be set externally to force one: "local" (the local Gaia DR2 copy), "tycho2_ucac5"
 # (EXPERIMENTAL: the local Tycho-2 and UCAC5 copies), "esa_tap", "vizquery", "none" (no
@@ -2203,7 +2204,50 @@ fi
 if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
  if [ "$LOCAL_GAIA_DR2_COPY_IS_USABLE" = "yes" ];then
   GAIA_DR2_CLIENT="local"
- elif [ -x lib/choose_gaia_dr2_client.sh ];then
+ fi
+fi
+# VizieR mirror for util/transients/report_transient.sh. The known-star check needs VizieR only
+# with an online Gaia client, and the APASS check only when it is enabled. Do not probe the
+# mirrors when the check reads a local catalog (or is off) and APASS is off: while CDS was
+# down in Nov 2026 every failed probe cost the run 96-162 s. Take a recent result recorded by
+# another run instead, if there is one; without it VIZIER_UNREACHABLE is "unknown" and the
+# online name lookup of unidentified candidates probes for itself, only when it is needed.
+if { [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ]; } && [ "$APASS_KNOWN_STAR_CHECK" != "yes" ];then
+ VIZIER_MIRROR_PROBED="no"
+ VIZIER_SITE=$(VIZIER_MIRROR_RECORD_ONLY=yes lib/choose_vizier_mirror.sh)
+ VIZIER_MIRROR_PROBE_EXIT_CODE=$?
+else
+ VIZIER_MIRROR_PROBED="yes"
+ VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
+ VIZIER_MIRROR_PROBE_EXIT_CODE=$?
+fi
+# The known-star check in report_transient.sh runs only when VIZIER_SITE is set
+if [ -z "$VIZIER_SITE" ];then
+ VIZIER_SITE="vizier.cds.unistra.fr"
+fi
+export VIZIER_SITE
+echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
+# lib/choose_vizier_mirror.sh exits with code 1 when no VizieR mirror answered its test query
+# (it then prints the main CDS site anyway) and, with VIZIER_MIRROR_RECORD_ONLY=yes, with code
+# 2 when there is no recent result. With VIZIER_UNREACHABLE=yes report_transient.sh does not
+# wait for VizieR for every candidate.
+case "$VIZIER_MIRROR_PROBE_EXIT_CODE" in
+ 0) VIZIER_UNREACHABLE="no" ;;
+ 1) VIZIER_UNREACHABLE="yes" ;;
+ *) VIZIER_UNREACHABLE="unknown" ;;
+esac
+export VIZIER_UNREACHABLE
+if [ "$VIZIER_MIRROR_PROBED" = "no" ];then
+ # (No "GAIA_DR2_CLIENT=" or "VIZIER_SITE=" in this line: the test suite reads the first such line)
+ case "$VIZIER_UNREACHABLE" in
+  yes) VIZIER_RECENT_PROBE_RESULT="no mirror answered" ;;
+  no) VIZIER_RECENT_PROBE_RESULT="$VIZIER_SITE answered" ;;
+  *) VIZIER_RECENT_PROBE_RESULT="none" ;;
+ esac
+ echo "Not probing the VizieR mirrors: the known-star check does not use VizieR (client: $GAIA_DR2_CLIENT) and the APASS check is off. Recent probe by another run: $VIZIER_RECENT_PROBE_RESULT" | tee -a transient_factory_test31.txt
+fi
+if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
+ if [ -x lib/choose_gaia_dr2_client.sh ];then
   GAIA_DR2_CLIENT=$(lib/choose_gaia_dr2_client.sh "$VIZIER_SITE")
  else
   GAIA_DR2_CLIENT="vizquery"
@@ -3418,6 +3462,45 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   " | tee -a transient_factory_test31.txt
   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   VAST_EXIT_CODE=$?
+  # Blurred second-epoch images (focus drift, dew) flood the candidate list. With
+  # FILTER_BAD_IMG__MAX_FWHM_PIX set for the camera, reject the field when the median FWHM of the
+  # isolated stars on either second-epoch image is larger. It is measured on the catalogs of the
+  # bright-star pass, the same way and with the same rounding as the "Median FWHM seeing for
+  # isolated stars" lines that pass writes to the report: the passes with fainter stars measure
+  # the same images about 15% smaller. SExtractor has written the catalogs also when VaST failed
+  # later on (star matching), so this comes before the VaST exit code is examined; without a
+  # catalog there is no check.
+  if [ -n "$FILTER_BAD_IMG__MAX_FWHM_PIX" ] && [ "$SEXTRACTOR_CONFIG_FILE" = "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
+   FWHM_CHECK_VALUES=""
+   FWHM_CHECK_FAILED="no"
+   for SE_IMG in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
+    SE_CATALOG_NAME=$(grep -F "$SE_IMG" vast_images_catalogs.log 2>/dev/null | awk '{print $1}' | head -n1)
+    if [ -z "$SE_CATALOG_NAME" ] || [ ! -s "$SE_CATALOG_NAME" ];then
+     continue
+    fi
+    SE_IMG_MEDIAN_FWHM_PIX=$(awk '{if( $22 < 2 && $23 > 0 ) print $23}' "$SE_CATALOG_NAME" | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%.1f", $2}')
+    if [ -z "$SE_IMG_MEDIAN_FWHM_PIX" ];then
+     continue
+    fi
+    # In the format of the "Median FWHM seeing" lines: unmw reads its FWHM column from such lines
+    echo "$SE_IMG_MEDIAN_FWHM_PIX $(basename "$SE_IMG") $FILTER_BAD_IMG__MAX_FWHM_PIX" | awk '{printf "%4.1f pix  %s  (median FWHM of isolated stars, limit %s pix)\n", $1, $2, $3}' | tee -a transient_factory_test31.txt
+    FWHM_CHECK_VALUES="${FWHM_CHECK_VALUES:+$FWHM_CHECK_VALUES and }$SE_IMG_MEDIAN_FWHM_PIX"
+    if awk -v fwhm="$SE_IMG_MEDIAN_FWHM_PIX" -v limit="$FILTER_BAD_IMG__MAX_FWHM_PIX" 'BEGIN {exit !(fwhm + 0 > limit + 0)}' ;then
+     FWHM_CHECK_FAILED="yes"
+    fi
+   done
+   if [ "$FWHM_CHECK_FAILED" = "yes" ];then
+    # Save image date for it to be displayed in the summary file
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
+    echo "***** ERROR: seeing on second-epoch images is out of range (median FWHM $FWHM_CHECK_VALUES pix, limit $FILTER_BAD_IMG__MAX_FWHM_PIX pix) *****" >> transient_factory.log
+    echo "############################################################" >> transient_factory.log
+    echo "ERROR: seeing on second-epoch images is out of range - median FWHM $FWHM_CHECK_VALUES pix, above the limit of $FILTER_BAD_IMG__MAX_FWHM_PIX pix (blurred images: focus? dew?)" | tee -a transient_factory_test31.txt
+    rm -f vast_output_$$.tmp
+    record_timing "    VAST_RUN_${SEXTRACTOR_CONFIG_FILE}" "$VAST_RUN_START_UNIXSEC"
+    # The images are just as blurred for the other SExtractor passes: skip them
+    break
+   fi
+  fi
   if [ $VAST_EXIT_CODE -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt

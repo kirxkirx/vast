@@ -82,6 +82,28 @@ function clean_tmp_files {
 }
 
 
+######### function to tell whether VizieR is unreachable #########
+# VIZIER_UNREACHABLE comes from util/transients/transient_factory_test31.sh. When it is neither
+# "yes" nor "no" (the factory does not probe VizieR when the known-star check reads a local
+# catalog, and other callers do not set it), ask lib/choose_vizier_mirror.sh: it answers from
+# the shared record of recent probes and probes the mirrors only when there is none. The answer
+# is kept in VIZIER_UNREACHABLE (and the mirror that answered in VIZIER_SITE) for this process.
+function vizier_is_unreachable {
+ local VIZIER_SITE_FROM_PROBE
+ if [ "$VIZIER_UNREACHABLE" != "yes" ] && [ "$VIZIER_UNREACHABLE" != "no" ];then
+  if VIZIER_SITE_FROM_PROBE=$(lib/choose_vizier_mirror.sh 2>/dev/null) ;then
+   VIZIER_UNREACHABLE="no"
+   if [ -n "$VIZIER_SITE_FROM_PROBE" ];then
+    VIZIER_SITE="$VIZIER_SITE_FROM_PROBE"
+   fi
+  else
+   VIZIER_UNREACHABLE="yes"
+  fi
+ fi
+ [ "$VIZIER_UNREACHABLE" = "yes" ]
+}
+
+
 ######### function to query Gaia DR2 (or a local catalog standing in for it) #########
 # Uses the GAIA_DR2_CLIENT environment variable to select the source of the answer:
 #  local         the local Gaia DR2 copy lib/catalogs/gaia_dr2 (lib/install_local_copy_of_GaiaDR2.sh),
@@ -133,6 +155,10 @@ function query_gaia_dr2 {
  # local catalog failed. When ESA does not reply with a query result the client prints
  # nothing on stdout and exits with a non-zero code: ask VizieR instead, otherwise the
  # known-star check below would silently treat every candidate as "no Gaia star here".
+ # ESA's synchronous TAP service may keep a query queued for over a minute: on 2026-11-05 its
+ # answers took 1.5-89 s (median 23 s), and the former 30 s limit discarded a third of them.
+ # A refusal (HTTP 503, queue full) or an outage still fails within seconds, so the 90 s limit
+ # costs time only while ESA is slow but answering.
  if [ "$GAIA_DR2_CLIENT" != "vizquery" ] || [ "$VIZIER_UNREACHABLE" = "yes" ]; then
   if [ -x lib/gaia_dr2_cone_search.sh ] && lib/gaia_dr2_cone_search.sh \
    -c="$coords" \
@@ -140,12 +166,13 @@ function query_gaia_dr2 {
    -out.max="$max_results" \
    -sort="$sort_band" \
    "$sort_band=$mag_bright..$mag_faint" \
-   -timeout=30 2>/dev/null ;then
+   -timeout=90 2>/dev/null ;then
    return 0
   fi
  fi
- # VizieR
- if [ -n "$VIZIER_SITE" ] && [ "$VIZIER_UNREACHABLE" != "yes" ]; then
+ # VizieR (when it is not known whether VizieR answers, find out first: a local catalog that
+ # cannot be read must not cost every candidate a VizieR timeout while CDS is down)
+ if [ -n "$VIZIER_SITE" ] && ! vizier_is_unreachable ; then
   VIZIER_REPLY=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
    -site="$VIZIER_SITE" \
    -mime=text \
@@ -174,7 +201,7 @@ function query_gaia_dr2 {
    -out.max="$max_results" \
    -sort="$sort_band" \
    "$sort_band=$mag_bright..$mag_faint" \
-   -timeout=30 2>/dev/null
+   -timeout=90 2>/dev/null
   return $?
  fi
  return 1
@@ -1097,9 +1124,18 @@ if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_A
   WCS_REFERENCE_IMAGE_NAME=wcs_$(basename "$REFERENCE_IMAGE")
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
-  #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
-  # Disable online VSX search
-  util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') no_online_vsx 2>&1 | grep '|' | tail -n1
+  # The online name lookup asks VizieR about ten catalogs one after another. While CDS was
+  # down (Nov 2026) each query waited for its timeout, costing 4-8 min per unidentified
+  # candidate for no answer, so skip the lookup when VizieR is unreachable.
+  if vizier_is_unreachable ;then
+   # No ' online_id ' with a space on both sides here: util/transients/make_report_in_HTML.sh
+   # takes the object name from such a line
+   echo "online_id skipped: VizieR is unreachable"
+  else
+   #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
+   # Disable online VSX search
+   util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') no_online_vsx 2>&1 | grep '|' | tail -n1
+  fi
   #
  fi
 fi

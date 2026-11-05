@@ -140,6 +140,9 @@ fi
 # failure only for VIZIER_MIRROR_RECORD_FAIL_SEC (default 300 s), so that a recovered
 # service is noticed within minutes. VIZIER_MIRROR_RECORD=no skips the record and probes
 # (the test suite's internet-connection check does that); the result is still recorded.
+# VIZIER_MIRROR_RECORD_ONLY=yes never probes: it reports a recent recorded result, or prints
+# the main CDS site and exits with code 2 when there is none (the transient search does that
+# when its known-star check reads a local catalog and needs no VizieR mirror up front).
 VIZIER_MIRROR_RECORD_FILE="${VAST_PATH}lib/catalogs/.vizier_mirror_probe_${CATALOG_TO_TEST}"
 VIZIER_MIRROR_RECORD_OK_SEC="${VIZIER_MIRROR_RECORD_OK_SEC:-900}"
 VIZIER_MIRROR_RECORD_FAIL_SEC="${VIZIER_MIRROR_RECORD_FAIL_SEC:-300}"
@@ -158,6 +161,10 @@ if [ "$VIZIER_MIRROR_RECORD" != "no" ] && [ -s "$VIZIER_MIRROR_RECORD_FILE" ];th
    exit "$RECORD_EXIT_CODE"
   fi
  fi
+fi
+if [ "$VIZIER_MIRROR_RECORD_ONLY" = "yes" ];then
+ echo "vizier.cds.unistra.fr"
+ exit 2
 fi
 
 # Write the record atomically; silently skip it where lib/catalogs is not writable

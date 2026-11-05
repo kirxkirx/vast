@@ -1335,6 +1335,31 @@ else
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
 
+##### VizieR mirror probe record test #####
+# lib/choose_vizier_mirror.sh shares its probe result between runs through a record in
+# lib/catalogs, and the transient search reads that record without probing when its
+# known-star check uses a local catalog. This part needs no network (a stand-in lib/vizquery),
+# so it runs everywhere, GitHub Actions included.
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "VizieR mirror probe record test "
+echo -n "VizieR mirror probe record test: " >> vast_test_report.txt
+VIZIERRECORD_TEST_OUTPUT=$(util/examples/test_vizier_mirror_record.sh 2>&1)
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $(echo "$VIZIERRECORD_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')"
+ echo "$VIZIERRECORD_TEST_OUTPUT"
+fi
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mVizieR mirror probe record test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mVizieR mirror probe record test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+
 ##### Local Gaia DR2 copy test (real catalog, local machines only) #####
 # The local Gaia DR2 copy (lib/install_local_copy_of_GaiaDR2.sh, the 568 million stars
 # brighter than G = 19, 13 GB, streamed from 588 GB of ESA files) is far too big for

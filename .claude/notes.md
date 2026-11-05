@@ -1426,3 +1426,55 @@ Update this file as you learn new things.
   "found in astcheck", and MPCheck_v2.sh searches 600 arcsec: Miras with an asteroid
   8 arcmin away were classed as asteroids. Use the astcheck distance when analysing
   candidates.
+
+## VizieR probed only when needed, online name lookup skipped while VizieR is down, TTU FWHM limit (2026-11-05)
+- After the 2026-11-04 deploy about half of the runs still waited 96-162 s at the start for
+  lib/choose_vizier_mirror.sh: all three mirrors fail (CDS: two 10 s connect timeouts; china-vo
+  and nao: HTTP 200 and no data for about 68 s, or nao's 3 s error page). The shared record has
+  no lock and is trusted 300 s after a failure, and unmw's load gate releases runs in bursts that
+  all probed at once. The probe only picks a mirror for the known-star check, and with the local
+  Gaia DR2 copy nothing needs one up front. The factory now settles GAIA_DR2_CLIENT first and
+  probes only for an online client or APASS_KNOWN_STAR_CHECK=yes. Otherwise it reads the record
+  (VIZIER_MIRROR_RECORD_ONLY=yes: exit 0 or 1 from a recent result, 2 and the CDS site when
+  there is none) and sets VIZIER_UNREACHABLE to yes, no or unknown. VIZIER_SITE stays set: the
+  known-star check runs only when it is. test_vast.sh reads the first "VIZIER_SITE=" and
+  "GAIA_DR2_CLIENT=" lines of the log, so no other log line may contain those strings.
+- The online name lookup of unidentified candidates (util/search_databases_with_vizquery.sh,
+  called by report_transient.sh) asks VizieR about ten catalogs in a row. With CDS down every
+  query waited about 25 s: 4-8 min per affected field, and no names. report_transient.sh skips it
+  when VizieR is unreachable (vizier_is_unreachable: VIZIER_UNREACHABLE from the factory; when
+  that is unknown, choose_vizier_mirror.sh answers from the record and probes only without a
+  recent result). The same function guards the VizieR fallback of query_gaia_dr2, which runs when
+  a local catalog cannot be read: "unknown" must not mean a 40 s CDS timeout per candidate. The
+  lookup script is unchanged: it
+  also checks the local catalogs, and test_vast.sh calls it directly. The skip line is "online_id
+  skipped: VizieR is unreachable", without a space before online_id:
+  util/transients/make_report_in_HTML.sh takes the AAVSO object name from a line containing
+  " online_id ", and unmw's filter_report.py only uses lines starting with "online_id" as the end
+  of a crossmatch block.
+- FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX limits the aperture diameter (6 x median A_IMAGE,
+  about 1.9 x the median FWHM on the TTU cameras, scattered: 6.2-8.5 pix at FWHM 4.5-5 pix) and
+  is applied only to uploads with more than two second-epoch images (the preliminary VaST run).
+  TTU uploads have two, so blurred images went through. FILTER_BAD_IMG__MAX_FWHM_PIX (4.5 for
+  TTUQ1b1x1 and TTUQ2b1x1, can be set in the environment; a large value switches it off) rejects
+  the field when the median FWHM_IMAGE of FLAGS<2 sources on a second-epoch image is larger. It is
+  measured on the catalogs of the bright-star pass (SEXTRACTOR_CONFIG_BRIGHTSTARPASS) right after
+  its ./vast run, before the exit code is examined, and rounded to 0.1 pix like that pass's "Median
+  FWHM seeing" lines. The pass matters: the passes with fainter stars measure the same images about
+  15% smaller (4.2 instead of 4.9 pix for a blurred image), so the check must not move to a later
+  pass when the first one fails. The values are printed as " N.N pix  <image>  (...)" lines, the
+  format unmw's nmw_second_epoch_fwhm reads for its FWHM column. On failure the field gets
+  "ERROR: seeing on second-epoch images is out of range (median FWHM X and Y pix, limit 4.5 pix)"
+  and the remaining passes are skipped (a blurred field ended after 22 s in a test).
+- Why: on 2026-11-04 the TTUQ1 focuser moved from 29479 to 29453 between the 19:09 and 19:14 CST
+  exposures (29447 later), and its images went from 2.2 to 4.7-5.6 pix FWHM for the rest of the
+  night, with up to 74 candidates per field instead of 0-3. Nov 3 had soft TTUQ1 images too.
+- util/examples/test_vizier_mirror_record.sh tests the record offline with a stand-in vizquery.
+- ESA's per-candidate Gaia DR2 query (report_transient.sh, both calls of lib/gaia_dr2_cone_search.sh)
+  now waits 90 s instead of 30 s. Of 22 synchronous ESA queries on 2026-11-05, 18 were answered in
+  1.5-89 s (median 23 s; 30 s would have kept 12 of them, 60 s 15, 90 s all 18) and 4 were refused
+  within a second (HTTP 503, "maximum number of synchronous queued jobs (150) reached"). Refusals
+  and outages fail fast, so the longer limit costs time only while ESA is slow but answering. The
+  15 s start-of-run probe in lib/choose_gaia_dr2_client.sh stays: ESA is asked for every candidate
+  whenever VizieR fails, so the probe only decides which service is tried first. Asynchronous
+  queries (/tap/async) took 1-3 s while the synchronous ones were refused or slow.
