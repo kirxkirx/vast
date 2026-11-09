@@ -90,6 +90,21 @@ Built on tau on 2026-11-09 in /data_ssd/GaiaDR3_nearby (linked as lib/catalogs/g
 4697159 records, 195 MB, equal to the whole-sky COUNT(*) of the selection, about 4 hours of
 throttled downloading.
 
+Distributed ready-made as gaia_dr3_nearby.tar.gz (160 MB; gzip, because bzip2 would save only
+4% and xz is not on every system) from the VaST catalog mirrors
+http://tau.kirx.net/vast_catalogs/gaia_dr3_nearby/ and
+http://scan.sai.msu.ru/~kirx/data/gaia_dr3_nearby/ (the source files are in
+/home/kirx/gaia_dr3_nearby_dist on tau, with the deployment notes). The installer asks the
+mirrors first (scan first when lib/get_country_code.sh says RU, tau first elsewhere;
+GAIA_DR3_NEARBY_MIRRORS overrides the list) and accepts an archive only when gzip -t passes,
+every zone file has its index, the zone files add up to records x record_size of
+catalog_info.txt and there are at least 4 million records; a mirror that answers 404 or sends
+something that is not gzip (an error page with status 200, a stub) is dropped at once, a
+dropped connection gets three resumed attempts. Only then does it build from the ESA archive
+(GAIA_DR3_NEARBY_SOURCE=auto; mirror forbids the build, esa skips the mirrors; a selection
+other than the published one always builds). A complete copy already in the destination is
+left alone. The whole install takes about a minute from a mirror.
+
 `local_star_catalog` got a second record layout, 40 bytes: the usual 24 (id, RA, Dec, G, BP,
 RP, flags) followed by int32 parallax (microarcsec), uint16 parallax error (microarcsec,
 65535 = unknown), int16 RUWE*1000, int32 pmRA and pmDec (microarcsec/yr). The record size is
@@ -100,8 +115,8 @@ column names. The search prints the wide format (BPmag, Plx, e_Plx, pmRA, pmDE, 
 the usual columns) when any searched catalog has the 40-byte records, and `-sort=_r` orders
 by distance.
 
-The installer downloads the 4.7 million sources (parallax > 5 mas, parallax_over_error > 3;
-190 MB as zones) from the ESA archive with synchronous TAP queries, one per equal-area
+When no mirror delivers the copy, the installer downloads the 4.7 million sources (parallax
+> 5 mas, parallax_over_error > 3; 190 MB as zones) from the ESA archive with synchronous TAP queries, one per equal-area
 declination band (100 by default, about 47000 stars each). Each band is counted once with
 COUNT(*); a band with more than 60000 sources is cut into equal RA pieces, twice as many as
 the count alone would need (the Galactic plane and the Magellanic Clouds add many sources
@@ -138,6 +153,21 @@ nothing. `UV_CETI_CHECK=no` disables it. In the test suite
 per candidate to the online services. unmw's `filter_report.py` ends the astcheck match block
 at the new prefix and exports the line as `uv_ceti_check`; both repositories must move
 together when the prefix changes. The timing log gets `UVCETI_CHECK` entries.
+
+## Tests
+
+`util/examples/test_nearby_red_dwarf_check.sh` has four parts selected by its arguments:
+`synthetic` (the default: a synthetic 40-byte catalog, no network), `local` (the real local
+copy: the record count, 4697159 for the published selection, the real stars, and that the
+check reads the copy by default), `online` (the ESA archive and VizieR on the real stars,
+each on its own, plus the fallback to them without a local copy) and `realsky` (`local` when
+a copy is there, `online` otherwise). The real stars are the Aur-05 star, an empty position
+near the north galactic pole, AD Leo and UV Cet at their positions of 2026.9. `test_vast.sh`
+runs `synthetic` with the no-network tests and `realsky` next to the Gaia DR2 clients test,
+on every machine: it links the copy from the directories the factory searches but never
+downloads it, records UVCETI_LOCAL_COPY_NOT_INSTALLED (informational) where there is none,
+and reports an outage of the ESA archive or VizieR under UVCETI_ESA_UNAVAILABLE /
+UVCETI_VIZIER_UNAVAILABLE (stripped from the failure list) rather than as a failure.
 
 ## Known limitations
 

@@ -1502,8 +1502,9 @@ fi
 # (a red dwarf, most likely) sits at the position of a transient candidate once its proper
 # motion is applied. This part builds a small synthetic copy of the nearby-star catalog with
 # lib/catalogs/local_star_catalog, so it needs no network and runs everywhere, GitHub Actions
-# included. The online part (the ESA Gaia archive and VizieR on a real star) runs next to the
-# Gaia DR2 clients test, on GitHub Actions only.
+# included. The real-sky part (the Aur-05 star, AD Leo, UV Cet: against the local copy of the
+# Gaia DR3 nearby stars where one is installed, otherwise against the ESA Gaia archive and
+# VizieR) runs next to the Gaia DR2 clients test, on every machine; no test downloads the copy.
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 echo "UV Ceti check test "
@@ -36734,46 +36735,66 @@ else
 fi
 fi # if [ "$GITHUB_ACTIONS" == "true" ];then -- Gaia DR2 clients test
 
-##### UV Ceti check test, online part (the ESA Gaia archive and VizieR) #####
-# The offline part of util/examples/test_nearby_red_dwarf_check.sh ran earlier with the other
-# no-network tests. This part asks the real services about a real star (the Aur-05 candidate
-# of 2026-11-08) and about an empty position, so it runs only on GitHub Actions, like the
-# Gaia DR2 clients test. An outage of a service is reported under its own code (exit code 3:
-# the ESA archive, 4: VizieR), not as a failure of the check.
-if [ "$GITHUB_ACTIONS" == "true" ];then
- THIS_TEST_START_UNIXSEC=$(date +%s)
- TEST_PASSED=1
- UVCETI_SERVICE_UNAVAILABLE=""
- echo "UV Ceti check online test "
- echo -n "UV Ceti check online test: " >> vast_test_report.txt
- UVCETI_ONLINE_TEST_OUTPUT=$(util/examples/test_nearby_red_dwarf_check.sh online 2>&1)
- UVCETI_ONLINE_TEST_EXIT_CODE=$?
- if [ $UVCETI_ONLINE_TEST_EXIT_CODE -eq 3 ];then
-  TEST_PASSED=0
-  UVCETI_SERVICE_UNAVAILABLE="ESA TAP"
-  FAILED_TEST_CODES="$FAILED_TEST_CODES UVCETI_ESA_UNAVAILABLE"
- elif [ $UVCETI_ONLINE_TEST_EXIT_CODE -eq 4 ];then
-  TEST_PASSED=0
-  UVCETI_SERVICE_UNAVAILABLE="VizieR"
-  FAILED_TEST_CODES="$FAILED_TEST_CODES UVCETI_VIZIER_UNAVAILABLE"
- elif [ $UVCETI_ONLINE_TEST_EXIT_CODE -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES $(echo "$UVCETI_ONLINE_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')"
-  echo "$UVCETI_ONLINE_TEST_OUTPUT"
- fi
- THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
- if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mUV Ceti check online test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
-  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
- elif [ -n "$UVCETI_SERVICE_UNAVAILABLE" ];then
-  echo -e "\n\033[01;34mUV Ceti check online test \033[01;33m$UVCETI_SERVICE_UNAVAILABLE UNAVAILABLE\033[00m ($THIS_TEST_TIME_MIN_STR)"
-  echo "$UVCETI_SERVICE_UNAVAILABLE UNAVAILABLE ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
- else
-  echo -e "\n\033[01;34mUV Ceti check online test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
-  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
- fi
-fi # if [ "$GITHUB_ACTIONS" == "true" ];then -- UV Ceti check online test
+##### UV Ceti check real-sky test (the local copy where installed, the ESA Gaia archive and VizieR elsewhere) #####
+# The synthetic part of util/examples/test_nearby_red_dwarf_check.sh ran earlier with the other
+# no-network tests. This part checks real stars (the Aur-05 candidate of 2026-11-08, AD Leo,
+# UV Cet and an empty position near the north galactic pole): against the local copy of the
+# Gaia DR3 nearby stars where one is installed (lib/catalogs/gaia_dr3_nearby, or one of the
+# directories util/transients/transient_factory_test31.sh links it from), with no network;
+# against the ESA Gaia archive and VizieR where there is none. The test never downloads the
+# copy (160 MB, lib/install_local_copy_of_GaiaDR3_nearby_stars.sh does that); a missing copy
+# is recorded as UVCETI_LOCAL_COPY_NOT_INSTALLED (informational, not a failure). An outage of
+# an online service is reported under its own code (exit code 3: the ESA archive, 4: VizieR),
+# not as a failure of the check.
+if [ ! -e lib/catalogs/gaia_dr3_nearby ] && [ ! -L lib/catalogs/gaia_dr3_nearby ];then
+ for TEST_THIS_DIR in /data_ssd/GaiaDR3_nearby /mnt/usb/GaiaDR3_nearby /dataX/kirx/GaiaDR3_nearby /data/kirx/GaiaDR3_nearby /home/kirx/GaiaDR3_nearby /home/apache/gaia_dr3_nearby "$HOME"/GaiaDR3_nearby "$HOME"/gaia_dr3_nearby ../GaiaDR3_nearby ../gaia_dr3_nearby ;do
+  if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ];then
+    ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr3_nearby
+   fi
+   break
+  fi
+ done
+fi
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+UVCETI_SERVICE_UNAVAILABLE=""
+if [ -s lib/catalogs/gaia_dr3_nearby/catalog_info.txt ];then
+ UVCETI_REALSKY_SOURCE="local copy"
+else
+ UVCETI_REALSKY_SOURCE="ESA Gaia archive and VizieR"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES UVCETI_LOCAL_COPY_NOT_INSTALLED"
+fi
+echo "UV Ceti check real-sky test ($UVCETI_REALSKY_SOURCE) "
+echo -n "UV Ceti check real-sky test ($UVCETI_REALSKY_SOURCE): " >> vast_test_report.txt
+UVCETI_REALSKY_TEST_OUTPUT=$(util/examples/test_nearby_red_dwarf_check.sh realsky 2>&1)
+UVCETI_REALSKY_TEST_EXIT_CODE=$?
+if [ $UVCETI_REALSKY_TEST_EXIT_CODE -eq 3 ];then
+ TEST_PASSED=0
+ UVCETI_SERVICE_UNAVAILABLE="ESA TAP"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES UVCETI_ESA_UNAVAILABLE"
+elif [ $UVCETI_REALSKY_TEST_EXIT_CODE -eq 4 ];then
+ TEST_PASSED=0
+ UVCETI_SERVICE_UNAVAILABLE="VizieR"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES UVCETI_VIZIER_UNAVAILABLE"
+elif [ $UVCETI_REALSKY_TEST_EXIT_CODE -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $(echo "$UVCETI_REALSKY_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')"
+ echo "$UVCETI_REALSKY_TEST_OUTPUT"
+fi
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mUV Ceti check real-sky test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+elif [ -n "$UVCETI_SERVICE_UNAVAILABLE" ];then
+ echo -e "\n\033[01;34mUV Ceti check real-sky test \033[01;33m$UVCETI_SERVICE_UNAVAILABLE UNAVAILABLE\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "$UVCETI_SERVICE_UNAVAILABLE UNAVAILABLE ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mUV Ceti check real-sky test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -37248,7 +37269,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # client failed or a service replied with the wrong number of sources) does fail it.
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS_ESA_UNAVAILABLE/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2CLIENTS_VIZIER_UNAVAILABLE/}"
- # The online part of the UV Ceti check test asks the same two services; the same rule
+ # The real-sky part of the UV Ceti check test asks the same two services on a machine
+ # without the local copy of the Gaia DR3 nearby stars; the same rule
  FAILED_TEST_CODES="${FAILED_TEST_CODES// UVCETI_ESA_UNAVAILABLE/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// UVCETI_VIZIER_UNAVAILABLE/}"
  # vizquery test uses an automatic retry on a missing '#END#' marker; the
@@ -37261,6 +37283,10 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # The local Gaia DR2 copy is optional (lib/install_local_copy_of_GaiaDR2.sh, 13 GB):
  # on a machine without it the known-star check uses the online services
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2LOCAL_NOT_INSTALLED/}"
+ # The local copy of the Gaia DR3 nearby stars is optional too
+ # (lib/install_local_copy_of_GaiaDR3_nearby_stars.sh, 160 MB from the VaST catalog mirrors):
+ # without it the UV Ceti check asks the ESA Gaia archive and VizieR, and so does its test
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// UVCETI_LOCAL_COPY_NOT_INSTALLED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"

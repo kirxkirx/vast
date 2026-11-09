@@ -22,7 +22,7 @@
 #            (the transient search passes its catalog-match tolerance, the image scale)
 #
 # Where the Gaia DR3 stars come from (the first one that works):
-#   1. the local copy lib/catalogs/gaia_dr3_nearby built by
+#   1. the local copy lib/catalogs/gaia_dr3_nearby installed by
 #      lib/install_local_copy_of_GaiaDR3_nearby_stars.sh (no network, instant),
 #   2. the ESA Gaia archive (TAP, 1-90 s),
 #   3. the Gaia DR3 table I/355/gaiadr3 at a VizieR mirror (lib/vizquery).

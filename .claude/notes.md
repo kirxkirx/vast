@@ -1560,12 +1560,36 @@ Update this file as you learn new things.
   trusts an empty reply, and treats a failed control as 'not performed'. When no mirror
   answers, lib/choose_vizier_mirror.sh prints the CDS site, so a 'not performed (VizieR
   (vizier.cds.unistra.fr) ...)' line means 'no mirror answered', not a problem of that site.
-- Tests: util/examples/test_nearby_red_dwarf_check.sh (offline on a synthetic 40-byte
-  catalog, everywhere; 'online' adds the ESA archive and VizieR, GitHub Actions only).
-  UVCETI_ESA_UNAVAILABLE and UVCETI_VIZIER_UNAVAILABLE are stripped like the Gaia DR2 client
-  outage codes. The synthetic test stars must have consistent BP-RP and G-RP: the check
-  switches to G-RP when the two colours disagree by more than 1.5 mag, and the first version
-  of the test data tripped on that.
+- Tests: util/examples/test_nearby_red_dwarf_check.sh has the parts synthetic (default: a
+  synthetic 40-byte catalog, no network), local (the real copy: record count 4697159, the
+  real stars Aur-05, AD Leo, UV Cet and an empty position, the default source), online (the
+  ESA archive and VizieR each on its own, plus the fallback without a copy) and realsky
+  (local where a copy is there, online otherwise). test_vast.sh runs synthetic with the
+  no-network tests and realsky next to the Gaia DR2 clients test on every machine (asked for
+  on 2026-11-09: where there is no local copy the real-sky part uses the ESA archive and
+  VizieR, and no test ever downloads the copy); a missing copy is the informational code
+  UVCETI_LOCAL_COPY_NOT_INSTALLED, outages are UVCETI_ESA_UNAVAILABLE and
+  UVCETI_VIZIER_UNAVAILABLE, all three stripped like the Gaia DR2 client outage codes. The
+  synthetic test stars must have consistent BP-RP and G-RP (the first version of the check
+  switched to G-RP when the two colours disagreed by more than 1.5 mag, and the first version
+  of the test data tripped on that).
+- The copy is distributed ready-made: gaia_dr3_nearby.tar.gz (160 MB; gzip, bzip2 saves 4%,
+  xz 20% but is not everywhere) from http://tau.kirx.net/vast_catalogs/gaia_dr3_nearby/ and
+  http://scan.sai.msu.ru/~kirx/data/gaia_dr3_nearby/ (source files and the deployment notes
+  in /home/kirx/gaia_dr3_nearby_dist on tau; the directory on tau is deliberately not under
+  vast_test_data/, so the GitHub release rule for test data does not apply).
+  lib/install_local_copy_of_GaiaDR3_nearby_stars.sh asks the mirrors first (RU: scan first,
+  GAIA_DR3_NEARBY_MIRRORS overrides), accepts an archive only when gzip -t passes, every zone
+  file has its index, the zone files add up to records x record_size and there are at least
+  4 million records, drops a mirror at once on a 404 or a non-gzip body (an error page sent
+  with status 200 would otherwise be fetched three times), resumes a dropped connection, and
+  builds from the ESA archive only when no mirror delivers (GAIA_DR3_NEARBY_SOURCE=auto;
+  mirror forbids the build, esa skips the mirrors; the retry count and sleep of the ESA
+  queries are GAIA_DR3_NEARBY_RETRY_ATTEMPTS/_SLEEP_SEC, handy for a quick failure test). A
+  complete copy in the destination is left alone - the first version re-downloaded the whole
+  sky from ESA when rerun over a finished copy. Tested with a local python http.server: a
+  truncated archive, an HTML stub and a 404 are skipped, the good mirror installs in 2 s, and
+  the installed copy passes the local test part.
 - Placeholders for 'no value' in the wide search output are the word null, never a number:
   the first version printed 99.999 for an unknown parallax and the check's normalizer took
   every parallax >= 99 mas for it, which silently dropped all stars within 10 pc (AD Leo,
