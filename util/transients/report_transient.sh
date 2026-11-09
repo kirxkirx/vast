@@ -72,8 +72,9 @@ function clean_tmp_files {
    "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp" \
    "${TEMP_FILE__MPCheck_OUTPUT}" \
    "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp" \
+   "${TEMP_FILE__UVCETI_OUTPUT}" \
    ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat \
-   tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp
+   tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp tempilefallback_UVCETI_OUTPUT_$$.tmp
  do
   if [ -n "$TMP_FILE_TO_REMOVE" ] && [ -f "$TMP_FILE_TO_REMOVE" ]; then
    rm -f "$TMP_FILE_TO_REMOVE"
@@ -1053,6 +1054,32 @@ NETWORK_TIMING_MPCHECK_START=$(date +%s)
  util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN test.mpc__"$LIGHTCURVEFILE" > "$TEMP_FILE__MPCheck_OUTPUT"
  echo $? > "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp"
 } &
+# UV Ceti check: is there a Gaia DR3 star closer than 200 pc (a red dwarf, most likely) at the
+# position once its proper motion is applied? It runs for every surviving candidate, known
+# variables included (a VSX match alone does not tell whether the star is a nearby red dwarf).
+# util/transients/check_nearby_red_dwarf.sh reads the local copy lib/catalogs/gaia_dr3_nearby
+# (lib/install_local_copy_of_GaiaDR3_nearby_stars.sh) and asks the ESA Gaia archive, then VizieR,
+# only without it. The tolerance is the catalog-match one (the image scale), like the known-star
+# check. The result is printed after the forced-photometry lines below. UV_CETI_CHECK=no disables
+# the check; the test suite runs it only with the local copy, so the tests never send a query per
+# candidate to the online services.
+TEMP_FILE__UVCETI_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_UVCETI_OUTPUT_$$.tmp")
+RUN_UVCETI_CHECK="yes"
+if [ "$UV_CETI_CHECK" = "no" ] || [ ! -x util/transients/check_nearby_red_dwarf.sh ];then
+ RUN_UVCETI_CHECK="no"
+fi
+if [ -n "$THIS_IS_VAST_TEST" ] && [ ! -s lib/catalogs/gaia_dr3_nearby/catalog_info.txt ];then
+ RUN_UVCETI_CHECK="no"
+fi
+if [ "$RUN_UVCETI_CHECK" = "yes" ];then
+ {
+  NETWORK_TIMING_UVCETI_START=$(date +%s)
+  util/transients/check_nearby_red_dwarf.sh "$RA_MEAN" "$DEC_MEAN" "$JD_MEAN" "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" > "$TEMP_FILE__UVCETI_OUTPUT" 2>/dev/null
+  if [ -n "$NETWORK_TIMING_LOG" ]; then
+   echo "UVCETI_CHECK $LIGHTCURVEFILE $(( $(date +%s) - NETWORK_TIMING_UVCETI_START ))s" >> "$NETWORK_TIMING_LOG"
+  fi
+ } &
+fi
 wait
 NETWORK_TIMING_MPCHECK_END=$(date +%s)
 if [ -n "$NETWORK_TIMING_LOG" ]; then
@@ -1147,6 +1174,16 @@ fi
 if [ -n "$FORCED_PHOT_HTML_BUFFER" ];then
  printf '%s' "$FORCED_PHOT_HTML_BUFFER"
 fi
+
+# The UV Ceti check line (started above, in parallel with the VSX and asteroid checks).
+# It is appended here, after everything the report parsers look for, and begins with
+# 'UV Ceti check' - the prefix unmw/filter_report.py uses to end the astcheck match block.
+# A check that could not be done prints 'UV Ceti check: not performed (why)', like the
+# 'online_id skipped' line above; a disabled check prints nothing.
+if [ "$RUN_UVCETI_CHECK" = "yes" ] && [ -s "$TEMP_FILE__UVCETI_OUTPUT" ];then
+ grep '^UV Ceti check' "$TEMP_FILE__UVCETI_OUTPUT" | head -n 1
+fi
+rm -f "$TEMP_FILE__UVCETI_OUTPUT"
 
 # Is the Online MPChecker search radius is not set - use the default one
 if [ -z "$ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN" ];then

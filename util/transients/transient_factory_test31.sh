@@ -2141,6 +2141,28 @@ if [ ! -e lib/catalogs/gaia_dr2 ] && [ ! -L lib/catalogs/gaia_dr2 ];then
   fi
  done
 fi
+# The same for the local copy of the Gaia DR3 nearby stars (parallax > 5 mas, built by
+# lib/install_local_copy_of_GaiaDR3_nearby_stars.sh) that serves the UV Ceti check of the
+# candidates, util/transients/check_nearby_red_dwarf.sh. Without it the check asks the ESA
+# Gaia archive, then VizieR, for every surviving candidate.
+if [ ! -e lib/catalogs/gaia_dr3_nearby ] && [ ! -L lib/catalogs/gaia_dr3_nearby ];then
+ for TEST_THIS_DIR in /data_ssd/GaiaDR3_nearby /mnt/usb/GaiaDR3_nearby /dataX/kirx/GaiaDR3_nearby /data/kirx/GaiaDR3_nearby /home/kirx/GaiaDR3_nearby /home/apache/gaia_dr3_nearby "$HOME"/GaiaDR3_nearby "$HOME"/gaia_dr3_nearby ../GaiaDR3_nearby ../gaia_dr3_nearby ;do
+  if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ] && ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr3_nearby ;then
+    echo "Linking the local copy of the Gaia DR3 nearby stars from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   fi
+   break
+  fi
+ done
+fi
+if [ "$UV_CETI_CHECK" != "no" ];then
+ if [ -s lib/catalogs/gaia_dr3_nearby/catalog_info.txt ];then
+  echo "UV Ceti check of the candidates: reading the local copy of the Gaia DR3 nearby stars" | tee -a transient_factory_test31.txt
+ else
+  echo "UV Ceti check of the candidates: no local copy of the Gaia DR3 nearby stars (see lib/install_local_copy_of_GaiaDR3_nearby_stars.sh), the ESA Gaia archive will be asked for each candidate" | tee -a transient_factory_test31.txt
+ fi
+fi
 #####################################################################################################
 # This script should take care of updating astorb.dat and other catalogs
 lib/update_offline_catalogs.sh all

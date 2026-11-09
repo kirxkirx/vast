@@ -1503,3 +1503,78 @@ Update this file as you learn new things.
   15 s start-of-run probe in lib/choose_gaia_dr2_client.sh stays: ESA is asked for every candidate
   whenever VizieR fails, so the probe only decides which service is tried first. Asynchronous
   queries (/tap/async) took 1-3 s while the synchronous ones were refused or slow.
+
+## UV Ceti check (nearby red dwarf), Gaia DR3 nearby-star copy, vizquery https redirect (2026-11-09)
+
+- New: util/transients/check_nearby_red_dwarf.sh tells whether a Gaia DR3 star closer than
+  200 pc (parallax > 5 mas, parallax_over_error > 3) sits at a candidate's position once its
+  proper motion is applied to the epoch of the observation, and where it sits with respect to
+  the K/M dwarf main sequence. Design, thresholds, verdicts and caveats are in
+  .claude/nearby_red_dwarf_check_design.md. Decisions of 2026-11-09: BP-RP >= 1.0 (all K and M
+  dwarfs) counts as red; the check runs for VSX-matched candidates too; the local copy is the
+  primary source, the ESA archive the fallback, VizieR the last resort.
+- The report line starts with 'UV Ceti check' and is appended after the forced-photometry
+  lines. It is a new entry for the parser list above: unmw/filter_report.py ends the astcheck
+  match block at that prefix and exports the line as the uv_ceti_check JSON field (documented in
+  unmw/filter_report_json_format.md). Keep the line free of 'The object was', 'found in',
+  'not found' and 'mag brighter than the'. report_transient.sh runs the check in the background
+  group with the VSX and asteroid checks; UV_CETI_CHECK=no disables it; with THIS_IS_VAST_TEST
+  set it runs only when lib/catalogs/gaia_dr3_nearby exists, so the test suite never sends one
+  online query per candidate.
+- src/catalogs/local_star_catalog.c: the zone record size is a runtime variable (g_rec_size),
+  24 bytes for gaia_dr2/tycho2 and 40 for gaia_dr3_nearby (parallax, its error, RUWE, pmRA,
+  pmDec after the old 24 bytes; chosen by the catalog name at finalize, read from
+  record_size= at search). The search prints the wide 13-column format whenever a 40-byte
+  catalog is involved ('null null' in the proper-motion columns = none in the catalog) and
+  -sort=_r orders by distance. The 24-byte catalogs are unchanged; test_local_star_catalog.sh
+  covers both layouts.
+- ESA Gaia archive, measured 2026-11-09: anonymous asynchronous jobs get executionDuration =
+  60 s, a request for a longer one is ignored, and a job running longer ends ABORTED with an
+  empty error summary (the installer's first version used 8 async declination bands of
+  768000 rows and lost every job this way). Rows are delivered at about 1500 per second; a
+  synchronous query of 39000 rows took 28 s and was complete; sync queries of at least 5000
+  rows and 55 s worked. COUNT(*) by declination band takes seconds, by source_id range 48 s.
+  Synchronous replies are cut at 50000 rows unless the request carries a larger MAXREC
+  (MAXREC=1000000 is honoured; without it a band of 85024 sources came back as exactly 50000
+  rows, which only the COUNT(*) comparison revealed). The archive answers a request that
+  follows another within seconds, and bursts of requests, with HTTP 429 (also for the UV
+  Ceti check's queries while a build runs). lib/install_local_copy_of_GaiaDR3_nearby_stars.sh
+  therefore uses 100 synchronous equal-area declination bands, counts each band once, cuts
+  a band of more than 60000 sources into equal RA pieces (twice as many as the count needs:
+  dense Galactic-plane and Magellanic-Cloud bands hold many spurious large parallaxes that
+  pass parallax_over_error > 3 and are not spread evenly in RA), requires the rows of the
+  pieces to add up to the count (otherwise the band is cleared and gets twice as many pieces
+  next run), pauses 15 s between queries and retries every 60 s on 429/5xx; it is resumable
+  as long as the band count is kept. Counting every piece recursively (the first version)
+  doubled the throttled requests: 5 min per southern band, 6 h for the sky. The first full
+  build on tau (2026-11-09, /data_ssd/GaiaDR3_nearby) took about 4 h for 148 queries with
+  30 refusals, including a 20-minute spell of HTTP 503 from the archive that the retries
+  outlasted, and holds 4697159 records (195 MB) - exactly the whole-sky COUNT(*), which is
+  the completeness check to repeat after any rebuild.
+- VizieR, 2026-11-09: vizier.cfa.harvard.edu answers plain http with a 301 to https, which
+  lib/my_vizquery.sh never followed (curl without -L), so every query there failed and the
+  mirror chooser could never pick it; the wrapper now follows redirects keeping the POST body
+  (-L --post301 --post302 --post303). The same mirror served complete-but-empty tables for
+  every query all day (also for the Gaia DR2 probe of the chooser), which would pass as 'no
+  star here': the UV Ceti check runs a control query (any Gaia DR3 star within 5') before it
+  trusts an empty reply, and treats a failed control as 'not performed'. When no mirror
+  answers, lib/choose_vizier_mirror.sh prints the CDS site, so a 'not performed (VizieR
+  (vizier.cds.unistra.fr) ...)' line means 'no mirror answered', not a problem of that site.
+- Tests: util/examples/test_nearby_red_dwarf_check.sh (offline on a synthetic 40-byte
+  catalog, everywhere; 'online' adds the ESA archive and VizieR, GitHub Actions only).
+  UVCETI_ESA_UNAVAILABLE and UVCETI_VIZIER_UNAVAILABLE are stripped like the Gaia DR2 client
+  outage codes. The synthetic test stars must have consistent BP-RP and G-RP: the check
+  switches to G-RP when the two colours disagree by more than 1.5 mag, and the first version
+  of the test data tripped on that.
+- Placeholders for 'no value' in the wide search output are the word null, never a number:
+  the first version printed 99.999 for an unknown parallax and the check's normalizer took
+  every parallax >= 99 mas for it, which silently dropped all stars within 10 pc (AD Leo,
+  201 mas, was 'no such star'; the synthetic tests had no parallax above 50 mas, a real-star
+  check caught it). The offline test now has a 201 mas star.
+- G-RP is no cross-check of BP-RP for M dwarfs: the main sequence is so steep in G-RP at the
+  late end that 0.1 mag of colour is 1.5 mag of M_G. UV Cet itself (BP-RP 3.83, G-RP 1.39)
+  sits on the locus by BP-RP and 1.6 mag below it by G-RP; the first version of the check
+  switched to G-RP whenever the two disagreed by 1.5 mag and called UV Cet a subdwarf or
+  composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
+  Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
+  touching the classification.

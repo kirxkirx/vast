@@ -13,35 +13,55 @@
 //    lib/install_local_copy_of_GaiaDR2.sh from the official ESA bulk download.
 //  - tycho2: the main Tycho-2 catalog (lib/catalogs/tycho2/tyc2.dat.*), positions
 //    propagated to epoch 2016.0, V estimated from BT and VT.
-//    Both use the zone format below.
+//  - gaia_dr3_nearby: the Gaia DR3 sources closer than 200 pc (parallax > 5 mas with
+//    parallax_over_error > 3) with their parallaxes and proper motions, built by
+//    lib/install_local_copy_of_GaiaDR3_nearby_stars.sh from the ESA Gaia archive. It
+//    serves the UV Ceti (nearby red dwarf) check util/transients/check_nearby_red_dwarf.sh.
+//    These three use the zone format below.
 //  - ucac5: VaST's existing local UCAC5 copy (lib/catalogs/ucac5/z001..z900, 52-byte
 //    records sorted by RA, see http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt),
 //    read in place; positions and G magnitudes there come from Gaia DR1.
 //
 // Zone format (format=vast_local_star_catalog_v1): 900 declination zones of 0.2 deg,
-// files z001 (dec -90.0..-89.8) .. z900, each a sequence of 24-byte little-endian
-// records sorted by RA:
+// files z001 (dec -90.0..-89.8) .. z900, each a sequence of little-endian records
+// sorted by RA. The record is 24 bytes (gaia_dr2, tycho2):
 //   int64 id | uint32 RA*1e7 deg | int32 Dec*1e7 deg | int16 m1 | int16 m2 | int16 m3 |
 //   uint8 flags | uint8 reserved
+// or 40 bytes (gaia_dr3_nearby): the same 24 bytes followed by
+//   int32 parallax (microarcsec) | uint16 parallax error (microarcsec, 65535 = larger
+//   or unknown) | int16 RUWE*1000 (0 = unknown) | int32 pmRA*cos(Dec) (microarcsec/yr) |
+//   int32 pmDec (microarcsec/yr)
 // magnitudes in millimag, -32768 = no value; Gaia: m1=G m2=BP m3=RP, flags bit 0 =
-// phot_variable_flag VARIABLE; Tycho-2: m1=V estimate m2=BT m3=VT.
+// phot_variable_flag VARIABLE, bit 1 = no proper motion in the catalog (stored as 0);
+// Tycho-2: m1=V estimate m2=BT m3=VT. catalog_info.txt records the record size.
 // zNNN.idx holds 3601 little-endian uint32: the index of the first record with
 // RA >= k*0.1 deg for k=0..3600 (the last value is the number of records).
 // catalog_info.txt is written last, so a directory without it is an incomplete build.
 //
 // Subcommands:
 //   local_star_catalog gaia-extract STAGING_DIR CHUNK_NAME MAX_GMAG < GaiaSource_NNN.csv
+//   local_star_catalog nearby-extract STAGING_DIR CHUNK_NAME MIN_PARALLAX_MAS < gaia_source.csv
+//     (a CSV with the ESA archive column names, see cmd_nearby_extract(); keeps the
+//     sources with a parallax above the limit)
 //   local_star_catalog tycho2-extract STAGING_DIR CHUNK_NAME tyc2.dat.00 [tyc2.dat.01 ...]
 //   local_star_catalog finalize STAGING_DIR OUTPUT_DIR CATALOG_NAME DESCRIPTION [MEMORY_LIMIT_MB]
+//     (the CATALOG_NAME gaia_dr3_nearby selects the 40-byte records)
 //   local_star_catalog search [-cat=TYPE:DIR ...] [DIR] -c="RA DEC" -c.rs=ARCSEC
-//                      [-out.max=N] [-sort=Gmag|RPmag] [Gmag=A..B|RPmag=A..B]
-//     TYPE is gaia_dr2, tycho2 or ucac5; a bare DIR is read as a zone catalog.
-//     RA DEC are sexagesimal (hh:mm:ss.s +dd:mm:ss.s) or decimal degrees.
-//     Several catalogs are merged, sorted by magnitude in the requested band, and a
-//     star listed by more than one catalog within 2 arcsec is reported once.
+//                      [-out.max=N] [-sort=Gmag|RPmag|_r] [Gmag=A..B|RPmag=A..B]
+//     TYPE is gaia_dr2, tycho2, gaia_dr3_nearby or ucac5; a bare DIR is read as a zone
+//     catalog. RA DEC are sexagesimal (hh:mm:ss.s +dd:mm:ss.s) or decimal degrees.
+//     Several catalogs are merged, sorted by magnitude in the requested band (or by the
+//     distance from the center with -sort=_r), and a star listed by more than one
+//     catalog within 2 arcsec is reported once.
 //     A star within 0.0005 mag of a magnitude limit is left out (see mag_passes()).
 //     For Tycho-2 the band is V for both Gmag and RPmag requests; for UCAC5 it is
 //     the Gaia DR1 G magnitude (UCAC f.mag when G is missing).
+//     When a gaia_dr3_nearby catalog is searched, every output line also lists BPmag,
+//     Plx and e_Plx (mas), pmRA and pmDE (mas/yr) and RUWE, see the header line printed
+//     before the stars; the word null stands for a value the catalog does not have (a
+//     star of another catalog in the same search, an unknown parallax error, no proper
+//     motion). The positions are those of the catalog epoch (2016.0); the caller
+//     propagates them with the proper motions.
 // Exit codes: 0 success (also when nothing matches), 1 usage error, 2 a catalog is
 // missing, incomplete or unreadable (the caller should then ask an online service).
 
@@ -66,6 +86,8 @@
 #endif
 
 #define REC_SIZE 24
+#define NEARBY_REC_SIZE 40
+#define NEARBY_CATALOG_NAME "gaia_dr3_nearby"
 #define UCAC5_REC_SIZE 52
 #define ZONE_COUNT 900
 #define ZONE_HEIGHT_DEG 0.2
@@ -76,6 +98,16 @@
 #define DEDUP_RADIUS_ARCSEC 2.0
 #define MAX_CATALOGS 8
 #define CATALOG_FORMAT "vast_local_star_catalog_v1"
+#define PLX_ERR_UNKNOWN_UAS 65535
+
+// Size of the zone records being written or read: REC_SIZE, or NEARBY_REC_SIZE for the
+// gaia_dr3_nearby catalog. The first 24 bytes have the same layout in both, so the
+// sorting and indexing code only needs the size.
+static int g_rec_size= REC_SIZE;
+// set by the search when a catalog with the extended records was read (wide output)
+static int g_any_extended_catalog= 0;
+// -sort=_r: order the search output by the distance from the center
+static int g_sort_by_distance= 0;
 
 typedef struct {
  int64_t id;
@@ -83,6 +115,12 @@ typedef struct {
  int32_t dec_e7;
  int16_t m1, m2, m3;
  uint8_t flags;
+ // the fields below are stored only in the NEARBY_REC_SIZE records
+ int32_t plx_uas;       // parallax, microarcsec
+ uint16_t plx_err_uas;  // parallax error, microarcsec (PLX_ERR_UNKNOWN_UAS = larger or unknown)
+ int16_t ruwe_milli;    // RUWE*1000 (0 = unknown)
+ int32_t pmra_uas_yr;   // pmRA*cos(Dec), microarcsec/yr
+ int32_t pmdec_uas_yr;  // pmDec, microarcsec/yr
 } star_rec;
 
 typedef struct {
@@ -91,8 +129,13 @@ typedef struct {
  double ra, dec;
  double mag_sort; // magnitude in the requested band, used for sorting and limits
  double gmag, rpmag; // printed columns (99.9999 = no value)
+ double bpmag;
  int variable;
  int catalog_index;
+ // from the NEARBY_REC_SIZE records (extended = 1), see the wide output format
+ int extended;
+ int has_pm;
+ double plx_mas, plx_err_mas, pmra_mas_yr, pmdec_mas_yr, ruwe;
 } match_t;
 
 typedef struct {
@@ -140,6 +183,13 @@ static void pack_rec( const star_rec *r, unsigned char *b ) {
  put_u16( b + 20, (uint16_t)r->m3 );
  b[22]= r->flags;
  b[23]= 0;
+ if ( g_rec_size == NEARBY_REC_SIZE ) {
+  put_u32( b + 24, (uint32_t)r->plx_uas );
+  put_u16( b + 28, r->plx_err_uas );
+  put_u16( b + 30, (uint16_t)r->ruwe_milli );
+  put_u32( b + 32, (uint32_t)r->pmra_uas_yr );
+  put_u32( b + 36, (uint32_t)r->pmdec_uas_yr );
+ }
 }
 static void unpack_rec( const unsigned char *b, star_rec *r ) {
  r->id= (int64_t)get_u64( b );
@@ -149,6 +199,18 @@ static void unpack_rec( const unsigned char *b, star_rec *r ) {
  r->m2= (int16_t)get_u16( b + 18 );
  r->m3= (int16_t)get_u16( b + 20 );
  r->flags= b[22];
+ r->plx_uas= 0;
+ r->plx_err_uas= PLX_ERR_UNKNOWN_UAS;
+ r->ruwe_milli= 0;
+ r->pmra_uas_yr= 0;
+ r->pmdec_uas_yr= 0;
+ if ( g_rec_size == NEARBY_REC_SIZE ) {
+  r->plx_uas= (int32_t)get_u32( b + 24 );
+  r->plx_err_uas= get_u16( b + 28 );
+  r->ruwe_milli= (int16_t)get_u16( b + 30 );
+  r->pmra_uas_yr= (int32_t)get_u32( b + 32 );
+  r->pmdec_uas_yr= (int32_t)get_u32( b + 36 );
+ }
 }
 
 // -------------------------------------------------------------------------
@@ -276,7 +338,7 @@ static int rec_buffer_add( rec_buffer *rb, const star_rec *r ) {
  unsigned char *nb;
  if ( rb->n_rec == rb->cap_rec ) {
   new_cap= rb->cap_rec ? rb->cap_rec * 2 : 65536;
-  nb= realloc( rb->b, new_cap * REC_SIZE );
+  nb= realloc( rb->b, new_cap * g_rec_size );
   if ( NULL == nb ) {
    fprintf( stderr, "ERROR: out of memory\n" );
    return -1;
@@ -284,7 +346,7 @@ static int rec_buffer_add( rec_buffer *rb, const star_rec *r ) {
   rb->b= nb;
   rb->cap_rec= new_cap;
  }
- pack_rec( r, rb->b + rb->n_rec * REC_SIZE );
+ pack_rec( r, rb->b + rb->n_rec * g_rec_size );
  rb->n_rec++;
  return 0;
 }
@@ -292,7 +354,7 @@ static int rec_buffer_add( rec_buffer *rb, const star_rec *r ) {
 static int write_chunk( const char *staging_dir, const char *chunk_name, rec_buffer *rb ) {
  char name[1024];
  snprintf( name, sizeof( name ), "%s.part", chunk_name );
- return write_file_atomically( staging_dir, name, rb->b, rb->n_rec * REC_SIZE );
+ return write_file_atomically( staging_dir, name, rb->b, rb->n_rec * g_rec_size );
 }
 
 // -------------------------------------------------------------------------
@@ -461,6 +523,179 @@ static int cmd_gaia_extract( int argc, char **argv ) {
   return 2;
  }
  fprintf( stderr, "%s: kept %lu of %ld sources with G < %.2f\n", chunk_name, (unsigned long)rb.n_rec, n_rows, max_gmag );
+ free( rb.b );
+ return 0;
+}
+
+// -------------------------------------------------------------------------
+// nearby-extract: the Gaia DR3 sources with a parallax above a limit, keeping the
+// parallax, its error, the proper motion and RUWE in NEARBY_REC_SIZE records.
+// The input is a CSV table with the ESA archive column names (a gaia_source query
+// result or a bulk-download file): source_id, ra, dec, parallax, parallax_error,
+// pmra, pmdec, phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, ruwe,
+// phot_variable_flag. The error, RUWE, the BP/RP magnitudes and the variability flag
+// may be absent.
+
+static int csv_column_index( char **fields, int nf, const char *name ) {
+ int i;
+ for ( i= 0; i < nf; i++ )
+  if ( 0 == strcmp( fields[i], name ) )
+   return i;
+ return -1;
+}
+
+// a CSV value times a scale, rounded to the nearest integer and clamped to int32
+static int32_t csv_value_to_int32_scaled( const char *s, double scale ) {
+ double v;
+ if ( is_null_field( s ) )
+  return 0;
+ v= floor( atof( s ) * scale + 0.5 );
+ if ( v > 2147483647.0 )
+  return 2147483647;
+ if ( v < -2147483647.0 )
+  return -2147483647;
+ return (int32_t)v;
+}
+
+static int cmd_nearby_extract( int argc, char **argv ) {
+ const char *staging_dir, *chunk_name;
+ double min_parallax_mas;
+ char *line= NULL;
+ size_t line_cap= 0;
+ ssize_t len;
+ char **fields;
+ int max_fields= 1024;
+ int header_seen= 0;
+ int i_sid= -1, i_ra= -1, i_dec= -1, i_plx= -1, i_eplx= -1, i_pmra= -1, i_pmdec= -1;
+ int i_g= -1, i_bp= -1, i_rp= -1, i_ruwe= -1, i_var= -1;
+ int needed[12];
+ int max_needed= -1;
+ rec_buffer rb= { NULL, 0, 0 };
+ long n_rows= 0;
+ star_rec r;
+ int nf, i;
+ double plx, v;
+
+ if ( argc != 5 ) {
+  fprintf( stderr, "Usage: %s nearby-extract STAGING_DIR CHUNK_NAME MIN_PARALLAX_MAS < gaia_source.csv\n", argv[0] );
+  return 1;
+ }
+ staging_dir= argv[2];
+ chunk_name= argv[3];
+ min_parallax_mas= atof( argv[4] );
+ if ( min_parallax_mas <= 0.0 || min_parallax_mas > 1000.0 ) {
+  fprintf( stderr, "ERROR: implausible MIN_PARALLAX_MAS %s\n", argv[4] );
+  return 1;
+ }
+ g_rec_size= NEARBY_REC_SIZE;
+ if ( 0 != make_dir( staging_dir ) )
+  return 2;
+ fields= malloc( sizeof( char * ) * max_fields );
+ if ( NULL == fields )
+  return 2;
+
+ while ( ( len= getline( &line, &line_cap, stdin ) ) > 0 ) {
+  if ( line[0] == '#' )
+   continue;
+  nf= split_csv( line, fields, max_fields );
+  if ( !header_seen ) {
+   i_sid= csv_column_index( fields, nf, "source_id" );
+   i_ra= csv_column_index( fields, nf, "ra" );
+   i_dec= csv_column_index( fields, nf, "dec" );
+   i_plx= csv_column_index( fields, nf, "parallax" );
+   i_eplx= csv_column_index( fields, nf, "parallax_error" );
+   i_pmra= csv_column_index( fields, nf, "pmra" );
+   i_pmdec= csv_column_index( fields, nf, "pmdec" );
+   i_g= csv_column_index( fields, nf, "phot_g_mean_mag" );
+   i_bp= csv_column_index( fields, nf, "phot_bp_mean_mag" );
+   i_rp= csv_column_index( fields, nf, "phot_rp_mean_mag" );
+   i_ruwe= csv_column_index( fields, nf, "ruwe" );
+   i_var= csv_column_index( fields, nf, "phot_variable_flag" );
+   if ( i_sid < 0 || i_ra < 0 || i_dec < 0 || i_plx < 0 || i_pmra < 0 || i_pmdec < 0 || i_g < 0 ) {
+    fprintf( stderr, "ERROR: the CSV header lacks source_id, ra, dec, parallax, pmra, pmdec or phot_g_mean_mag\n" );
+    free( fields );
+    free( line );
+    return 2;
+   }
+   needed[0]= i_sid;
+   needed[1]= i_ra;
+   needed[2]= i_dec;
+   needed[3]= i_plx;
+   needed[4]= i_eplx;
+   needed[5]= i_pmra;
+   needed[6]= i_pmdec;
+   needed[7]= i_g;
+   needed[8]= i_bp;
+   needed[9]= i_rp;
+   needed[10]= i_ruwe;
+   needed[11]= i_var;
+   for ( i= 0; i < 12; i++ )
+    if ( needed[i] > max_needed )
+     max_needed= needed[i];
+   header_seen= 1;
+   continue;
+  }
+  n_rows++;
+  if ( nf <= max_needed ) {
+   fprintf( stderr, "ERROR: a data line has %d fields, the header needs %d - truncated input?\n", nf, max_needed + 1 );
+   free( fields );
+   free( line );
+   free( rb.b );
+   return 2;
+  }
+  if ( is_null_field( fields[i_plx] ) )
+   continue;
+  plx= atof( fields[i_plx] );
+  if ( !( plx > min_parallax_mas ) )
+   continue;
+  memset( &r, 0, sizeof( r ) );
+  r.id= (int64_t)strtoll( fields[i_sid], NULL, 10 );
+  r.ra_e7= ra_deg_to_e7( atof( fields[i_ra] ) );
+  r.dec_e7= dec_deg_to_e7( atof( fields[i_dec] ) );
+  r.m1= mag_to_millimag( atof( fields[i_g] ), is_null_field( fields[i_g] ) );
+  r.m2= ( i_bp >= 0 ) ? mag_to_millimag( atof( fields[i_bp] ), is_null_field( fields[i_bp] ) ) : MAG_NULL;
+  r.m3= ( i_rp >= 0 ) ? mag_to_millimag( atof( fields[i_rp] ), is_null_field( fields[i_rp] ) ) : MAG_NULL;
+  r.flags= ( i_var >= 0 && 0 == strcmp( fields[i_var], "VARIABLE" ) ) ? 1 : 0;
+  r.plx_uas= csv_value_to_int32_scaled( fields[i_plx], 1000.0 );
+  r.plx_err_uas= PLX_ERR_UNKNOWN_UAS;
+  if ( i_eplx >= 0 && !is_null_field( fields[i_eplx] ) ) {
+   v= floor( atof( fields[i_eplx] ) * 1000.0 + 0.5 );
+   if ( v >= 0.0 && v < (double)PLX_ERR_UNKNOWN_UAS )
+    r.plx_err_uas= (uint16_t)v;
+  }
+  r.ruwe_milli= 0;
+  if ( i_ruwe >= 0 && !is_null_field( fields[i_ruwe] ) ) {
+   v= floor( atof( fields[i_ruwe] ) * 1000.0 + 0.5 );
+   if ( v > 32767.0 )
+    v= 32767.0;
+   if ( v > 0.0 )
+    r.ruwe_milli= (int16_t)v;
+  }
+  if ( is_null_field( fields[i_pmra] ) || is_null_field( fields[i_pmdec] ) ) {
+   r.flags|= 2;
+  } else {
+   r.pmra_uas_yr= csv_value_to_int32_scaled( fields[i_pmra], 1000.0 );
+   r.pmdec_uas_yr= csv_value_to_int32_scaled( fields[i_pmdec], 1000.0 );
+  }
+  if ( 0 != rec_buffer_add( &rb, &r ) ) {
+   free( fields );
+   free( line );
+   free( rb.b );
+   return 2;
+  }
+ }
+ free( fields );
+ free( line );
+ if ( !header_seen ) {
+  fprintf( stderr, "ERROR: no CSV header found on the standard input\n" );
+  free( rb.b );
+  return 2;
+ }
+ if ( 0 != write_chunk( staging_dir, chunk_name, &rb ) ) {
+  free( rb.b );
+  return 2;
+ }
+ fprintf( stderr, "%s: kept %lu of %ld sources with parallax > %.2f mas\n", chunk_name, (unsigned long)rb.n_rec, n_rows, min_parallax_mas );
  free( rb.b );
  return 0;
 }
@@ -661,7 +896,7 @@ typedef int ( *record_fn )( const unsigned char *rec, void *ctx );
 static int for_each_record( char **parts, size_t n_parts, record_fn fn, void *ctx ) {
  size_t i, got, k;
  FILE *f;
- unsigned char *buf= malloc( (size_t)REC_SIZE * 65536 );
+ unsigned char *buf= malloc( (size_t)g_rec_size * 65536 );
  if ( NULL == buf )
   return -1;
  for ( i= 0; i < n_parts; i++ ) {
@@ -671,9 +906,9 @@ static int for_each_record( char **parts, size_t n_parts, record_fn fn, void *ct
    free( buf );
    return -1;
   }
-  while ( ( got= fread( buf, REC_SIZE, 65536, f ) ) > 0 ) {
+  while ( ( got= fread( buf, g_rec_size, 65536, f ) ) > 0 ) {
    for ( k= 0; k < got; k++ ) {
-    if ( 0 != fn( buf + k * REC_SIZE, ctx ) ) {
+    if ( 0 != fn( buf + k * g_rec_size, ctx ) ) {
      fclose( f );
      free( buf );
      return -1;
@@ -722,7 +957,7 @@ static int fill_fn( const unsigned char *rec, void *ctx ) {
   fprintf( stderr, "ERROR: zone %d got more records than counted - did the staging files change?\n", z );
   return -1;
  }
- memcpy( c->zone_buf[z] + c->filled[z] * REC_SIZE, rec, REC_SIZE );
+ memcpy( c->zone_buf[z] + c->filled[z] * g_rec_size, rec, g_rec_size );
  c->filled[z]++;
  return 0;
 }
@@ -737,15 +972,15 @@ static int write_zone( const char *output_dir, int z, unsigned char *recs, uint6
   return -1;
  }
  if ( n > 1 )
-  qsort( recs, (size_t)n, REC_SIZE, compare_packed_ra );
+  qsort( recs, (size_t)n, g_rec_size, compare_packed_ra );
  for ( k= 0; k <= RA_BINS; k++ ) {
   limit= (uint64_t)k * RA_BIN_E7;
-  while ( i < n && (uint64_t)get_u32( recs + i * REC_SIZE + 8 ) < limit )
+  while ( i < n && (uint64_t)get_u32( recs + i * g_rec_size + 8 ) < limit )
    i++;
   put_u32( idx + 4 * k, (uint32_t)( k == RA_BINS ? n : i ) );
  }
  snprintf( name, sizeof( name ), "z%03d", z );
- if ( 0 != write_file_atomically( output_dir, name, recs, (size_t)( n * REC_SIZE ) ) )
+ if ( 0 != write_file_atomically( output_dir, name, recs, (size_t)( n * g_rec_size ) ) )
   return -1;
  snprintf( name, sizeof( name ), "z%03d.idx", z );
  return write_file_atomically( output_dir, name, idx, sizeof( idx ) );
@@ -776,6 +1011,8 @@ static int cmd_finalize( int argc, char **argv ) {
   memory_limit_mb= atof( argv[6] );
  if ( memory_limit_mb < 64.0 )
   memory_limit_mb= 64.0;
+ // the staging files of the nearby-star catalog hold the 40-byte records
+ g_rec_size= ( 0 == strcmp( catalog_name, NEARBY_CATALOG_NAME ) ) ? NEARBY_REC_SIZE : REC_SIZE;
  if ( 0 != make_dir( output_dir ) )
   return 2;
  parts= list_parts( staging_dir, &n_parts );
@@ -802,7 +1039,7 @@ static int cmd_finalize( int argc, char **argv ) {
   z1= z;
   // group zones into a pass that fits the memory limit (a single zone always fits)
   while ( z1 <= ZONE_COUNT ) {
-   zone_bytes= (double)cc->counts[z1] * REC_SIZE;
+   zone_bytes= (double)cc->counts[z1] * g_rec_size;
    if ( z1 > z && pass_bytes + zone_bytes > memory_limit_mb * 1048576.0 )
     break;
    pass_bytes+= zone_bytes;
@@ -816,7 +1053,7 @@ static int cmd_finalize( int argc, char **argv ) {
   fc->z1= z1;
   fc->counts= cc->counts;
   for ( zz= z; zz <= z1; zz++ ) {
-   fc->zone_buf[zz]= malloc( cc->counts[zz] > 0 ? (size_t)cc->counts[zz] * REC_SIZE : 1 );
+   fc->zone_buf[zz]= malloc( cc->counts[zz] > 0 ? (size_t)cc->counts[zz] * g_rec_size : 1 );
    if ( NULL == fc->zone_buf[zz] ) {
     fprintf( stderr, "ERROR: out of memory for zone %d\n", zz );
     return 2;
@@ -841,7 +1078,7 @@ static int cmd_finalize( int argc, char **argv ) {
  now= time( NULL );
  snprintf( info, sizeof( info ),
            "format=%s\ncatalog=%s\ndescription=%s\nrecords=%llu\nzones=%d\nzone_height_deg=%.1f\nra_index_bins=%d\nrecord_size=%d\nbuilt_unixtime=%ld\n",
-           CATALOG_FORMAT, catalog_name, description, (unsigned long long)total, ZONE_COUNT, ZONE_HEIGHT_DEG, RA_BINS, REC_SIZE, (long)now );
+           CATALOG_FORMAT, catalog_name, description, (unsigned long long)total, ZONE_COUNT, ZONE_HEIGHT_DEG, RA_BINS, g_rec_size, (long)now );
  if ( 0 != write_file_atomically( output_dir, "catalog_info.txt", (const unsigned char *)info, strlen( info ) ) )
   return 2;
  for ( i= 0; i < n_parts; i++ )
@@ -998,10 +1235,10 @@ static int info_value( const char *info, const char *key, char *out, size_t out_
  return -1;
 }
 
-// search a zone catalog (gaia_dr2 or tycho2)
+// search a zone catalog (gaia_dr2, tycho2 or gaia_dr3_nearby)
 static int search_zone_catalog( const char *dir, int catalog_index, const query_t *q, match_list *ml ) {
  char info[4096], value[256], path[4096];
- int is_gaia, z, z_lo, z_hi;
+ int is_gaia, is_nearby, record_size, z, z_lo, z_hi;
  double r_deg= q->radius_arcsec / 3600.0;
  unsigned char idx[( RA_BINS + 1 ) * 4];
  FILE *fi, *fz;
@@ -1009,7 +1246,7 @@ static int search_zone_catalog( const char *dir, int catalog_index, const query_
  int n_int, k, b0, b1;
  double zone_dec_lo;
  uint32_t first, last, i;
- unsigned char rec[REC_SIZE];
+ unsigned char rec[NEARBY_REC_SIZE];
  star_rec r;
  match_t m;
  double ra, dec, dist;
@@ -1027,6 +1264,17 @@ static int search_zone_catalog( const char *dir, int catalog_index, const query_
   return 2;
  }
  is_gaia= ( 0 == strncmp( value, "gaia", 4 ) );
+ is_nearby= ( 0 == strcmp( value, NEARBY_CATALOG_NAME ) );
+ record_size= REC_SIZE;
+ if ( 0 == info_value( info, "record_size", value, sizeof( value ) ) )
+  record_size= atoi( value );
+ if ( ( record_size != REC_SIZE && record_size != NEARBY_REC_SIZE ) || ( is_nearby && record_size != NEARBY_REC_SIZE ) ) {
+  fprintf( stderr, "ERROR: %s has %d-byte records, this program reads %d-byte (gaia_dr2, tycho2) and %d-byte (%s) records\n", dir, record_size, REC_SIZE, NEARBY_REC_SIZE, NEARBY_CATALOG_NAME );
+  return 2;
+ }
+ g_rec_size= record_size;
+ if ( record_size == NEARBY_REC_SIZE )
+  g_any_extended_catalog= 1;
  z_lo= zone_of_dec( fmax( -90.0, q->dec - r_deg - 1.0e-4 ) );
  z_hi= zone_of_dec( fmin( 90.0, q->dec + r_deg + 1.0e-4 ) );
  for ( z= z_lo; z <= z_hi; z++ ) {
@@ -1058,12 +1306,12 @@ static int search_zone_catalog( const char *dir, int catalog_index, const query_
    last= get_u32( idx + 4 * b1 );
    if ( last <= first )
     continue;
-   if ( 0 != fseeko( fz, (off_t)first * REC_SIZE, SEEK_SET ) ) {
+   if ( 0 != fseeko( fz, (off_t)first * g_rec_size, SEEK_SET ) ) {
     fclose( fz );
     return 2;
    }
    for ( i= first; i < last; i++ ) {
-    if ( 1 != fread( rec, REC_SIZE, 1, fz ) ) {
+    if ( 1 != fread( rec, g_rec_size, 1, fz ) ) {
      fprintf( stderr, "ERROR: short read in %s\n", path );
      fclose( fz );
      return 2;
@@ -1082,13 +1330,25 @@ static int search_zone_catalog( const char *dir, int catalog_index, const query_
     m.ra= ra;
     m.dec= dec;
     m.gmag= ( r.m1 == MAG_NULL ) ? 99.9999 : millimag_to_mag( r.m1 );
-    if ( is_gaia )
+    m.bpmag= 99.9999;
+    if ( is_gaia ) {
      m.rpmag= ( r.m3 == MAG_NULL ) ? 99.9999 : millimag_to_mag( r.m3 );
-    else
+     m.bpmag= ( r.m2 == MAG_NULL ) ? 99.9999 : millimag_to_mag( r.m2 );
+    } else {
      m.rpmag= m.gmag; // Tycho-2: V stands in for both bands
+    }
     m.mag_sort= q->band_rp ? m.rpmag : m.gmag;
     m.variable= ( is_gaia && ( r.flags & 1 ) ) ? 1 : 0;
     m.catalog_index= catalog_index;
+    if ( record_size == NEARBY_REC_SIZE ) {
+     m.extended= 1;
+     m.has_pm= ( r.flags & 2 ) ? 0 : 1;
+     m.plx_mas= (double)r.plx_uas / 1000.0;
+     m.plx_err_mas= (double)r.plx_err_uas / 1000.0;
+     m.pmra_mas_yr= (double)r.pmra_uas_yr / 1000.0;
+     m.pmdec_mas_yr= (double)r.pmdec_uas_yr / 1000.0;
+     m.ruwe= (double)r.ruwe_milli / 1000.0;
+    }
     if ( !mag_passes( q, m.mag_sort ) )
      continue;
     if ( 0 != match_list_add( ml, &m ) ) {
@@ -1215,6 +1475,17 @@ static int search_ucac5( const char *dir, int catalog_index, const query_t *q, m
 
 static int compare_matches( const void *a, const void *b ) {
  const match_t *x= (const match_t *)a, *y= (const match_t *)b;
+ if ( g_sort_by_distance ) {
+  if ( x->dist_arcsec < y->dist_arcsec )
+   return -1;
+  if ( x->dist_arcsec > y->dist_arcsec )
+   return 1;
+  if ( x->mag_sort < y->mag_sort )
+   return -1;
+  if ( x->mag_sort > y->mag_sort )
+   return 1;
+  return 0;
+ }
  if ( x->mag_sort < y->mag_sort )
   return -1;
  if ( x->mag_sort > y->mag_sort )
@@ -1236,6 +1507,7 @@ static int cmd_search( int argc, char **argv ) {
  const char *a, *colon, *v, *dots;
  static char types[MAX_CATALOGS][32];
  size_t tl, j;
+ char pm_str[64], plx_str[32], plx_err_str[32];
 
  memset( &q, 0, sizeof( q ) );
  for ( i= 2; i < argc; i++ ) {
@@ -1272,8 +1544,10 @@ static int cmd_search( int argc, char **argv ) {
     q.band_rp= 1;
    else if ( 0 == strcmp( a + 6, "Gmag" ) )
     q.band_rp= 0;
+   else if ( 0 == strcmp( a + 6, "_r" ) )
+    g_sort_by_distance= 1;
    else {
-    fprintf( stderr, "ERROR: unsupported sort field %s (Gmag or RPmag)\n", a + 6 );
+    fprintf( stderr, "ERROR: unsupported sort field %s (Gmag, RPmag or _r)\n", a + 6 );
     return 1;
    }
   } else if ( 0 == strncmp( a, "Gmag=", 5 ) || 0 == strncmp( a, "RPmag=", 6 ) ) {
@@ -1299,7 +1573,7 @@ static int cmd_search( int argc, char **argv ) {
   }
  }
  if ( n_cat == 0 || !have_coords || !have_radius ) {
-  fprintf( stderr, "Usage: %s search [-cat=gaia_dr2|tycho2|ucac5:DIR ...] [DIR] -c=\"RA DEC\" -c.rs=ARCSEC [-out.max=N] [-sort=Gmag|RPmag] [Gmag=A..B]\n", argv[0] );
+  fprintf( stderr, "Usage: %s search [-cat=gaia_dr2|tycho2|gaia_dr3_nearby|ucac5:DIR ...] [DIR] -c=\"RA DEC\" -c.rs=ARCSEC [-out.max=N] [-sort=Gmag|RPmag|_r] [Gmag=A..B]\n", argv[0] );
   return 1;
  }
  if ( out_max < 1 )
@@ -1342,11 +1616,37 @@ static int cmd_search( int argc, char **argv ) {
  for ( i= 0; i < n_cat; i++ )
   printf( "#   catalog %d: %s %s\n", i + 1, cat_type[i], cat_dir[i] );
  printf( "#   center %.7f %+.7f radius %.2f arcsec\n#\n", q.ra, q.dec, q.radius_arcsec );
- printf( "    _r              Source         RA_ICRS         DE_ICRS    Gmag   RPmag Var\n" );
+ if ( g_any_extended_catalog ) {
+  // wide format: the parallax (mas), its error (mas), the proper motion (mas/yr) and
+  // RUWE follow the magnitudes; the word null = the catalog has no such value (a star of
+  // a 24-byte catalog in the same search, an unknown parallax error, no proper motion),
+  // 0 = unknown RUWE. Never use a large number as the placeholder: the nearest stars have
+  // parallaxes of hundreds of mas and proper motions of arcseconds per year.
+  printf( "    _r              Source         RA_ICRS         DE_ICRS    Gmag   BPmag   RPmag     Plx  e_Plx      pmRA      pmDE  RUWE Var\n" );
+ } else {
+  printf( "    _r              Source         RA_ICRS         DE_ICRS    Gmag   RPmag Var\n" );
+ }
  for ( k= 0; k < ml.n && (int)n_out < out_max; k++ ) {
   if ( !keep[k] )
    continue;
-  printf( " %.3f %lld %015.11f %+.11f %.4f %.4f %s\n", ml.m[k].dist_arcsec, (long long)ml.m[k].id, ml.m[k].ra, ml.m[k].dec, ml.m[k].gmag, ml.m[k].rpmag, ml.m[k].variable ? "VARIABLE" : "NOT_AVAILABLE" );
+  if ( g_any_extended_catalog ) {
+   if ( ml.m[k].extended )
+    snprintf( plx_str, sizeof( plx_str ), "%.3f", ml.m[k].plx_mas );
+   else
+    snprintf( plx_str, sizeof( plx_str ), "null" );
+   if ( ml.m[k].extended && ml.m[k].plx_err_mas < (double)PLX_ERR_UNKNOWN_UAS / 1000.0 )
+    snprintf( plx_err_str, sizeof( plx_err_str ), "%.3f", ml.m[k].plx_err_mas );
+   else
+    snprintf( plx_err_str, sizeof( plx_err_str ), "null" );
+   if ( ml.m[k].extended && ml.m[k].has_pm )
+    snprintf( pm_str, sizeof( pm_str ), "%.3f %.3f", ml.m[k].pmra_mas_yr, ml.m[k].pmdec_mas_yr );
+   else
+    snprintf( pm_str, sizeof( pm_str ), "null null" );
+   printf( " %.3f %lld %015.11f %+.11f %.4f %.4f %.4f %s %s %s %.3f %s\n", ml.m[k].dist_arcsec, (long long)ml.m[k].id, ml.m[k].ra, ml.m[k].dec, ml.m[k].gmag, ml.m[k].bpmag, ml.m[k].rpmag,
+           plx_str, plx_err_str, pm_str, ml.m[k].extended ? ml.m[k].ruwe : 0.0, ml.m[k].variable ? "VARIABLE" : "NOT_AVAILABLE" );
+  } else {
+   printf( " %.3f %lld %015.11f %+.11f %.4f %.4f %s\n", ml.m[k].dist_arcsec, (long long)ml.m[k].id, ml.m[k].ra, ml.m[k].dec, ml.m[k].gmag, ml.m[k].rpmag, ml.m[k].variable ? "VARIABLE" : "NOT_AVAILABLE" );
+  }
   n_out++;
  }
  printf( "#END#\n" );
@@ -1357,11 +1657,13 @@ static int cmd_search( int argc, char **argv ) {
 
 int main( int argc, char **argv ) {
  if ( argc < 2 ) {
-  fprintf( stderr, "Usage: %s gaia-extract|tycho2-extract|finalize|search ...\n", argv[0] );
+  fprintf( stderr, "Usage: %s gaia-extract|nearby-extract|tycho2-extract|finalize|search ...\n", argv[0] );
   return 1;
  }
  if ( 0 == strcmp( argv[1], "gaia-extract" ) )
   return cmd_gaia_extract( argc, argv );
+ if ( 0 == strcmp( argv[1], "nearby-extract" ) )
+  return cmd_nearby_extract( argc, argv );
  if ( 0 == strcmp( argv[1], "tycho2-extract" ) )
   return cmd_tycho2_extract( argc, argv );
  if ( 0 == strcmp( argv[1], "finalize" ) )

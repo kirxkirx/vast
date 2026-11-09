@@ -179,6 +179,39 @@ else
  echo "python3 is not available - skipping the UCAC5 part of the test"
 fi
 
+##### The Gaia DR3 nearby-star catalog: 40-byte records with parallax and proper motion #####
+# The CSV has the ESA archive column names; 3003 is too distant (parallax 2 mas), 3004 has no
+# parallax, 3002 has no proper motion, no BP and no RUWE (empty fields)
+cat > "$WORK_DIR/nearby.csv" << 'EOF'
+source_id,ra,dec,parallax,parallax_error,pmra,pmdec,phot_g_mean_mag,phot_bp_mean_mag,phot_rp_mean_mag,ruwe,phot_variable_flag
+3001,10.0,10.0,50.123456,0.0456,3000.5,-4000.25,13.0,14.6,11.7,1.05,NOT_AVAILABLE
+3002,10.0003,10.0,20.0,0.1,,,15.0,,14.0,,VARIABLE
+3003,10.0,10.0003,2.0,0.1,10.0,10.0,12.0,12.5,11.5,1.0,NOT_AVAILABLE
+3004,10.0,10.0,,0.1,10.0,10.0,12.0,12.5,11.5,1.0,NOT_AVAILABLE
+EOF
+lib/catalogs/local_star_catalog nearby-extract "$WORK_DIR/nearby_staging" chunk 5.0 < "$WORK_DIR/nearby.csv" 2>/dev/null || fail LOCALSTARCAT_NEARBY_EXTRACT
+lib/catalogs/local_star_catalog finalize "$WORK_DIR/nearby_staging" "$WORK_DIR/nearby" gaia_dr3_nearby "synthetic nearby stars" 1 2>/dev/null || fail LOCALSTARCAT_NEARBY_FINALIZE
+grep -q '^records=2$' "$WORK_DIR/nearby/catalog_info.txt" 2>/dev/null || fail LOCALSTARCAT_NEARBY_RECORDS "the parallax limit and the null parallax should leave 2 of 4 sources"
+grep -q '^record_size=40$' "$WORK_DIR/nearby/catalog_info.txt" 2>/dev/null || fail LOCALSTARCAT_NEARBY_RECSIZE
+# Dec +10.0 is in zone 501, which should hold the two 40-byte records
+ZONE_SIZE=$(wc -c < "$WORK_DIR/nearby/z501" 2>/dev/null | awk '{print $1}')
+[ "$ZONE_SIZE" = "80" ] || fail LOCALSTARCAT_NEARBY_ZONEFILE "zone 501 holds $ZONE_SIZE bytes, expected 80"
+NEARBY="-cat=gaia_dr3_nearby:$WORK_DIR/nearby"
+# the wide output: _r Source RA_ICRS DE_ICRS Gmag BPmag RPmag Plx e_Plx pmRA pmDE RUWE Var
+LINE=$(search "$NEARBY" -c="10.0 10.0" -c.rs=5 -sort=_r | grep ' 3001 ')
+echo "$LINE" | awk '$1 < 0.01 && $5 == "13.0000" && $6 == "14.6000" && $7 == "11.7000" && $8 == "50.123" && $9 == "0.046" && $10 == "3000.500" && $11 == "-4000.250" && $12 == "1.050" && $13 == "NOT_AVAILABLE" {ok=1} END {exit ok ? 0 : 1}' || fail LOCALSTARCAT_NEARBY_COLUMNS "got #$LINE#"
+# missing values: no BP -> 99.9999, no proper motion -> the word null twice, no RUWE -> 0.000
+LINE=$(search "$NEARBY" -c="10.0 10.0" -c.rs=5 -sort=_r | grep ' 3002 ')
+echo "$LINE" | awk '$1 > 1.0 && $1 < 1.2 && $6 == "99.9999" && $8 == "20.000" && $9 == "0.100" && $10 == "null" && $11 == "null" && $12 == "0.000" && $13 == "VARIABLE" {ok=1} END {exit ok ? 0 : 1}' || fail LOCALSTARCAT_NEARBY_NULLS "got #$LINE#"
+# -sort=_r orders by distance (3002 is at the center but fainter), the default by magnitude
+RESULT=$(search "$NEARBY" -c="10.0003 10.0" -c.rs=5 -sort=_r | ids)
+[ "$RESULT" = "3002 3001" ] || fail LOCALSTARCAT_NEARBY_SORT_DISTANCE "got #$RESULT#"
+RESULT=$(search "$NEARBY" -c="10.0003 10.0" -c.rs=5 -sort=Gmag | ids)
+[ "$RESULT" = "3001 3002" ] || fail LOCALSTARCAT_NEARBY_SORT_MAG "got #$RESULT#"
+# the 24-byte catalogs still print the usual seven columns
+LINE=$(search "$GAIA" -c="00:00:00.00 +10:00:00.0" -c.rs=5 -out.max=1 -sort=Gmag Gmag=0.0..20.0 | head -n1)
+[ "$(echo "$LINE" | awk '{print NF}')" = "7" ] || fail LOCALSTARCAT_NARROW_OUTPUT "got #$LINE#"
+
 rm -rf "$WORK_DIR"
 if [ -n "$FAILED_CODES" ];then
  echo "Failed checks:$FAILED_CODES"
