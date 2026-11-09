@@ -1406,6 +1406,50 @@ else
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
 
+##### Lightcurve metadata test #####
+# util/examples/test_lightcurve_metadata.py checks that SE_FLAGS=N and other
+# per-measurement metadata survive the tools that rewrite lightcurves, and that
+# the transient report table keeps the format its parsers expect. It needs
+# python3 >= 3.7 (standard library only) and a C compiler. If one of them is
+# missing the test is skipped (NOT_PERFORMED_LCMETADATA_*, not a failure).
+LCMETADATA_SKIP_REASON=""
+if ! command -v python3 &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopython3"
+elif ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="oldpython3"
+elif ! python3 -c 'import os, pathlib, re, shutil, subprocess, tempfile' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopythonmodules"
+elif ! command -v cc &> /dev/null && ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nocompiler"
+fi
+if [ -z "$LCMETADATA_SKIP_REASON" ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Lightcurve metadata test "
+ echo -n "Lightcurve metadata test: " >> vast_test_report.txt
+ LCMETADATA_OUTPUT=$(python3 util/examples/test_lightcurve_metadata.py "$PWD" 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LCMETADATA001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LCMETADATA001 ######
+$LCMETADATA_OUTPUT"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ echo "Lightcurve metadata test: NOT PERFORMED ($LCMETADATA_SKIP_REASON)" | tee -a vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_LCMETADATA_$LCMETADATA_SKIP_REASON"
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+
 ########## remove bad regions file
 echo "Flusing bad_region.lst"
 if [ -f bad_region.lst ];then
@@ -7291,11 +7335,14 @@ if [ -d ../sample_data ];then
  # Run the test
  echo "Small CCD images with FITS keyword recording test " 
  echo -n "Small CCD images with FITS keyword recording test: " >> vast_test_report.txt
- # Here is the main feature of this test
+ # Here is the main feature of this test. Besides CCD-TEMP the list has names
+ # shorter than 8 characters (EXPTIME, OBJECT), two cards without a comment
+ # (XBINNING, YBINNING), a DOS line end, blanks around a name, a comment line,
+ # a comment after a name and an invalid lower-case name that must be ignored.
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
-  echo "CCD-TEMP" > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
+ printf '# FITS keywords to record\nCCD-TEMP\r\n  EXPTIME \nexptime\nOBJECT\nXBINNING   # binning\nYBINNING\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  ./vast -u -f ../sample_data/*.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -7303,6 +7350,8 @@ if [ -d ../sample_data ];then
  fi
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+ else
+  rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
  # Check results
  if [ -f vast_summary.log ];then
@@ -7413,8 +7462,69 @@ $GREP_RESULT"
    fi
   done
 
+  # Names shorter than 8 characters are recorded (exactly once: the invalid
+  # 'exptime' is ignored), and the cards without a comment are separated by a
+  # space instead of running into the next keyword name
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   if ! awk -v object_card="OBJECT  = 'Y Cam to Moffett@Barnes, 106-542'" '
+     { if (gsub(/ EXPTIME =   180\./, "&") != 1 || index($0, " " object_card " XBINNING=") == 0 || $0 !~ / XBINNING= +2 YBINNING= +2$/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD014"
+    break
+   fi
+  done
+
+  # A list with more names than the list array holds: only the first 10 are
+  # recorded (the 11th and 12th used to be written past the array), with one
+  # warning. The images also carry a '/' inside a quoted string value, which
+  # must not be taken for the start of the card comment.
+  util/clean_data.sh
+  KEYWORD_LIST_TEST_DIR="keyword_list_test_images_$$"
+  mkdir "$KEYWORD_LIST_TEST_DIR"
+  cp ../sample_data/f_72-00[1-3]r.fit "$KEYWORD_LIST_TEST_DIR"/
+  for KEYWORD_LIST_TEST_IMAGE in "$KEYWORD_LIST_TEST_DIR"/*.fit ;do
+   util/modhead "$KEYWORD_LIST_TEST_IMAGE" OBSERVER "'Volkov/Smith'" > /dev/null 2>&1
+  done
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+  fi
+  printf 'OBSERVER\nXBINNING\nYBINNING\nCCD-TEMP\nEXPTIME\nSET-TEMP\nXPIXSZ\nYPIXSZ\nXORGSUBF\nYORGSUBF\nIMAGETYP\nTELESCOP\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  ./vast -u -f "$KEYWORD_LIST_TEST_DIR"/*.fit > "keyword_list_test_$$.log" 2>&1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD015"
+  fi
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  else
+   rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  fi
+  if [ "$(grep -c 'lists more than 10 keywords' "keyword_list_test_$$.log")" != "1" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD016"
+  fi
+  KEYWORD_LIST_TEST_N_LC=0
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   [ -f "$LIGHTCURVEFILE_TO_TEST" ] || continue
+   KEYWORD_LIST_TEST_N_LC=$((KEYWORD_LIST_TEST_N_LC+1))
+   if ! awk -v slash_value="OBSERVER= 'Volkov/Smith' XBINNING=" '
+     { if (index($0, slash_value) == 0 || $0 !~ / YORGSUBF= +0$/ || $0 ~ /IMAGETYP=|TELESCOP=/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017"
+    break
+   fi
+  done
+  if [ $KEYWORD_LIST_TEST_N_LC -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017_NO_LIGHTCURVES"
+  fi
+  rm -f "keyword_list_test_$$.log"
+  rm -rf "$KEYWORD_LIST_TEST_DIR"
+
  else
-  echo "ERROR: cannot find vast_summary.log" 
+  echo "ERROR: cannot find vast_summary.log"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD_ALL"
  fi
@@ -36841,6 +36951,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_noscript/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nopython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nonumpyastropy/}"
+ # lightcurve metadata test: skipped without python3 >= 3.7 or a C compiler
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_oldpython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopythonmodules/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nocompiler/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.

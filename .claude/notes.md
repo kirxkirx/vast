@@ -1311,3 +1311,78 @@ Update this file as you learn new things.
 - util/moons.sh exits 0 with empty output when Horizons is unreachable, so the
   moons.txt format loop of the Solar System section passes vacuously; only
   the MPCheck Ganymede lookup catches the outage.
+- Rerun on 2026-10-22 with the keyword-recording fix: 135 of 138 sections in
+  428 minutes. vsx.aavso.org answered 504, which failed
+  STANDALONEDBSCRIPT001c_VSX and made the CBA formatter name V615 Vul
+  'PNV J19430751+2100204' (NMWNVUL24ST_CBASCRIPTTEST_*); the same section
+  passed with the old and the new vast binary an hour later. The scan.sai.msu.ru
+  plate archive search hung (AUXWEB_PASKYARCHIVE_001-003). The online
+  database and web-service sections fail on whichever service is down that
+  day: check the service before suspecting a regression.
+
+## FITS keyword recording in lightcurves (fixed 2026-10-22)
+- record_specified_fits_keywords() in src/vast.c read the list with
+  fgets(...,9,...): a name shorter than 8 characters kept its newline and
+  failed the character check, so AIRMASS, HA and PA of the shipped _example
+  list were never recorded (only 8-character names like CCD-TEMP worked). The
+  loop also never stopped at MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC, so
+  11+ valid names wrote past the list array on the stack.
+- Two output defects in the same function: cards are concatenated, and a card
+  without a comment has no trailing blank, so values ran into the next name
+  ("XBINNING=   2YBINNING="); and the comment was cut at the first '/' even
+  inside a quoted string ('NGC 224/M31'). Now: whole lines are read and the
+  name is the first word (the rest of the line is a comment, as it was by
+  accident for 8-character names; empty and '#' lines are ignored, CR ends
+  the name), at most 10 names, cut at the first '/' outside quotes, trailing
+  blanks trimmed, one space between cards.
+- The list is re-read for every image, so list warnings are printed only for
+  the first image (third argument print_list_warnings).
+- test_vast.sh: the first Small CCD section copies the _example list into
+  place and nothing removes it, so every later local section records
+  keywords. Since this fix that includes AIRMASS (NMW-TexasTech, KGO, M31,
+  Gaia16aye), PA (NMW-STL, Stas) and HA where present. The keyword section
+  checks short names, separators, the 10-name limit and a quoted '/'
+  (WITH_KEYWORD_RECORDING_SMALLCCD014-017) on sample_data; like the other
+  Small CCD sections it is disabled on GitHub Actions.
+- util/examples/test_lightcurve_metadata.py runs early in test_vast.sh
+  ("Lightcurve metadata test", LCMETADATA001 on failure). Without python3 >=
+  3.7 or a C compiler (cc, gcc or clang) it is skipped as
+  NOT_PERFORMED_LCMETADATA_<reason>, which the end of the script exempts.
+
+## NMW "passing clouds" SD-ratio check (investigated 2026-11-09)
+- The check in util/transients/transient_factory_test31.sh (search "passing
+  clouds") compares |SD1-SD2|/SD2 from util/imstat_vast_fast (plain SD over
+  all pixels) of the two selected new frames. It runs on RAW frames, before
+  the dark/flat calibration. Stas limits: hard 0.18 (field skipped), soft
+  0.12 (ERROR line printed but the field is still processed; unmw shows it
+  as a red ERROR row).
+- On raw star-rich NMW frames the SD is star light: the top 0.1% of pixels
+  carry ~88% of the variance, saturated pixels ~36%. Hot pixels carry
+  ~0.1-0.2% (up to ~5% in heavily clouded frames) with the same amplitude in
+  both frames; masking them changed no decision on 62 Stas pairs. Do not
+  chase hot pixels or darks when this check misbehaves.
+- Fit on Stas pairs: SD1/SD2 = (F1/F2)^0.575 (saturated cores damp the
+  response). Hard 0.18 = ~0.31 mag transparency change if frame 2 is
+  fainter, ~0.38 mag if it is brighter; soft 0.12 = ~0.21/0.25 mag. Frames
+  dominated by sky gradients (twilight, low altitude) respond weaker.
+- Rejections were real on 2026-11-09 (20 of 22 hard) and 2026-11-08
+  morning (13 of 13): thin, nearly uniform cloud of 0.3-2 mag between frames
+  30-90 s apart. It is invisible on the previews because fits2png stretches
+  every image to its own histogram (PGFV_CUTS_PERCENT) and the 128x128
+  summary thumbnail is the first new frame in file-name order. Judge with
+  matched-star photometry or the PinPoint ZMAG keyword of frame 001 (Stas
+  clear sky ~19.3-19.7).
+- Non-cloud false positives seen: a pointing jump between the two frames
+  that moves a very bright star in or out (Cas10 2026-11-09 17:51: 2.9 deg
+  shift + 3 deg rotation, ratio 0.187 at 0.05 mag); an aircraft trail (Aur4
+  18:27: ratio 0.405, 0.028 with the trail masked). Misses: both frames
+  equally clouded (passes), patchy cloud whose bright-star flux balances.
+- The pair is chosen by seeing only (aperture, column 9 of
+  vast_image_details.log, or the latest two when all apertures are equal);
+  after a hard failure the third frame is never tried.
+- Code reading, not run-verified: per-frame zero points of the preliminary
+  --type 2 run are in image%05d__<name minus last extension>.calib_param
+  (column 5; none for the reference image), moved to
+  vast_magnitude_calibration_details_log/. choose_best_reference_image()
+  swaps images after vast_images_catalogs.log is written, so the image%05d
+  index may not match that log: look the files up by basename.
