@@ -95,6 +95,11 @@ export FORCED_PHOTOMETRY_AIRMASS_ZEROPOINT
 # Limits on the size of stars in pixels
 # (star size is implied by the size of the automatically chosen aperture that is listed for each image in vast_image_details.log)
 # Images with very large or very small stars must have some problem.
+# The aperture limits are applied only when there are more than two second-epoch images (in the
+# preliminary VaST run that picks the best two). FILTER_BAD_IMG__MAX_FWHM_PIX, if set (in the
+# per-camera block below or in the environment), rejects a field whose second-epoch images have
+# a median FWHM of isolated stars larger than this, also when there are only two of them. A large
+# value (e.g. 99) switches that check off.
 FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX=2.0
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=9.6
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
@@ -119,13 +124,32 @@ export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 # on a crowded field. Measured on 600 production fields (2026-09-08..10): with
 # the old 40/100 limits three fields would stop updating their exclusion list,
 # eight would with doubled counts, three again with these values.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD=80
+# All three limits below may be exported (in unmw's local_config.sh, for example) to
+# override the defaults on a particular host.
+if [ -z "$MAX_NUMBER_OF_CANDIDATES_PER_FIELD" ];then
+ MAX_NUMBER_OF_CANDIDATES_PER_FIELD=80
+fi
 # Higher limit when most candidates are already identified (known variable stars etc.)
 # This allows fields with many known objects to still update the exclusion list.
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=200
+# Raised from 200 to 400 in 2026-11. On the night of 2026-11-03 CDS VizieR was down
+# and the ESA Gaia archive failed intermittently, so the Gaia known-star check found
+# nothing in many runs, and crowded Milky Way fields reported up to 222 candidates,
+# almost all of them known variable stars (Vul-01 8 unidentified of 222, Cyg-08 5 of
+# 217). Those two fields failed this limit, so their exclusion lists were not updated
+# and the same stars would have come back every night of the outage. In the 338
+# NMW-TexasTech summary pages of 2025-12..2026-11 (58969 field reports) no other field
+# with at most 19 unidentified candidates had more than 200 candidates, while all 166
+# fields with more than 200 candidates and more unidentified ones still fail the lower
+# limit above.
+if [ -z "$MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN" ];then
+ MAX_NUMBER_OF_CANDIDATES_PER_FIELD_IF_MOST_ARE_KNOWN=400
+fi
 # Number of unidentified candidates up to which the higher limit above applies.
-# Keep this in step with the same threshold in the unmw combine_reports.sh gate.
-MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT=19
+# Keep this in step with the same threshold in the unmw combine_reports.sh gate
+# (both scripts read the same variable name from the environment).
+if [ -z "$MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT" ];then
+ MAX_UNIDENTIFIED_CANDIDATES_FOR_RELAXED_LIMIT=19
+fi
 
 # The high-priority fields: crowded Galactic Center region fields where a real
 # transient is most likely to hide among the many known variable stars.
@@ -196,8 +220,13 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list.txt"
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # Passing-clouds limits, relaxed in 2026-11 from 0.18 and 0.12: uniform dimming
+  # by thin clouds does not matter for bright transients. On the raw Stas images
+  # the SD ratio follows the transparency change between the two images: 0.70
+  # and 0.30 correspond to about 1.0 and 0.5 mag when the second image is the
+  # fainter one (2.3 and 0.7 mag when it is the brighter one).
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.70
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.30
   FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
   # NMW site coordinates for the airmass computations: never trust SITELAT/SITELONG
@@ -411,6 +440,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=10000
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # Blurred images (focus drift, dew) flood the candidate list: on 2026-11-04 the TTUQ1 images
+  # went from 2.2 to 4.7-5.6 pix FWHM, and its fields got up to 74 candidates instead of 0-3.
+  if [ -z "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+   FILTER_BAD_IMG__MAX_FWHM_PIX=4.5
+  fi
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
@@ -517,6 +551,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=10000
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # Blurred images: see the TTUQ1b1x1 block
+  if [ -z "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+   FILTER_BAD_IMG__MAX_FWHM_PIX=4.5
+  fi
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
@@ -1010,6 +1048,261 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
    break
   fi
  done
+ return 0
+}
+
+function report_second_epoch_image_altitude {
+ # Print the altitude of the field above the horizon at the time of imaging
+ # for every second-epoch image whose FITS header records it: CENTALT (the
+ # image center altitude written by N.I.N.A. and Sequence Generator Pro) or
+ # OBJCTALT (the altitude of the mount target written by MaxIm DL, SGP and
+ # ACP), in degrees, as a number or as a sexagesimal 'D M S' string. An image
+ # with neither keyword (for example the ST-8300M frames written by MaxIm DL
+ # with no telescope connection), or with a value that is not an altitude, gets
+ # a note saying which of the two it is instead of a value, so the consumer of
+ # the log sees an altitude only when the header really has one.
+ # The 'Field altitude during imaging:' lines are picked up by the unmw
+ # summary page generator (combine_reports.sh) for its Altitude column, which
+ # shows the lowest altitude of the second-epoch images - keep the line
+ # format in step with that consumer.
+ local IMAGE_TO_CHECK
+ local ALTITUDE_DEG_AND_KEYWORD
+ for IMAGE_TO_CHECK in "$@" ;do
+  if [ -z "$IMAGE_TO_CHECK" ] || [ ! -s "$IMAGE_TO_CHECK" ];then
+   continue
+  fi
+  ALTITUDE_DEG_AND_KEYWORD=$(util/listhead "$IMAGE_TO_CHECK" 2>/dev/null | awk '
+# The value of a FITS card: the text after the "=" value indicator in
+# column 9, right after the 8-character keyword, without the quotes of a
+# string value and without the comment that follows the "/"; "" for a card
+# with no value indicator.
+function card_value(line,  value, quote_position) {
+ if (substr(line, 9, 1) != "=") return ""
+ value = substr(line, 10)
+ sub(/^[ \t]+/, "", value)
+ if (substr(value, 1, 1) == "\047") {
+  value = substr(value, 2)
+  quote_position = index(value, "\047")
+  if (quote_position > 0) value = substr(value, 1, quote_position - 1)
+ } else {
+  sub(/\/.*$/, "", value)
+ }
+ sub(/^[ \t]+/, "", value)
+ sub(/[ \t]+$/, "", value)
+ return value
+}
+# Decimal degrees from a number (FITS allows a D exponent) or from a
+# sexagesimal "D M S" or "D:M:S" string; "" when the value is neither.
+function to_degrees(value,  n_parts, parts, i, sign, degrees) {
+ if (value ~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eEdD][-+]?[0-9]+)?$/) {
+  sub(/[dD]/, "e", value)
+  return value + 0
+ }
+ gsub(/:/, " ", value)
+ n_parts = split(value, parts, /[ \t]+/)
+ if (n_parts < 2 || n_parts > 3) return ""
+ for (i = 1; i <= n_parts; i++) {
+  if (parts[i] !~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)$/) return ""
+ }
+ sign = (parts[1] ~ /^-/) ? -1 : 1
+ degrees = parts[1]
+ sub(/^[-+]/, "", degrees)
+ degrees = degrees + parts[2] / 60.0
+ if (n_parts == 3) degrees = degrees + parts[3] / 3600.0
+ return sign * degrees
+}
+substr($0, 1, 8) == "CENTALT " { centalt_card = 1; if (centalt == "") centalt = to_degrees(card_value($0)) }
+substr($0, 1, 8) == "OBJCTALT" { objctalt_card = 1; if (objctalt == "") objctalt = to_degrees(card_value($0)) }
+END {
+ if (centalt != "" && centalt >= -90.0 && centalt <= 90.0) { printf "%.1f CENTALT\n", centalt; exit }
+ if (objctalt != "" && objctalt >= -90.0 && objctalt <= 90.0) { printf "%.1f OBJCTALT\n", objctalt; exit }
+ if (centalt_card) { print "unusable CENTALT"; exit }
+ if (objctalt_card) print "unusable OBJCTALT"
+}')
+  case "$ALTITUDE_DEG_AND_KEYWORD" in
+   "")
+    echo "No field altitude in the FITS header (no CENTALT or OBJCTALT keyword)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+    ;;
+   unusable*)
+    echo "No field altitude in the FITS header (the ${ALTITUDE_DEG_AND_KEYWORD#unusable } value is not an altitude in degrees)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+    ;;
+   *)
+    echo "Field altitude during imaging: ${ALTITUDE_DEG_AND_KEYWORD% *} deg (FITS keyword ${ALTITUDE_DEG_AND_KEYWORD#* })  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+    ;;
+  esac
+ done
+ return 0
+}
+
+function choose_second_epoch_pair_for_passing_clouds_check {
+ # Called when there are more than two second-epoch images, after the
+ # preliminary VaST run has picked the pair with the best seeing
+ # (SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE) and before that
+ # pair is written to the log. If the SD ratio of the pair fails the soft
+ # passing-clouds limit (the hard one when there is no soft limit), another
+ # pair of the images that passed the preliminary run may replace it: the pair
+ # with the best seeing (smallest sum of the two aperture sizes, the later pair
+ # on a tie) among those under the soft limit or, when the best-seeing pair
+ # also fails the hard limit, among those under the hard limit. A replacement
+ # pair has to pass the checks the chosen pair goes through below: the
+ # elongation (tracking error) check on both images, the bright background
+ # checks on the first image, the hard SD ratio limit and, if
+ # FILTER_BAD_IMG__MAX_FWHM_PIX is set, the FWHM limit on both images (measured
+ # here on the preliminary-run catalogs, which come from the same bright-star
+ # SExtractor settings as the catalogs that limit is checked on after the main
+ # VaST run). Without one, the best-seeing pair is kept and the checks below
+ # treat it as before. Nothing changes either when those checks would not run
+ # (no measurable mean value of the reference image or of the first image).
+ # Formerly a field was rejected whenever the best-seeing pair failed the hard
+ # limit, even if another pair of its images was fine: thin clouds over one
+ # image, an aircraft trail or a pointing jump between two images was enough.
+ # Set DISABLE_SECOND_EPOCH_PAIR_FALLBACK=yes to always keep the best-seeing pair.
+ # The SECOND_EPOCH__FIRST_IMAGE= and SECOND_EPOCH__SECOND_IMAGE= lines are
+ # written after this choice, so they name the pair that is actually used:
+ # the unmw summary takes the FWHM column from the first such lines.
+ local SECOND_EPOCH_IMAGE_TABLE
+ local IMAGE_AP
+ local IMAGE_JD
+ local IMAGE_PATH
+ local IMAGE_STATS
+ local IMAGE_MEAN
+ local IMAGE_SD
+ local IMAGE_CATALOG
+ local IMAGE_ELONGATION
+ local IMAGE_FWHM
+ local REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE
+ local MAX_MEAN_RATIO_FOR_PAIR_CHOICE
+ local PAIR_CHOICE
+ local PAIR_CHOICE_ACTION
+ local BEST_SEEING_PAIR_SD_RATIO
+ local FAILED_LIMIT
+ local SD_RATIO_LIMITS
+ local NEW_PAIR_SD_RATIO
+ local NEW_FIRST_IMAGE
+ local NEW_SECOND_IMAGE
+ if [ "$DISABLE_SECOND_EPOCH_PAIR_FALLBACK" = "yes" ];then
+  return 0
+ fi
+ # The passing-clouds checks run only when MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is set
+ if [ -z "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] || [ -z "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
+  return 0
+ fi
+ if [ ! -s vast_image_details.log ] || [ -z "$SECOND_EPOCH__FIRST_IMAGE" ] || [ -z "$SECOND_EPOCH__SECOND_IMAGE" ] || [ -z "$REFERENCE_EPOCH__FIRST_IMAGE" ];then
+  return 0
+ fi
+ # The bright background and passing-clouds checks below are all skipped when
+ # the mean value of the reference image cannot be measured
+ REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" 2> /dev/null | grep ' MEAN= ' | awk '{print $2}')
+ if [ -z "$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" ];then
+  return 0
+ fi
+ MAX_MEAN_RATIO_FOR_PAIR_CHOICE="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO"
+ if [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "yes" ];then
+  MAX_MEAN_RATIO_FOR_PAIR_CHOICE=""
+ fi
+ # One line per image that passed the preliminary run, with the same selection
+ # as above: aperture JD mean SD elongation FWHM image ('-' for what could not
+ # be measured; the FWHM only when FILTER_BAD_IMG__MAX_FWHM_PIX is set)
+ SECOND_EPOCH_IMAGE_TABLE=$(grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' vast_image_details.log | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print $9, $7, $17}' | while read -r IMAGE_AP IMAGE_JD IMAGE_PATH ;do
+  IMAGE_STATS=$(util/imstat_vast_fast "$IMAGE_PATH" 2> /dev/null)
+  IMAGE_MEAN=$(echo "$IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  IMAGE_SD=$(echo "$IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  # median (A-B) of the sources in the preliminary-run catalog, as in the
+  # elongation check below, and the median FWHM of its isolated stars, as in
+  # the FWHM check after the main VaST run
+  IMAGE_ELONGATION=""
+  IMAGE_FWHM=""
+  IMAGE_CATALOG=$(grep -F "$IMAGE_PATH" vast_images_catalogs.log 2> /dev/null | awk '{print $1}' | head -n1)
+  if [ -n "$IMAGE_CATALOG" ] && [ -s "$IMAGE_CATALOG" ];then
+   IMAGE_ELONGATION=$(awk '{print $18-$20}' "$IMAGE_CATALOG" | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
+   if [ -n "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+    IMAGE_FWHM=$(awk '{if( $22 < 2 && $23 > 0 ) print $23}' "$IMAGE_CATALOG" | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%.1f", $2}')
+   fi
+  fi
+  echo "$IMAGE_AP $IMAGE_JD ${IMAGE_MEAN:--} ${IMAGE_SD:--} ${IMAGE_ELONGATION:--} ${IMAGE_FWHM:--} $IMAGE_PATH"
+ done)
+ # Prints nothing when the best-seeing pair passes, else
+ # 'keep <SD ratio of the best-seeing pair> <soft|hard: the limit it fails>' or
+ # 'switch <SD ratio of the best-seeing pair> <SD ratio of the new pair> <first image> <second image>'
+ PAIR_CHOICE=$(echo "$SECOND_EPOCH_IMAGE_TABLE" | awk -v first="$SECOND_EPOCH__FIRST_IMAGE" -v second="$SECOND_EPOCH__SECOND_IMAGE" -v hard="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" -v soft="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" -v max_elongation="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" -v max_fwhm="$FILTER_BAD_IMG__MAX_FWHM_PIX" -v max_mean="$MAX_NEW_IMG_MEAN_VALUE" -v max_mean_ratio="$MAX_MEAN_RATIO_FOR_PAIR_CHOICE" -v ref_mean="$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" '
+# |SD(i1) - SD(i2)| / SD(i2) as the passing-clouds check computes it, -1 if undefined
+function sd_ratio(i1, i2) {
+ if ( sd[i1] == "-" || sd[i2] == "-" || sd[i2] + 0 == 0 ) return -1
+ return ( sd[i1] + 0 > sd[i2] + 0 ? sd[i1] - sd[i2] : sd[i2] - sd[i1] ) / sd[i2]
+}
+NF >= 7 {
+ n++
+ ap[n] = $1; jd[n] = $2; mean[n] = $3; sd[n] = $4; elongation[n] = $5; fwhm[n] = $6; image[n] = $7
+ if ( $7 == first ) best_seeing_first = n
+ if ( $7 == second ) best_seeing_second = n
+}
+END {
+ if ( best_seeing_first == "" || best_seeing_second == "" ) exit
+ # without the mean value of the first image the checks below are skipped
+ if ( mean[best_seeing_first] == "-" ) exit
+ r0 = sd_ratio(best_seeing_first, best_seeing_second)
+ # an undefined ratio is skipped by the check below as well
+ if ( r0 < 0 ) exit
+ hard_limit = hard + 0
+ have_soft_limit = ( soft != "" )
+ soft_limit = soft + 0
+ if ( r0 < ( have_soft_limit ? soft_limit : hard_limit ) ) exit
+ found = 0
+ for ( i = 1; i <= n; i++ ) {
+  for ( j = i + 1; j <= n; j++ ) {
+   if ( ( i == best_seeing_first && j == best_seeing_second ) || ( i == best_seeing_second && j == best_seeing_first ) ) continue
+   # the image with the better seeing first, the earlier one on a tie
+   a = i; b = j
+   if ( ap[j] + 0 < ap[i] + 0 || ( ap[j] + 0 == ap[i] + 0 && jd[j] + 0 < jd[i] + 0 ) ) { a = j; b = i }
+   if ( mean[a] == "-" || elongation[a] == "-" || elongation[b] == "-" ) continue
+   if ( max_elongation != "" && ( elongation[a] + 0 > max_elongation + 0 || elongation[b] + 0 > max_elongation + 0 ) ) continue
+   # an unmeasured FWHM is not checked after the main VaST run either
+   if ( max_fwhm != "" && ( ( fwhm[a] != "-" && fwhm[a] + 0 > max_fwhm + 0 ) || ( fwhm[b] != "-" && fwhm[b] + 0 > max_fwhm + 0 ) ) ) continue
+   if ( max_mean != "" && mean[a] + 0 > max_mean + 0 ) continue
+   if ( max_mean_ratio != "" && mean[a] + 0 > max_mean_ratio * ref_mean ) continue
+   r = sd_ratio(a, b)
+   if ( r < 0 || r >= hard_limit ) continue
+   tier = ( have_soft_limit && r < soft_limit ) ? 0 : 1
+   # rounded, so that equal sums of the 0.1 pix aperture sizes compare equal
+   sum_ap = sprintf("%.2f", ap[a] + ap[b]) + 0
+   sum_jd = jd[a] + jd[b]
+   if ( found == 0 || tier < best_tier || ( tier == best_tier && ( sum_ap < best_sum_ap || ( sum_ap == best_sum_ap && sum_jd > best_sum_jd ) ) ) ) {
+    found = 1; best_tier = tier; best_sum_ap = sum_ap; best_sum_jd = sum_jd; best_a = a; best_b = b; best_r = r
+   }
+  }
+ }
+ # A pair over the soft limit replaces the best-seeing one only if that one fails the hard limit
+ if ( found == 0 || ( best_tier == 1 && r0 < hard_limit ) ) {
+  printf "keep %.3f %s\n", r0, ( r0 < hard_limit ? "soft" : "hard" )
+  exit
+ }
+ printf "switch %.3f %.3f %s %s\n", r0, best_r, image[best_a], image[best_b]
+}')
+ if [ -z "$PAIR_CHOICE" ];then
+  return 0
+ fi
+ PAIR_CHOICE_ACTION=$(echo "$PAIR_CHOICE" | awk '{print $1}')
+ BEST_SEEING_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $2}')
+ if [ "$PAIR_CHOICE_ACTION" = "switch" ];then
+  NEW_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+  NEW_FIRST_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $4}')
+  NEW_SECOND_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $5}')
+  if [ -z "$NEW_FIRST_IMAGE" ] || [ -z "$NEW_SECOND_IMAGE" ];then
+   return 0
+  fi
+  if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ];then
+   SD_RATIO_LIMITS="soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  else
+   SD_RATIO_LIMITS="hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  fi
+  # No 'ERROR' in this line: the unmw summary marks every field whose log has one as failed
+  echo "WARNING: passing clouds on the second-epoch images with the best seeing $(basename "$SECOND_EPOCH__FIRST_IMAGE") $(basename "$SECOND_EPOCH__SECOND_IMAGE") (SD ratio=$BEST_SEEING_PAIR_SD_RATIO $SD_RATIO_LIMITS), using $(basename "$NEW_FIRST_IMAGE") $(basename "$NEW_SECOND_IMAGE") (SD ratio=$NEW_PAIR_SD_RATIO) instead" | tee -a transient_factory_test31.txt
+  SECOND_EPOCH__FIRST_IMAGE="$NEW_FIRST_IMAGE"
+  SECOND_EPOCH__SECOND_IMAGE="$NEW_SECOND_IMAGE"
+  return 0
+ fi
+ FAILED_LIMIT=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+ echo "INFO: keeping the second-epoch images with the best seeing (SD ratio=$BEST_SEEING_PAIR_SD_RATIO): no other pair of them passes the $FAILED_LIMIT passing-clouds limit" | tee -a transient_factory_test31.txt
  return 0
 }
 
@@ -1908,6 +2201,7 @@ DARK_FRAMES_DIR_OR_FILE= $DARK_FRAMES_DIR_OR_FILE
 EXCLUSION_LIST= $EXCLUSION_LIST
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX= $FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX
+FILTER_BAD_IMG__MAX_FWHM_PIX= $FILTER_BAD_IMG__MAX_FWHM_PIX
 FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX
 FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH
 FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
@@ -1973,10 +2267,23 @@ fi
 # Check for a local copy of UCAC5
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
+ # Before 2026-11 the relative directories in the list below (../UCAC5, ../ucac5) were
+ # linked as they are, but a relative link target is read from lib/catalogs/, so those
+ # links lead nowhere. The link target is made absolute now, and such an old link is
+ # replaced in one step with ln -f, so that parallel runs never find it missing. Any
+ # other link is left alone: its disk may just be unmounted.
+ UCAC5_LINK_REPLACE=""
+ if [ -L lib/catalogs/ucac5 ];then
+  case "$(readlink lib/catalogs/ucac5 2>/dev/null)" in
+   ../UCAC5|../ucac5) UCAC5_LINK_REPLACE="-f" ;;
+  esac
+ fi
  for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /data/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 "$HOME"/UCAC5 "$HOME"/ucac5 ../UCAC5 ../ucac5 ;do
   if [ -d "$TEST_THIS_DIR" ];then
-   ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
-   echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ] && ln -s -n ${UCAC5_LINK_REPLACE:+"$UCAC5_LINK_REPLACE"} "$TEST_THIS_DIR" lib/catalogs/ucac5 ;then
+    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   fi
    break
   fi
  done
@@ -1993,6 +2300,45 @@ fi
 #####################################################################################################
 if [ ! -d lib/catalogs/ucac5 ];then
  echo "WARNING: no local copy of UCAC5 was found (will be using a remote one)" | tee -a transient_factory_test31.txt
+fi
+# Check for a local copy of Gaia DR2 (built by lib/install_local_copy_of_GaiaDR2.sh) for
+# the known-star check of transient candidates in util/transients/report_transient.sh.
+# Unlike UCAC5 its absence is not worth a warning: the check then asks the ESA Gaia
+# archive and VizieR, as before.
+# The link target is made absolute: a relative one like ../GaiaDR2 would be read from
+# lib/catalogs/. Anything already at lib/catalogs/gaia_dr2 (even a broken link) is left alone.
+if [ ! -e lib/catalogs/gaia_dr2 ] && [ ! -L lib/catalogs/gaia_dr2 ];then
+ for TEST_THIS_DIR in /data_ssd/GaiaDR2 /mnt/usb/GaiaDR2 /dataX/kirx/GaiaDR2 /data/kirx/GaiaDR2 /home/kirx/GaiaDR2 /home/apache/gaia_dr2 "$HOME"/GaiaDR2 "$HOME"/gaia_dr2 ../GaiaDR2 ../gaia_dr2 ;do
+  if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ] && ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr2 ;then
+    echo "Linking the local copy of Gaia DR2 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   fi
+   break
+  fi
+ done
+fi
+# The same for the local copy of the Gaia DR3 nearby stars (parallax > 5 mas, built by
+# lib/install_local_copy_of_GaiaDR3_nearby_stars.sh) that serves the UV Ceti check of the
+# candidates, util/transients/check_nearby_red_dwarf.sh. Without it the check asks the ESA
+# Gaia archive, then VizieR, for every surviving candidate.
+if [ ! -e lib/catalogs/gaia_dr3_nearby ] && [ ! -L lib/catalogs/gaia_dr3_nearby ];then
+ for TEST_THIS_DIR in /data_ssd/GaiaDR3_nearby /mnt/usb/GaiaDR3_nearby /dataX/kirx/GaiaDR3_nearby /data/kirx/GaiaDR3_nearby /home/kirx/GaiaDR3_nearby /home/apache/gaia_dr3_nearby "$HOME"/GaiaDR3_nearby "$HOME"/gaia_dr3_nearby ../GaiaDR3_nearby ../gaia_dr3_nearby ;do
+  if [ -s "$TEST_THIS_DIR/catalog_info.txt" ];then
+   TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+   if [ -n "$TEST_THIS_DIR" ] && ln -s -n "$TEST_THIS_DIR" lib/catalogs/gaia_dr3_nearby ;then
+    echo "Linking the local copy of the Gaia DR3 nearby stars from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
+   fi
+   break
+  fi
+ done
+fi
+if [ "$UV_CETI_CHECK" != "no" ];then
+ if [ -s lib/catalogs/gaia_dr3_nearby/catalog_info.txt ];then
+  echo "UV Ceti check of the candidates: reading the local copy of the Gaia DR3 nearby stars" | tee -a transient_factory_test31.txt
+ else
+  echo "UV Ceti check of the candidates: no local copy of the Gaia DR3 nearby stars (see lib/install_local_copy_of_GaiaDR3_nearby_stars.sh), the ESA Gaia archive will be asked for each candidate" | tee -a transient_factory_test31.txt
+ fi
 fi
 #####################################################################################################
 # This script should take care of updating astorb.dat and other catalogs
@@ -2023,12 +2369,82 @@ if [ -z "$1" ]; then
  exit 1
 fi
 
-# We need it for the new transients check in util/transients/report_transient.sh
-VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
+# Select the source for the known-star (Gaia DR2) check of the candidates. GAIA_DR2_CLIENT
+# can be set externally to force one: "local" (the local Gaia DR2 copy), "tycho2_ucac5"
+# (EXPERIMENTAL: the local Tycho-2 and UCAC5 copies), "esa_tap", "vizquery", "none" (no
+# known-star check), or "auto" (the default: the local Gaia DR2 copy if there is one,
+# otherwise the online service that answers lib/choose_gaia_dr2_client.sh first).
+LOCAL_GAIA_DR2_COPY_IS_USABLE="no"
+if [ -x lib/catalogs/local_star_catalog ] && [ -s lib/catalogs/gaia_dr2/catalog_info.txt ];then
+ LOCAL_GAIA_DR2_COPY_IS_USABLE="yes"
+fi
+if [ "$GAIA_DR2_CLIENT" = "local" ] && [ "$LOCAL_GAIA_DR2_COPY_IS_USABLE" != "yes" ];then
+ echo "The local Gaia DR2 copy lib/catalogs/gaia_dr2 is not usable - choosing an online Gaia client instead" | tee -a transient_factory_test31.txt
+ GAIA_DR2_CLIENT="auto"
+fi
+if [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ];then
+ # The Tycho-2 zones are built from the local Tycho-2 copy in a few seconds. Runs that
+ # share lib/catalogs (unmw's working copies) may do this at the same time: each stages
+ # in its own directory, and every zone file is replaced atomically.
+ if [ -x lib/catalogs/local_star_catalog ] && [ ! -s lib/catalogs/tycho2_zones/catalog_info.txt ] && [ -s lib/catalogs/tycho2/tyc2.dat.00 ];then
+  echo "Building lib/catalogs/tycho2_zones from the local Tycho-2 copy" | tee -a transient_factory_test31.txt
+  # The messages go to their own log: a failed build only means this optional client is
+  # not available, and an ERROR line in transient_factory_test31.txt would fail the field
+  if lib/catalogs/local_star_catalog tycho2-extract "lib/catalogs/tycho2_zones/.staging.$$" tycho2 lib/catalogs/tycho2/tyc2.dat.* >> local_star_catalog_build.log 2>&1 ;then
+   lib/catalogs/local_star_catalog finalize "lib/catalogs/tycho2_zones/.staging.$$" lib/catalogs/tycho2_zones tycho2 "Tycho-2 main catalog, positions at epoch 2016.0, V from BT and VT" >> local_star_catalog_build.log 2>&1
+  fi
+  rm -rf "lib/catalogs/tycho2_zones/.staging.$$"
+ fi
+ if [ ! -s lib/catalogs/tycho2_zones/catalog_info.txt ] || [ ! -s lib/catalogs/ucac5/z001 ];then
+  echo "The local Tycho-2 and UCAC5 copies are not both usable - choosing a Gaia client instead" | tee -a transient_factory_test31.txt
+  GAIA_DR2_CLIENT="auto"
+ fi
+fi
+if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
+ if [ "$LOCAL_GAIA_DR2_COPY_IS_USABLE" = "yes" ];then
+  GAIA_DR2_CLIENT="local"
+ fi
+fi
+# VizieR mirror for util/transients/report_transient.sh. The known-star check needs VizieR only
+# with an online Gaia client, and the APASS check only when it is enabled. Do not probe the
+# mirrors when the check reads a local catalog (or is off) and APASS is off: while CDS was
+# down in Nov 2026 every failed probe cost the run 96-162 s. Take a recent result recorded by
+# another run instead, if there is one; without it VIZIER_UNREACHABLE is "unknown" and the
+# online name lookup of unidentified candidates probes for itself, only when it is needed.
+if { [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ]; } && [ "$APASS_KNOWN_STAR_CHECK" != "yes" ];then
+ VIZIER_MIRROR_PROBED="no"
+ VIZIER_SITE=$(VIZIER_MIRROR_RECORD_ONLY=yes lib/choose_vizier_mirror.sh)
+ VIZIER_MIRROR_PROBE_EXIT_CODE=$?
+else
+ VIZIER_MIRROR_PROBED="yes"
+ VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
+ VIZIER_MIRROR_PROBE_EXIT_CODE=$?
+fi
+# The known-star check in report_transient.sh runs only when VIZIER_SITE is set
+if [ -z "$VIZIER_SITE" ];then
+ VIZIER_SITE="vizier.cds.unistra.fr"
+fi
 export VIZIER_SITE
 echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
-# Select the best Gaia DR2 client (VizieR or ESA TAP)
-# GAIA_DR2_CLIENT can be set externally to force a specific client: "vizquery", "esa_tap", or "auto"
+# lib/choose_vizier_mirror.sh exits with code 1 when no VizieR mirror answered its test query
+# (it then prints the main CDS site anyway) and, with VIZIER_MIRROR_RECORD_ONLY=yes, with code
+# 2 when there is no recent result. With VIZIER_UNREACHABLE=yes report_transient.sh does not
+# wait for VizieR for every candidate.
+case "$VIZIER_MIRROR_PROBE_EXIT_CODE" in
+ 0) VIZIER_UNREACHABLE="no" ;;
+ 1) VIZIER_UNREACHABLE="yes" ;;
+ *) VIZIER_UNREACHABLE="unknown" ;;
+esac
+export VIZIER_UNREACHABLE
+if [ "$VIZIER_MIRROR_PROBED" = "no" ];then
+ # (No "GAIA_DR2_CLIENT=" or "VIZIER_SITE=" in this line: the test suite reads the first such line)
+ case "$VIZIER_UNREACHABLE" in
+  yes) VIZIER_RECENT_PROBE_RESULT="no mirror answered" ;;
+  no) VIZIER_RECENT_PROBE_RESULT="$VIZIER_SITE answered" ;;
+  *) VIZIER_RECENT_PROBE_RESULT="none" ;;
+ esac
+ echo "Not probing the VizieR mirrors: the known-star check does not use VizieR (client: $GAIA_DR2_CLIENT) and the APASS check is off. Recent probe by another run: $VIZIER_RECENT_PROBE_RESULT" | tee -a transient_factory_test31.txt
+fi
 if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
  if [ -x lib/choose_gaia_dr2_client.sh ];then
   GAIA_DR2_CLIENT=$(lib/choose_gaia_dr2_client.sh "$VIZIER_SITE")
@@ -2037,10 +2453,32 @@ if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
  fi
 fi
 export GAIA_DR2_CLIENT
-if [ "$GAIA_DR2_CLIENT" = "esa_tap" ]; then
- echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/gaia_dr2_cone_search.sh -> ESA Gaia Archive TAP service)" | tee -a transient_factory_test31.txt
+case "$GAIA_DR2_CLIENT" in
+ local)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/catalogs/local_star_catalog -> local copy: $(grep '^description=' lib/catalogs/gaia_dr2/catalog_info.txt | cut -d= -f2-))" ;;
+ tycho2_ucac5)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (EXPERIMENTAL: lib/catalogs/local_star_catalog -> local Tycho-2 and UCAC5 copies)" ;;
+ esa_tap)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/gaia_dr2_cone_search.sh -> ESA Gaia Archive TAP service, then VizieR)" ;;
+ none)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (no known-star check of the candidates)" ;;
+ *)
+  echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/vizquery -> VizieR $VIZIER_SITE, then the ESA Gaia Archive TAP service)" ;;
+esac | tee -a transient_factory_test31.txt
+if [ "$APASS_KNOWN_STAR_CHECK" = "yes" ];then
+ echo "The APASS known-star check of the candidates is enabled with APASS_KNOWN_STAR_CHECK=yes (it needs CDS VizieR)" | tee -a transient_factory_test31.txt
 else
- echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/vizquery -> VizieR $VIZIER_SITE)" | tee -a transient_factory_test31.txt
+ echo "The APASS known-star check of the candidates is disabled (see the note in util/transients/report_transient.sh)" | tee -a transient_factory_test31.txt
+fi
+# Per .claude/notes.md a host-environment problem is a WARNING, never an ERROR (an ERROR
+# fails the field in unmw), and it is printed once, here, not repeated at the end of
+# the report, where it would hide the field-specific warnings on the unmw summary page.
+if [ "$VIZIER_UNREACHABLE" = "yes" ];then
+ if [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ];then
+  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+ else
+  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the known-star check relies on the ESA Gaia archive alone and the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+ fi
 fi
 ###
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
@@ -2766,12 +3204,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    # Take the last image as SECOND_EPOCH__SECOND_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   else
    # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
    echo "INFO: selecting two second-epoch images with best seeing (using aperture size as a proxy for seeing)" | tee -a transient_factory_test31.txt
@@ -2780,11 +3216,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   fi
   # Make sure SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE are set
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
@@ -2802,6 +3236,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
   fi
+  # If the brightness of the two images differs too much (the passing-clouds
+  # check below), another pair of the second-epoch images may replace them
+  choose_second_epoch_pair_for_passing_clouds_check
+  echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+  echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   ###
   # Check for elliptical star images (tracking error)
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=$(grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}')
@@ -2852,6 +3291,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
   ###
  fi # above was the procedure for handling more than two second-epoch images
+ 
+ # Report the altitude of the field at the time of imaging if the FITS headers
+ # record it. Both the two-image path and the more-than-two-images path above
+ # arrive here with SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE set.
+ report_second_epoch_image_altitude "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  
  ################################
  # check mean image value ratio, if asked to do so by setting $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
@@ -3218,6 +3662,45 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   " | tee -a transient_factory_test31.txt
   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   VAST_EXIT_CODE=$?
+  # Blurred second-epoch images (focus drift, dew) flood the candidate list. With
+  # FILTER_BAD_IMG__MAX_FWHM_PIX set for the camera, reject the field when the median FWHM of the
+  # isolated stars on either second-epoch image is larger. It is measured on the catalogs of the
+  # bright-star pass, the same way and with the same rounding as the "Median FWHM seeing for
+  # isolated stars" lines that pass writes to the report: the passes with fainter stars measure
+  # the same images about 15% smaller. SExtractor has written the catalogs also when VaST failed
+  # later on (star matching), so this comes before the VaST exit code is examined; without a
+  # catalog there is no check.
+  if [ -n "$FILTER_BAD_IMG__MAX_FWHM_PIX" ] && [ "$SEXTRACTOR_CONFIG_FILE" = "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
+   FWHM_CHECK_VALUES=""
+   FWHM_CHECK_FAILED="no"
+   for SE_IMG in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
+    SE_CATALOG_NAME=$(grep -F "$SE_IMG" vast_images_catalogs.log 2>/dev/null | awk '{print $1}' | head -n1)
+    if [ -z "$SE_CATALOG_NAME" ] || [ ! -s "$SE_CATALOG_NAME" ];then
+     continue
+    fi
+    SE_IMG_MEDIAN_FWHM_PIX=$(awk '{if( $22 < 2 && $23 > 0 ) print $23}' "$SE_CATALOG_NAME" | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%.1f", $2}')
+    if [ -z "$SE_IMG_MEDIAN_FWHM_PIX" ];then
+     continue
+    fi
+    # In the format of the "Median FWHM seeing" lines: unmw reads its FWHM column from such lines
+    echo "$SE_IMG_MEDIAN_FWHM_PIX $(basename "$SE_IMG") $FILTER_BAD_IMG__MAX_FWHM_PIX" | awk '{printf "%4.1f pix  %s  (median FWHM of isolated stars, limit %s pix)\n", $1, $2, $3}' | tee -a transient_factory_test31.txt
+    FWHM_CHECK_VALUES="${FWHM_CHECK_VALUES:+$FWHM_CHECK_VALUES and }$SE_IMG_MEDIAN_FWHM_PIX"
+    if awk -v fwhm="$SE_IMG_MEDIAN_FWHM_PIX" -v limit="$FILTER_BAD_IMG__MAX_FWHM_PIX" 'BEGIN {exit !(fwhm + 0 > limit + 0)}' ;then
+     FWHM_CHECK_FAILED="yes"
+    fi
+   done
+   if [ "$FWHM_CHECK_FAILED" = "yes" ];then
+    # Save image date for it to be displayed in the summary file
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
+    echo "***** ERROR: seeing on second-epoch images is out of range (median FWHM $FWHM_CHECK_VALUES pix, limit $FILTER_BAD_IMG__MAX_FWHM_PIX pix) *****" >> transient_factory.log
+    echo "############################################################" >> transient_factory.log
+    echo "ERROR: seeing on second-epoch images is out of range - median FWHM $FWHM_CHECK_VALUES pix, above the limit of $FILTER_BAD_IMG__MAX_FWHM_PIX pix (blurred images: focus? dew?)" | tee -a transient_factory_test31.txt
+    rm -f vast_output_$$.tmp
+    record_timing "    VAST_RUN_${SEXTRACTOR_CONFIG_FILE}" "$VAST_RUN_START_UNIXSEC"
+    # The images are just as blurred for the other SExtractor passes: skip them
+    break
+   fi
+  fi
   if [ $VAST_EXIT_CODE -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt

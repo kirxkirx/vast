@@ -132,7 +132,12 @@ test -z "$script" && script="asu-tsv"
 # Note for me: vizquery test fails on boinc with --speed-limit 100 --speed-time 20
 # increasing --speed-time to 100 did not help with slow VizieR mirrors (e.g. china-vo)
 # lowering --speed-limit to 10 and increasing --speed-time to 300 to tolerate very slow mirrors
-call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 10 --speed-time 400 --max-time 600 http://$site/$cgidir/$script"
+# Some mirrors (vizier.cfa.harvard.edu since 2026) answer plain-http requests with a 301
+# redirect to https. Without -L the reply is the redirect page, which has no #END# marker, so
+# every query to such a mirror failed and lib/choose_vizier_mirror.sh could never select it.
+# --post301/302/303 keep the POST method and the query body across the redirect (curl would
+# otherwise turn the request into a GET without the ASU parameters).
+call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt -L --post301 --post302 --post303 --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 10 --speed-time 400 --max-time 600 http://$site/$cgidir/$script"
 
 # Handle input
 if [ $input_file -gt 0 ]; then	# Input in a file:

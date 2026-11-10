@@ -1817,11 +1817,24 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
   # /data/cgi-bin/unmw/uploads/UCAC5 -- kadar2
   #
   if [ ! -d lib/catalogs/ucac5 ];then
+   # Before 2026-11 the relative directory ../UCAC5 in the list below was linked as it
+   # is, but a relative link target is read from lib/catalogs/, so that link leads
+   # nowhere. The link target is made absolute now, and such an old link is replaced
+   # in one step with ln -f, so that parallel runs never find it missing. Any other
+   # link is left alone: its disk may just be unmounted.
+   UCAC5_LINK_REPLACE=""
+   if [ -L lib/catalogs/ucac5 ];then
+    case "$(readlink lib/catalogs/ucac5 2>/dev/null)" in
+     ../UCAC5|../ucac5) UCAC5_LINK_REPLACE="-f" ;;
+    esac
+   fi
    for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataN/kirx/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 "$HOME"/UCAC5 ../UCAC5 /data/cgi-bin/unmw/uploads/UCAC5 ;do
     if [ -d "$TEST_THIS_DIR" ];then
-     ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
-     echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
-     echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
+     TEST_THIS_DIR=$(cd "$TEST_THIS_DIR" && pwd)
+     if [ -n "$TEST_THIS_DIR" ] && ln -s -n ${UCAC5_LINK_REPLACE:+"$UCAC5_LINK_REPLACE"} "$TEST_THIS_DIR" lib/catalogs/ucac5 ;then
+      echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
+      echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
+     fi
      break
     fi
    done

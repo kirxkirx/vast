@@ -1349,40 +1349,293 @@ Update this file as you learn new things.
   3.7 or a C compiler (cc, gcc or clang) it is skipped as
   NOT_PERFORMED_LCMETADATA_<reason>, which the end of the script exempts.
 
-## NMW "passing clouds" SD-ratio check (investigated 2026-11-09)
-- The check in util/transients/transient_factory_test31.sh (search "passing
-  clouds") compares |SD1-SD2|/SD2 from util/imstat_vast_fast (plain SD over
-  all pixels) of the two selected new frames. It runs on RAW frames, before
-  the dark/flat calibration. Stas limits: hard 0.18 (field skipped), soft
-  0.12 (ERROR line printed but the field is still processed; unmw shows it
-  as a red ERROR row).
-- On raw star-rich NMW frames the SD is star light: the top 0.1% of pixels
-  carry ~88% of the variance, saturated pixels ~36%. Hot pixels carry
-  ~0.1-0.2% (up to ~5% in heavily clouded frames) with the same amplitude in
-  both frames; masking them changed no decision on 62 Stas pairs. Do not
-  chase hot pixels or darks when this check misbehaves.
-- Fit on Stas pairs: SD1/SD2 = (F1/F2)^0.575 (saturated cores damp the
-  response). Hard 0.18 = ~0.31 mag transparency change if frame 2 is
-  fainter, ~0.38 mag if it is brighter; soft 0.12 = ~0.21/0.25 mag. Frames
-  dominated by sky gradients (twilight, low altitude) respond weaker.
-- Rejections were real on 2026-11-09 (20 of 22 hard) and 2026-11-08
-  morning (13 of 13): thin, nearly uniform cloud of 0.3-2 mag between frames
-  30-90 s apart. It is invisible on the previews because fits2png stretches
-  every image to its own histogram (PGFV_CUTS_PERCENT) and the 128x128
-  summary thumbnail is the first new frame in file-name order. Judge with
-  matched-star photometry or the PinPoint ZMAG keyword of frame 001 (Stas
-  clear sky ~19.3-19.7).
-- Non-cloud false positives seen: a pointing jump between the two frames
-  that moves a very bright star in or out (Cas10 2026-11-09 17:51: 2.9 deg
-  shift + 3 deg rotation, ratio 0.187 at 0.05 mag); an aircraft trail (Aur4
-  18:27: ratio 0.405, 0.028 with the trail masked). Misses: both frames
-  equally clouded (passes), patchy cloud whose bright-star flux balances.
-- The pair is chosen by seeing only (aperture, column 9 of
-  vast_image_details.log, or the latest two when all apertures are equal);
-  after a hard failure the third frame is never tried.
-- Code reading, not run-verified: per-frame zero points of the preliminary
-  --type 2 run are in image%05d__<name minus last extension>.calib_param
-  (column 5; none for the reference image), moved to
-  vast_magnitude_calibration_details_log/. choose_best_reference_image()
-  swaps images after vast_images_catalogs.log is written, so the image%05d
-  index may not match that log: look the files up by basename.
+## Known-star check without CDS: local Gaia DR2 copy, VizieR probe record, APASS off (2026-11-04)
+- From 2026-11-03 CDS (VizieR, SIMBAD, cdsarc) dropped connections. The china-vo and
+  nao VizieR mirrors serve only small catalogs (china-vo answered a crowded bulge cone
+  with an empty Gaia DR3 table), the CfA mirror is HTTPS-only and returns empty tables
+  for I/345/gaia2, and the ESA Gaia archive answered intermittently.
+- Why the known-star check (query_gaia_dr2 in util/transients/report_transient.sh) found
+  nothing: lib/choose_gaia_dr2_client.sh picks the client once per run and returns
+  vizquery when both 15 s probes fail, and there was no VizieR-to-ESA fallback. Runs of
+  2026-11-02/03 used vizquery in about half the fields; crowded fields filled with known
+  variables and failed the candidate limit (Vul-01 8 unidentified of 222, Cyg-08 5 of 217).
+  ESA and VizieR now fall back to each other, and VizieR is not asked when the factory's
+  mirror probe failed (VIZIER_UNREACHABLE=yes, one WARNING line per run).
+- lib/choose_vizier_mirror.sh spent 162 s per run when no mirror answered. The result is
+  now shared through lib/catalogs/.vizier_mirror_probe_<CATALOG> for 900 s (success) or
+  300 s (failure); VIZIER_MIRROR_RECORD=no bypasses it (test_vast.sh's internet gate).
+- util/solve_plate_with_UCAC5 no longer asks VizieR for UCAC5 when lib/catalogs/ucac5
+  exists or one of our UCAC5 servers answered ("Not querying VizieR for UCAC5: ...").
+- Local catalogs: lib/catalogs/local_star_catalog (src/catalogs/local_star_catalog.c)
+  writes 900 Dec zones of 24-byte records with a 0.1 deg RA index and prints the vizquery
+  text format, so report_transient.sh parses its answer unchanged. GAIA_DR2_CLIENT=auto
+  picks it when lib/catalogs/gaia_dr2/catalog_info.txt exists; the factory links
+  /data_ssd/GaiaDR2 and similar directories (the list next to the UCAC5 one).
+- The local copy must be Gaia DR2, the release the online check and the test expectations
+  use. A DR3 copy, tried first, failed five test_vast.sh checks: the Miras V2407 Sgr,
+  V1858 Sgr, V6463 Sgr, WZ Aur and AT Cyg have DR3 mean G 0.03-0.46 mag brighter than
+  DR2 and fell under the MAG_MEAN+0.98 faint limit (V2407 Sgr: DR2 13.38, DR3 13.24, limit
+  13.29). This is a selection effect: the tests hold the Miras that DR2 lets through.
+  WZ Aur (DR3 G = 12.8304, limit 12.83) failed only because the copy rounds to 0.001 mag;
+  local_star_catalog now leaves out a star within 0.0005 mag of a limit. These are the
+  losses in the 28 sections run with the DR3 copy, not an exhaustive list.
+- lib/install_local_copy_of_GaiaDR2.sh: 61234 files, 588 GB, from
+  https://cdn.gea.esac.esa.int/Gaia/gdr2/gaia_source/csv with checksums in MD5SUM.txt (the
+  DR3 list is _MD5SUM.txt). The CDN directory pages are JavaScript; list the files with the
+  S3 XML at https://gaia.eu-1.cdn77-storage.com/?prefix=Gaia/gdr2/gaia_source/csv/&delimiter=/
+  (1000 keys per page, NextMarker). DR2 CSV has no quotes and empty fields for nulls; DR3
+  quotes strings and writes null. G < 19: 568135077 stars, 13 GB, built in
+  2 h 8 min on tau with 12 parallel downloads. It refuses to run on GitHub Actions;
+  the test_vast.sh section "Local Gaia DR2 copy test" runs only elsewhere and records the
+  exempt code GAIADR2LOCAL_NOT_INSTALLED when there is no copy.
+- For all 747 candidates of the baseline system-test reports, the local copy and GAVO's
+  online Gaia DR2 returned the same stars (same source_id, G within 1 mmag); a DR3 copy
+  changed the reject/keep decision for 45 of them. A search takes about 1 ms.
+- Cross-checks while CDS and ESA are down: GAVO TAP (https://dc.zah.uni-heidelberg.de/tap,
+  table gaia.dr2light) answers DR2 cone searches in seconds. ARI
+  (https://gaia.ari.uni-heidelberg.de/tap, gaiadr2.gaia_source) answers source_id lookups
+  but took more than 30 s for every cone search, so it is no fallback for the check.
+- System test (2026-11-04, CDS down): 26 NMW sections of test_vast.sh plus the Gem-03
+  standalone test, run with GAIA_DR2_CLIENT forced. Candidates in total: no check 747,
+  local Gaia DR2 501, Tycho-2 + UCAC5 682, local Gaia DR3 480. With the DR2 copy every
+  section passed except Nova Sgr 2021 N1 and three that failed in all variants (the two
+  TICA TESS sections, whose APASS_I calibration needs CDS, and the selenium check of
+  Nova Vul 2024 ST). Nova Sgr 2021 N1 requires at least 6 candidates (a 2021 value; its
+  dataset is not downloaded by default) and got 5 both with the local copy and with the
+  ESA archive: the same four catalogued stars are rejected, so the bound is stale.
+- Tycho-2 + UCAC5 (GAIA_DR2_CLIENT=tycho2_ucac5, experimental) against DR2: it lost 15
+  known variables (14 Miras, 1 SR; AT Cyg fails the Cyg5 test) and kept 190 known
+  variables that DR2 rejects (Sgr-04 218 candidates instead of 132, Gem-03 standalone
+  19, over its limit of 17). No variant lost a nova, dwarf nova, planet, comet or
+  asteroid. UCAC5 (Gaia DR1 stars matched to UCAC4) lacks many bright red variables:
+  the G = 10.2 Mira at 17:43:02 -13:23:16 is in neither copy.
+- "The object was found in astcheck" is not an asteroid identification:
+  util/transients/MPCheck_v2.sh searches 600 arcsec. The "lost asteroids" of a first
+  comparison were Miras with an asteroid 8-10 arcmin away.
+- The APASS check is off unless APASS_KNOWN_STAR_CHECK=yes (and VizieR answers): APASS
+  exists only at CDS VizieR. Stars brighter than V = 9.1 are excluded earlier by the BSC
+  and Tycho-2 lists.
+- Candidate limits: factory 80, or 400 (was 200) when at most 19 are unidentified, all
+  three overridable from the environment; unmw combine_reports.sh 400. Deploy both: the
+  factory's own "too many candidates" ERROR line marks a field red whatever unmw accepts.
+- An optional build step in the factory must log to its own file
+  (local_star_catalog_build.log): an ERROR line in transient_factory_test31.txt fails the
+  field. The first tycho2_zones build failed because the parent of its staging
+  directory did not exist; make_dir now creates parents like mkdir -p.
+
+## Known-star check follow-up: what Tycho-2 + UCAC5 lets through, UCAC5 links, test margins (2026-11-04)
+- The 190 candidates of the NMW test sections that the Tycho-2 + UCAC5 check keeps and
+  Gaia DR2 drops are 151 distinct stars (39 reported twice): 150 VSX variables, mostly
+  Miras and semiregulars, and one star not known to vary (STL Neptune field, measured at
+  its Gaia G; the reference frames were too shallow). Gaia flags 188 of the 190 entries
+  as variable (DR2 phot_variable_flag 122, DR3 184). Caveats from an independent check:
+  one identification is weak (an "SRS:" ASAS-SN star with no Gaia flag), and 21 stars,
+  mostly in Aql-03, brightened by more than their catalogued amplitude, possibly a
+  photometry effect for very red stars.
+- Why UCAC5 misses them: the Gaia stars behind 188 of the drops (152 distinct, G 8.2-14.3,
+  median 12.6, median G - RP 1.87) have no UCAC5 entry within 2 arcsec (checked also
+  with a separate numpy reader of the zone files), and 150 of the 152 are not in Gaia
+  DR1, from which UCAC5 is built (gaiadr2.dr1_neighbourhood at the ARI Gaia TAP, cone
+  searches agree). Within 60 arcsec of them, UCAC5 has 5 of the 21 other Gaia DR2 stars
+  of similar G with G - RP > 1.3, and 162 of the 174 bluer ones. Tycho-2 does not reach
+  such red stars in V.
+- False candidates (not known to vary, no Gaia variability flag) are what matter: in the
+  same sections Gaia DR2 drops 12 of them and Tycho-2 + UCAC5 drops 11.
+- util/transients/search_for_transients_single_field.sh skips the known-star check by
+  unsetting VIZIER_SITE; the factory always sets it. So the gate in report_transient.sh
+  stays "VIZIER_SITE set, or GAIA_DR2_CLIENT=esa_tap" (and not none). Widening it to the
+  local clients made "Saturn/Iapetus test" (single-field) lose QY Sgr, V1234 Sgr and an
+  ASAS-SN variable when GAIA_DR2_CLIENT=local was exported.
+- The UCAC5 search lists of the factory and util/identify.sh contain ../UCAC5; it was
+  linked as is, and a relative link target is read from lib/catalogs/, so that link was
+  broken. Link targets are absolute now. A link pointing exactly at ../UCAC5 or ../ucac5
+  is replaced in one step with ln -s -n -f: removing it first let parallel runs on a
+  shared lib/catalogs briefly find no link and print a false "no local copy of UCAC5"
+  WARNING in a race test. Other broken links are kept (an unmounted disk).
+- Nova Sgr 2021 N1 now requires at least 5 candidates (the 2021 bound was 6): the Gaia
+  DR2 check drops the Miras V0358 Sgr, V2087 Sgr, V2048 Sgr and one of the two SV Sct
+  detections, online (ESA) and from the local copy alike.
+- Some Mira checks pass the Gaia DR2 check by a few hundredths of a magnitude: WZ Aur by
+  0.03 (Aur-02; with DR3 it would be 0.0004), AT Cyg by 0.05 on one of its two
+  detections (Cyg5). A small photometry change can fail them; the comments in
+  test_vast.sh give the numbers.
+- unmw's filter_report.py classes a candidate known_asteroid whenever the report says
+  "found in astcheck", and MPCheck_v2.sh searches 600 arcsec: Miras with an asteroid
+  8 arcmin away were classed as asteroids. Use the astcheck distance when analysing
+  candidates.
+
+## Report marker spelling, zlib build leftovers, test data on GitHub (2026-11-04)
+
+- The end-of-report marker of transient_report/index.html is `<H2>Processing complete!</H2>`
+  (transient_factory_test31.sh; unmw's combine_reports.sh, autoprocess.sh and
+  nmw_monitoring_lib.py rely on exactly this string). transient_factory_test30.sh and
+  NMW_transient_detection_test.sh, and old versions of test31, write `Processig complete!`.
+  The Sgr9 crash test in test_vast.sh grepped only for the misspelling, so after the typo
+  fix its 5 "excluded variable is not above the marker" checks could never fail. Match
+  the marker as `grep -E -B10000 'Process(ing|ig) complete!'`: the '!' is required, the
+  report also says "until the 'Processing complete' message appears" at the top and
+  "Processing completed" after the marker.
+- lib/compile_zlib.sh must finish with `make distclean`, not `make clean`: only distclean
+  restores the tracked src/zlib-*/Makefile placeholder and zconf.h that ./configure rewrites.
+  Otherwise every build leaves them modified in git status.
+- The test data files of http://tau.kirx.net/vast_test_data/ are mirrored as assets of the
+  GitHub pre-release test-data-v1 (asset name = path with '/' -> '__', other characters
+  outside A-Za-z0-9._+- -> '_'); download_test_data_file() tries GitHub first. A new file
+  in vast_test_data/ must also be uploaded there (gh release upload test-data-v1 ...).
+- The build-product part of .gitignore was generated from a fresh clone + `make`
+  (git ls-files --others); regenerate it the same way when programs are added.
+- Building bash 3.2 (app-shells/bash:3.2) with gcc 16 fails in builtins/mkbuiltins.c
+  (C23 treats `f()` as taking no arguments). CFLAGS alone does not reach mkbuiltins (it is
+  compiled with CFLAGS_FOR_BUILD); CC="gcc -std=gnu89 -fpermissive" via package.env was
+  suggested but not yet confirmed to work.
+
+## VizieR probed only when needed, online name lookup skipped while VizieR is down, TTU FWHM limit (2026-11-05)
+- After the 2026-11-04 deploy about half of the runs still waited 96-162 s at the start for
+  lib/choose_vizier_mirror.sh: all three mirrors fail (CDS: two 10 s connect timeouts; china-vo
+  and nao: HTTP 200 and no data for about 68 s, or nao's 3 s error page). The shared record has
+  no lock and is trusted 300 s after a failure, and unmw's load gate releases runs in bursts that
+  all probed at once. The probe only picks a mirror for the known-star check, and with the local
+  Gaia DR2 copy nothing needs one up front. The factory now settles GAIA_DR2_CLIENT first and
+  probes only for an online client or APASS_KNOWN_STAR_CHECK=yes. Otherwise it reads the record
+  (VIZIER_MIRROR_RECORD_ONLY=yes: exit 0 or 1 from a recent result, 2 and the CDS site when
+  there is none) and sets VIZIER_UNREACHABLE to yes, no or unknown. VIZIER_SITE stays set: the
+  known-star check runs only when it is. test_vast.sh reads the first "VIZIER_SITE=" and
+  "GAIA_DR2_CLIENT=" lines of the log, so no other log line may contain those strings.
+- The online name lookup of unidentified candidates (util/search_databases_with_vizquery.sh,
+  called by report_transient.sh) asks VizieR about ten catalogs in a row. With CDS down every
+  query waited about 25 s: 4-8 min per affected field, and no names. report_transient.sh skips it
+  when VizieR is unreachable (vizier_is_unreachable: VIZIER_UNREACHABLE from the factory; when
+  that is unknown, choose_vizier_mirror.sh answers from the record and probes only without a
+  recent result). The same function guards the VizieR fallback of query_gaia_dr2, which runs when
+  a local catalog cannot be read: "unknown" must not mean a 40 s CDS timeout per candidate. The
+  lookup script is unchanged: it
+  also checks the local catalogs, and test_vast.sh calls it directly. The skip line is "online_id
+  skipped: VizieR is unreachable", without a space before online_id:
+  util/transients/make_report_in_HTML.sh takes the AAVSO object name from a line containing
+  " online_id ", and unmw's filter_report.py only uses lines starting with "online_id" as the end
+  of a crossmatch block.
+- FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX limits the aperture diameter (6 x median A_IMAGE,
+  about 1.9 x the median FWHM on the TTU cameras, scattered: 6.2-8.5 pix at FWHM 4.5-5 pix) and
+  is applied only to uploads with more than two second-epoch images (the preliminary VaST run).
+  TTU uploads have two, so blurred images went through. FILTER_BAD_IMG__MAX_FWHM_PIX (4.5 for
+  TTUQ1b1x1 and TTUQ2b1x1, can be set in the environment; a large value switches it off) rejects
+  the field when the median FWHM_IMAGE of FLAGS<2 sources on a second-epoch image is larger. It is
+  measured on the catalogs of the bright-star pass (SEXTRACTOR_CONFIG_BRIGHTSTARPASS) right after
+  its ./vast run, before the exit code is examined, and rounded to 0.1 pix like that pass's "Median
+  FWHM seeing" lines. The pass matters: the passes with fainter stars measure the same images about
+  15% smaller (4.2 instead of 4.9 pix for a blurred image), so the check must not move to a later
+  pass when the first one fails. The values are printed as " N.N pix  <image>  (...)" lines, the
+  format unmw's nmw_second_epoch_fwhm reads for its FWHM column. On failure the field gets
+  "ERROR: seeing on second-epoch images is out of range (median FWHM X and Y pix, limit 4.5 pix)"
+  and the remaining passes are skipped (a blurred field ended after 22 s in a test).
+- Why: on 2026-11-04 the TTUQ1 focuser moved from 29479 to 29453 between the 19:09 and 19:14 CST
+  exposures (29447 later), and its images went from 2.2 to 4.7-5.6 pix FWHM for the rest of the
+  night, with up to 74 candidates per field instead of 0-3. Nov 3 had soft TTUQ1 images too.
+- util/examples/test_vizier_mirror_record.sh tests the record offline with a stand-in vizquery.
+- ESA's per-candidate Gaia DR2 query (report_transient.sh, both calls of lib/gaia_dr2_cone_search.sh)
+  now waits 90 s instead of 30 s. Of 22 synchronous ESA queries on 2026-11-05, 18 were answered in
+  1.5-89 s (median 23 s; 30 s would have kept 12 of them, 60 s 15, 90 s all 18) and 4 were refused
+  within a second (HTTP 503, "maximum number of synchronous queued jobs (150) reached"). Refusals
+  and outages fail fast, so the longer limit costs time only while ESA is slow but answering. The
+  15 s start-of-run probe in lib/choose_gaia_dr2_client.sh stays: ESA is asked for every candidate
+  whenever VizieR fails, so the probe only decides which service is tried first. Asynchronous
+  queries (/tap/async) took 1-3 s while the synchronous ones were refused or slow.
+
+## UV Ceti check (nearby red dwarf), Gaia DR3 nearby-star copy, vizquery https redirect (2026-11-09)
+
+- New: util/transients/check_nearby_red_dwarf.sh tells whether a Gaia DR3 star closer than
+  200 pc (parallax > 5 mas, parallax_over_error > 3) sits at a candidate's position once its
+  proper motion is applied to the epoch of the observation, and where it sits with respect to
+  the K/M dwarf main sequence. Design, thresholds, verdicts and caveats are in
+  .claude/nearby_red_dwarf_check_design.md. Decisions of 2026-11-09: BP-RP >= 1.0 (all K and M
+  dwarfs) counts as red; the check runs for VSX-matched candidates too; the local copy is the
+  primary source, the ESA archive the fallback, VizieR the last resort.
+- The report line starts with 'UV Ceti check' and is appended after the forced-photometry
+  lines. It is a new entry for the parser list above: unmw/filter_report.py ends the astcheck
+  match block at that prefix and exports the line as the uv_ceti_check JSON field (documented in
+  unmw/filter_report_json_format.md). Keep the line free of 'The object was', 'found in',
+  'not found' and 'mag brighter than the'. report_transient.sh runs the check in the background
+  group with the VSX and asteroid checks; UV_CETI_CHECK=no disables it; with THIS_IS_VAST_TEST
+  set it runs only when lib/catalogs/gaia_dr3_nearby exists, so the test suite never sends one
+  online query per candidate.
+- src/catalogs/local_star_catalog.c: the zone record size is a runtime variable (g_rec_size),
+  24 bytes for gaia_dr2/tycho2 and 40 for gaia_dr3_nearby (parallax, its error, RUWE, pmRA,
+  pmDec after the old 24 bytes; chosen by the catalog name at finalize, read from
+  record_size= at search). The search prints the wide 13-column format whenever a 40-byte
+  catalog is involved ('null null' in the proper-motion columns = none in the catalog) and
+  -sort=_r orders by distance. The 24-byte catalogs are unchanged; test_local_star_catalog.sh
+  covers both layouts.
+- ESA Gaia archive, measured 2026-11-09: anonymous asynchronous jobs get executionDuration =
+  60 s, a request for a longer one is ignored, and a job running longer ends ABORTED with an
+  empty error summary (the installer's first version used 8 async declination bands of
+  768000 rows and lost every job this way). Rows are delivered at about 1500 per second; a
+  synchronous query of 39000 rows took 28 s and was complete; sync queries of at least 5000
+  rows and 55 s worked. COUNT(*) by declination band takes seconds, by source_id range 48 s.
+  Synchronous replies are cut at 50000 rows unless the request carries a larger MAXREC
+  (MAXREC=1000000 is honoured; without it a band of 85024 sources came back as exactly 50000
+  rows, which only the COUNT(*) comparison revealed). The archive answers a request that
+  follows another within seconds, and bursts of requests, with HTTP 429 (also for the UV
+  Ceti check's queries while a build runs). lib/install_local_copy_of_GaiaDR3_nearby_stars.sh
+  therefore uses 100 synchronous equal-area declination bands, counts each band once, cuts
+  a band of more than 60000 sources into equal RA pieces (twice as many as the count needs:
+  dense Galactic-plane and Magellanic-Cloud bands hold many spurious large parallaxes that
+  pass parallax_over_error > 3 and are not spread evenly in RA), requires the rows of the
+  pieces to add up to the count (otherwise the band is cleared and gets twice as many pieces
+  next run), pauses 15 s between queries and retries every 60 s on 429/5xx; it is resumable
+  as long as the band count is kept. Counting every piece recursively (the first version)
+  doubled the throttled requests: 5 min per southern band, 6 h for the sky. The first full
+  build on tau (2026-11-09, /data_ssd/GaiaDR3_nearby) took about 4 h for 148 queries with
+  30 refusals, including a 20-minute spell of HTTP 503 from the archive that the retries
+  outlasted, and holds 4697159 records (195 MB) - exactly the whole-sky COUNT(*), which is
+  the completeness check to repeat after any rebuild.
+- VizieR, 2026-11-09: vizier.cfa.harvard.edu answers plain http with a 301 to https, which
+  lib/my_vizquery.sh never followed (curl without -L), so every query there failed and the
+  mirror chooser could never pick it; the wrapper now follows redirects keeping the POST body
+  (-L --post301 --post302 --post303). The same mirror served complete-but-empty tables for
+  every query all day (also for the Gaia DR2 probe of the chooser), which would pass as 'no
+  star here': the UV Ceti check runs a control query (any Gaia DR3 star within 5') before it
+  trusts an empty reply, and treats a failed control as 'not performed'. When no mirror
+  answers, lib/choose_vizier_mirror.sh prints the CDS site, so a 'not performed (VizieR
+  (vizier.cds.unistra.fr) ...)' line means 'no mirror answered', not a problem of that site.
+- Tests: util/examples/test_nearby_red_dwarf_check.sh has the parts synthetic (default: a
+  synthetic 40-byte catalog, no network), local (the real copy: record count 4697159, the
+  real stars Aur-05, AD Leo, UV Cet and an empty position, the default source), online (the
+  ESA archive and VizieR each on its own, plus the fallback without a copy) and realsky
+  (local where a copy is there, online otherwise). test_vast.sh runs synthetic with the
+  no-network tests and realsky next to the Gaia DR2 clients test on every machine (asked for
+  on 2026-11-09: where there is no local copy the real-sky part uses the ESA archive and
+  VizieR, and no test ever downloads the copy); a missing copy is the informational code
+  UVCETI_LOCAL_COPY_NOT_INSTALLED, outages are UVCETI_ESA_UNAVAILABLE and
+  UVCETI_VIZIER_UNAVAILABLE, all three stripped like the Gaia DR2 client outage codes. The
+  synthetic test stars must have consistent BP-RP and G-RP (the first version of the check
+  switched to G-RP when the two colours disagreed by more than 1.5 mag, and the first version
+  of the test data tripped on that).
+- The copy is distributed ready-made: gaia_dr3_nearby.tar.gz (160 MB; gzip, bzip2 saves 4%,
+  xz 20% but is not everywhere) from http://tau.kirx.net/vast_catalogs/gaia_dr3_nearby/ and
+  http://scan.sai.msu.ru/~kirx/data/gaia_dr3_nearby/ (source files and the deployment notes
+  in /home/kirx/gaia_dr3_nearby_dist on tau; the directory on tau is deliberately not under
+  vast_test_data/, so the GitHub release rule for test data does not apply).
+  lib/install_local_copy_of_GaiaDR3_nearby_stars.sh asks the mirrors first (RU: scan first,
+  GAIA_DR3_NEARBY_MIRRORS overrides), accepts an archive only when gzip -t passes, every zone
+  file has its index, the zone files add up to records x record_size and there are at least
+  4 million records, drops a mirror at once on a 404 or a non-gzip body (an error page sent
+  with status 200 would otherwise be fetched three times), resumes a dropped connection, and
+  builds from the ESA archive only when no mirror delivers (GAIA_DR3_NEARBY_SOURCE=auto;
+  mirror forbids the build, esa skips the mirrors; the retry count and sleep of the ESA
+  queries are GAIA_DR3_NEARBY_RETRY_ATTEMPTS/_SLEEP_SEC, handy for a quick failure test). A
+  complete copy in the destination is left alone - the first version re-downloaded the whole
+  sky from ESA when rerun over a finished copy. Tested with a local python http.server: a
+  truncated archive, an HTML stub and a 404 are skipped, the good mirror installs in 2 s, and
+  the installed copy passes the local test part.
+- Placeholders for 'no value' in the wide search output are the word null, never a number:
+  the first version printed 99.999 for an unknown parallax and the check's normalizer took
+  every parallax >= 99 mas for it, which silently dropped all stars within 10 pc (AD Leo,
+  201 mas, was 'no such star'; the synthetic tests had no parallax above 50 mas, a real-star
+  check caught it). The offline test now has a 201 mas star.
+- G-RP is no cross-check of BP-RP for M dwarfs: the main sequence is so steep in G-RP at the
+  late end that 0.1 mag of colour is 1.5 mag of M_G. UV Cet itself (BP-RP 3.83, G-RP 1.39)
+  sits on the locus by BP-RP and 1.6 mag below it by G-RP; the first version of the check
+  switched to G-RP whenever the two disagreed by 1.5 mag and called UV Cet a subdwarf or
+  composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
+  Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
+  touching the classification.

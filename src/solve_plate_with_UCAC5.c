@@ -3479,6 +3479,12 @@ int obscure_proxy_credentials( char *str ) {
  return 1;
 }
 
+// Set to 1 by the remote UCAC5 server search when one of our own UCAC5 servers
+// (scan/vast/tau) answered at all, whether or not its answer could be used.
+// search_UCAC5_with_vizquery() never falls back to VizieR in that case: our server is
+// up, so a failed match is a problem of the image, not of the catalog service.
+static int ucac5_remote_server_answered= 0;
+
 /**
  * Modified search_UCAC5_at_scan function that uses safer command construction.
  */
@@ -3641,6 +3647,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
   fprintf( stderr, "Running curl to query UCAC5...\n" );
   vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
+  if ( vizquery_run_success == 0 ) {
+   ucac5_remote_server_answered= 1;
+  }
 
   if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
@@ -3969,6 +3978,9 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
 
   fprintf( stderr, "Running curl to query UCAC5...\n" );
   vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
+  if ( vizquery_run_success == 0 ) {
+   ucac5_remote_server_answered= 1;
+  }
 
   if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
@@ -4418,6 +4430,16 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  return 0;
 }
 
+// 1 if the zone files of a local UCAC5 copy can be opened
+static int ucac5_local_copy_is_present( void ) {
+ FILE *f= fopen( "lib/catalogs/ucac5/z001", "rb" );
+ if ( NULL == f ) {
+  return 0;
+ }
+ fclose( f );
+ return 1;
+}
+
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[BASE_COMMAND_LENGTH];
  FILE *vizquery_input;
@@ -4442,13 +4464,25 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  }
 
  // Try the copy of UCAC5 at scan
+ ucac5_remote_server_answered= 0;
  if ( 0 == search_UCAC5_at_scan( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The remote UCAC5 server search seems to be a success\n" );
   return 0;
- } else {
-  fprintf( stderr, "The remote UCAC5 server search failed. Trying VizieR as last resort\n" );
-  // exit( EXIT_FAILURE );
  }
+
+ // VizieR is only the last resort for when we have no UCAC5 of our own to ask. If a
+ // local copy exists or one of our UCAC5 servers answered, the failure is not caused by
+ // an unavailable catalog, VizieR would serve the same stars, and CDS has been
+ // unreliable (2026-11): do not query it.
+ if ( ucac5_local_copy_is_present() ) {
+  fprintf( stderr, "The remote UCAC5 server search failed too. Not querying VizieR for UCAC5: a local copy of UCAC5 is present\n" );
+  return 1;
+ }
+ if ( ucac5_remote_server_answered ) {
+  fprintf( stderr, "The remote UCAC5 server search failed. Not querying VizieR for UCAC5: one of our UCAC5 servers answered\n" );
+  return 1;
+ }
+ fprintf( stderr, "No local copy of UCAC5 and none of our UCAC5 servers answered. Trying VizieR as last resort\n" );
 
  // Initialize the allocated memory to null characters
  memset( vizquery_input_filename, '\0', FILENAME_LENGTH );

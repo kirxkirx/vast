@@ -186,6 +186,16 @@ else
     print_test_status "Photometric calibration TYCHO2_V" 1
 fi
 
+# Check the field altitude lines written from the N.I.N.A. CENTALT keyword
+# (picked up by the unmw summary page for its Altitude column)
+if grep -q 'Field altitude during imaging: 42.9 deg (FITS keyword CENTALT)  Gem-03-Q1b1x1_2026-01-21_02-42-26_20.00sec_-15.00C_LIGHT_0409.fits' transient_report/index.html && grep -q 'Field altitude during imaging: 42.7 deg (FITS keyword CENTALT)  Gem-03-Q1b1x1_2026-01-21_02-43-20_20.00sec_-15.00C_LIGHT_0410.fits' transient_report/index.html; then
+    print_test_status "Field altitude lines 42.9 and 42.7 deg" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_FIELD_ALTITUDE"
+    print_test_status "Field altitude lines 42.9 and 42.7 deg" 1
+fi
+
 # Validate HTML format
 if util/transients/validate_HTML_list_of_candidates.sh 2>/dev/null; then
     print_test_status "HTML list format validation" 0
