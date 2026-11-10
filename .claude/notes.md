@@ -1639,3 +1639,38 @@ Update this file as you learn new things.
   composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
   Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
   touching the classification.
+
+## External-service outages and the test suite: VizieR, UCAC5/plate-solve servers, JPL HORIZONS (2026-11-09)
+- test_vast.sh's internet check counted "no VizieR mirror serves Gaia DR2" as "offline" and
+  stopped the run before the first section; since the CDS outage of 2026-11-03 every CI system
+  test (Ubuntu, macOS, Alpine, WSL2) died there. Only unreachable tau.kirx.net and
+  scan.sai.msu.ru stop the run now; a VizieR outage is recorded once as the informational
+  VIZIER_UNAVAILABLE, and VizieR is probed again at most hourly (a failed probe takes ~140 s).
+  Never let one external service gate the whole run.
+- VizieR mirrors hold only some catalogs and answer complete-but-empty tables for the others,
+  so lib/choose_vizier_mirror.sh tests a catalog, with a record per catalog: GAIADR2 (default),
+  APASS, 2MASS. vizier.idia.ac.za (added 2026-11-09) serves APASS, 2MASS, UCAC5, Gaia DR3,
+  GCVS, VSX and the catalogs of the online identification, not the Gaia DR2/EDR3 source tables.
+  util/search_databases_with_vizquery.sh uses the 2MASS test, and report_transient.sh decides
+  whether to skip it with online_id_vizier_is_unreachable (2MASS), not with VIZIER_UNREACHABLE,
+  which is about Gaia DR2 for the known-star check. The search over all catalogs ('may be a
+  known variable') needs CDS itself. test_vizier_mirror_record.sh counts four mirror probes.
+- One failing server must not produce an ERROR line while another server may still answer:
+  every ERROR marks the field as failed on the unmw summary page. On 2026-11-09 the UCAC5 search
+  and the plate-solve CGIs of scan.sai.msu.ru answered HTTP 500. solve_plate_with_UCAC5 took
+  the 16-line error page for a catalog reply (it counted lines), matched no star and stopped
+  without asking vast/tau ("ERROR running vizquery" although VizieR was not asked); now curl
+  runs with --fail and a reply needs >=5 catalog data lines. util/identify.sh
+  (= wcs_image_calibration.sh) printed ERROR and the raw error page before trying the next
+  server; the page's </body></html> broke the HTML validation of the transient report. Now a
+  WARNING and the reply made safe (no tags, no 'ERROR'), as already done for the WCS header.
+  Machines with a local UCAC5 copy and solve-field are not affected.
+- JPL HORIZONS has answered every TLIST request with "LTP: input TIM outside +-500K range"
+  since the evening of 2026-11-09 MST (production still got its moons at 23:39 UTC on 11-09;
+  failing from 03:40 UTC on 11-10), for any date and time format, also via the kirx.net proxy,
+  while START_TIME/STOP_TIME works. util/planets.sh, moons.sh, spacecraft.sh and comets.sh now
+  ask START_TIME='JD..', STOP_TIME=+0.0007 d, STEP_SIZE='1 m' and use the first row after
+  $$SOE. The failure was silent: the scripts print nothing for an object they cannot get, so
+  moons and spacecraft (always from HORIZONS) and planets and comets (from HORIZONS only when
+  skyfield is missing) just stopped being identified. The Saturn/Iapetus 2, Venus and
+  STEREO-A Ceres tests caught it.

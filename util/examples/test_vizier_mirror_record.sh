@@ -69,9 +69,9 @@ check() {
 }
 NOW=$(date +%s)
 
-# No record: record-only does not probe; a normal call probes the three mirrors and records the failure
+# No record: record-only does not probe; a normal call probes the four mirrors and records the failure
 check VIZIERRECORD_ONLY_NO_RECORD "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD_ONLY=yes)"
-check VIZIERRECORD_PROBE_FAIL "vizier.cds.unistra.fr 1 3" "$(probe)"
+check VIZIERRECORD_PROBE_FAIL "vizier.cds.unistra.fr 1 4" "$(probe)"
 if [ ! -s "$RECORD" ] || ! awk -v now="$NOW" '{exit !(NF == 3 && $1 >= now && $2 == 1 && $3 == "vizier.cds.unistra.fr")}' "$RECORD" ;then
  fail VIZIERRECORD_FAIL_RECORDED "record #$(cat "$RECORD" 2>/dev/null)#"
 fi
@@ -91,7 +91,7 @@ check VIZIERRECORD_ONLY_FRESH_OK "vizier.nao.ac.jp 0 0" "$(probe VIZIER_MIRROR_R
 echo "$((NOW - 400)) 1 vizier.cds.unistra.fr" > "$RECORD"
 check VIZIERRECORD_ONLY_FAIL_EXPIRED "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD_ONLY=yes)"
 check VIZIERRECORD_ONLY_FAIL_SEC_ENV "vizier.cds.unistra.fr 1 0" "$(probe VIZIER_MIRROR_RECORD_FAIL_SEC=1800 VIZIER_MIRROR_RECORD_ONLY=yes)"
-check VIZIERRECORD_FAIL_EXPIRED_PROBES "vizier.cds.unistra.fr 1 3" "$(probe)"
+check VIZIERRECORD_FAIL_EXPIRED_PROBES "vizier.cds.unistra.fr 1 4" "$(probe)"
 # A success older than VIZIER_MIRROR_RECORD_OK_SEC (900 s by default) is not reused
 echo "$((NOW - 1000)) 0 vizier.nao.ac.jp" > "$RECORD"
 check VIZIERRECORD_ONLY_OK_EXPIRED "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD_ONLY=yes)"
@@ -102,7 +102,7 @@ echo "garbage" > "$RECORD"
 check VIZIERRECORD_ONLY_GARBAGE "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD_ONLY=yes)"
 # VIZIER_MIRROR_RECORD=no ignores the record: probes, or with record-only reports nothing
 echo "$NOW 0 vizier.nao.ac.jp" > "$RECORD"
-check VIZIERRECORD_BYPASS_PROBES "vizier.cds.unistra.fr 1 3" "$(probe VIZIER_MIRROR_RECORD=no)"
+check VIZIERRECORD_BYPASS_PROBES "vizier.cds.unistra.fr 1 4" "$(probe VIZIER_MIRROR_RECORD=no)"
 echo "$NOW 0 vizier.nao.ac.jp" > "$RECORD"
 check VIZIERRECORD_BYPASS_ONLY "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD=no VIZIER_MIRROR_RECORD_ONLY=yes)"
 

@@ -47,6 +47,13 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# JPL HORIZONS has answered every TLIST request with "LTP: input TIM outside +-500K range"
+# since (at least) 2026-11-09, whatever the time format, while START_TIME/STOP_TIME requests
+# work. Ask for a table that starts at the requested time (one row at that time and one a
+# minute later) and use its first row.
+JD_STOP=$(echo "$JD" | awk '{printf "%.8f", $1 + 0.0007}')
+HORIZONS_TIME_PARAMETERS="START_TIME='JD${JD}'&STOP_TIME='JD${JD_STOP}'&STEP_SIZE='1%20m'"
+
 # Run comet search locally unless explicitly set to "remote"
 if [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ]; then
  if command -v python3 &>/dev/null && \
@@ -142,7 +149,7 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
   PERIODIC_COMET_DESIGNATION=$(echo "$PERIODIC_COMET_DESIGNATION_AND_NAME" | awk -F'/' '{print $1}')
  fi
  
- HORIZONS_REPLY=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'")
+ HORIZONS_REPLY=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'")
  if [ -n "$HORIZONS_REPLY" ];then
   SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
  fi
@@ -167,14 +174,14 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
     # something is wrong - let's try to reconnect via the reverse proxy
     # this will be slow if connection with reverse proxy is fine, but there is no reply from upstream
     #PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --silent --show-error --insecure "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
-    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --silent --show-error --insecure "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
+    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --silent --show-error --insecure "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
     # last attempt
     #sleep $[$RANDOM % 9]
     sleep $((RANDOM % 10 + 1))
     if [ -z "$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER" ];then
      #PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --silent --insecure "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
      # Retry with the main horizons site, not the proxy
-     PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --silent --show-error --insecure "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
+     PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --silent --show-error --insecure "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
     else
      SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
     fi
@@ -194,7 +201,7 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
    fi
   fi
   #HORIZONS_REPLY=$(curl --connect-timeout 10 --retry 1 --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'")
-  HORIZONS_REPLY=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'")
+  HORIZONS_REPLY=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'")
   if [ -n "$HORIZONS_REPLY" ];then
    SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
   fi
@@ -213,13 +220,13 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
  # Make sure to print empty string if $3, $4, $5, $6, $7, $8 are undefined
  # sed 's/ [*CNAmrets] /   /g' is to remove Moon Sun presence markers and the likes - they may appear if MPC_CODE is set
  #COMET_RA_DEC_MAG_STRING=$(echo "$HORIZONS_REPLY" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
- COMET_RA_DEC_MAG_STRING=$(echo "$HORIZONS_REPLY" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+ COMET_RA_DEC_MAG_STRING=$(echo "$HORIZONS_REPLY" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  if [ -z "$COMET_RA_DEC_MAG_STRING" ];then
   # Something is wrong - let's try to reconnect via the reverse proxy
   # Make sure to print empty string if $3, $4, $5, $6, $7, $8 are undefined
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  fi
  if [ -n "$COMET_RA_DEC_MAG_STRING" ];then
   # Verify the format of $PLANET_RA_DEC_MAG_STRING - lib/hms2deg will return non-zero exit code if something is wrong with the coordinates
@@ -244,14 +251,14 @@ echo "$NON_PERIODIC_COMETS" | while read NON_PERIODIC_COMET_DESIGNATION_AND_NAME
  NON_PERIODIC_COMET_DESIGNATION_URLENCODE=$(echo "$NON_PERIODIC_COMET_DESIGNATION_AND_NAME" | awk '{print $1"%20"$2}')
  # Make sure to print empty string if $3, $4, $5, $6, $7, $8 are undefined
  #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
- COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+ COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  if [ -z "$COMET_RA_DEC_MAG_STRING" ];then
   # Normally this isn't happening
   # Something is wrong - let's try to reconnect via the reverse proxy
   # Make sure to print empty string if $3, $4, $5, $6, $7, $8 are undefined
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --max-time 30 --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  else
   SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
  fi
@@ -266,7 +273,7 @@ echo "$NON_PERIODIC_COMETS" | while read NON_PERIODIC_COMET_DESIGNATION_AND_NAME
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 0 --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets] /   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
   # Retry with the main horizons site, not proxy
   #COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+  COMET_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 0 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  else
   SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
  fi

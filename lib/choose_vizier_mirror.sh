@@ -128,6 +128,15 @@ if [ -n "$1" ];then
  if [ "$1" = "APASS" ];then
   CATALOG_TO_TEST="APASS"
  fi
+ # The online identification (util/search_databases_with_vizquery.sh) needs 2MASS for the
+ # colour of every star, plus GCVS, VSX, OGLE, ATLAS, LAMOST and the Gaia variability
+ # tables, but not the Gaia DR2 source table that the default test asks for. A mirror that
+ # serves 2MASS served the others too: on 2026-11-09, with CDS down, vizier.idia.ac.za passed
+ # 19 of the 20 VizieR checks of the test_vast.sh database section that failed against CDS
+ # (all but the search over all catalogs, which only CDS can answer).
+ if [ "$1" = "2MASS" ];then
+  CATALOG_TO_TEST="2MASS"
+ fi
 fi
 
 
@@ -178,9 +187,23 @@ remember_probe_result() {
 }
 
 # New code: choose VizieR mirror that serves Gaia DR2
-for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp ;do
+# (or APASS or 2MASS - see above). vizier.idia.ac.za (IDIA, South Africa) answered within a
+# second on 2026-11-09, when CDS, china-vo and nao did not: it serves APASS DR9, 2MASS, Gaia DR3,
+# UCAC4, UCAC5, Tycho-2, GCVS and VSX, but returns empty tables for the Gaia DR2 and EDR3 source
+# tables, so it passes the APASS and 2MASS tests only. It is tried right after CDS because a
+# mirror that lacks the catalog fails the test in about a second, while china-vo and nao kept
+# the probe waiting for a minute.
+for vizier_mirror in vizier.cds.unistra.fr vizier.idia.ac.za vizier.china-vo.org vizier.nao.ac.jp ;do
  if [ "$CATALOG_TO_TEST" = "APASS" ];then
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep -q ' 15.0'
+  if [ $? -eq 0 ];then
+   remember_probe_result 0 "$vizier_mirror"
+   echo "$vizier_mirror"
+   exit 0
+  fi
+ elif [ "$CATALOG_TO_TEST" = "2MASS" ];then
+  # omi Cet (Mira) is 2MASS J02192081-0258393; a mirror without 2MASS returns an empty table
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/246 -out.max=1 -out.add=_r -out.form=mini -sort=_r -c="02:19:20.79 -02:58:39.5" -c.rs=3.0 -out="2MASS,Jmag,Kmag" | grep -q '02192081-0258393'
   if [ $? -eq 0 ];then
    remember_probe_result 0 "$vizier_mirror"
    echo "$vizier_mirror"

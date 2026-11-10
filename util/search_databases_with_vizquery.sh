@@ -228,7 +228,9 @@ fi
 #
 
 #VIZIER_SITE=vizier.u-strasbg.fr
-VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh)
+# A mirror that serves 2MASS (and with it the variable star catalogs this script asks), not
+# necessarily the Gaia DR2 source table that the default mirror test requires
+VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh 2MASS)
 #
 echo -e "Starting $0" 1>&2
 

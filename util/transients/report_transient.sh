@@ -104,6 +104,24 @@ function vizier_is_unreachable {
  [ "$VIZIER_UNREACHABLE" = "yes" ]
 }
 
+######### function to tell whether the online identification can reach VizieR #########
+# VIZIER_UNREACHABLE is about a mirror that serves the Gaia DR2 source table. The online
+# identification (util/search_databases_with_vizquery.sh) does not need that table: it asks
+# 2MASS and the variable star catalogs, which a mirror kept serving while CDS was down
+# (vizier.idia.ac.za, Nov 2026), so it asks lib/choose_vizier_mirror.sh about 2MASS (from the
+# shared record of recent probes; the mirrors are probed only when there is none). The answer
+# is kept in ONLINE_ID_VIZIER_UNREACHABLE for this process.
+function online_id_vizier_is_unreachable {
+ if [ "$ONLINE_ID_VIZIER_UNREACHABLE" != "yes" ] && [ "$ONLINE_ID_VIZIER_UNREACHABLE" != "no" ];then
+  if lib/choose_vizier_mirror.sh 2MASS > /dev/null 2>&1 ;then
+   ONLINE_ID_VIZIER_UNREACHABLE="no"
+  else
+   ONLINE_ID_VIZIER_UNREACHABLE="yes"
+  fi
+ fi
+ [ "$ONLINE_ID_VIZIER_UNREACHABLE" = "yes" ]
+}
+
 
 ######### function to query Gaia DR2 (or a local catalog standing in for it) #########
 # Uses the GAIA_DR2_CLIENT environment variable to select the source of the answer:
@@ -1153,8 +1171,8 @@ if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_A
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
   # The online name lookup asks VizieR about ten catalogs one after another. While CDS was
   # down (Nov 2026) each query waited for its timeout, costing 4-8 min per unidentified
-  # candidate for no answer, so skip the lookup when VizieR is unreachable.
-  if vizier_is_unreachable ;then
+  # candidate for no answer, so skip the lookup when no mirror serves its catalogs.
+  if online_id_vizier_is_unreachable ;then
    # No ' online_id ' with a space on both sides here: util/transients/make_report_in_HTML.sh
    # takes the object name from such a line
    echo "online_id skipped: VizieR is unreachable"

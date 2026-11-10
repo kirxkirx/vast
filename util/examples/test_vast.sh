@@ -664,16 +664,50 @@ function single_internet_connection_probe() {
   return 0
  fi
 
- # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
- # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
- VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1
- if [ $? -ne 0 ];then
-  echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
-  echo "ERROR in test_internet_connection(): cannot connect to VizieR"
-  return 1
- fi
+ # A VizieR outage is recorded, it does not make the check fail (see below)
+ probe_vizier_for_test_run
 
  return 0
+}
+
+# Since 2026-11-03 VizieR has been unreachable for days at a time: CDS drops the
+# connections and the mirrors that answer serve only some catalogs. The test run used to
+# stop at the first internet check whenever no VizieR mirror served Gaia DR2, before running
+# a single section (2026-11-09: 'still offline after 4 probe attempts' after 8 minutes).
+# Most of VaST no longer needs VizieR (the known-star check reads a local Gaia DR2 copy or
+# asks the ESA archive, plate solving asks our UCAC5 servers), so a VizieR outage is now
+# recorded under the informational code VIZIER_UNAVAILABLE and the run goes on; the sections
+# that still need VizieR fail on their own, which shows what the outage breaks. Only an
+# unreachable tau.kirx.net and scan.sai.msu.ru stops the run. A failed probe takes over two
+# minutes (137 s on 2026-11-09) and the check runs before dozens of sections, so after a
+# failure VizieR is probed again only once an hour.
+VIZIER_TEST_PROBE_UNIXSEC=""
+VIZIER_TEST_PROBE_RESULT=""
+function record_vizier_unavailable() {
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  if ! echo " $FAILED_TEST_CODES " | grep -q ' VIZIER_UNAVAILABLE ' ;then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZIER_UNAVAILABLE"
+  fi
+ fi
+}
+function probe_vizier_for_test_run() {
+ local now_unixsec
+ now_unixsec=$(date +%s)
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ] && [ -n "$VIZIER_TEST_PROBE_UNIXSEC" ] && [ $(( now_unixsec - VIZIER_TEST_PROBE_UNIXSEC )) -lt 3600 ];then
+  return 1
+ fi
+ VIZIER_TEST_PROBE_UNIXSEC="$now_unixsec"
+ # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
+ # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
+ if VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1 ;then
+  VIZIER_TEST_PROBE_RESULT="available"
+  return 0
+ fi
+ VIZIER_TEST_PROBE_RESULT="unavailable"
+ echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
+ echo "WARNING in test_internet_connection(): cannot connect to VizieR - continuing, the sections that need VizieR will fail (VIZIER_UNAVAILABLE)"
+ record_vizier_unavailable
+ return 1
 }
 
 function test_internet_connection() {
@@ -1030,6 +1064,8 @@ echo "
 ##### Set initial values for the variables #####
 DEBUG_OUTPUT=""
 FAILED_TEST_CODES=""
+# keep a VizieR outage found by the internet check at the start of the run
+record_vizier_unavailable
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
 VAST_BUILD_NUMBER=`cat .cc.build`
@@ -2580,11 +2616,19 @@ if [ $? -ne 0 ];then
 fi
 rm -rf "$DUALMATCH_SANDBOX"
 
-# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
+# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names.
+# That is a search over all VizieR catalogs, which only the main CDS site can answer: a mirror
+# holds some catalogs only (vizier.idia.ac.za, which the identification used while CDS was down
+# in Nov 2026, does not list this star). When the internet check found no VizieR site serving
+# Gaia DR2 (VIZIER_UNAVAILABLE), a failure here is recorded under its own informational code.
 util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep -q 'may be a known variable'
 if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE"
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ fi
 fi
 
 # No false ID with Gaia DR2 high-amplitude variable
@@ -34604,11 +34648,13 @@ if [ $? -ne 0 ];then
 fi
 
 # Horizons direct and reverse proxy
-HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+# START_TIME/STOP_TIME (first row = the requested time), not TLIST: HORIZONS answered every
+# TLIST request with 'LTP: input TIM outside +-500K range' on 2026-11-09 (see util/planets.sh)
+HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 else
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 fi
 if [ "$HORIZONS_DIRECT" != "$HORIZONS_REVERSE_PROXY" ] ;then
  if [ -n "$HORIZONS_DIRECT" ];then
@@ -37395,6 +37441,12 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
  # not a VaST code failure (the code stays in vast_test_report.txt)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"
+ # No VizieR mirror served Gaia DR2 at one of the internet checks: an outage of an external
+ # service (the code stays in vast_test_report.txt); the sections that need VizieR report
+ # their own failure codes
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZIER_UNAVAILABLE/}"
+ # ... like the search over all VizieR catalogs, which only the main CDS site can answer
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE/}"
  # The local Gaia DR2 copy is optional (lib/install_local_copy_of_GaiaDR2.sh, 13 GB):
  # on a machine without it the known-star check uses the online services
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2LOCAL_NOT_INSTALLED/}"
