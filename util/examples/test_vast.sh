@@ -1934,7 +1934,18 @@ remove_test_data_to_save_space
 
 
 ### Enable this test only for GitHub Actions where internet connection is sure to be very fast
-if [ "$GITHUB_ACTIONS" == "true" ];then
+# A VizieR outage must not end the whole run (see test_internet_connection() above). This test
+# called fail_early when its UCAC5 query got no complete reply, which stopped every CI system
+# test 14 minutes in while CDS was down (2026-11-09..11: CDS answered with a 'Page unavailable'
+# page, and vizier.idia.ac.za, which serves UCAC5, gives no catalog values to this query, which
+# names eight of the UCAC5 columns). When the internet check has already found VizieR
+# unavailable, the test is not performed and the outage is recorded under its own
+# informational code instead.
+if [ "$GITHUB_ACTIONS" == "true" ] && [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+ echo "vizquery test: NOT PERFORMED (VizieR unavailable)" >> vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_VIZIER_UNAVAILABLE"
+fi
+if [ "$GITHUB_ACTIONS" == "true" ] && [ "$VIZIER_TEST_PROBE_RESULT" != "unavailable" ];then
 
 #### vizquery test
 THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -37385,6 +37396,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # retry-marker code survives into FAILED_TEST_CODES even when the retry
  # succeeds (external VizieR flakiness, not a VaST-side failure).
  FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_RETRY/}"
+ # ...and is not performed at all while the internet check finds VizieR unavailable
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_VIZIER_UNAVAILABLE/}"
  # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
  # not a VaST code failure (the code stays in vast_test_report.txt)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"

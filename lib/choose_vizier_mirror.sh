@@ -137,6 +137,12 @@ if [ -n "$1" ];then
  if [ "$1" = "2MASS" ];then
   CATALOG_TO_TEST="2MASS"
  fi
+ # The plate solver (search_UCAC5_with_vizquery() in src/solve_plate_with_UCAC5.c) queries
+ # UCAC5; with the default test it was sent to CDS while CDS was down (November 2026),
+ # although vizier.idia.ac.za serves UCAC5.
+ if [ "$1" = "UCAC5" ];then
+  CATALOG_TO_TEST="UCAC5"
+ fi
 fi
 
 
@@ -187,12 +193,14 @@ remember_probe_result() {
 }
 
 # New code: choose VizieR mirror that serves Gaia DR2
-# (or APASS or 2MASS - see above). vizier.idia.ac.za (IDIA, South Africa) answered within a
-# second on 2026-11-09, when CDS, china-vo and nao did not: it serves APASS DR9, 2MASS, Gaia DR3,
+# (or APASS, 2MASS or UCAC5 - see above). vizier.idia.ac.za (IDIA, South Africa) answered within
+# a second on 2026-11-09, when CDS, china-vo and nao did not: it serves APASS DR9, 2MASS, Gaia DR3,
 # UCAC4, UCAC5, Tycho-2, GCVS and VSX, but returns empty tables for the Gaia DR2 and EDR3 source
-# tables, so it passes the APASS and 2MASS tests only. It is tried right after CDS because a
-# mirror that lacks the catalog fails the test in about a second, while china-vo and nao kept
-# the probe waiting for a minute.
+# tables, so it passes the APASS, 2MASS and UCAC5 tests only. For UCAC5 it fails most queries
+# that name some of the columns with -out=..., the plate solver's old eight-column query among
+# them (no catalog values, 2026-11-12), so the UCAC5 test asks for all columns, as the plate
+# solver now does. IDIA is tried right after CDS because a mirror that lacks the catalog fails
+# the test in about a second, while china-vo and nao kept the probe waiting for a minute.
 for vizier_mirror in vizier.cds.unistra.fr vizier.idia.ac.za vizier.china-vo.org vizier.nao.ac.jp ;do
  if [ "$CATALOG_TO_TEST" = "APASS" ];then
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep -q ' 15.0'
@@ -204,6 +212,15 @@ for vizier_mirror in vizier.cds.unistra.fr vizier.idia.ac.za vizier.china-vo.org
  elif [ "$CATALOG_TO_TEST" = "2MASS" ];then
   # omi Cet (Mira) is 2MASS J02192081-0258393; a mirror without 2MASS returns an empty table
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/246 -out.max=1 -out.add=_r -out.form=mini -sort=_r -c="02:19:20.79 -02:58:39.5" -c.rs=3.0 -out="2MASS,Jmag,Kmag" | grep -q '02192081-0258393'
+  if [ $? -eq 0 ];then
+   remember_probe_result 0 "$vizier_mirror"
+   echo "$vizier_mirror"
+   exit 0
+  fi
+ elif [ "$CATALOG_TO_TEST" = "UCAC5" ];then
+  # The star of the APASS test is Gaia DR1 2015451508604496128 in UCAC5, f.mag 15.823;
+  # all columns are asked for, as tab-separated values, like the plate solver asks for them
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=tsv -source=UCAC5 -out.max=1 -out.add=_r -out.all -sort=_r -c="23:24:47.70 +61:11:14.3" -c.rs=2.0 | grep '2015451508604496128' | grep -q '15\.823'
   if [ $? -eq 0 ];then
    remember_probe_result 0 "$vizier_mirror"
    echo "$vizier_mirror"

@@ -4186,16 +4186,235 @@ static int ucac5_local_copy_is_present( void ) {
  return 1;
 }
 
+// The longest line of a tab-separated VizieR reply that select_columns_from_vizier_tsv_reply()
+// reads (a UCAC5 row with all columns is about 230 characters long), the most columns in a line
+// and the most columns it can select
+#define VIZIER_TSV_LINE_LENGTH 4096
+#define VIZIER_TSV_MAX_FIELDS 256
+#define VIZIER_TSV_MAX_SELECTED_COLUMNS 32
+
+// vizier.idia.ac.za, the VizieR mirror that kept serving UCAC5 while CDS was down in November
+// 2026, fails UCAC5 queries that name some of the columns with -out=...: on 2026-11-12 the
+// eight-column query this solver used to send got rows holding only the target positions, and
+// so did most other column lists tried (the VOTable form says '(pipe) Request has been
+// interrupted'), while a query for all columns always worked. So search_UCAC5_with_vizquery()
+// asks for all columns, as tab-separated values so that the columns can be found by name and
+// empty values keep their place, and this function writes the columns read_UCAC5_from_vizquery()
+// reads, in its order, as a table separated by spaces. The names are taken from the header line,
+// which VizieR repeats for each target of a list query that has a match. A row with an empty
+// value in one of the first n_required_columns columns is skipped; a row with an empty value in
+// one of the other columns is written with the required columns only (read_UCAC5_from_vizquery()
+// then applies no proper motion). A last line without a newline is the cut-off end of an
+// incomplete reply and is ignored. Returns the number of rows written (0 when VizieR found no
+// star near any target), or -1 if the reply cannot be read, is empty, is not a VizieR table
+// (an error page) or has no header line with all the required columns.
+static int select_columns_from_vizier_tsv_reply( const char *tsv_filename, const char *output_filename, const char **column_names, int n_columns, int n_required_columns ) {
+ FILE *tsv_file;
+ FILE *output_file;
+ char line[VIZIER_TSV_LINE_LENGTH];
+ char *fields[VIZIER_TSV_MAX_FIELDS];
+ int column_index[VIZIER_TSV_MAX_SELECTED_COLUMNS];
+ int n_fields;
+ int is_header_line;
+ int header_is_usable;
+ int n_header_lines;
+ int n_usable_header_lines;
+ const char *missing_column_name;
+ int n_rows_written;
+ int n_rows_skipped;
+ int n_columns_to_write;
+ int row_has_required_values;
+ int n_lines_read;
+ int n_vizier_resource_lines;
+ int reply_is_cut_off;
+ int i, j;
+ int c;
+ char *p;
+ char *end;
+
+ if ( n_columns < 1 || n_columns > VIZIER_TSV_MAX_SELECTED_COLUMNS || n_required_columns < 1 || n_required_columns > n_columns ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): wrong number of columns\n" );
+  return -1;
+ }
+ tsv_file= fopen( tsv_filename, "r" );
+ if ( tsv_file == NULL ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): cannot open %s for reading\n", tsv_filename );
+  return -1;
+ }
+ output_file= fopen( output_filename, "w" );
+ if ( output_file == NULL ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): cannot open %s for writing\n", output_filename );
+  fclose( tsv_file );
+  return -1;
+ }
+ header_is_usable= 0;
+ n_header_lines= 0;
+ n_usable_header_lines= 0;
+ missing_column_name= NULL;
+ n_rows_written= 0;
+ n_rows_skipped= 0;
+ n_lines_read= 0;
+ n_vizier_resource_lines= 0;
+ reply_is_cut_off= 0;
+ while ( NULL != fgets( line, VIZIER_TSV_LINE_LENGTH, tsv_file ) ) {
+  n_lines_read++;
+  // A line without its newline either does not fit in the buffer, which no expected line does,
+  // or is the cut-off end of an incomplete reply (a complete reply ends with a newline): drop it
+  if ( NULL == strchr( line, '\n' ) ) {
+   if ( 0 == feof( tsv_file ) ) {
+    c= fgetc( tsv_file );
+    while ( c != EOF && c != '\n' ) {
+     c= fgetc( tsv_file );
+    }
+   } else {
+    reply_is_cut_off= 1;
+   }
+   continue;
+  }
+  line[strcspn( line, "\r\n" )]= '\0';
+  // Comments and empty lines. VizieR describes each table (in a list query, the table of each
+  // target) in comment lines starting with '#RESOURCE=', also when it found nothing.
+  if ( line[0] == '#' ) {
+   if ( 0 == strncmp( line, "#RESOURCE=", 10 ) ) {
+    n_vizier_resource_lines++;
+   }
+   continue;
+  }
+  if ( line[0] == '\0' ) {
+   continue;
+  }
+  // Split the line at the tabs and trim the spaces that pad the values. The target position
+  // in the '_1' column keeps the space between its RA and Dec.
+  n_fields= 0;
+  fields[n_fields]= line;
+  n_fields++;
+  for ( p= line; *p != '\0'; p++ ) {
+   if ( *p == '\t' ) {
+    *p= '\0';
+    if ( n_fields < VIZIER_TSV_MAX_FIELDS ) {
+     fields[n_fields]= p + 1;
+     n_fields++;
+    }
+   }
+  }
+  for ( i= 0; i < n_fields; i++ ) {
+   while ( *fields[i] == ' ' ) {
+    fields[i]++;
+   }
+   end= fields[i] + strlen( fields[i] );
+   while ( end > fields[i] && *( end - 1 ) == ' ' ) {
+    end--;
+   }
+   *end= '\0';
+  }
+  // A header line names the first requested column ('_1', the target)
+  is_header_line= 0;
+  for ( i= 0; i < n_fields; i++ ) {
+   if ( 0 == strcmp( fields[i], column_names[0] ) ) {
+    is_header_line= 1;
+    break;
+   }
+  }
+  if ( is_header_line == 1 ) {
+   n_header_lines++;
+   header_is_usable= 1;
+   for ( j= 0; j < n_columns; j++ ) {
+    column_index[j]= -1;
+    for ( i= 0; i < n_fields; i++ ) {
+     if ( 0 == strcmp( fields[i], column_names[j] ) ) {
+      column_index[j]= i;
+      break;
+     }
+    }
+    if ( column_index[j] < 0 && j < n_required_columns ) {
+     header_is_usable= 0;
+     missing_column_name= column_names[j];
+    }
+   }
+   if ( header_is_usable == 1 ) {
+    n_usable_header_lines++;
+   }
+   continue;
+  }
+  // A data row follows a usable header line and starts with the target position; the units
+  // line and the line of dashes under the header do not
+  if ( header_is_usable == 0 ) {
+   continue;
+  }
+  if ( column_index[0] >= n_fields || 0 == isdigit( (unsigned char)fields[column_index[0]][0] ) ) {
+   continue;
+  }
+  row_has_required_values= 1;
+  for ( j= 0; j < n_required_columns; j++ ) {
+   if ( column_index[j] >= n_fields || fields[column_index[j]][0] == '\0' ) {
+    row_has_required_values= 0;
+    break;
+   }
+  }
+  if ( row_has_required_values == 0 ) {
+   n_rows_skipped++;
+   continue;
+  }
+  n_columns_to_write= n_columns;
+  for ( j= n_required_columns; j < n_columns; j++ ) {
+   if ( column_index[j] < 0 || column_index[j] >= n_fields || fields[column_index[j]][0] == '\0' ) {
+    n_columns_to_write= n_required_columns;
+    break;
+   }
+  }
+  for ( j= 0; j < n_columns_to_write; j++ ) {
+   if ( j > 0 ) {
+    fputc( ' ', output_file );
+   }
+   fputs( fields[column_index[j]], output_file );
+  }
+  fputc( '\n', output_file );
+  n_rows_written++;
+ }
+ fclose( tsv_file );
+ fclose( output_file );
+ if ( reply_is_cut_off == 1 ) {
+  fprintf( stderr, "WARNING: the VizieR reply %s ends with an incomplete line (was the reply cut off?) - ignoring that line\n", tsv_filename );
+ }
+ if ( n_usable_header_lines == 0 ) {
+  if ( n_header_lines > 0 ) {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): the column '%s' is not in the VizieR reply %s\n", missing_column_name, tsv_filename );
+   return -1;
+  }
+  // A table header comes only with a target that has a match
+  if ( n_vizier_resource_lines > 0 ) {
+   fprintf( stderr, "VizieR found no catalog star near any of the targets (%s)\n", tsv_filename );
+   return 0;
+  }
+  if ( n_lines_read == 0 ) {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): the VizieR reply %s is empty (a connection problem?)\n", tsv_filename );
+  } else {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): %s is not a VizieR table (an error page?)\n", tsv_filename );
+  }
+  return -1;
+ }
+ if ( n_rows_skipped > 0 ) {
+  fprintf( stderr, "WARNING: skipped %d rows with empty values in the VizieR reply %s\n", n_rows_skipped, tsv_filename );
+ }
+ return n_rows_written;
+}
+
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[BASE_COMMAND_LENGTH];
  FILE *vizquery_input;
  int i;
  int pid= getpid();
  char vizquery_input_filename[FILENAME_LENGTH];
+ char vizquery_tsv_filename[FILENAME_LENGTH];
  char vizquery_output_filename[FILENAME_LENGTH];
  int vizquery_run_success;
  int search_stars_counter;
  int zero_radec_counter;
+ int n_vizier_rows;
+ // The columns read_UCAC5_from_vizquery() reads, in its order: the target position, the
+ // distance to it, the catalog position and magnitude are required, the epoch and proper
+ // motion are optional
+ const char *ucac5_vizier_reply_columns[10]= { "_1", "_r", "RAJ2000", "DEJ2000", "f.mag", "EPucac", "pmRA", "e_pmRA", "pmDE", "e_pmDE" };
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
@@ -4232,8 +4451,10 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  // Initialize the allocated memory to null characters
  memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_tsv_filename, '\0', FILENAME_LENGTH );
  memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
  snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "vizquery_%d.input", pid );
+ snprintf( vizquery_tsv_filename, FILENAME_LENGTH - 1, "vizquery_%d.tsv", pid );
  snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
@@ -4267,10 +4488,15 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  fprintf( stderr, "Searchig VizieR for %d good reference stars...\n", search_stars_counter );
 
  // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5 via VizieR (mirror will be selected by lib/choose_vizier_mirror.sh)...\n" );
+ fprintf( stderr, "Searchig UCAC5 via VizieR (mirror will be selected by lib/choose_vizier_mirror.sh UCAC5)...\n" );
  // yes, sorting in magnitude works
  // sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ // The mirror is chosen by a UCAC5 test query: the default test asks for Gaia DR2, which
+ // vizier.idia.ac.za does not serve, so while CDS was down (November 2026) it pointed this query
+ // at CDS although IDIA serves UCAC5. All columns are asked for, as tab-separated values, because
+ // IDIA fails most UCAC5 queries that name some of them, this solver's old eight-column query
+ // among them (see select_columns_from_vizier_tsv_reply()).
+ sprintf( command, "export BEST_VIZIER_MIRROR=$(%slib/choose_vizier_mirror.sh UCAC5); echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=tsv -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.all f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_tsv_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
@@ -4301,6 +4527,13 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   }
  }
 
+ n_vizier_rows= select_columns_from_vizier_tsv_reply( vizquery_tsv_filename, vizquery_output_filename, ucac5_vizier_reply_columns, 10, 5 );
+ if ( n_vizier_rows < 0 ) {
+  fprintf( stderr, "Problem getting UCAC5 data from VizieR. :(\n" );
+  return 1;
+ }
+ fprintf( stderr, "Got %d UCAC5 stars from VizieR\n", n_vizier_rows );
+
  if ( 0 != read_UCAC5_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters ) ) {
   fprintf( stderr, "Problem getting UCAC5 data from VizieR. :(\n" );
   return 1;
@@ -4310,6 +4543,8 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  // if ( vizquery_run_success == 0 ) {
  if ( 0 != unlink( vizquery_input_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_tsv_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_tsv_filename );
  if ( 0 != unlink( vizquery_output_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}

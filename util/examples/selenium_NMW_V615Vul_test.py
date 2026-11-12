@@ -37,7 +37,7 @@ SKIP_LINK_PATTERNS = (
     "cbat.eps.harvard.edu/tocp_report",
     "wis-tns.weizmann.ac.il",
     "wis-tns.org",
-    "aladin.u-strasbg.fr/AladinLite/",
+    "aladin.cds.unistra.fr/AladinLite/",
     "www.projectpluto.com/sat_id2.htm",
     "minorplanetcenter.net/cgi-bin/checkneocmt.cgi",
     "www.astrouw.edu.pl",

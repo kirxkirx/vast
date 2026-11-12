@@ -3,10 +3,11 @@
 # Unit test of the shared record of lib/choose_vizier_mirror.sh probe results: reuse of a
 # recent success or failure, expiry (also with VIZIER_MIRROR_RECORD_FAIL_SEC from the
 # environment), records that are not trusted, VIZIER_MIRROR_RECORD=no, a separate record
-# per catalog, and VIZIER_MIRROR_RECORD_ONLY=yes, which must never probe. A stand-in
-# lib/vizquery fails at once and counts its calls, so no network is needed and the test runs
-# everywhere, GitHub Actions included. Run it from the VaST directory; it prints the failed
-# check codes and exits with code 1 if any check fails.
+# per catalog, and VIZIER_MIRROR_RECORD_ONLY=yes, which must never probe; also that the UCAC5
+# test asks for all columns (vizier.idia.ac.za fails most UCAC5 queries that name some). A
+# stand-in lib/vizquery fails at once and logs its calls, so no network is needed and the test
+# runs everywhere, GitHub Actions included. Run it from the VaST directory; it prints the
+# failed check codes and exits with code 1 if any check fails.
 #
 # Usage: util/examples/test_vizier_mirror_record.sh
 
@@ -31,27 +32,32 @@ fi
 WORK_DIR=$(mktemp -d 2>/dev/null || echo "vizier_mirror_record_test_$$")
 mkdir -p "$WORK_DIR/lib/catalogs" || exit 1
 cp lib/choose_vizier_mirror.sh "$WORK_DIR/lib/" || exit 1
-# The stand-in for lib/vizquery: no mirror answers, every call is counted
+# The stand-in for lib/vizquery: no mirror answers, every call is logged with its arguments
 cat > "$WORK_DIR/lib/vizquery" << 'VIZQUERY_STANDIN'
 #!/usr/bin/env bash
-echo "call" >> "$(dirname "$0")/vizquery_calls.txt"
+echo "call $*" >> "$(dirname "$0")/vizquery_calls.txt"
 exit 1
 VIZQUERY_STANDIN
 chmod +x "$WORK_DIR/lib/vizquery"
 RECORD="$WORK_DIR/lib/catalogs/.vizier_mirror_probe_GAIADR2"
 RECORD_APASS="$WORK_DIR/lib/catalogs/.vizier_mirror_probe_APASS"
+RECORD_UCAC5="$WORK_DIR/lib/catalogs/.vizier_mirror_probe_UCAC5"
 
-# Run lib/choose_vizier_mirror.sh with the given environment settings (and "APASS" as the
-# argument if the last setting is "APASS"); print "<output> <exit code> <vizquery calls>"
+# Run lib/choose_vizier_mirror.sh with the given environment settings (and "APASS" or "UCAC5"
+# as the argument if the last setting is one of them); print "<output> <exit code> <vizquery calls>"
 probe() {
  local ARGUMENT=""
  local SETTINGS=( "$@" )
- if [ "${#SETTINGS[@]}" -gt 0 ] && [ "${SETTINGS[${#SETTINGS[@]}-1]}" = "APASS" ];then
-  ARGUMENT="APASS"
-  unset 'SETTINGS[${#SETTINGS[@]}-1]'
+ if [ "${#SETTINGS[@]}" -gt 0 ];then
+  case "${SETTINGS[${#SETTINGS[@]}-1]}" in
+   APASS|UCAC5)
+    ARGUMENT="${SETTINGS[${#SETTINGS[@]}-1]}"
+    unset 'SETTINGS[${#SETTINGS[@]}-1]'
+    ;;
+  esac
  fi
  rm -f "$WORK_DIR/lib/vizquery_calls.txt"
- OUTPUT=$(env -u VIZIER_MIRROR_RECORD -u VIZIER_MIRROR_RECORD_ONLY -u VIZIER_MIRROR_RECORD_OK_SEC -u VIZIER_MIRROR_RECORD_FAIL_SEC VAST_PATH="$WORK_DIR/" "${SETTINGS[@]}" "$WORK_DIR/lib/choose_vizier_mirror.sh" $ARGUMENT 2>/dev/null)
+ OUTPUT=$(env -u VIZIER_MIRROR_RECORD -u VIZIER_MIRROR_RECORD_ONLY -u VIZIER_MIRROR_RECORD_OK_SEC -u VIZIER_MIRROR_RECORD_FAIL_SEC VAST_PATH="$WORK_DIR/" "${SETTINGS[@]}" "$WORK_DIR/lib/choose_vizier_mirror.sh" ${ARGUMENT:+"$ARGUMENT"} 2>/dev/null)
  EXIT_CODE=$?
  CALLS=0
  if [ -f "$WORK_DIR/lib/vizquery_calls.txt" ];then
@@ -105,6 +111,16 @@ echo "$NOW 0 vizier.nao.ac.jp" > "$RECORD"
 check VIZIERRECORD_BYPASS_PROBES "vizier.cds.unistra.fr 1 4" "$(probe VIZIER_MIRROR_RECORD=no)"
 echo "$NOW 0 vizier.nao.ac.jp" > "$RECORD"
 check VIZIERRECORD_BYPASS_ONLY "vizier.cds.unistra.fr 2 0" "$(probe VIZIER_MIRROR_RECORD=no VIZIER_MIRROR_RECORD_ONLY=yes)"
+# The UCAC5 test of the plate solver probes the four mirrors, keeps its own record and asks
+# for all columns: no '-out=' list, as vizier.idia.ac.za fails most of those for UCAC5
+check VIZIERRECORD_UCAC5_PROBE_FAIL "vizier.cds.unistra.fr 1 4" "$(probe UCAC5)"
+if [ ! -s "$RECORD_UCAC5" ] || ! awk -v now="$NOW" '{exit !(NF == 3 && $1 >= now && $2 == 1 && $3 == "vizier.cds.unistra.fr")}' "$RECORD_UCAC5" ;then
+ fail VIZIERRECORD_UCAC5_FAIL_RECORDED "record #$(cat "$RECORD_UCAC5" 2>/dev/null)#"
+fi
+if [ "$(grep -c -e '-source=UCAC5' "$WORK_DIR/lib/vizquery_calls.txt" 2>/dev/null)" != "4" ] || grep -q -e '-out=' "$WORK_DIR/lib/vizquery_calls.txt" ;then
+ fail VIZIERRECORD_UCAC5_QUERY "#$(head -n 1 "$WORK_DIR/lib/vizquery_calls.txt" 2>/dev/null)#"
+fi
+check VIZIERRECORD_UCAC5_REUSE_FAIL "vizier.cds.unistra.fr 1 0" "$(probe UCAC5)"
 
 rm -rf "$WORK_DIR"
 if [ -n "$FAILED_CODES" ];then

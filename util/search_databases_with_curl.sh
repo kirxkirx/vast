@@ -247,7 +247,7 @@ fi
 # Try to querry SIMBAD multiple times with different search radius 
 # since the simple parser will recognize object if this is the single SIMBAD object in the field.
 for SIMBAD_SEARCH_RADIUS in 0.05 1 0.02 0.5 ;do
- DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 30 --data "Coord=$RA%20$DEC&CooDefinedFrames=J2000&Radius=$SIMBAD_SEARCH_RADIUS&Radius.unit=arcmin" "http://simbad.u-strasbg.fr/simbad/sim-coo" |grep -v \< |grep -A3 "Basic" |tail -n3)
+ DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 30 --data "Coord=$RA%20$DEC&CooDefinedFrames=J2000&Radius=$SIMBAD_SEARCH_RADIUS&Radius.unit=arcmin" "http://simbad.cds.unistra.fr/simbad/sim-coo" |grep -v \< |grep -A3 "Basic" |tail -n3)
  if [ "$DATABASE_RESULTS" != "" ];then
   if [ $COLOR -eq 1 ];then
    echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME:  "

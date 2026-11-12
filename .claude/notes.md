@@ -1706,3 +1706,60 @@ Update this file as you learn new things.
   vast (vast runs an older plate-solve CGI and is the slowest; util/identify.sh does not list
   it for plate solving). kirx.net/polaris runs its own working period-search service that is
   in none of VaST's lists; kirx.net/ticaariel is gone.
+
+## System test on tau 2026-11-12 (97952d25): dead CDS host names, CI vizquery gate
+- Set-up: fresh clone in /tmp/vast, test data reflink-copied from /home/kirx/vast_test,
+  lib/catalogs/ucac5, gaia_dr2 and gaia_dr3_nearby linked to /data_ssd as in the dev copy,
+  nice 10 (the nightly search was running), stdin </dev/null, no DISPLAY, and no
+  ../THIS_IS_HPCC (that file makes the suite e-mail its report). 149 of 153 sections
+  passed in 289.7 min.
+- simbad.u-strasbg.fr, vizier.u-strasbg.fr and aladin.u-strasbg.fr have had no address
+  records since the u-strasbg.fr zone change of 2026-11-10 (cdsarc. and cdsweb.u-strasbg.fr
+  still resolve). The transient report links (util/transients/report_transient.sh) and the
+  SIMBAD query of util/search_databases_with_curl.sh now use the cds.unistra.fr names; plain
+  http works there without a redirect, which matters for old curl and for the POST. unmw's
+  filter_report.py recognises both names, as older reports keep the old ones. Both selenium
+  report tests failed on the dead SIMBAD link, and they keep failing while CDS serves its
+  'Page unavailable' page (HTTP 404): only minorplanetcenter.net is in FLAKY_LINK_PATTERNS.
+- The vizquery test (GitHub Actions only) ended every CI system test 14 minutes in while CDS
+  was down (fail_early on VIZQUERYTEST004a_NO_END). It is now not performed, with the
+  stripped code VIZQUERYTEST_VIZIER_UNAVAILABLE, when the internet check found VizieR
+  unavailable.
+- The UCAC5 VizieR fallback of solve_plate_with_UCAC5.c asked lib/choose_vizier_mirror.sh with
+  the default Gaia DR2 test, so while CDS was down it got CDS, although vizier.idia.ac.za
+  serves UCAC5. It now asks with a UCAC5 test. But IDIA fails most UCAC5 queries that name
+  some of the columns with -out=..., the solver's own among them: its eight-column list query
+  got one row per target holding nothing but the target position (the 1226 lines that the CI
+  test's 2000-position list got from IDIA were such rows, not an answer), a single-position
+  query gets an empty table, and the VOTable form says '(pipe) Request has been interrupted'.
+  Which lists fail is unclear (all columns in any order worked, so did all but SrcIDgaia, all
+  but Kmag did not); UCAC4, APASS, 2MASS and Gaia DR3 queries with -out= work. A query for all
+  columns always worked, so the solver now asks for all columns as tab-separated values
+  (-mime=tsv -out.all) and select_columns_from_vizier_tsv_reply() writes the columns
+  read_UCAC5_from_vizquery() reads, found by name in the header line that VizieR repeats for
+  every target with a match; the chooser's UCAC5 test asks the same way. A valid reply without
+  any match counts as zero stars, an empty reply or an error page as a failed query, and a
+  last line without its newline (a cut-off reply) is dropped.
+  Checked end to end on 2026-11-12 in a scratch build with the local UCAC5 copy removed and
+  our three UCAC5 servers renamed to unresolvable hosts: on a 9576x6388 Texas Tech frame the
+  chooser picked IDIA in 2 s, 926 and 925 of the 1000 query stars matched in the two passes,
+  and the catalog positions (proper motion applied) of all 923 stars used agreed with those
+  of a run on the local UCAC5 copy to within 0.001 arcsec. The solve took 7.8-10.3 min
+  instead of 4.8 min with the local copy.
+  Not changed: the CI vizquery test still sends the eight-column query with the default test
+  (so it can only pass at CDS), and the Pan-STARRS1 query still uses VIZIER_SITE (IDIA
+  returns no PS1 rows either way).
+- Outside VaST that day: GCVS at www.sai.msu.su answered 2 of 4 direct queries (17-30 s), the
+  others reset after 68 s or hung past 120 s. scan's PA sky_archive CGI sent 727 bytes and
+  then hung (the test's comment points at the sshfs mounts of the archive disks on scan). All
+  ~kirx directory listings on kirx.net answer 403 (the files themselves download), as they
+  did on 2026-10-21. Cause, as far as can be seen from outside: polaris refuses *.php* files
+  server-wide (a FilesMatch with 'Require all denied' in conf-enabled), Debian's DirectoryIndex
+  lists index.php, and mod_dir answers a directory with the 403 of its index.php look-up
+  instead of letting mod_autoindex list it, so Options +Indexes alone cannot help. Signature:
+  a missing .php file gives 403 where a missing .txt gives 404, and OPTIONS on the directory
+  gives 403. Fix on polaris, keeping the PHP ban: a DirectoryIndex without index.php in a
+  <Directory /home/kirx/public_html> section. Nothing in VaST reads these listings; only the
+  AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING check does.
+- unmw's pytest suite does not start on this machine's Python 3.14: it needs the cgi module
+  (legacy-cgi), which is not installed here and not in requirements-test.txt.
