@@ -3488,6 +3488,33 @@ static int ucac5_remote_server_answered= 0;
 /**
  * Modified search_UCAC5_at_scan function that uses safer command construction.
  */
+// The number of lines holding catalog data (at least six numbers: the measured RA and Dec,
+// the distance, the catalog RA, Dec and magnitude) in a reply of one of our UCAC5 servers.
+// Counting all lines let an error page pass for a catalog reply: on 2026-11-09 the server
+// at scan.sai.msu.ru answered every query with a 16-line HTML page (HTTP 500), which was
+// accepted, matched no star and ended the plate solution without trying the other servers.
+static int count_data_lines_in_UCAC5_server_reply( const char *filename ) {
+ FILE *f;
+ char string[1024];
+ double value1, value2, value3, value4, value5, value6;
+ int n_data_lines;
+ n_data_lines= 0;
+ f= fopen( filename, "r" );
+ if ( NULL == f ) {
+  return 0;
+ }
+ while ( NULL != fgets( string, 1024, f ) ) {
+  if ( string[0] == '#' ) {
+   continue;
+  }
+  if ( 6 == sscanf( string, "%lf %lf %lf %lf %lf %lf", &value1, &value2, &value3, &value4, &value5, &value6 ) ) {
+   n_data_lines++;
+  }
+ }
+ fclose( f );
+ return n_data_lines;
+}
+
 int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  struct detected_star_spatial_grid *spatial_grid;
  long n_spatial_grid_candidates;
@@ -3637,7 +3664,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
   }
   memset( base_command, '\0', BASE_COMMAND_LENGTH );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
+  // --fail: an HTTP error (the server answered with an error page) is a failure of this server
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --fail --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
@@ -3651,7 +3679,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    ucac5_remote_server_answered= 1;
   }
 
-  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+  // a reply without catalog data (an error page) is a failure of this server too
+  if ( vizquery_run_success == 0 && count_data_lines_in_UCAC5_server_reply( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
    if ( server_idx > 0 ) {
     fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
@@ -3804,7 +3833,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  }
  fclose( f );
  free_detected_star_spatial_grid( spatial_grid );
- fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ fprintf( stderr, "Matched %d stars with UCAC5 at %s.\n", N_stars_matched_with_astrometric_catalog, ucac5_servers[server_order[server_idx]] );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
   fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
@@ -3968,7 +3997,8 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
    fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
   }
   memset( base_command, '\0', BASE_COMMAND_LENGTH );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
+  // --fail: an HTTP error (the server answered with an error page) is a failure of this server
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --fail --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
@@ -3982,7 +4012,8 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
    ucac5_remote_server_answered= 1;
   }
 
-  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+  // a reply without catalog data (an error page) is a failure of this server too
+  if ( vizquery_run_success == 0 && count_data_lines_in_UCAC5_server_reply( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
    if ( server_idx > 0 ) {
     fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
@@ -4126,7 +4157,7 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
   } // for(i=0;i<N;i++)
  }
  fclose( f );
- fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ fprintf( stderr, "Matched %d stars with UCAC5 at %s.\n", N_stars_matched_with_astrometric_catalog, ucac5_servers[server_order[server_idx]] );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
   fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
@@ -7533,7 +7564,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "\nITERATION 01 -- talking to VizieR, this might be slow!\n" );
  // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
  if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-  fprintf( stderr, "ERROR running vizquery\n" );
+  fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
   free( stars );
   return 1;
  }
@@ -7556,7 +7587,7 @@ int main( int argc, char **argv ) {
   //
   // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
   if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running vizquery\n" );
+   fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
    free( stars );
    return 1;
   }
@@ -7614,7 +7645,7 @@ int main( int argc, char **argv ) {
   // search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog);
   // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
   if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running vizquery\n" );
+   fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
    free( stars );
    return 1;
   }

@@ -1311,6 +1311,43 @@ Update this file as you learn new things.
 - util/moons.sh exits 0 with empty output when Horizons is unreachable, so the
   moons.txt format loop of the Solar System section passes vacuously; only
   the MPCheck Ganymede lookup catches the outage.
+- Rerun on 2026-10-22 with the keyword-recording fix: 135 of 138 sections in
+  428 minutes. vsx.aavso.org answered 504, which failed
+  STANDALONEDBSCRIPT001c_VSX and made the CBA formatter name V615 Vul
+  'PNV J19430751+2100204' (NMWNVUL24ST_CBASCRIPTTEST_*); the same section
+  passed with the old and the new vast binary an hour later. The scan.sai.msu.ru
+  plate archive search hung (AUXWEB_PASKYARCHIVE_001-003). The online
+  database and web-service sections fail on whichever service is down that
+  day: check the service before suspecting a regression.
+
+## FITS keyword recording in lightcurves (fixed 2026-10-22)
+- record_specified_fits_keywords() in src/vast.c read the list with
+  fgets(...,9,...): a name shorter than 8 characters kept its newline and
+  failed the character check, so AIRMASS, HA and PA of the shipped _example
+  list were never recorded (only 8-character names like CCD-TEMP worked). The
+  loop also never stopped at MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC, so
+  11+ valid names wrote past the list array on the stack.
+- Two output defects in the same function: cards are concatenated, and a card
+  without a comment has no trailing blank, so values ran into the next name
+  ("XBINNING=   2YBINNING="); and the comment was cut at the first '/' even
+  inside a quoted string ('NGC 224/M31'). Now: whole lines are read and the
+  name is the first word (the rest of the line is a comment, as it was by
+  accident for 8-character names; empty and '#' lines are ignored, CR ends
+  the name), at most 10 names, cut at the first '/' outside quotes, trailing
+  blanks trimmed, one space between cards.
+- The list is re-read for every image, so list warnings are printed only for
+  the first image (third argument print_list_warnings).
+- test_vast.sh: the first Small CCD section copies the _example list into
+  place and nothing removes it, so every later local section records
+  keywords. Since this fix that includes AIRMASS (NMW-TexasTech, KGO, M31,
+  Gaia16aye), PA (NMW-STL, Stas) and HA where present. The keyword section
+  checks short names, separators, the 10-name limit and a quoted '/'
+  (WITH_KEYWORD_RECORDING_SMALLCCD014-017) on sample_data; like the other
+  Small CCD sections it is disabled on GitHub Actions.
+- util/examples/test_lightcurve_metadata.py runs early in test_vast.sh
+  ("Lightcurve metadata test", LCMETADATA001 on failure). Without python3 >=
+  3.7 or a C compiler (cc, gcc or clang) it is skipped as
+  NOT_PERFORMED_LCMETADATA_<reason>, which the end of the script exempts.
 
 ## Known-star check without CDS: local Gaia DR2 copy, VizieR probe record, APASS off (2026-11-04)
 - From 2026-11-03 CDS (VizieR, SIMBAD, cdsarc) dropped connections. The china-vo and
@@ -1602,6 +1639,41 @@ Update this file as you learn new things.
   composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
   Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
   touching the classification.
+
+## External-service outages and the test suite: VizieR, UCAC5/plate-solve servers, JPL HORIZONS (2026-11-09)
+- test_vast.sh's internet check counted "no VizieR mirror serves Gaia DR2" as "offline" and
+  stopped the run before the first section; since the CDS outage of 2026-11-03 every CI system
+  test (Ubuntu, macOS, Alpine, WSL2) died there. Only unreachable tau.kirx.net and
+  scan.sai.msu.ru stop the run now; a VizieR outage is recorded once as the informational
+  VIZIER_UNAVAILABLE, and VizieR is probed again at most hourly (a failed probe takes ~140 s).
+  Never let one external service gate the whole run.
+- VizieR mirrors hold only some catalogs and answer complete-but-empty tables for the others,
+  so lib/choose_vizier_mirror.sh tests a catalog, with a record per catalog: GAIADR2 (default),
+  APASS, 2MASS. vizier.idia.ac.za (added 2026-11-09) serves APASS, 2MASS, UCAC5, Gaia DR3,
+  GCVS, VSX and the catalogs of the online identification, not the Gaia DR2/EDR3 source tables.
+  util/search_databases_with_vizquery.sh uses the 2MASS test, and report_transient.sh decides
+  whether to skip it with online_id_vizier_is_unreachable (2MASS), not with VIZIER_UNREACHABLE,
+  which is about Gaia DR2 for the known-star check. The search over all catalogs ('may be a
+  known variable') needs CDS itself. test_vizier_mirror_record.sh counts four mirror probes.
+- One failing server must not produce an ERROR line while another server may still answer:
+  every ERROR marks the field as failed on the unmw summary page. On 2026-11-09 the UCAC5 search
+  and the plate-solve CGIs of scan.sai.msu.ru answered HTTP 500. solve_plate_with_UCAC5 took
+  the 16-line error page for a catalog reply (it counted lines), matched no star and stopped
+  without asking vast/tau ("ERROR running vizquery" although VizieR was not asked); now curl
+  runs with --fail and a reply needs >=5 catalog data lines. util/identify.sh
+  (= wcs_image_calibration.sh) printed ERROR and the raw error page before trying the next
+  server; the page's </body></html> broke the HTML validation of the transient report. Now a
+  WARNING and the reply made safe (no tags, no 'ERROR'), as already done for the WCS header.
+  Machines with a local UCAC5 copy and solve-field are not affected.
+- JPL HORIZONS has answered every TLIST request with "LTP: input TIM outside +-500K range"
+  since the evening of 2026-11-09 MST (production still got its moons at 23:39 UTC on 11-09;
+  failing from 03:40 UTC on 11-10), for any date and time format, also via the kirx.net proxy,
+  while START_TIME/STOP_TIME works. util/planets.sh, moons.sh, spacecraft.sh and comets.sh now
+  ask START_TIME='JD..', STOP_TIME=+0.0007 d, STEP_SIZE='1 m' and use the first row after
+  $$SOE. The failure was silent: the scripts print nothing for an object they cannot get, so
+  moons and spacecraft (always from HORIZONS) and planets and comets (from HORIZONS only when
+  skyfield is missing) just stopped being identified. The Saturn/Iapetus 2, Venus and
+  STEREO-A Ceres tests caught it.
 
 ## vast.sai.msu.ru / kirx.net dependencies, vsx.dat second mirror (2026-11-11)
 - vsx.dat is now tried at LOCAL_SERVER, then ALTERNATIVE_SERVER, then CDS FTP (it used to

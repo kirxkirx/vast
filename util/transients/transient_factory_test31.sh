@@ -220,8 +220,13 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list.txt"
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # Passing-clouds limits, relaxed in 2026-11 from 0.18 and 0.12: uniform dimming
+  # by thin clouds does not matter for bright transients. On the raw Stas images
+  # the SD ratio follows the transparency change between the two images: 0.70
+  # and 0.30 correspond to about 1.0 and 0.5 mag when the second image is the
+  # fainter one (2.3 and 0.7 mag when it is the brighter one).
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.70
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.30
   FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
   # NMW site coordinates for the airmass computations: never trust SITELAT/SITELONG
@@ -1126,6 +1131,178 @@ END {
     ;;
   esac
  done
+ return 0
+}
+
+function choose_second_epoch_pair_for_passing_clouds_check {
+ # Called when there are more than two second-epoch images, after the
+ # preliminary VaST run has picked the pair with the best seeing
+ # (SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE) and before that
+ # pair is written to the log. If the SD ratio of the pair fails the soft
+ # passing-clouds limit (the hard one when there is no soft limit), another
+ # pair of the images that passed the preliminary run may replace it: the pair
+ # with the best seeing (smallest sum of the two aperture sizes, the later pair
+ # on a tie) among those under the soft limit or, when the best-seeing pair
+ # also fails the hard limit, among those under the hard limit. A replacement
+ # pair has to pass the checks the chosen pair goes through below: the
+ # elongation (tracking error) check on both images, the bright background
+ # checks on the first image, the hard SD ratio limit and, if
+ # FILTER_BAD_IMG__MAX_FWHM_PIX is set, the FWHM limit on both images (measured
+ # here on the preliminary-run catalogs, which come from the same bright-star
+ # SExtractor settings as the catalogs that limit is checked on after the main
+ # VaST run). Without one, the best-seeing pair is kept and the checks below
+ # treat it as before. Nothing changes either when those checks would not run
+ # (no measurable mean value of the reference image or of the first image).
+ # Formerly a field was rejected whenever the best-seeing pair failed the hard
+ # limit, even if another pair of its images was fine: thin clouds over one
+ # image, an aircraft trail or a pointing jump between two images was enough.
+ # Set DISABLE_SECOND_EPOCH_PAIR_FALLBACK=yes to always keep the best-seeing pair.
+ # The SECOND_EPOCH__FIRST_IMAGE= and SECOND_EPOCH__SECOND_IMAGE= lines are
+ # written after this choice, so they name the pair that is actually used:
+ # the unmw summary takes the FWHM column from the first such lines.
+ local SECOND_EPOCH_IMAGE_TABLE
+ local IMAGE_AP
+ local IMAGE_JD
+ local IMAGE_PATH
+ local IMAGE_STATS
+ local IMAGE_MEAN
+ local IMAGE_SD
+ local IMAGE_CATALOG
+ local IMAGE_ELONGATION
+ local IMAGE_FWHM
+ local REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE
+ local MAX_MEAN_RATIO_FOR_PAIR_CHOICE
+ local PAIR_CHOICE
+ local PAIR_CHOICE_ACTION
+ local BEST_SEEING_PAIR_SD_RATIO
+ local FAILED_LIMIT
+ local SD_RATIO_LIMITS
+ local NEW_PAIR_SD_RATIO
+ local NEW_FIRST_IMAGE
+ local NEW_SECOND_IMAGE
+ if [ "$DISABLE_SECOND_EPOCH_PAIR_FALLBACK" = "yes" ];then
+  return 0
+ fi
+ # The passing-clouds checks run only when MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is set
+ if [ -z "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] || [ -z "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
+  return 0
+ fi
+ if [ ! -s vast_image_details.log ] || [ -z "$SECOND_EPOCH__FIRST_IMAGE" ] || [ -z "$SECOND_EPOCH__SECOND_IMAGE" ] || [ -z "$REFERENCE_EPOCH__FIRST_IMAGE" ];then
+  return 0
+ fi
+ # The bright background and passing-clouds checks below are all skipped when
+ # the mean value of the reference image cannot be measured
+ REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" 2> /dev/null | grep ' MEAN= ' | awk '{print $2}')
+ if [ -z "$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" ];then
+  return 0
+ fi
+ MAX_MEAN_RATIO_FOR_PAIR_CHOICE="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO"
+ if [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "yes" ];then
+  MAX_MEAN_RATIO_FOR_PAIR_CHOICE=""
+ fi
+ # One line per image that passed the preliminary run, with the same selection
+ # as above: aperture JD mean SD elongation FWHM image ('-' for what could not
+ # be measured; the FWHM only when FILTER_BAD_IMG__MAX_FWHM_PIX is set)
+ SECOND_EPOCH_IMAGE_TABLE=$(grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' vast_image_details.log | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print $9, $7, $17}' | while read -r IMAGE_AP IMAGE_JD IMAGE_PATH ;do
+  IMAGE_STATS=$(util/imstat_vast_fast "$IMAGE_PATH" 2> /dev/null)
+  IMAGE_MEAN=$(echo "$IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  IMAGE_SD=$(echo "$IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  # median (A-B) of the sources in the preliminary-run catalog, as in the
+  # elongation check below, and the median FWHM of its isolated stars, as in
+  # the FWHM check after the main VaST run
+  IMAGE_ELONGATION=""
+  IMAGE_FWHM=""
+  IMAGE_CATALOG=$(grep -F "$IMAGE_PATH" vast_images_catalogs.log 2> /dev/null | awk '{print $1}' | head -n1)
+  if [ -n "$IMAGE_CATALOG" ] && [ -s "$IMAGE_CATALOG" ];then
+   IMAGE_ELONGATION=$(awk '{print $18-$20}' "$IMAGE_CATALOG" | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
+   if [ -n "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+    IMAGE_FWHM=$(awk '{if( $22 < 2 && $23 > 0 ) print $23}' "$IMAGE_CATALOG" | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%.1f", $2}')
+   fi
+  fi
+  echo "$IMAGE_AP $IMAGE_JD ${IMAGE_MEAN:--} ${IMAGE_SD:--} ${IMAGE_ELONGATION:--} ${IMAGE_FWHM:--} $IMAGE_PATH"
+ done)
+ # Prints nothing when the best-seeing pair passes, else
+ # 'keep <SD ratio of the best-seeing pair> <soft|hard: the limit it fails>' or
+ # 'switch <SD ratio of the best-seeing pair> <SD ratio of the new pair> <first image> <second image>'
+ PAIR_CHOICE=$(echo "$SECOND_EPOCH_IMAGE_TABLE" | awk -v first="$SECOND_EPOCH__FIRST_IMAGE" -v second="$SECOND_EPOCH__SECOND_IMAGE" -v hard="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" -v soft="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" -v max_elongation="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" -v max_fwhm="$FILTER_BAD_IMG__MAX_FWHM_PIX" -v max_mean="$MAX_NEW_IMG_MEAN_VALUE" -v max_mean_ratio="$MAX_MEAN_RATIO_FOR_PAIR_CHOICE" -v ref_mean="$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" '
+# |SD(i1) - SD(i2)| / SD(i2) as the passing-clouds check computes it, -1 if undefined
+function sd_ratio(i1, i2) {
+ if ( sd[i1] == "-" || sd[i2] == "-" || sd[i2] + 0 == 0 ) return -1
+ return ( sd[i1] + 0 > sd[i2] + 0 ? sd[i1] - sd[i2] : sd[i2] - sd[i1] ) / sd[i2]
+}
+NF >= 7 {
+ n++
+ ap[n] = $1; jd[n] = $2; mean[n] = $3; sd[n] = $4; elongation[n] = $5; fwhm[n] = $6; image[n] = $7
+ if ( $7 == first ) best_seeing_first = n
+ if ( $7 == second ) best_seeing_second = n
+}
+END {
+ if ( best_seeing_first == "" || best_seeing_second == "" ) exit
+ # without the mean value of the first image the checks below are skipped
+ if ( mean[best_seeing_first] == "-" ) exit
+ r0 = sd_ratio(best_seeing_first, best_seeing_second)
+ # an undefined ratio is skipped by the check below as well
+ if ( r0 < 0 ) exit
+ hard_limit = hard + 0
+ have_soft_limit = ( soft != "" )
+ soft_limit = soft + 0
+ if ( r0 < ( have_soft_limit ? soft_limit : hard_limit ) ) exit
+ found = 0
+ for ( i = 1; i <= n; i++ ) {
+  for ( j = i + 1; j <= n; j++ ) {
+   if ( ( i == best_seeing_first && j == best_seeing_second ) || ( i == best_seeing_second && j == best_seeing_first ) ) continue
+   # the image with the better seeing first, the earlier one on a tie
+   a = i; b = j
+   if ( ap[j] + 0 < ap[i] + 0 || ( ap[j] + 0 == ap[i] + 0 && jd[j] + 0 < jd[i] + 0 ) ) { a = j; b = i }
+   if ( mean[a] == "-" || elongation[a] == "-" || elongation[b] == "-" ) continue
+   if ( max_elongation != "" && ( elongation[a] + 0 > max_elongation + 0 || elongation[b] + 0 > max_elongation + 0 ) ) continue
+   # an unmeasured FWHM is not checked after the main VaST run either
+   if ( max_fwhm != "" && ( ( fwhm[a] != "-" && fwhm[a] + 0 > max_fwhm + 0 ) || ( fwhm[b] != "-" && fwhm[b] + 0 > max_fwhm + 0 ) ) ) continue
+   if ( max_mean != "" && mean[a] + 0 > max_mean + 0 ) continue
+   if ( max_mean_ratio != "" && mean[a] + 0 > max_mean_ratio * ref_mean ) continue
+   r = sd_ratio(a, b)
+   if ( r < 0 || r >= hard_limit ) continue
+   tier = ( have_soft_limit && r < soft_limit ) ? 0 : 1
+   # rounded, so that equal sums of the 0.1 pix aperture sizes compare equal
+   sum_ap = sprintf("%.2f", ap[a] + ap[b]) + 0
+   sum_jd = jd[a] + jd[b]
+   if ( found == 0 || tier < best_tier || ( tier == best_tier && ( sum_ap < best_sum_ap || ( sum_ap == best_sum_ap && sum_jd > best_sum_jd ) ) ) ) {
+    found = 1; best_tier = tier; best_sum_ap = sum_ap; best_sum_jd = sum_jd; best_a = a; best_b = b; best_r = r
+   }
+  }
+ }
+ # A pair over the soft limit replaces the best-seeing one only if that one fails the hard limit
+ if ( found == 0 || ( best_tier == 1 && r0 < hard_limit ) ) {
+  printf "keep %.3f %s\n", r0, ( r0 < hard_limit ? "soft" : "hard" )
+  exit
+ }
+ printf "switch %.3f %.3f %s %s\n", r0, best_r, image[best_a], image[best_b]
+}')
+ if [ -z "$PAIR_CHOICE" ];then
+  return 0
+ fi
+ PAIR_CHOICE_ACTION=$(echo "$PAIR_CHOICE" | awk '{print $1}')
+ BEST_SEEING_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $2}')
+ if [ "$PAIR_CHOICE_ACTION" = "switch" ];then
+  NEW_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+  NEW_FIRST_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $4}')
+  NEW_SECOND_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $5}')
+  if [ -z "$NEW_FIRST_IMAGE" ] || [ -z "$NEW_SECOND_IMAGE" ];then
+   return 0
+  fi
+  if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ];then
+   SD_RATIO_LIMITS="soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  else
+   SD_RATIO_LIMITS="hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  fi
+  # No 'ERROR' in this line: the unmw summary marks every field whose log has one as failed
+  echo "WARNING: passing clouds on the second-epoch images with the best seeing $(basename "$SECOND_EPOCH__FIRST_IMAGE") $(basename "$SECOND_EPOCH__SECOND_IMAGE") (SD ratio=$BEST_SEEING_PAIR_SD_RATIO $SD_RATIO_LIMITS), using $(basename "$NEW_FIRST_IMAGE") $(basename "$NEW_SECOND_IMAGE") (SD ratio=$NEW_PAIR_SD_RATIO) instead" | tee -a transient_factory_test31.txt
+  SECOND_EPOCH__FIRST_IMAGE="$NEW_FIRST_IMAGE"
+  SECOND_EPOCH__SECOND_IMAGE="$NEW_SECOND_IMAGE"
+  return 0
+ fi
+ FAILED_LIMIT=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+ echo "INFO: keeping the second-epoch images with the best seeing (SD ratio=$BEST_SEEING_PAIR_SD_RATIO): no other pair of them passes the $FAILED_LIMIT passing-clouds limit" | tee -a transient_factory_test31.txt
  return 0
 }
 
@@ -3027,12 +3204,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    # Take the last image as SECOND_EPOCH__SECOND_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   else
    # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
    echo "INFO: selecting two second-epoch images with best seeing (using aperture size as a proxy for seeing)" | tee -a transient_factory_test31.txt
@@ -3041,11 +3216,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   fi
   # Make sure SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE are set
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
@@ -3063,6 +3236,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
   fi
+  # If the brightness of the two images differs too much (the passing-clouds
+  # check below), another pair of the second-epoch images may replace them
+  choose_second_epoch_pair_for_passing_clouds_check
+  echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+  echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   ###
   # Check for elliptical star images (tracking error)
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=$(grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}')

@@ -1512,30 +1512,36 @@ fi
    fi
    if [ $CURL_EXIT_CODE -ne 0 ];then
     # something else went wrong
-    echo "An ERROR has occured while uploading the star list to the server $PLATE_SOLVE_SERVER !"
+    echo "WARNING: uploading the star list to the server $PLATE_SOLVE_SERVER failed - trying the next plate-solve server"
     echo "The failed command (see out$$_remote_debug.txt): "
     cat out$$_remote_debug.txt
     ERROR_STATUS=2
     continue
    fi
    if [ ! -s server_reply$$.html ];then
-    echo "ERROR: the server reply is empty!"
+    echo "WARNING: the reply of the plate-solve server $PLATE_SOLVE_SERVER is empty - trying the next plate-solve server"
     ERROR_STATUS=2
     continue
    fi
    if grep -q -e  '404 Not Found' -e '500 Internal Server Error' server_reply$$.html ;then
-    echo "ERROR in $0: plate-solve server reports an error!"
+    # A failure of one server is a WARNING: the next server may solve the field, and every
+    # ERROR line marks the field as failed on the unmw summary page. The reply is shown made
+    # safe for the HTML log it may end up in (no tags: an error page would add a second
+    # </body></html> to the transient report; no 'ERROR'), as for the WCS header below.
+    echo "WARNING: plate-solve server $PLATE_SOLVE_SERVER reports an error - trying the next plate-solve server"
     echo "#### Server reply listing ####"
-    cat server_reply$$.html
+    head -c 1000 server_reply$$.html | tr -c '\040-\176\n' ' ' | sed -e 's/</[/g' -e 's/>/]/g' -e 's/ERROR/Error/g'
+    echo
     echo "##############################"
     ERROR_STATUS=2
     continue    
    fi
    EXPECTED_WCS_HEAD_URL=$(grep WCS_HEADER_FILE= server_reply$$.html | awk '{print $2}')
    if [ "$EXPECTED_WCS_HEAD_URL" = "" ];then
-    echo "ERROR in $0: cannot parse the plate-solve server reply to get 'WCS_HEADER_FILE=' line!"
+    echo "WARNING: cannot parse the reply of the plate-solve server $PLATE_SOLVE_SERVER to get the 'WCS_HEADER_FILE=' line - trying the next plate-solve server"
     echo "#### Server reply listing ####"
-    cat server_reply$$.html
+    head -c 1000 server_reply$$.html | tr -c '\040-\176\n' ' ' | sed -e 's/</[/g' -e 's/>/]/g' -e 's/ERROR/Error/g'
+    echo
     echo "##############################"
     ERROR_STATUS=2
     continue
@@ -1545,7 +1551,7 @@ fi
    #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
    $TIMEOUT_COMMAND 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
    if [ $? != 0 ];then
-    echo "ERROR: getting processing log from the server $PLATE_SOLVE_SERVER"
+    echo "WARNING: cannot get the processing log from the server $PLATE_SOLVE_SERVER - trying the next plate-solve server"
     ERROR_STATUS=2
     continue
    fi

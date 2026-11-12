@@ -1,4 +1,6 @@
 XX XXX XXXX: vast-1.0rc90
+	* FITS keywords with names shorter than 8 characters (like AIRMASS or HA) listed in
+	vast_list_of_FITS_keywords_to_record_in_lightcurves.txt are now recorded in lightcurves.
 	* NMW traansient search script 'util/transients/transient_factory_test31.sh' can now 
         do automatic flat-field selection from a directory. 
 	can now be pointed at a directory of flat fields instead of a single master flat: the new

@@ -662,16 +662,50 @@ function single_internet_connection_probe() {
   return 0
  fi
 
- # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
- # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
- VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1
- if [ $? -ne 0 ];then
-  echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
-  echo "ERROR in test_internet_connection(): cannot connect to VizieR"
-  return 1
- fi
+ # A VizieR outage is recorded, it does not make the check fail (see below)
+ probe_vizier_for_test_run
 
  return 0
+}
+
+# Since 2026-11-03 VizieR has been unreachable for days at a time: CDS drops the
+# connections and the mirrors that answer serve only some catalogs. The test run used to
+# stop at the first internet check whenever no VizieR mirror served Gaia DR2, before running
+# a single section (2026-11-09: 'still offline after 4 probe attempts' after 8 minutes).
+# Most of VaST no longer needs VizieR (the known-star check reads a local Gaia DR2 copy or
+# asks the ESA archive, plate solving asks our UCAC5 servers), so a VizieR outage is now
+# recorded under the informational code VIZIER_UNAVAILABLE and the run goes on; the sections
+# that still need VizieR fail on their own, which shows what the outage breaks. Only an
+# unreachable tau.kirx.net and scan.sai.msu.ru stops the run. A failed probe takes over two
+# minutes (137 s on 2026-11-09) and the check runs before dozens of sections, so after a
+# failure VizieR is probed again only once an hour.
+VIZIER_TEST_PROBE_UNIXSEC=""
+VIZIER_TEST_PROBE_RESULT=""
+function record_vizier_unavailable() {
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  if ! echo " $FAILED_TEST_CODES " | grep -q ' VIZIER_UNAVAILABLE ' ;then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZIER_UNAVAILABLE"
+  fi
+ fi
+}
+function probe_vizier_for_test_run() {
+ local now_unixsec
+ now_unixsec=$(date +%s)
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ] && [ -n "$VIZIER_TEST_PROBE_UNIXSEC" ] && [ $(( now_unixsec - VIZIER_TEST_PROBE_UNIXSEC )) -lt 3600 ];then
+  return 1
+ fi
+ VIZIER_TEST_PROBE_UNIXSEC="$now_unixsec"
+ # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
+ # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
+ if VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1 ;then
+  VIZIER_TEST_PROBE_RESULT="available"
+  return 0
+ fi
+ VIZIER_TEST_PROBE_RESULT="unavailable"
+ echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
+ echo "WARNING in test_internet_connection(): cannot connect to VizieR - continuing, the sections that need VizieR will fail (VIZIER_UNAVAILABLE)"
+ record_vizier_unavailable
+ return 1
 }
 
 function test_internet_connection() {
@@ -1028,6 +1062,8 @@ echo "
 ##### Set initial values for the variables #####
 DEBUG_OUTPUT=""
 FAILED_TEST_CODES=""
+# keep a VizieR outage found by the internet check at the start of the run
+record_vizier_unavailable
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
 VAST_BUILD_NUMBER=`cat .cc.build`
@@ -1696,6 +1732,50 @@ else
  echo -e "\n\033[01;34mCountry code detection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
+
+##### Lightcurve metadata test #####
+# util/examples/test_lightcurve_metadata.py checks that SE_FLAGS=N and other
+# per-measurement metadata survive the tools that rewrite lightcurves, and that
+# the transient report table keeps the format its parsers expect. It needs
+# python3 >= 3.7 (standard library only) and a C compiler. If one of them is
+# missing the test is skipped (NOT_PERFORMED_LCMETADATA_*, not a failure).
+LCMETADATA_SKIP_REASON=""
+if ! command -v python3 &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopython3"
+elif ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="oldpython3"
+elif ! python3 -c 'import os, pathlib, re, shutil, subprocess, tempfile' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopythonmodules"
+elif ! command -v cc &> /dev/null && ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nocompiler"
+fi
+if [ -z "$LCMETADATA_SKIP_REASON" ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Lightcurve metadata test "
+ echo -n "Lightcurve metadata test: " >> vast_test_report.txt
+ LCMETADATA_OUTPUT=$(python3 util/examples/test_lightcurve_metadata.py "$PWD" 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LCMETADATA001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LCMETADATA001 ######
+$LCMETADATA_OUTPUT"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ echo "Lightcurve metadata test: NOT PERFORMED ($LCMETADATA_SKIP_REASON)" | tee -a vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_LCMETADATA_$LCMETADATA_SKIP_REASON"
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 
 ########## remove bad regions file
 echo "Flusing bad_region.lst"
@@ -2534,11 +2614,19 @@ if [ $? -ne 0 ];then
 fi
 rm -rf "$DUALMATCH_SANDBOX"
 
-# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
+# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names.
+# That is a search over all VizieR catalogs, which only the main CDS site can answer: a mirror
+# holds some catalogs only (vizier.idia.ac.za, which the identification used while CDS was down
+# in Nov 2026, does not list this star). When the internet check found no VizieR site serving
+# Gaia DR2 (VIZIER_UNAVAILABLE), a failure here is recorded under its own informational code.
 util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep -q 'may be a known variable'
 if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE"
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ fi
 fi
 
 # No false ID with Gaia DR2 high-amplitude variable
@@ -7582,11 +7670,14 @@ if [ -d ../sample_data ];then
  # Run the test
  echo "Small CCD images with FITS keyword recording test " 
  echo -n "Small CCD images with FITS keyword recording test: " >> vast_test_report.txt
- # Here is the main feature of this test
+ # Here is the main feature of this test. Besides CCD-TEMP the list has names
+ # shorter than 8 characters (EXPTIME, OBJECT), two cards without a comment
+ # (XBINNING, YBINNING), a DOS line end, blanks around a name, a comment line,
+ # a comment after a name and an invalid lower-case name that must be ignored.
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
-  echo "CCD-TEMP" > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
+ printf '# FITS keywords to record\nCCD-TEMP\r\n  EXPTIME \nexptime\nOBJECT\nXBINNING   # binning\nYBINNING\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  ./vast -u -f ../sample_data/*.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -7594,6 +7685,8 @@ if [ -d ../sample_data ];then
  fi
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+ else
+  rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
  # Check results
  if [ -f vast_summary.log ];then
@@ -7704,8 +7797,69 @@ $GREP_RESULT"
    fi
   done
 
+  # Names shorter than 8 characters are recorded (exactly once: the invalid
+  # 'exptime' is ignored), and the cards without a comment are separated by a
+  # space instead of running into the next keyword name
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   if ! awk -v object_card="OBJECT  = 'Y Cam to Moffett@Barnes, 106-542'" '
+     { if (gsub(/ EXPTIME =   180\./, "&") != 1 || index($0, " " object_card " XBINNING=") == 0 || $0 !~ / XBINNING= +2 YBINNING= +2$/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD014"
+    break
+   fi
+  done
+
+  # A list with more names than the list array holds: only the first 10 are
+  # recorded (the 11th and 12th used to be written past the array), with one
+  # warning. The images also carry a '/' inside a quoted string value, which
+  # must not be taken for the start of the card comment.
+  util/clean_data.sh
+  KEYWORD_LIST_TEST_DIR="keyword_list_test_images_$$"
+  mkdir "$KEYWORD_LIST_TEST_DIR"
+  cp ../sample_data/f_72-00[1-3]r.fit "$KEYWORD_LIST_TEST_DIR"/
+  for KEYWORD_LIST_TEST_IMAGE in "$KEYWORD_LIST_TEST_DIR"/*.fit ;do
+   util/modhead "$KEYWORD_LIST_TEST_IMAGE" OBSERVER "'Volkov/Smith'" > /dev/null 2>&1
+  done
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+  fi
+  printf 'OBSERVER\nXBINNING\nYBINNING\nCCD-TEMP\nEXPTIME\nSET-TEMP\nXPIXSZ\nYPIXSZ\nXORGSUBF\nYORGSUBF\nIMAGETYP\nTELESCOP\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  ./vast -u -f "$KEYWORD_LIST_TEST_DIR"/*.fit > "keyword_list_test_$$.log" 2>&1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD015"
+  fi
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  else
+   rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  fi
+  if [ "$(grep -c 'lists more than 10 keywords' "keyword_list_test_$$.log")" != "1" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD016"
+  fi
+  KEYWORD_LIST_TEST_N_LC=0
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   [ -f "$LIGHTCURVEFILE_TO_TEST" ] || continue
+   KEYWORD_LIST_TEST_N_LC=$((KEYWORD_LIST_TEST_N_LC+1))
+   if ! awk -v slash_value="OBSERVER= 'Volkov/Smith' XBINNING=" '
+     { if (index($0, slash_value) == 0 || $0 !~ / YORGSUBF= +0$/ || $0 ~ /IMAGETYP=|TELESCOP=/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017"
+    break
+   fi
+  done
+  if [ $KEYWORD_LIST_TEST_N_LC -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017_NO_LIGHTCURVES"
+  fi
+  rm -f "keyword_list_test_$$.log"
+  rm -rf "$KEYWORD_LIST_TEST_DIR"
+
  else
-  echo "ERROR: cannot find vast_summary.log" 
+  echo "ERROR: cannot find vast_summary.log"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD_ALL"
  fi
@@ -34487,11 +34641,13 @@ if [ $? -ne 0 ];then
 fi
 
 # Horizons direct and reverse proxy
-HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+# START_TIME/STOP_TIME (first row = the requested time), not TLIST: HORIZONS answered every
+# TLIST request with 'LTP: input TIM outside +-500K range' on 2026-11-09 (see util/planets.sh)
+HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 else
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 fi
 if [ "$HORIZONS_DIRECT" != "$HORIZONS_REVERSE_PROXY" ] ;then
  if [ -n "$HORIZONS_DIRECT" ];then
@@ -37211,6 +37367,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_noscript/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nopython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nonumpyastropy/}"
+ # lightcurve metadata test: skipped without python3 >= 3.7 or a C compiler
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_oldpython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopythonmodules/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nocompiler/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.
@@ -37227,6 +37388,12 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
  # not a VaST code failure (the code stays in vast_test_report.txt)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"
+ # No VizieR mirror served Gaia DR2 at one of the internet checks: an outage of an external
+ # service (the code stays in vast_test_report.txt); the sections that need VizieR report
+ # their own failure codes
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZIER_UNAVAILABLE/}"
+ # ... like the search over all VizieR catalogs, which only the main CDS site can answer
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE/}"
  # The local Gaia DR2 copy is optional (lib/install_local_copy_of_GaiaDR2.sh, 13 GB):
  # on a machine without it the known-star check uses the online services
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2LOCAL_NOT_INSTALLED/}"
