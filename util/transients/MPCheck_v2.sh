@@ -136,31 +136,6 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
  # This script should take care of updating astorb.dat
  #lib/update_offline_catalogs.sh all
  #
- #if [ ! -f astorb.dat ];then
- # # astorb.dat needs to be downloaded
- # echo "Downloading the asteroid database (astorb.dat)" 1>&2
- # #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
- # #wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
- # curl $VAST_CURL_PROXY --continue-at - --insecure --output astorb.dat.gz https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
- # if [ $? -ne 0 ];then
- #  # a desperate recovery attempt
- #  #wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
- #  curl $VAST_CURL_PROXY --continue-at - --output astorb.dat.gz http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
- #  if [ $? -ne 0 ];then
- #   echo "ERROR: cannot download astorb.dat.gz"
- #   exit 1
- #  fi
- # fi
- # gunzip astorb.dat.gz
- # if [ $? -ne 0 ];then
- #  echo "ERROR: cannot gunzip astorb.dat.gz"
- #  exit 1
- # fi
- # if [ ! -f astorb.dat ];then
- #  echo "ERROR: cannot find astorb.dat"
- #  exit 1
- # fi
- #fi
  # Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details
  # move up
  #echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" | awk -v mpccode=$MPC_CODE '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' > "$TEST_MPC_FILE"

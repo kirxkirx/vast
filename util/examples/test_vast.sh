@@ -508,7 +508,6 @@ function test_https_connection() {
 
 
  # the following will not work at legacy systems that will try to connect via the disallowed SSLv3
- #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
  curl --max-time 10 --silent https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
@@ -525,7 +524,6 @@ function test_https_connection() {
     return 2
    fi
   fi
-  #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
   curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
    echo "ERROR in test_https_connection(): cannot connect to https://kirx.net"
@@ -25393,8 +25391,6 @@ $GREP_RESULT"
   # NMW-STL scale is 13.80"/pix
   # I cannot get WCS headers down to 1pix without running solve-field locally on the _image_ to verify its WCS header.
   # but the above test with transient position suggests that the local correction does the trick correcting source positions.
-  # Here is my manual test:
-  # rm -f wcs_025_2023-8-20_20-50-10_002.fts* local_wcs_cache/wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals ; ASTROMETRYNET_LOCAL_OR_REMOTE="local" FORCE_PLATE_SOLVE_SERVER="vast.sai.msu.ru" util/wcs_image_calibration.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts ; lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 ; lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' ) ; echo "######" ; util/solve_plate_with_UCAC5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts --no_photometric_catalog ; cat wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}'
   #
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -30523,7 +30519,6 @@ if [ -d ../individual_images_test ];then
  # Run the test
  echo "Test plate solving with remote servers " 
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
- #for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
  for FORCE_PLATE_SOLVE_SERVER in tau.kirx.net scan.sai.msu.ru ;do
   export FORCE_PLATE_SOLVE_SERVER
   unset TELESCOP
@@ -31781,8 +31776,6 @@ if [ ! -f ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat ];then
  cd "$WORKDIR" || exit 1
 fi
 
-#PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
-#PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
 PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
 
 # Disable server fallback in pokaz_laflerkinman.sh so we can detect individual server failures
@@ -34512,26 +34505,6 @@ if [ -z "$HORIZONS_DIRECT" ] && [ -z "$HORIZONS_REVERSE_PROXY" ] ;then
 fi
 # if HORIZONS_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
-# disable VSX test
-### VSX direct and reverse proxy
-#VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://vsx.aavso.org/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
-# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#else
-# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'http://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#fi
-#if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
-# if [ -n "$VSX_DIRECT" ];then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
-# fi
-#fi
-#if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
-# TEST_PASSED=0
-# FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
-#fi
-### if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
-
 #### Test static pages for any unexpected changes
 
 # kirx.net Image and Document Fetch Test
@@ -34691,32 +34664,6 @@ if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_YEAR_MISMATCH"
 fi
-
-## Fetch HTML and check for "morning summary" or "evening summary"
-#NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_VAST_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_VAST_SUMMARY_CHECK_FAILED"
-#fi
-#
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
-#fi
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar"
-#fi
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar2/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2"
-#fi
 
 ### Check directory listing where it's needed
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
@@ -35405,7 +35352,7 @@ fi
 N_REPLY_LINES=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@scan_ucac5_test.input -F submit="Upload Image" -F brightmag=2.000000 -F faintmag=13.500000 -F searcharcsec=23.350000 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py' | wc -l)
 if [ $N_REPLY_LINES -lt 600 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_scan"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_tau"
 fi
 # clean up
 if [ -f scan_ucac5_test.input ];then

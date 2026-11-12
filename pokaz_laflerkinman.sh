@@ -133,19 +133,6 @@ CURL="$CURL $VAST_CURL_PROXY -H 'Expect:' --connect-timeout 10 --retry 1 --max-t
 if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  # Decide on which period search server to use
  # first - set the initial list of servers
- #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
- # polaris.kirx.net is actually pretty slow...
- # vast.sai.msu.ru disabled until the software is updated there
- #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
- # re-enabling vast.sai.msu.ru as it now runs the current code
- #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
- #PERIOD_SEARCH_SERVERS="kirx.net/ticaariel scan.sai.msu.ru vast.sai.msu.ru"
- # disable vast.sai.msu.ru again in an attempt to fix PERIODSEARCH003_EMPTY_REMOTE_FREQUENCY_CD_none test
- #PERIOD_SEARCH_SERVERS="kirx.net/ticaariel scan.sai.msu.ru"
- # empty none is still a problem
- #PERIOD_SEARCH_SERVERS="kirx.net/ticaariel scan.sai.msu.ru vast.sai.msu.ru"
- # remove ariel
- #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
  # Determine country code to select server order
  if [ -z "$VAST_COUNTRY_CODE" ];then
   if [ -x lib/get_country_code.sh ];then

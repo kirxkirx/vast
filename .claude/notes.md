@@ -1602,3 +1602,35 @@ Update this file as you learn new things.
   composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
   Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
   touching the classification.
+
+## vast.sai.msu.ru / kirx.net dependencies, vsx.dat second mirror (2026-11-11)
+- vsx.dat is now tried at LOCAL_SERVER, then ALTERNATIVE_SERVER, then CDS FTP (it used to
+  be LOCAL_SERVER then CDS, so outside Russia kirx.net was the only mirror). Both mirrors
+  serve the same 370150125-byte vsx.dat.gz. CDS timed out over FTP and HTTPS from tau that
+  day. Tested in a scratch copy with VAST_COUNTRY_CODE=US, CATALOG_DOWNLOAD_ATTEMPTS=1 and
+  VAST_CURL_PROXY="--resolve kirx.net:443:192.0.2.1": kirx.net times out after ~50 s, scan
+  delivers, the 2.1 GB catalog installs, 136 s in all. The updater refuses to start without
+  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search, so a
+  scratch copy needs it (and the BSC/Tycho-2 files) linked in.
+- The Bright Star Catalogue (end of the same script) is now tried at LOCAL_SERVER, then
+  ALTERNATIVE_SERVER, with --fail (it was LOCAL_SERVER only, so kirx.net only outside Russia,
+  and an HTTP error page got saved as the catalog). The mirrors serve identical copies (md5
+  bdb7b7c1...). A download is installed only if at least 9000 records carry a well-formed
+  J2000 position in bytes 76-90 (the complete catalog: 9110 records, 9096 with a position);
+  the lines are of varying length, so a line-length test would reject the real file. A
+  complete copy on disk is reused when only the derived lists are missing, and a missing
+  all-star list (bright_star_catalog_radeconly.txt) now triggers the rebuild too. Tested with
+  a TLS stub (openssl s_server -WWW behind curl --connect-to) that answers HTTP 200 with an
+  error page: rejected, scan used. Rebuilding the two lists takes ~27 s (a bash read loop).
+- Every 'make' touches every file in the tree (lib/check_external_programs.sh, skipped only
+  when out*.dat lightcurves are present), including lib/catalogs/vsx.dat, asassnv.csv and
+  astorb.dat. That restarts the 50-day refresh clock of lib/update_offline_catalogs.sh, so a
+  copy rebuilt more often than every 50 days never refreshes these catalogs by age.
+- Probing the remote services by hand: the plate-solve CGI accepts only uploads named
+  out[A-Za-z0-9]+.xyls (any other name gets "ERROR: Invalid filename" with HTTP 200), and
+  pokaz_laflerkinman.sh keeps only the servers that answer over https if any does - vast has
+  no https, so the ./lc L key reaches it only when tau and scan both fail over https.
+- State on 2026-11-11: period search, UCAC5 and plate solving all worked on tau, scan and
+  vast (vast runs an older plate-solve CGI and is the slowest; util/identify.sh does not list
+  it for plate solving). kirx.net/polaris runs its own working period-search service that is
+  in none of VaST's lists; kirx.net/ticaariel is gone.

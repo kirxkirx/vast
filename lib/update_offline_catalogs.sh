@@ -240,6 +240,20 @@ verify_catalog_structure() {
  return 0
 }
 
+# How many records of a Bright Star Catalogue copy (CDS V/50 layout) carry a well-formed
+# J2000 position in bytes 76-90, the only part of the catalog VaST reads (see the list
+# extraction near the end of this script). The complete catalog has 9110 records, 9096 of
+# them with a position; an HTML error page or a stub has next to none. The lines are of
+# varying length (trailing blanks are trimmed), so a line-length test would not work here.
+# Prints 0 for a missing or empty file.
+count_bright_star_catalog_records_with_coordinates() {
+ if [ ! -s "$1" ];then
+  echo 0
+  return 0
+ fi
+ awk 'substr($0,76,15) ~ /^[0-9][0-9][0-9][0-9][0-9][0-9][.][0-9][-+][0-9][0-9][0-9][0-9][0-9][0-9]$/ {n++} END {print n+0}' "$1"
+}
+
 # The ASAS-SN V-band catalog comes in two layouts. VaST reads the 79-column one
 # ("source_id,asassn_name,other_names,raj2000,dej2000,..."). The "Full Dataset" that
 # https://asas-sn.osu.edu/variables links to (asassn_catalog_full.csv on Google Drive,
@@ -895,8 +909,13 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+   # Both mirrors carry vsx.dat.gz, so try the other mirror before going upstream,
+   # as for asassnv.csv. Outside Russia the chain used to be kirx.net -> CDS FTP only:
+   # on 2026-11-11 CDS answered neither FTP nor HTTPS from tau.kirx.net, so a host without
+   # an installed copy depended on kirx.net alone, though scan.sai.msu.ru had the same file.
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $ALTERNATIVE_SERVER/vsx.dat.gz"
    CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
+   CURL_SECOND_FALLBACK_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
    DOWNLOAD_TARGET_FILE="$TMP_OUTPUT.gz"
   fi
@@ -1146,15 +1165,37 @@ Will run the unpack command: $UNPACK_COMMAND" >&2
 done
 
 ### Check if the  Bright  Star  Catalogue  (BSC) has been downloaded
-if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catalogs/brightbright_star_catalog_radeconly.txt" ] ;then
- echo "Downloading the Bright Star Catalogue" >&2
- # The CDS link is down
- #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
- # Changed to local copy
- #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
- #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
- curl $VAST_CURL_PROXY --connect-timeout 10 --insecure --silent --output lib/catalogs/bright_star_catalog_original.txt "$LOCAL_SERVER/bright_star_catalog_original.txt"
- if [ $? -eq 0 ];then
+# Both mirrors carry an identical copy of the catalog (the CDS original, V/50, is not used).
+# The download used to come from LOCAL_SERVER alone and without --fail, so outside Russia it
+# depended on kirx.net only, and an HTTP error page was saved as the catalog. Now each mirror
+# is tried in turn, a download is installed only if it looks like the complete catalog, and
+# a complete copy already on disk is reused when only the lists made from it are missing.
+# The download goes to a per-process name and is renamed into place: unmw links lib/catalogs
+# of every field's working copy to the reference copy, so concurrent runs share this directory.
+BSC_MINIMUM_RECORDS_WITH_COORDINATES=9000
+if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catalogs/bright_star_catalog_radeconly.txt" ] || [ ! -s "lib/catalogs/brightbright_star_catalog_radeconly.txt" ] ;then
+ BSC_IS_USABLE=0
+ if [ "$(count_bright_star_catalog_records_with_coordinates lib/catalogs/bright_star_catalog_original.txt)" -ge "$BSC_MINIMUM_RECORDS_WITH_COORDINATES" ] 2>/dev/null ;then
+  BSC_IS_USABLE=1
+ else
+  echo "Downloading the Bright Star Catalogue" >&2
+  BSC_DOWNLOAD_TMP="lib/catalogs/bright_star_catalog_original.txt.download$$"
+  for BSC_SERVER in "$LOCAL_SERVER" "$ALTERNATIVE_SERVER" ;do
+   rm -f "$BSC_DOWNLOAD_TMP"
+   if ! curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --silent --show-error --fail --output "$BSC_DOWNLOAD_TMP" "$BSC_SERVER/bright_star_catalog_original.txt" ;then
+    echo "Could not download $BSC_SERVER/bright_star_catalog_original.txt" >&2
+    continue
+   fi
+   BSC_RECORDS_WITH_COORDINATES=$(count_bright_star_catalog_records_with_coordinates "$BSC_DOWNLOAD_TMP")
+   if [ "$BSC_RECORDS_WITH_COORDINATES" -ge "$BSC_MINIMUM_RECORDS_WITH_COORDINATES" ] 2>/dev/null ;then
+    mv -f "$BSC_DOWNLOAD_TMP" lib/catalogs/bright_star_catalog_original.txt && BSC_IS_USABLE=1
+    break
+   fi
+   echo "$BSC_SERVER/bright_star_catalog_original.txt has only $BSC_RECORDS_WITH_COORDINATES records with coordinates (the complete catalog has 9096) - not using it" >&2
+  done
+  rm -f "$BSC_DOWNLOAD_TMP"
+ fi
+ if [ $BSC_IS_USABLE -eq 1 ];then
   echo "Extracting the R.A. Dec. list (all BSC)" >&2
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
