@@ -1758,8 +1758,10 @@ Update this file as you learn new things.
   lists index.php, and mod_dir answers a directory with the 403 of its index.php look-up
   instead of letting mod_autoindex list it, so Options +Indexes alone cannot help. Signature:
   a missing .php file gives 403 where a missing .txt gives 404, and OPTIONS on the directory
-  gives 403. Fix on polaris, keeping the PHP ban: a DirectoryIndex without index.php in a
-  <Directory /home/kirx/public_html> section. Nothing in VaST reads these listings; only the
-  AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING check does.
+  gives 403. Fixed on polaris the same day, keeping the PHP ban:
+  /etc/apache2/conf-available/kirx-userdir-listing.conf (enabled with a2enconf) gives
+  <Directory /home/kirx/public_html> 'DirectoryIndex index.html index.htm' and
+  'Options +Indexes'; the listing works again and .php URLs still get 403. Nothing in VaST
+  reads these listings; only the AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING check does.
 - unmw's pytest suite does not start on this machine's Python 3.14: it needs the cgi module
   (legacy-cgi), which is not installed here and not in requirements-test.txt.
