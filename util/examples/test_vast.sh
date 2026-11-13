@@ -17608,7 +17608,7 @@ $GREP_RESULT
 $CAT_RESULT"
       #
      else
-      rm -f selenium_TICA_TESS__zeroRA_test.
+      rm -f selenium_NMW_V615Vul_test.txt
      fi
     else
      FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_NMWNVUL24ST_SELENIUM_TEST"
@@ -27016,7 +27016,7 @@ $GREP_RESULT
 $CAT_RESULT"
       #
      else
-      rm -f selenium_TICA_TESS__zeroRA_test.
+      rm -f selenium_TICA_TESS__zeroRA_test.txt
      fi
     else
      FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_TICATESSZERORA_Klio_SELENIUM_TEST"
@@ -31130,7 +31130,7 @@ $GREP_RESULT"
 fi
 
 ####### Special test V2466 Cyg SAI600 #######
-# Run it only on vast, otherwise if /dataX is mounted over sshfs the test will be super slow
+# Run it only on vast, where the test data are on a local disk
 if [ "$HOSTNAME" = "vast" ];then
  # The test script will return 0 if there is no data or if everything is fine
  util/examples/test_V2466CygSAI600.sh
@@ -34621,19 +34621,19 @@ curl  --insecure --connect-timeout 10 --retry 1 --max-time 900  --silent 'http:/
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
-fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
-fi
-file wwwtest.png | grep -q 'PNG image data'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- # most likely Kirill needs to do sshfs at scan: 
- # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataX /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataX
- # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataY /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataY
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
+else
+ # Download and check the image only if the search listed it:
+ # otherwise there is no image URL, and 002 and 003 would only repeat 001
+ curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png "$(awk -F'"' '{print $2}' wwwtest.tmp | head -n1)"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
+ fi
+ file wwwtest.png | grep -q 'PNG image data'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
+ fi
 fi
 # clean-up
 if [ -f wwwtest.tmp ];then

@@ -47,6 +47,9 @@ SKIP_LINK_PATTERNS = (
 # Links that are known to be flaky - failures are logged as warnings, not errors
 FLAKY_LINK_PATTERNS = (
     "minorplanetcenter.net",
+    # CDS (SIMBAD, VizieR) can be down for days: in November 2026 it answered
+    # every query with its 'Page unavailable' page (HTTP 404)
+    "cds.unistra.fr",
 )
 
 REQUEST_TIMEOUT   = 60   # seconds for each HTTP request

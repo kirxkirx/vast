@@ -1719,8 +1719,11 @@ Update this file as you learn new things.
   SIMBAD query of util/search_databases_with_curl.sh now use the cds.unistra.fr names; plain
   http works there without a redirect, which matters for old curl and for the POST. unmw's
   filter_report.py recognises both names, as older reports keep the old ones. Both selenium
-  report tests failed on the dead SIMBAD link, and they keep failing while CDS serves its
-  'Page unavailable' page (HTTP 404): only minorplanetcenter.net is in FLAKY_LINK_PATTERNS.
+  report tests failed on the dead SIMBAD link; while CDS serves its 'Page unavailable' page
+  (HTTP 404) the cds.unistra.fr links fail too, so both tests now have cds.unistra.fr in
+  FLAKY_LINK_PATTERNS next to minorplanetcenter.net: such a failure is logged as a warning
+  and does not fail the test (each failing link still costs 2 x 120 s of retries). A passing
+  test's output file is now deleted (the rm had a truncated file name, so none ever was).
 - The vizquery test (GitHub Actions only) ended every CI system test 14 minutes in while CDS
   was down (fail_early on VIZQUERYTEST004a_NO_END). It is now not performed, with the
   stripped code VIZQUERYTEST_VIZIER_UNAVAILABLE, when the internet check found VizieR
@@ -1751,7 +1754,7 @@ Update this file as you learn new things.
   returns no PS1 rows either way).
 - Outside VaST that day: GCVS at www.sai.msu.su answered 2 of 4 direct queries (17-30 s), the
   others reset after 68 s or hung past 120 s. scan's PA sky_archive CGI sent 727 bytes and
-  then hung (the test's comment points at the sshfs mounts of the archive disks on scan). All
+  then hung. All
   ~kirx directory listings on kirx.net answer 403 (the files themselves download), as they
   did on 2026-10-21. Cause, as far as can be seen from outside: polaris refuses *.php* files
   server-wide (a FilesMatch with 'Require all denied' in conf-enabled), Debian's DirectoryIndex
@@ -1765,3 +1768,25 @@ Update this file as you learn new things.
   reads these listings; only the AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING check does.
 - unmw's pytest suite does not start on this machine's Python 3.14: it needs the cgi module
   (legacy-cgi), which is not installed here and not in requirements-test.txt.
+- CI after the gate (Ubuntu runs 43269700500 at fbdcc6b4 and 43280965083 at 71d7b86c, the
+  first Ubuntu runs to reach the end since 2026-10-22): both ran to the end (243.7 and
+  215.7 min) and exited 1 only on AUXWEB_PASKYARCHIVE_001-003; 002 and 003 followed from 001
+  (the empty match file left the PNG download without a URL: 'curl: (2) no URL
+  specified'), so they now run only when 001 found the image. NMWNVUL24ST_SELENIUM_TEST
+  (SIMBAD 404; the next link, VizieR, gives the same 404) and all the VizieR codes are
+  stripped before the exit decision. The PA check has failed since 2026-10-23 (WSL run
+  39915054811; it last passed in Ubuntu run 39795286462 on 10-22), unseen in Ubuntu CI
+  because no Ubuntu run reached that section in between. Signature: HTTP 200 and 727 bytes
+  within 1 s listing one plate (SCA1017N), then nothing until scan closes the reply about
+  320 s after the request (curl exit 18), well inside the test's 900 s. The expected
+  plate's FITS file downloads from the archive at once; where the CGI blocks cannot be seen
+  from outside. The new UCAC5 VizieR fallback got no CI coverage: all 183 UCAC5 searches
+  were answered by our own servers; APASS used IDIA through the chooser (6 queries, all
+  fine).
+  The report upload's 'unexpected reply from the server' is in every CI run that reached the
+  end since at least 2026-08-19, passing runs included: vasttestreport.php is no longer run
+  as PHP on scan (a GET returns its source), so no report has been mailed. Even when it ran,
+  its success reply was a single space (the file ends with '?> '), so the check for 'Thanks
+  for the submission!' could never pass. The result does not affect the exit code. For a
+  report link during the outage: simbad.cfa.harvard.edu has V0615 Vul (PNV
+  J19430751+2100204), simbad.idia.ac.za does not.
