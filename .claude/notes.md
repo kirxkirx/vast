@@ -1563,6 +1563,9 @@ Update this file as you learn new things.
   .claude/nearby_red_dwarf_check_design.md. Decisions of 2026-11-09: BP-RP >= 1.0 (all K and M
   dwarfs) counts as red; the check runs for VSX-matched candidates too; the local copy is the
   primary source, the ESA archive the fallback, VizieR the last resort.
+- 2026-11-16: red now means K5 and later (BP-RP >= 1.39, G-RP >= 0.78, the K5V entries of the
+  locus table). With all K dwarfs counted, SS Cyg in outburst (BP-RP 1.18, M_G 6.4: the K donor
+  plus the disc sit on the main sequence) was called a likely UV Ceti-type flare.
 - The report line starts with 'UV Ceti check' and is appended after the forced-photometry
   lines. It is a new entry for the parser list above: unmw/filter_report.py ends the astcheck
   match block at that prefix and exports the line as the uv_ceti_check JSON field (documented in

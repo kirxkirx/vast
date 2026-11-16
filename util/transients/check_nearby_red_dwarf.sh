@@ -33,11 +33,11 @@
 # 'found in', 'not found', 'mag brighter than the'), see .claude/notes.md.
 #
 # Exit codes:
-#   0  a nearby red dwarf (K or M dwarf on, above or slightly below the main sequence) is
-#      at the position: a UV Ceti-type flare is likely
+#   0  a nearby red dwarf (K5 or later dwarf on, above or slightly below the main sequence)
+#      is at the position: a UV Ceti-type flare is likely
 #   1  no star closer than 200 pc at the position (the search was completed)
 #   2  a nearby star is at the position, but it is not a single red dwarf (far below the
-#      main sequence, bluer than K0, a giant)
+#      main sequence, bluer than K5, a giant)
 #   3  the check could not be done (no local copy and no reply from the online services)
 #   4  usage error
 #
@@ -46,8 +46,8 @@
 #   UVCETI_LOCAL_CATALOG    the local copy, default lib/catalogs/gaia_dr3_nearby
 #   UVCETI_MAX_DISTANCE_PC  200: stars with a parallax below 1000/this are not considered
 #   UVCETI_MIN_PLX_OVER_ERROR  3: stars with a less significant parallax are not considered
-#   UVCETI_MIN_BP_RP        1.0: the bluest 'red dwarf' colour (K0V has BP-RP = 0.98)
-#   UVCETI_MIN_G_RP         0.58: the same limit in G-RP, used when BP is missing or unreliable
+#   UVCETI_MIN_BP_RP        1.39: the bluest 'red dwarf' colour, that of K5V in the locus table
+#   UVCETI_MIN_G_RP         0.78: the same limit in G-RP, used when BP is missing or unreliable
 #   UVCETI_BP_UNRELIABLE_G  19.5: G-RP places stars fainter than this (BP is biased there)
 #   UVCETI_MAX_PM_ARCSEC_YR 11: the search cone grows by this times the years since 2016.0
 #                           (Barnard's star moves 10.4"/yr, the fastest star known)
@@ -84,8 +84,8 @@ fi
 : "${UVCETI_LOCAL_CATALOG:=lib/catalogs/gaia_dr3_nearby}"
 : "${UVCETI_MAX_DISTANCE_PC:=200}"
 : "${UVCETI_MIN_PLX_OVER_ERROR:=3}"
-: "${UVCETI_MIN_BP_RP:=1.0}"
-: "${UVCETI_MIN_G_RP:=0.58}"
+: "${UVCETI_MIN_BP_RP:=1.39}"
+: "${UVCETI_MIN_G_RP:=0.78}"
 : "${UVCETI_BP_UNRELIABLE_G:=19.5}"
 : "${UVCETI_MAX_PM_ARCSEC_YR:=11}"
 : "${UVCETI_ESA_TIMEOUT_SEC:=90}"
@@ -451,7 +451,7 @@ END {
  }
  if (!isred) {
   if (absmag > 10.0) printf "%s %s is a white dwarf (blue and faint)%s: not a red dwarf; a brightening here may still come from an unseen companion.\n", prefix, ident, colour_note;
-  else printf "%s %s is a dwarf earlier than K0%s: not a red dwarf, a large flare is unlikely.\n", prefix, ident, colour_note;
+  else printf "%s %s is a dwarf earlier than K5%s: not a red dwarf, a large flare is unlikely.\n", prefix, ident, colour_note;
   exit 2;
  }
  if (off > msfar && nsigma >= minsigma) {

@@ -44,15 +44,18 @@ applied, and what kind of star is it?
   (UV Cet, BP-RP 3.83 and G-RP 1.39, sits on the locus by BP-RP and 1.6 mag below it by
   G-RP; the first version switched to G-RP on such a disagreement and called UV Cet a
   subdwarf or composite).
-- "Red dwarf" means BP-RP >= 1.0 (K0V has 0.98) or G-RP >= 0.58 - all K and M dwarfs, as
-  decided on 2026-11-09.
+- "Red dwarf" means BP-RP >= 1.39 or G-RP >= 0.78 - K5V in the locus table, so K5 and later
+  dwarfs (2026-11-16). The first version (2026-11-09) took all K dwarfs (BP-RP >= 1.0,
+  G-RP >= 0.58) and called SS Cyg in outburst (Gaia DR3 1972957892448494592: BP-RP 1.18,
+  M_G 6.4 - the K donor plus the disc put this dwarf nova on the main sequence) a likely
+  UV Ceti-type flare.
 - The main-sequence locus (BP-RP, G-RP, M_G) is a 14-point table from K0 to M9 (Pecaut and
   Mamajek dwarf sequence with G-V from the Gaia DR2 photometric relations, about 0.3 mag
   accurate). The offset is quoted in sigmas with sigma = sqrt((2.17 e_plx/plx)^2 + 0.5^2),
   the 0.5 mag being the intrinsic width of the main sequence.
 - Verdicts (exit code in brackets):
   - M_G < 4: giant or subgiant [2];
-  - not red: a white dwarf when M_G > 10, otherwise a dwarf earlier than K0 [2];
+  - not red: a white dwarf when M_G > 10, otherwise a dwarf earlier than K5 [2];
   - red, more than 2.5 mag and 3 sigma below the locus: a white dwarf + red dwarf binary
     or a cataclysmic variable rather than a single red dwarf; a flare on the companion or a
     dwarf nova outburst is possible [2];
