@@ -1,0 +1,4 @@
+# Maintenance notes for Claude Code stay in the repository but not in release archives:
+# git archive and GitHub's 'Source code' downloads skip paths marked export-ignore
+# (the release tarball made by .github/workflows/create_release_archive.yml excludes them too)
+/.claude export-ignore

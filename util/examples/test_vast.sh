@@ -14940,7 +14940,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a"
    GREP_RESULT=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N40110a ######
+###### NMWNSGR20N40310a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17280,7 +17280,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a"
    GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10310a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17313,7 +17313,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a"
    GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10410a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17345,7 +17345,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10411a"
    GREP_RESULT=`grep "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10411a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17608,6 +17608,14 @@ $GREP_RESULT
 $CAT_RESULT"
       #
      else
+      # The test passed, but links to flaky services (MPC, CDS) may have failed:
+      # keep their warnings in the report before the output file is removed
+      GREP_RESULT=$(grep -F '[WARNING]' selenium_NMW_V615Vul_test.txt)
+      if [ -n "$GREP_RESULT" ];then
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_SELENIUM_TEST passed with warnings ######
+$GREP_RESULT"
+      fi
       rm -f selenium_NMW_V615Vul_test.txt
      fi
     else
@@ -18787,7 +18795,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20211a"
    GREP_RESULT=`grep "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N20210a ######
+###### NMWNSGR21N20211a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -18819,7 +18827,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20212a"
    GREP_RESULT=`grep "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N20210a ######
+###### NMWNSGR21N20212a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19122,7 +19130,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10211a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10211a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19154,7 +19162,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10212a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  10\...  18:53:..\... -14:11:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10212a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  10\...  18:53:..\... -14:11:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19186,7 +19194,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10213a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  11\...  19:00:..\... -15:12:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10213a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  11\...  19:00:..\... -15:12:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -27010,12 +27018,20 @@ $CAT_RESULT"
       GREP_RESULT=$(cat selenium_TICA_TESS__zeroRA_test.txt)
       CAT_RESULT="silenced"
       DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### TICATESSZERORA_ERROR_MESSAGE_IN_index_html ######
+###### TICATESSZERORA_Klio_SELENIUM_TEST ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
       #
      else
+      # The test passed, but links to flaky services (MPC, CDS) may have failed:
+      # keep their warnings in the report before the output file is removed
+      GREP_RESULT=$(grep -F '[WARNING]' selenium_TICA_TESS__zeroRA_test.txt)
+      if [ -n "$GREP_RESULT" ];then
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA_Klio_SELENIUM_TEST passed with warnings ######
+$GREP_RESULT"
+      fi
       rm -f selenium_TICA_TESS__zeroRA_test.txt
      fi
     else
@@ -34915,16 +34931,19 @@ curl  --insecure --connect-timeout 10 --retry 1 --max-time 300  --silent 'http:/
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_001"
-fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
-fi
-file wwwtest.png | grep -q 'PNG image data'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
+else
+ # Download and check the image only if the search listed it:
+ # otherwise there is no image URL, and 002 and 003 would only repeat 001
+ curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' "$(awk -F'"' '{print $2}' wwwtest.tmp | head -n1)"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
+ fi
+ file wwwtest.png | grep -q 'PNG image data'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
+ fi
 fi
 # clean-up
 if [ -f wwwtest.tmp ];then

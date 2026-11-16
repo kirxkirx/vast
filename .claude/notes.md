@@ -6,8 +6,14 @@ Update this file as you learn new things.
 ## Git Workflow
 
 - Tracked in git from the `.claude/` folder: `CLAUDE.md`, `notes.md` (this file) and the design docs
-  `airmass_zeropoint_forced_photometry_design.md` and `forced_photometry_reference_filter_design.md`
-  (tracked scripts cite them by their `.claude/` path, so do not move them). Stage them when they change.
+  `airmass_zeropoint_forced_photometry_design.md`, `forced_photometry_reference_filter_design.md`
+  and `nearby_red_dwarf_check_design.md` (tracked scripts cite them by their `.claude/` path, so do
+  not move them). Stage them when they change.
+- `.claude/` stays in the repository but not in release archives: the release workflow
+  (.github/workflows/create_release_archive.yml) leaves it out of its rsync copy, and
+  .gitattributes marks it export-ignore for git archive and GitHub's 'Source code' downloads.
+  Code comments in the scripts cite the design docs by their .claude/ path only, so a tarball
+  user has to look them up in the GitHub repository.
 - Keep temporary investigation reports, session notes, deployment checklists and handoff documents
   outside the repository tree; never stage or commit them. Keep durable lessons in this consolidated
   maintenance-notes file instead (user preference, 2026-10-10).
@@ -207,6 +213,13 @@ Update this file as you learn new things.
 - lib/autodetect_aperture_main in STANDALONE mode names its temp files image_pid<PID>.* (not image00000.*). Test assertions must grep 'FLAG_IMAGE image' + '.flag', never the literal 'FLAG_IMAGE image00000.flag'. The non-PSF exclude-ref-image section was updated for this long ago; the PSF variant (EXCLUDEREFIMAGEPSF006) and the photographic-plates check (PHOTOPLATE, inverted logic) still had the old pattern - fixed 2026-07-03.
 - The PSF test sections only run when psfex is installed; PSFEX_NOT_INSTALLED is auto-stripped from FAILED_TEST_CODES. psfex appeared on this dev machine only on 2026-06-15 (/usr/local/bin/psfex 3.24.2), so PSF sections had not run here for a long time - expect stale assertions when a new tool enables a long-skipped section.
 - To edit a test script WHILE the suite is running from it: cp to a temp file, edit the copy, bash -n, then mv over the original (atomic rename). The running bash keeps its fd on the old inode and is not disturbed. Never edit the file in place mid-run.
+- The '###### X ######' header that a failed check adds to DEBUG_OUTPUT must name the code that
+  the same check adds to FAILED_TEST_CODES, since the report is read by searching for the code.
+  A block copied from a neighbour tends to keep the neighbour's header: nine position checks of
+  the NMWNSGR20N4, NMWNSGR24N1, NMWNSGR21N2 and NMWNSGR21N1 sections were reported under the
+  first check's header, and the failed TICA selenium test under
+  TICATESSZERORA_ERROR_MESSAGE_IN_index_html (both fixed 2026-11-16). To find such slips,
+  compare each header with the nearest FAILED_TEST_CODES addition above it.
 - test_vast.sh strips known-environmental failure codes at the end (STANDALONEDBSCRIPT001a/001b_GCVS, scan.sai.msu.ru_REMOTEPLATESOLVE007-009, PSFEX/WCSTOOLS/VARTOOLS_NOT_INSTALLED, ...) - check that list before investigating a FAILED section summary line.
 - PGPLOT truncates long device filenames: around 90 characters the /png driver opens a chopped path, prints "PGPLOT /png: could not open file ... plotting disabled" to stderr, every plot call becomes a no-op, and cpgbeg() STILL RETURNS SUCCESS - so a tool can "succeed" while writing nothing. lightcurve_png.c handles this (2026-07-03) by rendering to a short temp name in cwd and rename()/copying to the destination, plus a stat() check that the output exists before claiming success. Any other PGPLOT-PNG tool given a user-supplied output path needs the same treatment; never trust cpgbeg's return value as proof the file opened.
 
@@ -1723,7 +1736,9 @@ Update this file as you learn new things.
   (HTTP 404) the cds.unistra.fr links fail too, so both tests now have cds.unistra.fr in
   FLAKY_LINK_PATTERNS next to minorplanetcenter.net: such a failure is logged as a warning
   and does not fail the test (each failing link still costs 2 x 120 s of retries). A passing
-  test's output file is now deleted (the rm had a truncated file name, so none ever was).
+  test's output file is now deleted (the rm had a truncated file name, so none ever was);
+  its [WARNING] lines are first copied into DEBUG_OUTPUT under '<code> passed with warnings',
+  so the report still shows the flaky links that failed.
 - The vizquery test (GitHub Actions only) ended every CI system test 14 minutes in while CDS
   was down (fail_early on VIZQUERYTEST004a_NO_END). It is now not performed, with the
   stripped code VIZQUERYTEST_VIZIER_UNAVAILABLE, when the internet check found VizieR
@@ -1772,7 +1787,8 @@ Update this file as you learn new things.
   first Ubuntu runs to reach the end since 2026-10-22): both ran to the end (243.7 and
   215.7 min) and exited 1 only on AUXWEB_PASKYARCHIVE_001-003; 002 and 003 followed from 001
   (the empty match file left the PNG download without a URL: 'curl: (2) no URL
-  specified'), so they now run only when 001 found the image. NMWNVUL24ST_SELENIUM_TEST
+  specified'), so they now run only when 001 found the image (the same for the NMW sky
+  archive's AUXWEB_NMWSKYARCHIVE_002/003). NMWNVUL24ST_SELENIUM_TEST
   (SIMBAD 404; the next link, VizieR, gives the same 404) and all the VizieR codes are
   stripped before the exit decision. The PA check has failed since 2026-10-23 (WSL run
   39915054811; it last passed in Ubuntu run 39795286462 on 10-22), unseen in Ubuntu CI
@@ -1787,7 +1803,11 @@ Update this file as you learn new things.
   end since at least 2026-08-19, passing runs included: vasttestreport.php is no longer run
   as PHP on scan (a GET returns its source), so no report has been mailed. Even when it ran,
   its success reply was a single space (the file ends with '?> '), so the check for 'Thanks
-  for the submission!' could never pass. The result does not affect the exit code. For a
+  for the submission!' could never pass. The result does not affect the exit code.
+  PHP-free replacements were written on 2026-11-12/13 (Python CGI programs in scan's cgi-bin,
+  mapped to the old .php URLs with ScriptAlias; kept outside this repository) for
+  vasttestreport.php, vastemail.php (the mailing-list form of doc/README.html) and
+  anyemailkirx.php (used only by test_vast.sh of 2019-05-08). For a
   report link during the outage: simbad.cfa.harvard.edu has V0615 Vul (PNV
   J19430751+2100204), simbad.idia.ac.za does not.
 
