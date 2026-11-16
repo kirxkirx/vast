@@ -1,4 +1,15 @@
 XX XXX XXXX: vast-1.0rc90
+	* New tool util/detect_closed_roof finds images taken with the observatory roof (dome)
+	closed while the camera kept imaging: it counts star-like peaks and compares the image
+	background with a matching dark frame, and prints OK, CLOSED_ROOF (no stars, background
+	at the dark level), NO_STARS (no stars on a bright background, or no dark frame to tell)
+	or PARTLY_DARK (a part of the field of view gets no sky light).
+	The NMW transient search script 'util/transients/transient_factory_test31.sh' runs it on
+	the new images of the NMW-TexasTech cameras (CHECK_FOR_CLOSED_ROOF=yes by default for
+	TTUQ1b1x1 and TTUQ2b1x1) and reports a field whose latest new image was taken with the
+	roof closed with the ERROR "OBSERVATORY ROOF CLOSED?", which unmw turns into an alert.
+	* util/find_best_dark.sh no longer prints the input image path to stdout when the image
+	does not fully pass fitsverify (the path ended up in the dark frame file name).
 	* FITS keywords with names shorter than 8 characters (like AIRMASS or HA) listed in
 	vast_list_of_FITS_keywords_to_record_in_lightcurves.txt are now recorded in lightcurves.
 	* NMW traansient search script 'util/transients/transient_factory_test31.sh' can now 

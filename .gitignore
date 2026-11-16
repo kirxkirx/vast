@@ -130,6 +130,7 @@ lib/catalogs/.update_offline_catalogs.lock
 /util/convert/SWASP_FITS2ASCII
 /util/cute_lc
 /util/cute_lc_fullJD
+/util/detect_closed_roof
 /util/estimate_systematic_noise_level
 /util/fits2png
 /util/fitscopy

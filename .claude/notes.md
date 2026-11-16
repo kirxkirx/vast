@@ -1790,3 +1790,71 @@ Update this file as you learn new things.
   for the submission!' could never pass. The result does not affect the exit code. For a
   report link during the outage: simbad.cfa.harvard.edu has V0615 Vul (PNV
   J19430751+2100204), simbad.idia.ac.za does not.
+
+## Closed-roof detection: util/detect_closed_roof and the OBSERVATORY ROOF CLOSED alert (2026-11-15)
+- Problem: the NMW-TexasTech roof sometimes closes without NINA knowing, and NINA keeps
+  imaging the inside of the roof (13 nights between 2026-10-03 and 2026-11-13, both cameras,
+  often only one of them). Such runs used to end as "less than 4 images processed", or as
+  "passing clouds" when the roof moved between the two frames, and nobody was alerted.
+- What the frames look like (a year of logs plus all raw frames that were still on disk):
+  median(raw - matched master dark) is -1..+6 ADU (up to +18 ADU with moonlight or dawn
+  leaking in), the pixel noise is the read noise (5-7 ADU), and there are 0-1 star-like peaks.
+  The faintest open-roof sky in 11 months was +268 ADU (TTUQ2) / +326 ADU (TTUQ1) above the
+  dark at 20 s, and every open frame had thousands of peaks. TTUQ2 closed frames sit 0.2-1 ADU
+  BELOW their dark (bias offset), TTUQ1 ones 1-4 ADU above: that is why ms.c's
+  "dark mean >= image mean" ERROR fires mostly for TTUQ2 (79 of 97 closed frames) and only
+  occasionally for TTUQ1 (10 of 62) - do not use it as a roof indicator.
+- util/detect_closed_roof [-n MAX_STARS] [-r ADU_PER_SEC] [-b ADU] [-s MAX_NOISE_ADU] [-v] image [dark] prints
+  one line "VERDICT key=value ..." (OK, CLOSED_ROOF, NO_STARS, PARTLY_DARK); exit 0/1/2.
+  Star-like peak: local maximum > 5 sigma above the 128-255 px tile median, with >= 6 of 8
+  neighbours > 2 sigma (the neighbour rule rejects hot pixels and cosmic rays; a global
+  background instead of the tiles gives thousands of false peaks on closed frames).
+  The background limit is 5 ADU/s x EXPTIME (100 ADU at 20 s). Validated on all 1928 surviving
+  raw frames of 2026-11-10..13: 34/34 closed -> CLOSED_ROOF, 1889/1889 open -> OK, both
+  partly lit frames -> PARTLY_DARK (with the dark); without a dark closed -> NO_STARS.
+- util/ccd/ms stores |image - dark|, so in an already dark-subtracted frame (HISTORY
+  "Dark frame subtraction:") with a background near zero the noise is folded at zero: median
+  and MAD then underestimate the noise (and are coarsely quantized: medians of 3 or 4 ADU) and
+  ~20-230 folded noise peaks pass for stars. The tool measures the noise of such tiles as the
+  clipped RMS around zero instead (closed fd_ frames: 0-5 peaks).
+- Do not use src/quickselect.c on pixel data: it is quadratic in the number of equal values
+  (minutes for a 61 Mpix integer frame). detect_closed_roof has its own three-way-partition
+  quickselect; it reads the image strip by strip (one row of tiles + 2 rows), about 20 MB of
+  RAM and 0.8 s per 61 Mpix frame with a dark.
+- transient_factory_test31.sh runs the check after the Mean value check (new images only,
+  never the references) when CHECK_FOR_CLOSED_ROOF=yes (default for TTUQ1b1x1/TTUQ2b1x1 only).
+  The dark comes from util/find_best_dark.sh; if nothing matches the temperature/exposure,
+  find_any_dark_frame_of_the_same_size_as_image() takes the newest dark of the same size (the
+  bias level changes by only a few ADU between set-points). If the LATEST new image (by JD) is
+  CLOSED_ROOF, the field gets the banner "***** ACTION NEEDED - OBSERVATORY ROOF CLOSED? *****"
+  in transient_factory.log plus "ERROR: OBSERVATORY ROOF CLOSED? ..." in the filtering log and
+  is skipped (7 s instead of 33 s of failing VaST runs and blind solves). Other cases (roof
+  opening during the pair, part of the field dark, no stars on a bright background, no dark)
+  get their own ERROR without that phrase. "OBSERVATORY ROOF CLOSED" is a cross-repo contract:
+  unmw greps it to send the Slack alert, so no other message may contain it (only the two echo
+  lines of closed_roof_check_report_closed_roof do). The per-image part is the function
+  closed_roof_check_inspect_new_images; the "too few refereence images" branch calls it too, so
+  a closed roof is reported (and alerted) also for fields without reference images (For-03,
+  Scl-04): there only the alert case replaces the usual error, the field stays NOREF otherwise.
+- Tests: the "Test detect_closed_roof tool" block of test_vast.sh (runs on GitHub CI too; it
+  also checks that exactly two non-comment echo lines of the factory carry the contract phrase)
+  and util/examples/test_closed_roof_check.sh (factory level, about 3.3 min, not on CI). Data:
+  NMW-TexasTech__closed_roof_test.tar.bz2 - 1024x1024 crops of real closed, open, partly lit,
+  cloudy and already calibrated frames of both cameras with dark crops cut at the same pixels and
+  2 reference crops; its README.txt lists the expected verdict of every file. Raw img_* directories
+  are pruned after a few days, so new real cases must be saved promptly.
+- Review fixes (2026-11-15): util/find_best_dark.sh echoed the input image path to stdout
+  (a grep without -q in its fitsverify fallback), so a frame failing fitsverify got its own
+  path as "the dark": image - image = 0 looked like a closed roof, and in
+  try_to_calibrate_the_input_frame the two-line DARK_FRAME broke the dark subtraction. The
+  check now trusts find_best_dark.sh output only when it exits 0 and never compares an image
+  with itself; the tool also refuses an image identical to its dark. A dark that does not
+  match the camera settings (other OFFSET/readout mode) is the remaining false-alarm risk:
+  if its level is far above the image, bright overcast can come out near "the dark level".
+  The tool therefore sets zero_level=mismatch (no CLOSED_ROOF) when the background is more
+  than max(3 sigma, half the limit) below the dark, or - with -s, CLOSED_ROOF_CHECK_MAX_NOISE_ADU,
+  15 ADU for the TTU cameras - when a starless frame at the dark level is noisier than a frame
+  without sky light can be (closed 4.4-7.4 ADU, faintest open sky 35.6 ADU in the sweep).
+  Re-validated with the final binary called as the pipeline calls it (matching dark, -s 15):
+  1928/1928 surviving frames of 2026-11-10..13 got the expected verdict, and the mismatch rule
+  never fired on a real frame.

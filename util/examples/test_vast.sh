@@ -580,7 +580,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../NMW-TexasTech__closed_roof_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -29015,6 +29015,334 @@ if [ -f lib/is_fits_image_blank ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK_TOOL_NOT_FOUND"
 fi
+
+
+
+######### Test detect_closed_roof tool
+# util/detect_closed_roof recognizes images taken with the observatory roof closed: the
+# NMW-TexasTech cameras keep imaging when the roof closes without the camera control software
+# knowing it, and such images show no stars and a background at the dark-frame level.
+# The test data are 1024x1024 crops of real raw frames of both NMW-TexasTech cameras (the roof
+# closed, open sky, the roof moving during the exposure, overcast) with crops of the matching
+# master darks, a closed-roof frame dark-subtracted and flat-fielded by VaST (cut at two places:
+# near the optical axis its noise folded at zero is the hardest case for the star counter) and
+# two calibrated reference images; README.txt of the dataset lists the expected verdict of every
+# file. The data are small (15 MB) and the tool needs no network, so this test runs everywhere,
+# GitHub Actions included. The files the test makes go to a private temporary directory.
+# (DCR_ stands for detect_closed_roof)
+if [ -x util/detect_closed_roof ];then
+ # Download the test dataset if needed
+ if [ ! -d ../NMW-TexasTech__closed_roof_test ];then
+  cd .. || exit 1
+  download_test_data_file NMW-TexasTech__closed_roof_test.tar.bz2 "http://tau.kirx.net/vast_test_data/NMW-TexasTech__closed_roof_test.tar.bz2" "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__closed_roof_test.tar.bz2" && tar -xvjf NMW-TexasTech__closed_roof_test.tar.bz2 && rm -f NMW-TexasTech__closed_roof_test.tar.bz2
+  cd "$WORKDIR" || exit 1
+ fi
+ if [ -d ../NMW-TexasTech__closed_roof_test ];then
+  THIS_TEST_START_UNIXSEC=$(date +%s)
+  TEST_PASSED=1
+  util/clean_data.sh
+  # Run the test
+  echo "Test detect_closed_roof tool "
+  echo -n "Test detect_closed_roof tool: " >> vast_test_report.txt
+  DCR_DATA=../NMW-TexasTech__closed_roof_test
+  DCR_Q1_DARK="$DCR_DATA/TTUQ1b1x1/darks/mdark_TTUQ1b1x1_0C_20s_2026-08-12_multinight_x6529-7552_y4097-5120.fit"
+  DCR_Q1_CLOSED_0236="$DCR_DATA/TTUQ1b1x1/closed/Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_CLOSED_0237="$DCR_DATA/TTUQ1b1x1/closed/Pup-02-Q1b1x1_2026-11-12_04-34-11_20.00sec_-0.00C_LIGHTs_0237.fits"
+  DCR_Q1_CALIBRATED="$DCR_DATA/TTUQ1b1x1/closed_calibrated/fd_Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_CALIBRATED_CENTER="$DCR_DATA/TTUQ1b1x1/closed_calibrated_center/fd_Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_OPEN_CYG08="$DCR_DATA/TTUQ1b1x1/open/Cyg-08-Q1b1x1_2026-11-11_19-18-29_20.00sec_-0.00C_LIGHTs_0026.fits"
+  DCR_Q1_OPEN_TAU02="$DCR_DATA/TTUQ1b1x1/open/Tau-02-Q1b1x1_2026-11-13_02-28-11_20.00sec_-0.00C_LIGHTs_0323.fits"
+  DCR_Q1_PARTLY_DARK="$DCR_DATA/TTUQ1b1x1/partly_dark/Lyn-03-Q1b1x1_2026-11-13_04-50-43_20.00sec_-0.00C_LIGHTs_0395.fits"
+  DCR_Q1_CLOUDY="$DCR_DATA/TTUQ1b1x1/cloudy/Dra-07-Q1b1x1_2026-11-13_21-23-58_20.00sec_-0.00C_LIGHTs_0115.fits"
+  DCR_Q2_DARK="$DCR_DATA/TTUQ2b1x1/darks/mdark_TTUQ2b1x1_0C_20s_2026-08-12_multinight_x4225-5248_y3841-4864.fit"
+  DCR_Q2_CLOSED_0326="$DCR_DATA/TTUQ2b1x1/closed/Pup-02-Q2b1x1_2026-11-12_02-48-08_20.00sec_-0.00C_LIGHT_0326.fits"
+  DCR_Q2_CLOSED_0327="$DCR_DATA/TTUQ2b1x1/closed/Pup-02-Q2b1x1_2026-11-12_02-56-16_20.00sec_-0.00C_LIGHT_0327.fits"
+  DCR_Q2_OPEN_LAC01="$DCR_DATA/TTUQ2b1x1/open/Lac-01-Q2b1x1_2026-11-12_19-22-04_20.00sec_-0.00C_LIGHT_0042.fits"
+  DCR_Q2_OPEN_COM03="$DCR_DATA/TTUQ2b1x1/open/Com-03-Q2b1x1_2026-11-13_05-30-53_20.00sec_-0.00C_LIGHT_0521.fits"
+  DCR_Q2_OPEN_AND05="$DCR_DATA/TTUQ2b1x1/open/And-05-Q2b1x1_2026-11-11_23-37-44_20.00sec_-0.00C_LIGHT_0282.fits"
+  DCR_Q2_PARTLY_DARK="$DCR_DATA/TTUQ2b1x1/partly_dark/Com-01-Q2b1x1_2026-11-13_05-03-55_20.00sec_0.00C_LIGHT_0517.fits"
+  DCR_REF_0013="$DCR_DATA/reference_images/Pup-02-Q2b1x1_2026-03-20_21-03-09_20.00sec_-15.00C_LIGHT_0013.fits"
+  DCR_REF_0000="$DCR_DATA/reference_images/Pup-02-Q2b1x1_2026-04-05_21-28-35_20.00sec_-4.90C_LIGHTs_0000.fits"
+  # A private directory for the test files and the output of the tool
+  DCR_TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/vast_detect_closed_roof_test.XXXXXX" 2>/dev/null)
+  if [ -z "$DCR_TMP_DIR" ] || [ ! -d "$DCR_TMP_DIR" ];then
+   DCR_TMP_DIR="$PWD/vast_detect_closed_roof_test_$$"
+   mkdir -p "$DCR_TMP_DIR"
+  fi
+  # The test files: a file that is not a FITS image, an exact copy of an image, a dark frame of
+  # another size and an image too small to be checked (both cut with util/fitscopy), and two dark
+  # frames that do not match the images - the TTUQ1b1x1 dark with 2000 or 1350 ADU added
+  echo "This is not a FITS image" > "$DCR_TMP_DIR/not_a_fits_image.fits"
+  cp "$DCR_Q2_CLOSED_0326" "$DCR_TMP_DIR/copy_of_the_image.fits"
+  util/fitscopy "${DCR_Q2_DARK}[1:512,1:512]" "$DCR_TMP_DIR/dark_512x512.fits" > /dev/null 2>&1
+  util/fitscopy "${DCR_Q2_CLOSED_0326}[1:8,1:8]" "$DCR_TMP_DIR/image_8x8.fits" > /dev/null 2>&1
+  util/imarith "$DCR_Q1_DARK" 2000 add "$DCR_TMP_DIR/dark_plus_2000.fits" > /dev/null 2>&1
+  util/imarith "$DCR_Q1_DARK" 1350 add "$DCR_TMP_DIR/dark_plus_1350.fits" > /dev/null 2>&1
+  for DCR_TEST_FILE in not_a_fits_image copy_of_the_image dark_512x512 image_8x8 dark_plus_2000 dark_plus_1350 ;do
+   if [ ! -s "$DCR_TMP_DIR/$DCR_TEST_FILE.fits" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF010_$DCR_TEST_FILE"
+   fi
+  done
+  # Verdicts: one line per run of the tool, the columns (separated by |) are
+  #  the name of the case (it goes into the failure codes), the options, the image, the dark frame
+  #  (none if empty), the expected verdict, the expected zero level of the background, and
+  #  key=value fields the output line has to contain.
+  # The first 32 lines are every image of the dataset with the dark of its camera and without a
+  # dark. The fd_ images and the reference images are dark-subtracted (HISTORY Dark frame
+  # subtraction): their zero level comes from the header, and a dark given for them is not used.
+  # The other lines test the options and the dark frames that do not match the images:
+  #  - the overcast image (no stars, about 1400 ADU above the dark) with the dark plus 2000 ADU
+  #    has its background about 600 ADU below the dark level, which no matching dark allows;
+  #    without that guard this would be CLOSED_ROOF;
+  #  - with the dark plus 1350 ADU its background comes out near the dark level (+46 ADU), so
+  #    without -s it looks like a closed roof - the case for the noise limit -s that the transient
+  #    factory sets for the NMW-TexasTech cameras (15 ADU): its noise (62 ADU) then shows that the
+  #    dark does not match, while the closed-roof images (read noise, 4-6 ADU) stay CLOSED_ROOF;
+  #  - -b and -r (in ADU per second of the 20 s exposure) raise the background limit above the
+  #    background of the overcast image, and -b overrides -r;
+  #  - the open image Com-03-Q2b1x1 has about 230 star-like peaks: OK with -n 100, NO_STARS with
+  #    -n 1000.
+  # The verdict OK has to come with exit code 0, the other verdicts with exit code 1. The transient
+  # factory copies the output line to the report, so it has to be exactly one line naming the
+  # image, without 'ERROR' (unmw takes a report line with ERROR for a run status) and without '<'.
+  while IFS='|' read -r DCR_CASE DCR_OPTIONS DCR_IMAGE DCR_DARK DCR_EXPECTED_VERDICT DCR_EXPECTED_ZERO_LEVEL DCR_EXPECTED_FIELDS ;do
+   if [ -z "$DCR_CASE" ];then
+    continue
+   fi
+   if [ ! -f "$DCR_IMAGE" ] || { [ -n "$DCR_DARK" ] && [ ! -f "$DCR_DARK" ]; } ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF000_$DCR_CASE"
+    continue
+   fi
+   # The options are split into words on purpose
+   # shellcheck disable=SC2086
+   util/detect_closed_roof $DCR_OPTIONS "$DCR_IMAGE" ${DCR_DARK:+"$DCR_DARK"} > "$DCR_TMP_DIR/stdout.txt" 2> "$DCR_TMP_DIR/stderr.txt" < /dev/null
+   DCR_EXIT_CODE=$?
+   DCR_EXPECTED_EXIT_CODE=1
+   if [ "$DCR_EXPECTED_VERDICT" = "OK" ];then
+    DCR_EXPECTED_EXIT_CODE=0
+   fi
+   # The output line with a space at the end, so that every key=value field is followed by a space
+   DCR_OUTPUT_LINE="$(head -n 1 "$DCR_TMP_DIR/stdout.txt") "
+   DCR_CASE_FAILED_CODES=""
+   if [ "$(echo "$DCR_OUTPUT_LINE" | awk '{print $1}')" != "$DCR_EXPECTED_VERDICT" ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF001_$DCR_CASE"
+   fi
+   if [ $DCR_EXIT_CODE -ne $DCR_EXPECTED_EXIT_CODE ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF002_$DCR_CASE"
+   fi
+   if [ "$(wc -l < "$DCR_TMP_DIR/stdout.txt" | awk '{print $1}')" != "1" ] || [ "$(awk 'END {print NR}' "$DCR_TMP_DIR/stdout.txt")" != "1" ] || grep -q -e 'ERROR' -e '<' "$DCR_TMP_DIR/stdout.txt" || ! echo "$DCR_OUTPUT_LINE" | grep -q -F " image=$(basename "$DCR_IMAGE") " ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF003_$DCR_CASE"
+   fi
+   if ! echo "$DCR_OUTPUT_LINE" | grep -q -F " zero_level=$DCR_EXPECTED_ZERO_LEVEL " ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF004_$DCR_CASE"
+   fi
+   for DCR_EXPECTED_FIELD in $DCR_EXPECTED_FIELDS ;do
+    if ! echo "$DCR_OUTPUT_LINE" | grep -q -F " $DCR_EXPECTED_FIELD " ;then
+     DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF005_$DCR_CASE"
+     break
+    fi
+   done
+   if [ -n "$DCR_CASE_FAILED_CODES" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES$DCR_CASE_FAILED_CODES"
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DETECTCLOSEDROOF $DCR_CASE ######
+util/detect_closed_roof $DCR_OPTIONS $DCR_IMAGE $DCR_DARK
+expected $DCR_EXPECTED_VERDICT zero_level=$DCR_EXPECTED_ZERO_LEVEL $DCR_EXPECTED_FIELDS with exit code $DCR_EXPECTED_EXIT_CODE, got exit code $DCR_EXIT_CODE and
+$(head -n 3 "$DCR_TMP_DIR/stdout.txt")
+$(head -n 5 "$DCR_TMP_DIR/stderr.txt")"
+   fi
+  done << DCR_EOF
+Q1closed0236_dark||$DCR_Q1_CLOSED_0236|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0236_nodark||$DCR_Q1_CLOSED_0236||NO_STARS|none|
+Q1closed0237_dark||$DCR_Q1_CLOSED_0237|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0237_nodark||$DCR_Q1_CLOSED_0237||NO_STARS|none|
+Q1calibrated_dark||$DCR_Q1_CALIBRATED|$DCR_Q1_DARK|CLOSED_ROOF|header|
+Q1calibrated_nodark||$DCR_Q1_CALIBRATED||CLOSED_ROOF|header|
+Q1calibratedcenter_dark||$DCR_Q1_CALIBRATED_CENTER|$DCR_Q1_DARK|CLOSED_ROOF|header|
+Q1calibratedcenter_nodark||$DCR_Q1_CALIBRATED_CENTER||CLOSED_ROOF|header|
+Q1openCyg08_dark||$DCR_Q1_OPEN_CYG08|$DCR_Q1_DARK|OK|dark|
+Q1openCyg08_nodark||$DCR_Q1_OPEN_CYG08||OK|none|
+Q1openTau02_dark||$DCR_Q1_OPEN_TAU02|$DCR_Q1_DARK|OK|dark|
+Q1openTau02_nodark||$DCR_Q1_OPEN_TAU02||OK|none|
+Q1partlydark_dark||$DCR_Q1_PARTLY_DARK|$DCR_Q1_DARK|PARTLY_DARK|dark|
+Q1partlydark_nodark||$DCR_Q1_PARTLY_DARK||OK|none|
+Q1cloudy_dark||$DCR_Q1_CLOUDY|$DCR_Q1_DARK|NO_STARS|dark|
+Q1cloudy_nodark||$DCR_Q1_CLOUDY||NO_STARS|none|
+Q2closed0326_dark||$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|CLOSED_ROOF|dark|max_stars=20 max_above_dark=100.0 exptime=20.000
+Q2closed0326_nodark||$DCR_Q2_CLOSED_0326||NO_STARS|none|above_dark=unknown dark_regions=unknown
+Q2closed0327_dark||$DCR_Q2_CLOSED_0327|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q2closed0327_nodark||$DCR_Q2_CLOSED_0327||NO_STARS|none|
+Q2openLac01_dark||$DCR_Q2_OPEN_LAC01|$DCR_Q2_DARK|OK|dark|
+Q2openLac01_nodark||$DCR_Q2_OPEN_LAC01||OK|none|
+Q2openCom03_dark||$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|OK|dark|
+Q2openCom03_nodark||$DCR_Q2_OPEN_COM03||OK|none|
+Q2openAnd05_dark||$DCR_Q2_OPEN_AND05|$DCR_Q2_DARK|OK|dark|
+Q2openAnd05_nodark||$DCR_Q2_OPEN_AND05||OK|none|
+Q2partlydark_dark||$DCR_Q2_PARTLY_DARK|$DCR_Q2_DARK|PARTLY_DARK|dark|
+Q2partlydark_nodark||$DCR_Q2_PARTLY_DARK||OK|none|
+ref0013_dark||$DCR_REF_0013|$DCR_Q2_DARK|OK|header|
+ref0013_nodark||$DCR_REF_0013||OK|header|
+ref0000_dark||$DCR_REF_0000|$DCR_Q2_DARK|OK|header|
+ref0000_nodark||$DCR_REF_0000||OK|header|
+cloudy_darkplus2000||$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_2000.fits|NO_STARS|mismatch|
+cloudy_darkplus1350||$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_1350.fits|CLOSED_ROOF|dark|
+cloudy_darkplus1350_s15|-s 15|$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_1350.fits|NO_STARS|mismatch|
+Q1closed0236_s15|-s 15|$DCR_Q1_CLOSED_0236|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0237_s15|-s 15|$DCR_Q1_CLOSED_0237|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q2closed0326_s15|-s 15|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q2closed0327_s15|-s 15|$DCR_Q2_CLOSED_0327|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q1calibrated_s15|-s 15|$DCR_Q1_CALIBRATED||CLOSED_ROOF|header|
+Q1calibratedcenter_s15|-s 15|$DCR_Q1_CALIBRATED_CENTER||CLOSED_ROOF|header|
+Q2closed0326_s1|-s 1|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|NO_STARS|mismatch|
+cloudy_b2000|-b 2000|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|CLOSED_ROOF|dark|max_above_dark=2000.0
+cloudy_r100|-r 100|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|CLOSED_ROOF|dark|max_above_dark=2000.0
+cloudy_r100_b0|-r 100 -b 0|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|NO_STARS|dark|max_above_dark=0.0
+Q2openCom03_n100|-n 100|$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|OK|dark|max_stars=100
+Q2openCom03_n1000|-n 1000|$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|NO_STARS|dark|max_stars=1000
+DCR_EOF
+  # Errors: exit code 2, nothing on stdout (the transient factory treats an image that the tool
+  # could not check as a good one), and the reason on stderr. The columns are the name of the
+  # case, the options, the image, the dark frame and a part of the expected error message.
+  # An image given as its own dark frame (image - image = 0 would look like a closed roof) is an
+  # error, whether it is the same file or an exact copy of it.
+  while IFS='|' read -r DCR_CASE DCR_OPTIONS DCR_IMAGE DCR_DARK DCR_EXPECTED_MESSAGE ;do
+   if [ -z "$DCR_CASE" ];then
+    continue
+   fi
+   # The options are split into words on purpose
+   # shellcheck disable=SC2086
+   util/detect_closed_roof $DCR_OPTIONS ${DCR_IMAGE:+"$DCR_IMAGE"} ${DCR_DARK:+"$DCR_DARK"} > "$DCR_TMP_DIR/stdout.txt" 2> "$DCR_TMP_DIR/stderr.txt" < /dev/null
+   DCR_EXIT_CODE=$?
+   DCR_CASE_FAILED_CODES=""
+   if [ $DCR_EXIT_CODE -ne 2 ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF006_$DCR_CASE"
+   fi
+   if [ -s "$DCR_TMP_DIR/stdout.txt" ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF007_$DCR_CASE"
+   fi
+   if ! grep -q -F -e "$DCR_EXPECTED_MESSAGE" "$DCR_TMP_DIR/stderr.txt" ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF008_$DCR_CASE"
+   fi
+   if [ -n "$DCR_CASE_FAILED_CODES" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES$DCR_CASE_FAILED_CODES"
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DETECTCLOSEDROOF $DCR_CASE ######
+util/detect_closed_roof $DCR_OPTIONS $DCR_IMAGE $DCR_DARK
+expected exit code 2, nothing on stdout and '$DCR_EXPECTED_MESSAGE' on stderr, got exit code $DCR_EXIT_CODE and
+$(head -n 3 "$DCR_TMP_DIR/stdout.txt")
+$(head -n 5 "$DCR_TMP_DIR/stderr.txt")"
+   fi
+  done << DCR_EOF
+missingimage||$DCR_TMP_DIR/no_such_image.fits||no_such_image.fits is not a readable FITS image
+missingdark||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/no_such_dark.fits|no_such_dark.fits is not a readable FITS image
+notfitsimage||$DCR_TMP_DIR/not_a_fits_image.fits||not_a_fits_image.fits is not a readable FITS image
+notfitsdark||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/not_a_fits_image.fits|not_a_fits_image.fits is not a readable FITS image
+samefile||$DCR_Q2_CLOSED_0326|$DCR_Q2_CLOSED_0326|is given as the image and as the dark frame
+identicalcopy||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/copy_of_the_image.fits|identical to the dark frame
+darksize||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/dark_512x512.fits|is 512x512 pixels while the image
+toosmall||$DCR_TMP_DIR/image_8x8.fits||is too small
+n0|-n 0|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -n: 0
+nabc|-n abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -n: abc
+rabc|-r abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -r: abc
+rnegative|-r -5|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -r: -5
+bxyz|-b xyz|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -b: xyz
+sabc|-s abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -s: abc
+unknownoption|-x|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|Usage:
+noarguments||||Usage:
+DCR_EOF
+  # -v prints the diagnostics on stderr and does not change the output line
+  util/detect_closed_roof "$DCR_Q2_CLOSED_0326" "$DCR_Q2_DARK" > "$DCR_TMP_DIR/stdout.txt" 2> /dev/null < /dev/null
+  util/detect_closed_roof -v "$DCR_Q2_CLOSED_0326" "$DCR_Q2_DARK" > "$DCR_TMP_DIR/stdout_verbose.txt" 2> "$DCR_TMP_DIR/stderr_verbose.txt" < /dev/null
+  if [ ! -s "$DCR_TMP_DIR/stdout.txt" ] || ! cmp -s "$DCR_TMP_DIR/stdout.txt" "$DCR_TMP_DIR/stdout_verbose.txt" || ! grep -q 'Star-like peaks' "$DCR_TMP_DIR/stderr_verbose.txt" ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF009"
+  fi
+  # The phrase OBSERVATORY ROOF CLOSED is a contract with unmw: a report line with ERROR and this
+  # phrase makes unmw send an alert that the roof is closed. The transient factory may print it in
+  # exactly two lines, the ACTION NEEDED banner and the ERROR line of the closed-roof check (the
+  # comments that mention it do not count): any other message with it would send false alerts.
+  DCR_N_ROOF_CLOSED_ECHO_LINES=$(grep 'OBSERVATORY ROOF CLOSED' util/transients/transient_factory_test31.sh | grep -v '^[[:space:]]*#' | grep -c 'echo')
+  if [ "$DCR_N_ROOF_CLOSED_ECHO_LINES" != "2" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF011_$DCR_N_ROOF_CLOSED_ECHO_LINES"
+  fi
+  if [ -n "$DCR_TMP_DIR" ] && [ -d "$DCR_TMP_DIR" ];then
+   rm -rf "$DCR_TMP_DIR"
+  fi
+
+  THIS_TEST_STOP_UNIXSEC=$(date +%s)
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+  # Make an overall conclusion for this test
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mTest detect_closed_roof tool \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mTest detect_closed_roof tool \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  fi
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF_TEST_NOT_PERFORMED"
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF_TOOL_NOT_FOUND"
+fi
+
+
+
+######### Closed roof check of the transient factory
+# util/examples/test_closed_roof_check.sh runs util/transients/transient_factory_test31.sh on the
+# two TTUQ2b1x1 closed-roof images of the dataset of the test above (see the list of its checks
+# at the top of the script): with the default settings the field has to stop at the closed-roof
+# check at once, with the "ACTION NEEDED - OBSERVATORY ROOF CLOSED?" banner as the first ERROR line
+# of the report (unmw sends an alert for it); with CHECK_FOR_CLOSED_ROOF=no or without a dark
+# frame no closed roof may be reported. It is a separate script, like the other tests of a single
+# feature, so that it can be run alone (in a few minutes) after changing the check: this script takes
+# hours. With the check switched off the starless images go through the rest of the pipeline,
+# plate solving included (with the remote plate-solve service where there is no local
+# Astrometry.net), so like the other NMW-TexasTech transient search tests this one does not run
+# on GitHub Actions.
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ -d ../NMW-TexasTech__closed_roof_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Closed roof check of the transient factory test "
+ echo -n "Closed roof check of the transient factory test: " >> vast_test_report.txt
+ CLOSEDROOFCHECK_TEST_OUTPUT=$(util/examples/test_closed_roof_check.sh 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  # The failure codes of the script are in its "FAILED: CODE description" lines
+  CLOSEDROOFCHECK_CODES=$(echo "$CLOSEDROOFCHECK_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+  if [ -z "$CLOSEDROOFCHECK_CODES" ];then
+   CLOSEDROOFCHECK_CODES="CLOSEDROOFCHECK_UNKNOWN_FAILURE"
+  fi
+  FAILED_TEST_CODES="$FAILED_TEST_CODES $CLOSEDROOFCHECK_CODES"
+  echo "$CLOSEDROOFCHECK_TEST_OUTPUT"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CLOSEDROOFCHECK ######
+$(echo "$CLOSEDROOFCHECK_TEST_OUTPUT" | tail -n 40)"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mClosed roof check of the transient factory test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mClosed roof check of the transient factory test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CLOSEDROOFCHECK_TEST_NOT_PERFORMED"
+fi
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
 
 
 
