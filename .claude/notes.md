@@ -217,9 +217,20 @@ Update this file as you learn new things.
   the same check adds to FAILED_TEST_CODES, since the report is read by searching for the code.
   A block copied from a neighbour tends to keep the neighbour's header: nine position checks of
   the NMWNSGR20N4, NMWNSGR24N1, NMWNSGR21N2 and NMWNSGR21N1 sections were reported under the
-  first check's header, and the failed TICA selenium test under
-  TICATESSZERORA_ERROR_MESSAGE_IN_index_html (both fixed 2026-11-16). To find such slips,
-  compare each header with the nearest FAILED_TEST_CODES addition above it.
+  first check's header, the failed TICA selenium test under
+  TICATESSZERORA_ERROR_MESSAGE_IN_index_html, and ten X_ERROR_MESSAGE_IN_index_html failures
+  under X_NO_ERROR_MESSAGE_IN_index_html (all fixed 2026-11-16, with a few more). To find such
+  slips, compare each header with the nearest FAILED_TEST_CODES addition above it.
+- Every check also needs a code of its own, or a failure cannot be traced to its check. Copied
+  blocks kept the codes of their neighbours: COLSTAT_MIN on the MAX, MEDIAN and MEAN checks, the
+  second sysrem2 pass reusing NMWSYSREM007 and 102-106, valgrind runs of other programs reusing
+  SPECIAL_VALGRIND017/018 and 026-028, the MASTER PSF section adding the small-CCD PSF
+  section's SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK, and about twenty more (all
+  renamed 2026-11-16; the second sysrem2 pass now uses 107 and 202-206; in the exclusion-list
+  test the star-name checks of the commented list use 105-107 and the list with stray comment
+  lines 201-207). DISKSPACE_TEST_ERROR stays shared on purpose: both disk-space helpers parse
+  the same df value. To find duplicates, list the static codes that occur more than once and
+  compare the static prefixes of the codes that end in a variable.
 - test_vast.sh strips known-environmental failure codes at the end (STANDALONEDBSCRIPT001a/001b_GCVS, scan.sai.msu.ru_REMOTEPLATESOLVE007-009, PSFEX/WCSTOOLS/VARTOOLS_NOT_INSTALLED, ...) - check that list before investigating a FAILED section summary line.
 - PGPLOT truncates long device filenames: around 90 characters the /png driver opens a chopped path, prints "PGPLOT /png: could not open file ... plotting disabled" to stderr, every plot call becomes a no-op, and cpgbeg() STILL RETURNS SUCCESS - so a tool can "succeed" while writing nothing. lightcurve_png.c handles this (2026-07-03) by rendering to a short temp name in cwd and rename()/copying to the destination, plus a stat() check that the output exists before claiming success. Any other PGPLOT-PNG tool given a user-supplied output path needs the same treatment; never trust cpgbeg's return value as proof the file opened.
 

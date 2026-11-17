@@ -2515,7 +2515,7 @@ fi
 lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep -q 'ASASSN-V J150207.95-450307.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020b"
 fi
 
 
@@ -3288,7 +3288,7 @@ $GREP_RESULT"
    lib/remove_lightcurves_with_small_number_of_points 40
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_remove_lightcurves_with_small_number_of_points_exit_code"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_remove_lightcurves_with_small_number_of_points_exit_code"
    fi
    util/nopgplot.sh
    # Find star with the largest sigma in this field
@@ -6179,7 +6179,7 @@ $GREP_RESULT"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
- FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_TEST_NOT_PERFORMED"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -11049,12 +11049,12 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  util/sysrem2
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM107"
  fi
  SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM202"
  fi
  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0254)*($1-0.0254) ) < 0.005 ) print 1 ;else print 0 }'`
@@ -11063,20 +11063,20 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   echo "TEST ERROR"
   TEST_PASSED=0
   TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM203_TEST_ERROR"
  fi
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM203"
  fi
  if [ ! -s vast_lightcurve_statistics.log ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM204"
  fi
  MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM205"
  fi
  #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
  TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.020588)*($1-0.020588) ) < 0.005 ) print 1 ;else print 0 }'`
@@ -11085,11 +11085,11 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   echo "TEST ERROR"
   TEST_PASSED=0
   TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM206_TEST_ERROR"
  fi
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM206"
  fi
  #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
@@ -12672,7 +12672,7 @@ $GREP_RESULT"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110b_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   #
@@ -13395,17 +13395,17 @@ $GREP_RESULT"
    util/listhead f_test.fit | grep -q 'HISTORY Dark frame subtraction:'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY01"
    fi
    util/listhead f_test.fit | grep 'HISTORY' | grep -q 'Cyg2_2023-11-5_16-35-31_001.fts'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY02"
    fi
    util/listhead f_test.fit | grep 'HISTORY' | grep -q 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY03"
    fi
    # The keys inserted by md
    util/listhead f_test.fit | grep -q 'HISTORY Flat fielding:'
@@ -13683,7 +13683,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_POSITION"
    GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNCASAUG310110a ######
+###### NMWNCASAUG310110a_POSITION ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -13955,15 +13955,15 @@ $GREP_RESULT"
   #grep -q "DP Pyx" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210"
   #fi
   #grep -q "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a"
   # GREP_RESULT=`grep "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html`
   # DEBUG_OUTPUT="$DEBUG_OUTPUT
-  ####### NMWLARGEOFFSET0110a ######
+  ####### NMWLARGEOFFSET0210a ######
   #$GREP_RESULT"
   #fi
   #RADECPOSITION_TO_TEST=`grep "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -13975,11 +13975,11 @@ $GREP_RESULT"
   # echo "TEST ERROR"
   # TEST_PASSED=0
   # TEST=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a_TOO_FAR_TEST_ERROR"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a_TOO_FAR_TEST_ERROR"
   #else
   # if [ $TEST -eq 0 ];then
   #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a_TOO_FAR_$DISTANCE_ARCSEC"
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a_TOO_FAR_$DISTANCE_ARCSEC"
   # fi
   #fi
   #
@@ -14759,7 +14759,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR20N4_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -14979,7 +14979,7 @@ $GREP_RESULT"
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40410a"
   # GREP_RESULT=`grep "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html`
   # DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N40110a ######
+###### NMWNSGR20N40410a ######
 #$GREP_RESULT"
   #fi
   #RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -16307,6 +16307,7 @@ else
  echo "FAILED" >> vast_test_report.txt
  FAILED_TEST_CODES="$FAILED_TEST_CODES ASTROMETRY_OUTPUT_SAFETY"
  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ASTROMETRY_OUTPUT_SAFETY ######
 $(cat "astrometry_safety_$$.log")"
 fi
 rm -f "astrometry_safety_$$.log"
@@ -17073,7 +17074,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N1_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR24N1_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -17232,7 +17233,7 @@ $GREP_RESULT"
   grep -q "TCP 2024 02 24.125.*  18 02 53\... -29 14 1[67]\..  11\.. U             Sgr       9 0" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110c"
   fi
 
   # V1770 Sgr
@@ -17474,7 +17475,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNVUL24ST_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNVUL24ST_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -17627,7 +17628,7 @@ $GREP_RESULT"
   grep galactic transient_report/index.html | grep -q "PNV J19430751+2100204"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110b"
   fi
   grep -q "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
@@ -17948,7 +17949,7 @@ if [ $ARTSTARRECOVERY_TEST_CAN_RUN -eq 1 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_TIMEOUT_${ARTSTARRECOVERY_TIMEOUT_SEC}SEC"
    GREP_RESULT=$(tail -n 50 test_artificial_star_recovery_terminal_output$$.tmp 2>/dev/null)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### ARTSTARRECOVERY_TIMEOUT ######
+###### ARTSTARRECOVERY_TIMEOUT_${ARTSTARRECOVERY_TIMEOUT_SEC}SEC ######
 $GREP_RESULT"
   else
    FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_EXIT_CODE"
@@ -17973,7 +17974,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_FRACTION_TOO_LOW_${RECOVERED_FRACTION}"
     GREP_RESULT=$(cat artificial_star_test_results.txt)
     DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### ARTSTARRECOVERY_FRACTION_TOO_LOW ######
+###### ARTSTARRECOVERY_FRACTION_TOO_LOW_${RECOVERED_FRACTION} ######
 $GREP_RESULT"
    fi
   fi
@@ -18078,7 +18079,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNHER21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNHER21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18350,7 +18351,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNCAS21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNCAS21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18621,7 +18622,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N2_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR21N2_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18950,7 +18951,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N1_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR21N1_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -19227,7 +19228,7 @@ $GREP_RESULT"
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10214a"
 #   GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  12\...  18:47:..\... -15:45:..\.." transient_report/index.html`
 #   DEBUG_OUTPUT="$DEBUG_OUTPUT
-####### NMWNSGR21N10210a ######
+####### NMWNSGR21N10214a ######
 #$GREP_RESULT"
 #  fi
 #  RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  12\...  18:47:..\... -15:45:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19353,7 +19354,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNVUL21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNVUL21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -19615,7 +19616,7 @@ if [ -d ../NMW_find_Mars_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWMARS_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWMARS_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -19815,7 +19816,7 @@ $GREP_RESULT"
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWMARS3_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWMARS3_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -20657,7 +20658,7 @@ $GREP_RESULT"
   grep -q '18:31:5.\... -32:00:5.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_04"
   fi
   #
   
@@ -21294,7 +21295,7 @@ $GREP_RESULT"
 $GREP_RESULT"
    GREP_RESULT=$(grep -B20 "Neptune" transient_report/index.html)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
------- NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ######
+------ NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ------
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=$(grep "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}')
@@ -25170,7 +25171,7 @@ $CAT_RESULT"
   grep -q 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -30681,7 +30682,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep 'FLAG_IMAGE' | grep -q 'WEIGHT_IMAGE'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_flag_weight"
  fi
  #
  util/wcs_image_calibration.sh ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
@@ -31452,7 +31453,7 @@ if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] ||
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_61CYG_001"
   DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### 61 Cyg ######
+###### SPECIAL_61CYG_001 ######
 $GREP_RESULT"
  fi
 
@@ -31732,7 +31733,7 @@ if [ $? -eq 0 ];then
     util/imstat_vast ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND034"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -31742,7 +31743,7 @@ if [ $? -eq 0 ];then
     done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND035"
     fi
     #
     #
@@ -31865,7 +31866,7 @@ if [ $? -eq 0 ];then
     lib/catalogs/check_catalogs_offline `lib/hms2deg 19:50:33.92439 +32:54:50.6097` &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND036"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -31875,14 +31876,14 @@ if [ $? -eq 0 ];then
     done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND037"
     fi
     #
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     util/get_image_date '2015-08-21T22:18:25.000000' &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND038"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -33186,7 +33187,7 @@ $GREP_RESULT"
     for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
      if [ ! -s "$LOGFILE_TO_CHECK" ];then
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
+      FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
      fi
     done
     IMGNUM=$((IMGNUM+1))
@@ -33263,13 +33264,13 @@ if [ -d ../M31_ISON_test ];then
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003a"
   fi
   #grep -q "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003b"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -33563,7 +33564,7 @@ echo -n "Performing the second period search test: " >> vast_test_report.txt
 lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep 'LS' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH100"
 fi
 lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep 'LK' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
@@ -33889,17 +33890,17 @@ if [ $? -eq 0 ];then
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_105"
  fi
  lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_106"
  fi
  lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_107"
  fi
  # a complex exclusion list with comments
  echo "15:57:35.3 +26:52:40 Star1
@@ -33919,37 +33920,37 @@ if [ $? -eq 0 ];then
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_201"
  fi
  lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_202"
  fi
  lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_203"
  fi
  lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_204"
  fi
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_205"
  fi
  lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_206"
  fi
  lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_207"
  fi
  #
  rm -f exclusion_list_autotest.txt
@@ -34216,7 +34217,7 @@ fi
 util/get_image_date '2014-09-09T05:29' 2>&1 | grep -q 'JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006b"
 fi
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
@@ -34538,7 +34539,7 @@ fi
 util/get_image_date 2020 10 27 18:00:00 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025b"
 fi
 util/get_image_date 2020 10 27.75 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
@@ -36338,21 +36339,21 @@ echo "1
 3" | util/colstat 2> /dev/null | grep -q 'MAX= 3.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MAX"
 fi
 echo "1
 2
 3" | util/colstat 2> /dev/null | grep -q 'MEDIAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEDIAN"
 fi
 echo "1
 2
 3" | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN"
 fi
 echo "1
 2
@@ -36360,7 +36361,7 @@ echo "1
 " | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN_EMPTY_LINE"
 fi
 echo "1
 2
@@ -36370,7 +36371,7 @@ echo "1
 " | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN_BLANK_LINES"
 fi
 
 
@@ -36715,14 +36716,14 @@ POSITION_AT_C32=$(MPC_CODE=C32 util/moons.sh 2460658.64631944 | grep Europa | aw
 POSITION_AT_500=$(util/moons.sh 2460658.64631944 | grep Europa | awk '{print $1" "$2}')
 if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.005 ? 0 : 1)}' ;then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_C32_500_MISMATCH"
 fi
 # 
 POSITION_AT_C32=$(MPC_CODE=C32 util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
 POSITION_AT_500=$(util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
 if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.3 ? 0 : 1)}' ;then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_SPACECRAFT_C32_500_MISMATCH"
 fi
 
 # -00:01:02.3 dec problem
