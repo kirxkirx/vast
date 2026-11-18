@@ -1046,27 +1046,33 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  return 0
 }
 
-function report_second_epoch_image_altitude {
- # Print the altitude of the field above the horizon at the time of imaging
- # for every second-epoch image whose FITS header records it: CENTALT (the
- # image center altitude written by N.I.N.A. and Sequence Generator Pro) or
- # OBJCTALT (the altitude of the mount target written by MaxIm DL, SGP and
- # ACP), in degrees, as a number or as a sexagesimal 'D M S' string. An image
- # with neither keyword (for example the ST-8300M frames written by MaxIm DL
- # with no telescope connection), or with a value that is not an altitude, gets
- # a note saying which of the two it is instead of a value, so the consumer of
- # the log sees an altitude only when the header really has one.
- # The 'Field altitude during imaging:' lines are picked up by the unmw
- # summary page generator (combine_reports.sh) for its Altitude column, which
- # shows the lowest altitude of the second-epoch images - keep the line
- # format in step with that consumer.
- local IMAGE_TO_CHECK
- local ALTITUDE_DEG_AND_KEYWORD
+function report_second_epoch_image_altaz {
+ # Report the header altitude and azimuth of each new image, independently.
+ # CENTALT/CENTAZ take precedence over OBJCTALT/OBJCTAZ; azimuth is degrees
+ # from North through East. Missing or invalid coordinates get a note, not
+ # a fabricated value. These lines feed the unmw summary table: retain the
+ # existing altitude format and use the same format for azimuth. Reading the
+ # headers here also works when no dark subtraction/header dump is performed.
+ local IMAGE_TO_CHECK IMAGE_HEADER COORDINATE CENTER_KEY TARGET_KEY MIN_DEG MAX_DEG
+ local COORDINATE_DEG_AND_KEYWORD
  for IMAGE_TO_CHECK in "$@" ;do
   if [ -z "$IMAGE_TO_CHECK" ] || [ ! -s "$IMAGE_TO_CHECK" ];then
    continue
   fi
-  ALTITUDE_DEG_AND_KEYWORD=$(util/listhead "$IMAGE_TO_CHECK" 2>/dev/null | awk '
+  IMAGE_HEADER=$(util/listhead "$IMAGE_TO_CHECK" 2>/dev/null)
+  for COORDINATE in altitude azimuth ;do
+   if [ "$COORDINATE" = "altitude" ];then
+    CENTER_KEY=CENTALT
+    TARGET_KEY=OBJCTALT
+    MIN_DEG=-90
+    MAX_DEG=90
+   else
+    CENTER_KEY=CENTAZ
+    TARGET_KEY=OBJCTAZ
+    MIN_DEG=0
+    MAX_DEG=360
+   fi
+   COORDINATE_DEG_AND_KEYWORD=$(printf '%s\n' "$IMAGE_HEADER" | awk -v center_key="$CENTER_KEY" -v target_key="$TARGET_KEY" -v min_deg="$MIN_DEG" -v max_deg="$MAX_DEG" '
 # The value of a FITS card: the text after the "=" value indicator in
 # column 9, right after the 8-character keyword, without the quotes of a
 # string value and without the comment that follows the "/"; "" for a card
@@ -1099,6 +1105,9 @@ function to_degrees(value,  n_parts, parts, i, sign, degrees) {
  for (i = 1; i <= n_parts; i++) {
   if (parts[i] !~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)$/) return ""
  }
+ for (i = 2; i <= n_parts; i++) {
+  if (parts[i] + 0 < 0 || parts[i] + 0 >= 60) return ""
+ }
  sign = (parts[1] ~ /^-/) ? -1 : 1
  degrees = parts[1]
  sub(/^[-+]/, "", degrees)
@@ -1106,25 +1115,30 @@ function to_degrees(value,  n_parts, parts, i, sign, degrees) {
  if (n_parts == 3) degrees = degrees + parts[3] / 3600.0
  return sign * degrees
 }
-substr($0, 1, 8) == "CENTALT " { centalt_card = 1; if (centalt == "") centalt = to_degrees(card_value($0)) }
-substr($0, 1, 8) == "OBJCTALT" { objctalt_card = 1; if (objctalt == "") objctalt = to_degrees(card_value($0)) }
+{
+ key = substr($0, 1, 8)
+ sub(/ +$/, "", key)
+ if (key == center_key) { center_card = 1; if (center == "") center = to_degrees(card_value($0)) }
+ if (key == target_key) { target_card = 1; if (target == "") target = to_degrees(card_value($0)) }
+}
 END {
- if (centalt != "" && centalt >= -90.0 && centalt <= 90.0) { printf "%.1f CENTALT\n", centalt; exit }
- if (objctalt != "" && objctalt >= -90.0 && objctalt <= 90.0) { printf "%.1f OBJCTALT\n", objctalt; exit }
- if (centalt_card) { print "unusable CENTALT"; exit }
- if (objctalt_card) print "unusable OBJCTALT"
+ if (center != "" && center >= min_deg && center <= max_deg) { printf "%.1f %s\n", center, center_key; exit }
+ if (target != "" && target >= min_deg && target <= max_deg) { printf "%.1f %s\n", target, target_key; exit }
+ if (center_card) { print "unusable " center_key; exit }
+ if (target_card) print "unusable " target_key
 }')
-  case "$ALTITUDE_DEG_AND_KEYWORD" in
-   "")
-    echo "No field altitude in the FITS header (no CENTALT or OBJCTALT keyword)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
-    ;;
-   unusable*)
-    echo "No field altitude in the FITS header (the ${ALTITUDE_DEG_AND_KEYWORD#unusable } value is not an altitude in degrees)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
-    ;;
-   *)
-    echo "Field altitude during imaging: ${ALTITUDE_DEG_AND_KEYWORD% *} deg (FITS keyword ${ALTITUDE_DEG_AND_KEYWORD#* })  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
-    ;;
-  esac
+   case "$COORDINATE_DEG_AND_KEYWORD" in
+    "")
+     echo "No field $COORDINATE in the FITS header (no $CENTER_KEY or $TARGET_KEY keyword)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+     ;;
+    unusable*)
+     echo "No field $COORDINATE in the FITS header (the ${COORDINATE_DEG_AND_KEYWORD#unusable } value is not a valid $COORDINATE in degrees)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+     ;;
+    *)
+     echo "Field $COORDINATE during imaging: ${COORDINATE_DEG_AND_KEYWORD% *} deg (FITS keyword ${COORDINATE_DEG_AND_KEYWORD#* })  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+     ;;
+   esac
+  done
  done
  return 0
 }
@@ -3114,10 +3128,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   ###
  fi # above was the procedure for handling more than two second-epoch images
  
- # Report the altitude of the field at the time of imaging if the FITS headers
+ # Report the altitude and azimuth at the time of imaging if the FITS headers
  # record it. Both the two-image path and the more-than-two-images path above
  # arrive here with SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE set.
- report_second_epoch_image_altitude "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ report_second_epoch_image_altaz "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  
  ################################
  # check mean image value ratio, if asked to do so by setting $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
