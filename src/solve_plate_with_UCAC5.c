@@ -3488,6 +3488,33 @@ static int ucac5_remote_server_answered= 0;
 /**
  * Modified search_UCAC5_at_scan function that uses safer command construction.
  */
+// The number of lines holding catalog data (at least six numbers: the measured RA and Dec,
+// the distance, the catalog RA, Dec and magnitude) in a reply of one of our UCAC5 servers.
+// Counting all lines let an error page pass for a catalog reply: on 2026-11-09 the server
+// at scan.sai.msu.ru answered every query with a 16-line HTML page (HTTP 500), which was
+// accepted, matched no star and ended the plate solution without trying the other servers.
+static int count_data_lines_in_UCAC5_server_reply( const char *filename ) {
+ FILE *f;
+ char string[1024];
+ double value1, value2, value3, value4, value5, value6;
+ int n_data_lines;
+ n_data_lines= 0;
+ f= fopen( filename, "r" );
+ if ( NULL == f ) {
+  return 0;
+ }
+ while ( NULL != fgets( string, 1024, f ) ) {
+  if ( string[0] == '#' ) {
+   continue;
+  }
+  if ( 6 == sscanf( string, "%lf %lf %lf %lf %lf %lf", &value1, &value2, &value3, &value4, &value5, &value6 ) ) {
+   n_data_lines++;
+  }
+ }
+ fclose( f );
+ return n_data_lines;
+}
+
 int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  struct detected_star_spatial_grid *spatial_grid;
  long n_spatial_grid_candidates;
@@ -3637,7 +3664,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
   }
   memset( base_command, '\0', BASE_COMMAND_LENGTH );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
+  // --fail: an HTTP error (the server answered with an error page) is a failure of this server
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --fail --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
@@ -3651,7 +3679,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    ucac5_remote_server_answered= 1;
   }
 
-  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+  // a reply without catalog data (an error page) is a failure of this server too
+  if ( vizquery_run_success == 0 && count_data_lines_in_UCAC5_server_reply( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
    if ( server_idx > 0 ) {
     fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
@@ -3804,7 +3833,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  }
  fclose( f );
  free_detected_star_spatial_grid( spatial_grid );
- fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ fprintf( stderr, "Matched %d stars with UCAC5 at %s.\n", N_stars_matched_with_astrometric_catalog, ucac5_servers[server_order[server_idx]] );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
   fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
@@ -3968,7 +3997,8 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
    fprintf( stderr, "Trying UCAC5 server: %s (fallback %d)\n", ucac5_servers[srv], server_idx );
   }
   memset( base_command, '\0', BASE_COMMAND_LENGTH );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
+  // --fail: an HTTP error (the server answered with an error page) is a failure of this server
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --fail --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://%s/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
@@ -3982,7 +4012,8 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
    ucac5_remote_server_answered= 1;
   }
 
-  if ( vizquery_run_success == 0 && count_lines_in_ASCII_file( vizquery_output_filename ) >= 5 ) {
+  // a reply without catalog data (an error page) is a failure of this server too
+  if ( vizquery_run_success == 0 && count_data_lines_in_UCAC5_server_reply( vizquery_output_filename ) >= 5 ) {
    ucac5_success= 1;
    if ( server_idx > 0 ) {
     fprintf( stderr, "WARNING: UCAC5 server %s succeeded only on fallback attempt %d\n", ucac5_servers[srv], server_idx );
@@ -4126,292 +4157,7 @@ int search_UCAC5_at_scan_bruteforce( struct detected_star *stars, int N, struct 
   } // for(i=0;i<N;i++)
  }
  fclose( f );
- fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
- if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
-  return 1;
- }
-
-#ifdef DEBUGFILES
- fclose( scan_ucac5_debug_ds9_region );
-#endif
-
- // delete temporary files only on success
- if ( 0 != unlink( vizquery_input_filename ) )
-  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
- if ( 0 != unlink( vizquery_output_filename ) )
-  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
-
- return 0;
-}
-
-int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
- double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
- int N_stars_matched_with_astrometric_catalog= 0;
- double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
- double cos_delta;
- double ra_diff_rematch;
- char string[1024];
- // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
- char base_command[BASE_COMMAND_LENGTH];
- FILE *vizquery_input;
- FILE *f;
- int i;
- int pid= getpid();
- char vizquery_input_filename[FILENAME_LENGTH];
- char vizquery_output_filename[FILENAME_LENGTH];
- int vizquery_run_success;
- int search_stars_counter;
- int zero_radec_counter;
- char *proxy_settings;
- int randChoice;
- int sscanf_return_code;
-
- char path_to_vast_string[VAST_PATH_MAX];
-#ifdef DEBUGFILES
- FILE *scan_ucac5_debug_ds9_region;
-#endif
- get_path_to_vast( path_to_vast_string );
-
- // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
- // return 1;
-
-#ifdef DEBUGFILES
- scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
- fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
- fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
- fprintf( scan_ucac5_debug_ds9_region, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
- fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
-#endif
-
- // Initialize the allocated memory to null characters
- memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
- memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
- snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.input", pid );
- snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.output", pid );
- vizquery_input= fopen( vizquery_input_filename, "w" );
- if ( NULL == vizquery_input ) {
-  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
-  return 1;
- }
- search_stars_counter= 0;
- zero_radec_counter= 0;
- for ( i= 0; i < N; i++ ) {
-  if ( stars[i].good_star == 1 ) {
-   // check for a specific problem
-   if ( stars[i].ra_deg_measured == 0.0 && stars[i].dec_deg_measured == 0.0 ) {
-    zero_radec_counter++;
-    if ( zero_radec_counter > 10 ) {
-     fprintf( stderr, "ERROR in search_UCAC5_at_scan(): too many input positions are '0.000000 0.000000'\nWe cannot go to VizieR with that!\n" );
-     exit( EXIT_FAILURE ); // terminate everything
-    }
-   }
-   //
-   fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
-#ifdef DEBUGFILES
-   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0 * 21 / 3600 );
-#endif
-   search_stars_counter++;
-   if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
-    break;
-   }
-  }
- }
- fclose( vizquery_input );
-
-#ifdef DEBUGFILES
- fclose( scan_ucac5_debug_ds9_region );
-#endif
-
- if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
-  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
-  return 1;
- }
-
- // Print search stat
- fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
-
- // Get proxy settings if available
- proxy_settings= get_sanitized_curl_proxy();
-
- // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5...\n" );
- // Randomly choose between the two servers
- // Seed the random number generator
- srand( time( NULL ) );
- // Generate a random number (0 or 1)
- randChoice= rand() % 2;
-
- // Construct base command
- // Initialize the allocated memory to null characters
- memset( base_command, '\0', BASE_COMMAND_LENGTH );
- if ( randChoice == 0 ) {
-  fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru\n" );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
- } else {
-  fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru\n" );
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
- }
- base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
-
- // Execute curl directly without shell interpretation (avoids command injection)
- fprintf( stderr, "Running curl to query UCAC5...\n" );
- vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
-
- if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-  fprintf( stderr, "First UCAC5 server attempt failed, trying alternative server\n" );
-
-  // Note the reverse order with respect to randChoice
-  if ( randChoice == 0 ) {
-   // This block will execute if the first executed command was the first option and it failed
-   fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru (fallback)\n" );
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
-  } else {
-   // This block will execute if the first executed command was the second option and it failed
-   fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru (fallback)\n" );
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-            vizquery_input_filename, catalog_search_parameters->brightest_mag,
-            catalog_search_parameters->faintest_mag,
-            catalog_search_parameters->search_radius_deg * 3600,
-            vizquery_output_filename );
-  }
-
-  // Execute curl directly without shell interpretation (avoids command injection)
-  fprintf( stderr, "Running curl to query UCAC5 (fallback)...\n" );
-  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
-
-  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-   fprintf( stderr, "ERROR: Both UCAC5 server attempts failed\n" );
-   // Free proxy settings if allocated
-   if ( proxy_settings != NULL ) {
-    free( proxy_settings );
-   }
-   return 1;
-  }
- }
-
- // Free proxy settings if allocated
- if ( proxy_settings != NULL ) {
-  free( proxy_settings );
- }
-
-#ifdef DEBUGFILES
- scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
- fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
- fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
- fprintf( scan_ucac5_debug_ds9_region, "global color=red font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
- fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
-#endif
-
- f= fopen( vizquery_output_filename, "r" );
- if ( f == NULL ) {
-  fprintf( stderr, "ERROR: Cannot open %s for reading\n", vizquery_output_filename );
-  return 1;
- }
- while ( NULL != fgets( string, 1024, f ) ) {
-  if ( string[0] == '#' )
-   continue;
-
-  if ( string[0] == '\n' )
-   continue;
-
-  epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
-  if ( 6 > sscanf_return_code ) {
-   continue;
-  }
-  if ( 9 > sscanf_return_code ) {
-   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  }
-
-  cos_delta= cos( catalog_dec * M_PI / 180.0 );
-
-  ///////////////// Account for proper motion /////////////////
-  catalog_ra_original= catalog_ra;
-  catalog_dec_original= catalog_dec;
-  // assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
-  // assuming observing_epoch_jd is the same for all stars!
-  observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
-  dt= observing_epoch_jy - epoch;
-  // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
-  // pmRA is UCAC/Gaia proper motion in RA*cosDE
-  if ( fabs( cos_delta ) > 1e-6 ) {
-   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
-  }
-  catalog_dec= catalog_dec + pmDE / 3600000 * dt;
-  /////////////////////////////////////////////////////////////
-
-  // Now find which input star that was
-  for ( i= 0; i < N; i++ ) {
-   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
-    continue;
-   }
-   if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
-    // Handle RA wrapping near the 0/360 boundary
-    ra_diff_rematch= fabs( stars[i].ra_deg_measured - measured_ra );
-    if ( ra_diff_rematch > 180.0 ) {
-     ra_diff_rematch= 360.0 - ra_diff_rematch;
-    }
-    if ( ra_diff_rematch * cos_delta < catalog_search_parameters->search_radius_deg ) {
-     if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
-      continue;
-     }
-
-#ifdef DEBUGFILES
-     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0 * 21 / 3600 );
-#endif
-
-     // if we are here - this is a match
-     stars[i].matched_with_astrometric_catalog= 1;
-     stars[i].d_ra= ra_diff_normalized_for_wraparound( catalog_ra, measured_ra );
-     stars[i].d_dec= catalog_dec - measured_dec;
-     stars[i].catalog_ra= catalog_ra;
-     stars[i].catalog_dec= catalog_dec;
-     stars[i].catalog_mag= catalog_mag;
-     stars[i].catalog_mag_err= 0.0;
-     stars[i].catalog_ra_original= catalog_ra_original;
-     stars[i].catalog_dec_original= catalog_dec_original;
-
-     //
-     stars[i].match_distance_astrometric_catalog_arcsec= distance / 3600;
-
-     // reset photometric info
-     stars[i].APASS_B= 0.0;
-     stars[i].APASS_B_err= 0.0;
-     stars[i].APASS_V= 0.0;
-     stars[i].APASS_V_err= 0.0;
-     stars[i].APASS_r= 0.0;
-     stars[i].APASS_r_err= 0.0;
-     stars[i].APASS_i= 0.0;
-     stars[i].APASS_i_err= 0.0;
-     stars[i].Rc_computed_from_APASS_ri= 0.0;
-     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
-     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
-     stars[i].Ic_computed_from_APASS_ri= 0.0;
-     stars[i].Ic_computed_from_APASS_ri_err= 0.0;
-     stars[i].APASS_g= 0.0;
-     stars[i].APASS_g_err= 0.0;
-
-     N_stars_matched_with_astrometric_catalog++;
-     break; // like if we assume there will be only one match within distance - why not?
-    }
-   }
-  } // for(i=0;i<N;i++)
- }
- fclose( f );
- fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ fprintf( stderr, "Matched %d stars with UCAC5 at %s.\n", N_stars_matched_with_astrometric_catalog, ucac5_servers[server_order[server_idx]] );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
   fprintf( stderr, "WARNING: too few stars matched (%d, need at least 5) with UCAC5 at this remote server - will try the next UCAC5 server or VizieR!\n", N_stars_matched_with_astrometric_catalog );
   return 1;
@@ -4440,16 +4186,235 @@ static int ucac5_local_copy_is_present( void ) {
  return 1;
 }
 
+// The longest line of a tab-separated VizieR reply that select_columns_from_vizier_tsv_reply()
+// reads (a UCAC5 row with all columns is about 230 characters long), the most columns in a line
+// and the most columns it can select
+#define VIZIER_TSV_LINE_LENGTH 4096
+#define VIZIER_TSV_MAX_FIELDS 256
+#define VIZIER_TSV_MAX_SELECTED_COLUMNS 32
+
+// vizier.idia.ac.za, the VizieR mirror that kept serving UCAC5 while CDS was down in November
+// 2026, fails UCAC5 queries that name some of the columns with -out=...: on 2026-11-12 the
+// eight-column query this solver used to send got rows holding only the target positions, and
+// so did most other column lists tried (the VOTable form says '(pipe) Request has been
+// interrupted'), while a query for all columns always worked. So search_UCAC5_with_vizquery()
+// asks for all columns, as tab-separated values so that the columns can be found by name and
+// empty values keep their place, and this function writes the columns read_UCAC5_from_vizquery()
+// reads, in its order, as a table separated by spaces. The names are taken from the header line,
+// which VizieR repeats for each target of a list query that has a match. A row with an empty
+// value in one of the first n_required_columns columns is skipped; a row with an empty value in
+// one of the other columns is written with the required columns only (read_UCAC5_from_vizquery()
+// then applies no proper motion). A last line without a newline is the cut-off end of an
+// incomplete reply and is ignored. Returns the number of rows written (0 when VizieR found no
+// star near any target), or -1 if the reply cannot be read, is empty, is not a VizieR table
+// (an error page) or has no header line with all the required columns.
+static int select_columns_from_vizier_tsv_reply( const char *tsv_filename, const char *output_filename, const char **column_names, int n_columns, int n_required_columns ) {
+ FILE *tsv_file;
+ FILE *output_file;
+ char line[VIZIER_TSV_LINE_LENGTH];
+ char *fields[VIZIER_TSV_MAX_FIELDS];
+ int column_index[VIZIER_TSV_MAX_SELECTED_COLUMNS];
+ int n_fields;
+ int is_header_line;
+ int header_is_usable;
+ int n_header_lines;
+ int n_usable_header_lines;
+ const char *missing_column_name;
+ int n_rows_written;
+ int n_rows_skipped;
+ int n_columns_to_write;
+ int row_has_required_values;
+ int n_lines_read;
+ int n_vizier_resource_lines;
+ int reply_is_cut_off;
+ int i, j;
+ int c;
+ char *p;
+ char *end;
+
+ if ( n_columns < 1 || n_columns > VIZIER_TSV_MAX_SELECTED_COLUMNS || n_required_columns < 1 || n_required_columns > n_columns ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): wrong number of columns\n" );
+  return -1;
+ }
+ tsv_file= fopen( tsv_filename, "r" );
+ if ( tsv_file == NULL ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): cannot open %s for reading\n", tsv_filename );
+  return -1;
+ }
+ output_file= fopen( output_filename, "w" );
+ if ( output_file == NULL ) {
+  fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): cannot open %s for writing\n", output_filename );
+  fclose( tsv_file );
+  return -1;
+ }
+ header_is_usable= 0;
+ n_header_lines= 0;
+ n_usable_header_lines= 0;
+ missing_column_name= NULL;
+ n_rows_written= 0;
+ n_rows_skipped= 0;
+ n_lines_read= 0;
+ n_vizier_resource_lines= 0;
+ reply_is_cut_off= 0;
+ while ( NULL != fgets( line, VIZIER_TSV_LINE_LENGTH, tsv_file ) ) {
+  n_lines_read++;
+  // A line without its newline either does not fit in the buffer, which no expected line does,
+  // or is the cut-off end of an incomplete reply (a complete reply ends with a newline): drop it
+  if ( NULL == strchr( line, '\n' ) ) {
+   if ( 0 == feof( tsv_file ) ) {
+    c= fgetc( tsv_file );
+    while ( c != EOF && c != '\n' ) {
+     c= fgetc( tsv_file );
+    }
+   } else {
+    reply_is_cut_off= 1;
+   }
+   continue;
+  }
+  line[strcspn( line, "\r\n" )]= '\0';
+  // Comments and empty lines. VizieR describes each table (in a list query, the table of each
+  // target) in comment lines starting with '#RESOURCE=', also when it found nothing.
+  if ( line[0] == '#' ) {
+   if ( 0 == strncmp( line, "#RESOURCE=", 10 ) ) {
+    n_vizier_resource_lines++;
+   }
+   continue;
+  }
+  if ( line[0] == '\0' ) {
+   continue;
+  }
+  // Split the line at the tabs and trim the spaces that pad the values. The target position
+  // in the '_1' column keeps the space between its RA and Dec.
+  n_fields= 0;
+  fields[n_fields]= line;
+  n_fields++;
+  for ( p= line; *p != '\0'; p++ ) {
+   if ( *p == '\t' ) {
+    *p= '\0';
+    if ( n_fields < VIZIER_TSV_MAX_FIELDS ) {
+     fields[n_fields]= p + 1;
+     n_fields++;
+    }
+   }
+  }
+  for ( i= 0; i < n_fields; i++ ) {
+   while ( *fields[i] == ' ' ) {
+    fields[i]++;
+   }
+   end= fields[i] + strlen( fields[i] );
+   while ( end > fields[i] && *( end - 1 ) == ' ' ) {
+    end--;
+   }
+   *end= '\0';
+  }
+  // A header line names the first requested column ('_1', the target)
+  is_header_line= 0;
+  for ( i= 0; i < n_fields; i++ ) {
+   if ( 0 == strcmp( fields[i], column_names[0] ) ) {
+    is_header_line= 1;
+    break;
+   }
+  }
+  if ( is_header_line == 1 ) {
+   n_header_lines++;
+   header_is_usable= 1;
+   for ( j= 0; j < n_columns; j++ ) {
+    column_index[j]= -1;
+    for ( i= 0; i < n_fields; i++ ) {
+     if ( 0 == strcmp( fields[i], column_names[j] ) ) {
+      column_index[j]= i;
+      break;
+     }
+    }
+    if ( column_index[j] < 0 && j < n_required_columns ) {
+     header_is_usable= 0;
+     missing_column_name= column_names[j];
+    }
+   }
+   if ( header_is_usable == 1 ) {
+    n_usable_header_lines++;
+   }
+   continue;
+  }
+  // A data row follows a usable header line and starts with the target position; the units
+  // line and the line of dashes under the header do not
+  if ( header_is_usable == 0 ) {
+   continue;
+  }
+  if ( column_index[0] >= n_fields || 0 == isdigit( (unsigned char)fields[column_index[0]][0] ) ) {
+   continue;
+  }
+  row_has_required_values= 1;
+  for ( j= 0; j < n_required_columns; j++ ) {
+   if ( column_index[j] >= n_fields || fields[column_index[j]][0] == '\0' ) {
+    row_has_required_values= 0;
+    break;
+   }
+  }
+  if ( row_has_required_values == 0 ) {
+   n_rows_skipped++;
+   continue;
+  }
+  n_columns_to_write= n_columns;
+  for ( j= n_required_columns; j < n_columns; j++ ) {
+   if ( column_index[j] < 0 || column_index[j] >= n_fields || fields[column_index[j]][0] == '\0' ) {
+    n_columns_to_write= n_required_columns;
+    break;
+   }
+  }
+  for ( j= 0; j < n_columns_to_write; j++ ) {
+   if ( j > 0 ) {
+    fputc( ' ', output_file );
+   }
+   fputs( fields[column_index[j]], output_file );
+  }
+  fputc( '\n', output_file );
+  n_rows_written++;
+ }
+ fclose( tsv_file );
+ fclose( output_file );
+ if ( reply_is_cut_off == 1 ) {
+  fprintf( stderr, "WARNING: the VizieR reply %s ends with an incomplete line (was the reply cut off?) - ignoring that line\n", tsv_filename );
+ }
+ if ( n_usable_header_lines == 0 ) {
+  if ( n_header_lines > 0 ) {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): the column '%s' is not in the VizieR reply %s\n", missing_column_name, tsv_filename );
+   return -1;
+  }
+  // A table header comes only with a target that has a match
+  if ( n_vizier_resource_lines > 0 ) {
+   fprintf( stderr, "VizieR found no catalog star near any of the targets (%s)\n", tsv_filename );
+   return 0;
+  }
+  if ( n_lines_read == 0 ) {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): the VizieR reply %s is empty (a connection problem?)\n", tsv_filename );
+  } else {
+   fprintf( stderr, "ERROR in select_columns_from_vizier_tsv_reply(): %s is not a VizieR table (an error page?)\n", tsv_filename );
+  }
+  return -1;
+ }
+ if ( n_rows_skipped > 0 ) {
+  fprintf( stderr, "WARNING: skipped %d rows with empty values in the VizieR reply %s\n", n_rows_skipped, tsv_filename );
+ }
+ return n_rows_written;
+}
+
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[BASE_COMMAND_LENGTH];
  FILE *vizquery_input;
  int i;
  int pid= getpid();
  char vizquery_input_filename[FILENAME_LENGTH];
+ char vizquery_tsv_filename[FILENAME_LENGTH];
  char vizquery_output_filename[FILENAME_LENGTH];
  int vizquery_run_success;
  int search_stars_counter;
  int zero_radec_counter;
+ int n_vizier_rows;
+ // The columns read_UCAC5_from_vizquery() reads, in its order: the target position, the
+ // distance to it, the catalog position and magnitude are required, the epoch and proper
+ // motion are optional
+ const char *ucac5_vizier_reply_columns[10]= { "_1", "_r", "RAJ2000", "DEJ2000", "f.mag", "EPucac", "pmRA", "e_pmRA", "pmDE", "e_pmDE" };
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
@@ -4486,8 +4451,10 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  // Initialize the allocated memory to null characters
  memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_tsv_filename, '\0', FILENAME_LENGTH );
  memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
  snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "vizquery_%d.input", pid );
+ snprintf( vizquery_tsv_filename, FILENAME_LENGTH - 1, "vizquery_%d.tsv", pid );
  snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
@@ -4521,10 +4488,15 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  fprintf( stderr, "Searchig VizieR for %d good reference stars...\n", search_stars_counter );
 
  // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5 via VizieR (mirror will be selected by lib/choose_vizier_mirror.sh)...\n" );
+ fprintf( stderr, "Searchig UCAC5 via VizieR (mirror will be selected by lib/choose_vizier_mirror.sh UCAC5)...\n" );
  // yes, sorting in magnitude works
  // sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ // The mirror is chosen by a UCAC5 test query: the default test asks for Gaia DR2, which
+ // vizier.idia.ac.za does not serve, so while CDS was down (November 2026) it pointed this query
+ // at CDS although IDIA serves UCAC5. All columns are asked for, as tab-separated values, because
+ // IDIA fails most UCAC5 queries that name some of them, this solver's old eight-column query
+ // among them (see select_columns_from_vizier_tsv_reply()).
+ sprintf( command, "export BEST_VIZIER_MIRROR=$(%slib/choose_vizier_mirror.sh UCAC5); echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=tsv -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.all f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_tsv_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
@@ -4555,6 +4527,13 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   }
  }
 
+ n_vizier_rows= select_columns_from_vizier_tsv_reply( vizquery_tsv_filename, vizquery_output_filename, ucac5_vizier_reply_columns, 10, 5 );
+ if ( n_vizier_rows < 0 ) {
+  fprintf( stderr, "Problem getting UCAC5 data from VizieR. :(\n" );
+  return 1;
+ }
+ fprintf( stderr, "Got %d UCAC5 stars from VizieR\n", n_vizier_rows );
+
  if ( 0 != read_UCAC5_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters ) ) {
   fprintf( stderr, "Problem getting UCAC5 data from VizieR. :(\n" );
   return 1;
@@ -4564,6 +4543,8 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  // if ( vizquery_run_success == 0 ) {
  if ( 0 != unlink( vizquery_input_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_tsv_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_tsv_filename );
  if ( 0 != unlink( vizquery_output_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}
@@ -7818,7 +7799,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "\nITERATION 01 -- talking to VizieR, this might be slow!\n" );
  // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
  if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-  fprintf( stderr, "ERROR running vizquery\n" );
+  fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
   free( stars );
   return 1;
  }
@@ -7841,7 +7822,7 @@ int main( int argc, char **argv ) {
   //
   // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
   if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running vizquery\n" );
+   fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
    free( stars );
    return 1;
   }
@@ -7899,7 +7880,7 @@ int main( int argc, char **argv ) {
   // search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog);
   // if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
   if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running vizquery\n" );
+   fprintf( stderr, "ERROR: the UCAC5 catalog search failed\n" );
    free( stars );
    return 1;
   }

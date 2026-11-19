@@ -6,8 +6,14 @@ Update this file as you learn new things.
 ## Git Workflow
 
 - Tracked in git from the `.claude/` folder: `CLAUDE.md`, `notes.md` (this file) and the design docs
-  `airmass_zeropoint_forced_photometry_design.md` and `forced_photometry_reference_filter_design.md`
-  (tracked scripts cite them by their `.claude/` path, so do not move them). Stage them when they change.
+  `airmass_zeropoint_forced_photometry_design.md`, `forced_photometry_reference_filter_design.md`
+  and `nearby_red_dwarf_check_design.md` (tracked scripts cite them by their `.claude/` path, so do
+  not move them). Stage them when they change.
+- `.claude/` stays in the repository but not in release archives: the release workflow
+  (.github/workflows/create_release_archive.yml) leaves it out of its rsync copy, and
+  .gitattributes marks it export-ignore for git archive and GitHub's 'Source code' downloads.
+  Code comments in the scripts cite the design docs by their .claude/ path only, so a tarball
+  user has to look them up in the GitHub repository.
 - Keep temporary investigation reports, session notes, deployment checklists and handoff documents
   outside the repository tree; never stage or commit them. Keep durable lessons in this consolidated
   maintenance-notes file instead (user preference, 2026-10-10).
@@ -207,6 +213,24 @@ Update this file as you learn new things.
 - lib/autodetect_aperture_main in STANDALONE mode names its temp files image_pid<PID>.* (not image00000.*). Test assertions must grep 'FLAG_IMAGE image' + '.flag', never the literal 'FLAG_IMAGE image00000.flag'. The non-PSF exclude-ref-image section was updated for this long ago; the PSF variant (EXCLUDEREFIMAGEPSF006) and the photographic-plates check (PHOTOPLATE, inverted logic) still had the old pattern - fixed 2026-07-03.
 - The PSF test sections only run when psfex is installed; PSFEX_NOT_INSTALLED is auto-stripped from FAILED_TEST_CODES. psfex appeared on this dev machine only on 2026-06-15 (/usr/local/bin/psfex 3.24.2), so PSF sections had not run here for a long time - expect stale assertions when a new tool enables a long-skipped section.
 - To edit a test script WHILE the suite is running from it: cp to a temp file, edit the copy, bash -n, then mv over the original (atomic rename). The running bash keeps its fd on the old inode and is not disturbed. Never edit the file in place mid-run.
+- The '###### X ######' header that a failed check adds to DEBUG_OUTPUT must name the code that
+  the same check adds to FAILED_TEST_CODES, since the report is read by searching for the code.
+  A block copied from a neighbour tends to keep the neighbour's header: nine position checks of
+  the NMWNSGR20N4, NMWNSGR24N1, NMWNSGR21N2 and NMWNSGR21N1 sections were reported under the
+  first check's header, the failed TICA selenium test under
+  TICATESSZERORA_ERROR_MESSAGE_IN_index_html, and ten X_ERROR_MESSAGE_IN_index_html failures
+  under X_NO_ERROR_MESSAGE_IN_index_html (all fixed 2026-11-16, with a few more). To find such
+  slips, compare each header with the nearest FAILED_TEST_CODES addition above it.
+- Every check also needs a code of its own, or a failure cannot be traced to its check. Copied
+  blocks kept the codes of their neighbours: COLSTAT_MIN on the MAX, MEDIAN and MEAN checks, the
+  second sysrem2 pass reusing NMWSYSREM007 and 102-106, valgrind runs of other programs reusing
+  SPECIAL_VALGRIND017/018 and 026-028, the MASTER PSF section adding the small-CCD PSF
+  section's SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK, and about twenty more (all
+  renamed 2026-11-16; the second sysrem2 pass now uses 107 and 202-206; in the exclusion-list
+  test the star-name checks of the commented list use 105-107 and the list with stray comment
+  lines 201-207). DISKSPACE_TEST_ERROR stays shared on purpose: both disk-space helpers parse
+  the same df value. To find duplicates, list the static codes that occur more than once and
+  compare the static prefixes of the codes that end in a variable.
 - test_vast.sh strips known-environmental failure codes at the end (STANDALONEDBSCRIPT001a/001b_GCVS, scan.sai.msu.ru_REMOTEPLATESOLVE007-009, PSFEX/WCSTOOLS/VARTOOLS_NOT_INSTALLED, ...) - check that list before investigating a FAILED section summary line.
 - PGPLOT truncates long device filenames: around 90 characters the /png driver opens a chopped path, prints "PGPLOT /png: could not open file ... plotting disabled" to stderr, every plot call becomes a no-op, and cpgbeg() STILL RETURNS SUCCESS - so a tool can "succeed" while writing nothing. lightcurve_png.c handles this (2026-07-03) by rendering to a short temp name in cwd and rename()/copying to the destination, plus a stat() check that the output exists before claiming success. Any other PGPLOT-PNG tool given a user-supplied output path needs the same treatment; never trust cpgbeg's return value as proof the file opened.
 
@@ -1311,6 +1335,43 @@ Update this file as you learn new things.
 - util/moons.sh exits 0 with empty output when Horizons is unreachable, so the
   moons.txt format loop of the Solar System section passes vacuously; only
   the MPCheck Ganymede lookup catches the outage.
+- Rerun on 2026-10-22 with the keyword-recording fix: 135 of 138 sections in
+  428 minutes. vsx.aavso.org answered 504, which failed
+  STANDALONEDBSCRIPT001c_VSX and made the CBA formatter name V615 Vul
+  'PNV J19430751+2100204' (NMWNVUL24ST_CBASCRIPTTEST_*); the same section
+  passed with the old and the new vast binary an hour later. The scan.sai.msu.ru
+  plate archive search hung (AUXWEB_PASKYARCHIVE_001-003). The online
+  database and web-service sections fail on whichever service is down that
+  day: check the service before suspecting a regression.
+
+## FITS keyword recording in lightcurves (fixed 2026-10-22)
+- record_specified_fits_keywords() in src/vast.c read the list with
+  fgets(...,9,...): a name shorter than 8 characters kept its newline and
+  failed the character check, so AIRMASS, HA and PA of the shipped _example
+  list were never recorded (only 8-character names like CCD-TEMP worked). The
+  loop also never stopped at MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC, so
+  11+ valid names wrote past the list array on the stack.
+- Two output defects in the same function: cards are concatenated, and a card
+  without a comment has no trailing blank, so values ran into the next name
+  ("XBINNING=   2YBINNING="); and the comment was cut at the first '/' even
+  inside a quoted string ('NGC 224/M31'). Now: whole lines are read and the
+  name is the first word (the rest of the line is a comment, as it was by
+  accident for 8-character names; empty and '#' lines are ignored, CR ends
+  the name), at most 10 names, cut at the first '/' outside quotes, trailing
+  blanks trimmed, one space between cards.
+- The list is re-read for every image, so list warnings are printed only for
+  the first image (third argument print_list_warnings).
+- test_vast.sh: the first Small CCD section copies the _example list into
+  place and nothing removes it, so every later local section records
+  keywords. Since this fix that includes AIRMASS (NMW-TexasTech, KGO, M31,
+  Gaia16aye), PA (NMW-STL, Stas) and HA where present. The keyword section
+  checks short names, separators, the 10-name limit and a quoted '/'
+  (WITH_KEYWORD_RECORDING_SMALLCCD014-017) on sample_data; like the other
+  Small CCD sections it is disabled on GitHub Actions.
+- util/examples/test_lightcurve_metadata.py runs early in test_vast.sh
+  ("Lightcurve metadata test", LCMETADATA001 on failure). Without python3 >=
+  3.7 or a C compiler (cc, gcc or clang) it is skipped as
+  NOT_PERFORMED_LCMETADATA_<reason>, which the end of the script exempts.
 
 ## Known-star check without CDS: local Gaia DR2 copy, VizieR probe record, APASS off (2026-11-04)
 - From 2026-11-03 CDS (VizieR, SIMBAD, cdsarc) dropped connections. The china-vo and
@@ -1513,6 +1574,9 @@ Update this file as you learn new things.
   .claude/nearby_red_dwarf_check_design.md. Decisions of 2026-11-09: BP-RP >= 1.0 (all K and M
   dwarfs) counts as red; the check runs for VSX-matched candidates too; the local copy is the
   primary source, the ESA archive the fallback, VizieR the last resort.
+- 2026-11-16: red now means K5 and later (BP-RP >= 1.39, G-RP >= 0.78, the K5V entries of the
+  locus table). With all K dwarfs counted, SS Cyg in outburst (BP-RP 1.18, M_G 6.4: the K donor
+  plus the disc sit on the main sequence) was called a likely UV Ceti-type flare.
 - The report line starts with 'UV Ceti check' and is appended after the forced-photometry
   lines. It is a new entry for the parser list above: unmw/filter_report.py ends the astcheck
   match block at that prefix and exports the line as the uv_ceti_check JSON field (documented in
@@ -1602,3 +1666,229 @@ Update this file as you learn new things.
   composite. Now BP-RP decides for G <= 19.5 and G-RP only for fainter stars or without BP.
   Always try the classical flare stars (AD Leo, UV Cet, both in the online test) after
   touching the classification.
+
+## External-service outages and the test suite: VizieR, UCAC5/plate-solve servers, JPL HORIZONS (2026-11-09)
+- test_vast.sh's internet check counted "no VizieR mirror serves Gaia DR2" as "offline" and
+  stopped the run before the first section; since the CDS outage of 2026-11-03 every CI system
+  test (Ubuntu, macOS, Alpine, WSL2) died there. Only unreachable tau.kirx.net and
+  scan.sai.msu.ru stop the run now; a VizieR outage is recorded once as the informational
+  VIZIER_UNAVAILABLE, and VizieR is probed again at most hourly (a failed probe takes ~140 s).
+  Never let one external service gate the whole run.
+- VizieR mirrors hold only some catalogs and answer complete-but-empty tables for the others,
+  so lib/choose_vizier_mirror.sh tests a catalog, with a record per catalog: GAIADR2 (default),
+  APASS, 2MASS. vizier.idia.ac.za (added 2026-11-09) serves APASS, 2MASS, UCAC5, Gaia DR3,
+  GCVS, VSX and the catalogs of the online identification, not the Gaia DR2/EDR3 source tables.
+  util/search_databases_with_vizquery.sh uses the 2MASS test, and report_transient.sh decides
+  whether to skip it with online_id_vizier_is_unreachable (2MASS), not with VIZIER_UNREACHABLE,
+  which is about Gaia DR2 for the known-star check. The search over all catalogs ('may be a
+  known variable') needs CDS itself. test_vizier_mirror_record.sh counts four mirror probes.
+- One failing server must not produce an ERROR line while another server may still answer:
+  every ERROR marks the field as failed on the unmw summary page. On 2026-11-09 the UCAC5 search
+  and the plate-solve CGIs of scan.sai.msu.ru answered HTTP 500. solve_plate_with_UCAC5 took
+  the 16-line error page for a catalog reply (it counted lines), matched no star and stopped
+  without asking vast/tau ("ERROR running vizquery" although VizieR was not asked); now curl
+  runs with --fail and a reply needs >=5 catalog data lines. util/identify.sh
+  (= wcs_image_calibration.sh) printed ERROR and the raw error page before trying the next
+  server; the page's </body></html> broke the HTML validation of the transient report. Now a
+  WARNING and the reply made safe (no tags, no 'ERROR'), as already done for the WCS header.
+  Machines with a local UCAC5 copy and solve-field are not affected.
+- JPL HORIZONS has answered every TLIST request with "LTP: input TIM outside +-500K range"
+  since the evening of 2026-11-09 MST (production still got its moons at 23:39 UTC on 11-09;
+  failing from 03:40 UTC on 11-10), for any date and time format, also via the kirx.net proxy,
+  while START_TIME/STOP_TIME works. util/planets.sh, moons.sh, spacecraft.sh and comets.sh now
+  ask START_TIME='JD..', STOP_TIME=+0.0007 d, STEP_SIZE='1 m' and use the first row after
+  $$SOE. The failure was silent: the scripts print nothing for an object they cannot get, so
+  moons and spacecraft (always from HORIZONS) and planets and comets (from HORIZONS only when
+  skyfield is missing) just stopped being identified. The Saturn/Iapetus 2, Venus and
+  STEREO-A Ceres tests caught it.
+
+## vast.sai.msu.ru / kirx.net dependencies, vsx.dat second mirror (2026-11-11)
+- vsx.dat is now tried at LOCAL_SERVER, then ALTERNATIVE_SERVER, then CDS FTP (it used to
+  be LOCAL_SERVER then CDS, so outside Russia kirx.net was the only mirror). Both mirrors
+  serve the same 370150125-byte vsx.dat.gz. CDS timed out over FTP and HTTPS from tau that
+  day. Tested in a scratch copy with VAST_COUNTRY_CODE=US, CATALOG_DOWNLOAD_ATTEMPTS=1 and
+  VAST_CURL_PROXY="--resolve kirx.net:443:192.0.2.1": kirx.net times out after ~50 s, scan
+  delivers, the 2.1 GB catalog installs, 136 s in all. The updater refuses to start without
+  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search, so a
+  scratch copy needs it (and the BSC/Tycho-2 files) linked in.
+- The Bright Star Catalogue (end of the same script) is now tried at LOCAL_SERVER, then
+  ALTERNATIVE_SERVER, with --fail (it was LOCAL_SERVER only, so kirx.net only outside Russia,
+  and an HTTP error page got saved as the catalog). The mirrors serve identical copies (md5
+  bdb7b7c1...). A download is installed only if at least 9000 records carry a well-formed
+  J2000 position in bytes 76-90 (the complete catalog: 9110 records, 9096 with a position);
+  the lines are of varying length, so a line-length test would reject the real file. A
+  complete copy on disk is reused when only the derived lists are missing, and a missing
+  all-star list (bright_star_catalog_radeconly.txt) now triggers the rebuild too. Tested with
+  a TLS stub (openssl s_server -WWW behind curl --connect-to) that answers HTTP 200 with an
+  error page: rejected, scan used. Rebuilding the two lists takes ~27 s (a bash read loop).
+- Every 'make' touches every file in the tree (lib/check_external_programs.sh, skipped only
+  when out*.dat lightcurves are present), including lib/catalogs/vsx.dat, asassnv.csv and
+  astorb.dat. That restarts the 50-day refresh clock of lib/update_offline_catalogs.sh, so a
+  copy rebuilt more often than every 50 days never refreshes these catalogs by age.
+- Probing the remote services by hand: the plate-solve CGI accepts only uploads named
+  out[A-Za-z0-9]+.xyls (any other name gets "ERROR: Invalid filename" with HTTP 200), and
+  pokaz_laflerkinman.sh keeps only the servers that answer over https if any does - vast has
+  no https, so the ./lc L key reaches it only when tau and scan both fail over https.
+- State on 2026-11-11: period search, UCAC5 and plate solving all worked on tau, scan and
+  vast (vast runs an older plate-solve CGI and is the slowest; util/identify.sh does not list
+  it for plate solving). kirx.net/polaris runs its own working period-search service that is
+  in none of VaST's lists; kirx.net/ticaariel is gone.
+
+## System test on tau 2026-11-12 (97952d25): dead CDS host names, CI vizquery gate
+- Set-up: fresh clone in /tmp/vast, test data reflink-copied from /home/kirx/vast_test,
+  lib/catalogs/ucac5, gaia_dr2 and gaia_dr3_nearby linked to /data_ssd as in the dev copy,
+  nice 10 (the nightly search was running), stdin </dev/null, no DISPLAY, and no
+  ../THIS_IS_HPCC (that file makes the suite e-mail its report). 149 of 153 sections
+  passed in 289.7 min.
+- simbad.u-strasbg.fr, vizier.u-strasbg.fr and aladin.u-strasbg.fr have had no address
+  records since the u-strasbg.fr zone change of 2026-11-10 (cdsarc. and cdsweb.u-strasbg.fr
+  still resolve). The transient report links (util/transients/report_transient.sh) and the
+  SIMBAD query of util/search_databases_with_curl.sh now use the cds.unistra.fr names; plain
+  http works there without a redirect, which matters for old curl and for the POST. unmw's
+  filter_report.py recognises both names, as older reports keep the old ones. Both selenium
+  report tests failed on the dead SIMBAD link; while CDS serves its 'Page unavailable' page
+  (HTTP 404) the cds.unistra.fr links fail too, so both tests now have cds.unistra.fr in
+  FLAKY_LINK_PATTERNS next to minorplanetcenter.net: such a failure is logged as a warning
+  and does not fail the test (each failing link still costs 2 x 120 s of retries). A passing
+  test's output file is now deleted (the rm had a truncated file name, so none ever was);
+  its [WARNING] lines are first copied into DEBUG_OUTPUT under '<code> passed with warnings',
+  so the report still shows the flaky links that failed.
+- The vizquery test (GitHub Actions only) ended every CI system test 14 minutes in while CDS
+  was down (fail_early on VIZQUERYTEST004a_NO_END). It is now not performed, with the
+  stripped code VIZQUERYTEST_VIZIER_UNAVAILABLE, when the internet check found VizieR
+  unavailable.
+- The UCAC5 VizieR fallback of solve_plate_with_UCAC5.c asked lib/choose_vizier_mirror.sh with
+  the default Gaia DR2 test, so while CDS was down it got CDS, although vizier.idia.ac.za
+  serves UCAC5. It now asks with a UCAC5 test. But IDIA fails most UCAC5 queries that name
+  some of the columns with -out=..., the solver's own among them: its eight-column list query
+  got one row per target holding nothing but the target position (the 1226 lines that the CI
+  test's 2000-position list got from IDIA were such rows, not an answer), a single-position
+  query gets an empty table, and the VOTable form says '(pipe) Request has been interrupted'.
+  Which lists fail is unclear (all columns in any order worked, so did all but SrcIDgaia, all
+  but Kmag did not); UCAC4, APASS, 2MASS and Gaia DR3 queries with -out= work. A query for all
+  columns always worked, so the solver now asks for all columns as tab-separated values
+  (-mime=tsv -out.all) and select_columns_from_vizier_tsv_reply() writes the columns
+  read_UCAC5_from_vizquery() reads, found by name in the header line that VizieR repeats for
+  every target with a match; the chooser's UCAC5 test asks the same way. A valid reply without
+  any match counts as zero stars, an empty reply or an error page as a failed query, and a
+  last line without its newline (a cut-off reply) is dropped.
+  Checked end to end on 2026-11-12 in a scratch build with the local UCAC5 copy removed and
+  our three UCAC5 servers renamed to unresolvable hosts: on a 9576x6388 Texas Tech frame the
+  chooser picked IDIA in 2 s, 926 and 925 of the 1000 query stars matched in the two passes,
+  and the catalog positions (proper motion applied) of all 923 stars used agreed with those
+  of a run on the local UCAC5 copy to within 0.001 arcsec. The solve took 7.8-10.3 min
+  instead of 4.8 min with the local copy.
+  Not changed: the CI vizquery test still sends the eight-column query with the default test
+  (so it can only pass at CDS), and the Pan-STARRS1 query still uses VIZIER_SITE (IDIA
+  returns no PS1 rows either way).
+- Outside VaST that day: GCVS at www.sai.msu.su answered 2 of 4 direct queries (17-30 s), the
+  others reset after 68 s or hung past 120 s. scan's PA sky_archive CGI sent 727 bytes and
+  then hung. All
+  ~kirx directory listings on kirx.net answer 403 (the files themselves download), as they
+  did on 2026-10-21. Cause, as far as can be seen from outside: polaris refuses *.php* files
+  server-wide (a FilesMatch with 'Require all denied' in conf-enabled), Debian's DirectoryIndex
+  lists index.php, and mod_dir answers a directory with the 403 of its index.php look-up
+  instead of letting mod_autoindex list it, so Options +Indexes alone cannot help. Signature:
+  a missing .php file gives 403 where a missing .txt gives 404, and OPTIONS on the directory
+  gives 403. Fixed on polaris the same day, keeping the PHP ban:
+  /etc/apache2/conf-available/kirx-userdir-listing.conf (enabled with a2enconf) gives
+  <Directory /home/kirx/public_html> 'DirectoryIndex index.html index.htm' and
+  'Options +Indexes'; the listing works again and .php URLs still get 403. Nothing in VaST
+  reads these listings; only the AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING check does.
+- unmw's pytest suite does not start on this machine's Python 3.14: it needs the cgi module
+  (legacy-cgi), which is not installed here and not in requirements-test.txt.
+- CI after the gate (Ubuntu runs 43269700500 at fbdcc6b4 and 43280965083 at 71d7b86c, the
+  first Ubuntu runs to reach the end since 2026-10-22): both ran to the end (243.7 and
+  215.7 min) and exited 1 only on AUXWEB_PASKYARCHIVE_001-003; 002 and 003 followed from 001
+  (the empty match file left the PNG download without a URL: 'curl: (2) no URL
+  specified'), so they now run only when 001 found the image (the same for the NMW sky
+  archive's AUXWEB_NMWSKYARCHIVE_002/003). NMWNVUL24ST_SELENIUM_TEST
+  (SIMBAD 404; the next link, VizieR, gives the same 404) and all the VizieR codes are
+  stripped before the exit decision. The PA check has failed since 2026-10-23 (WSL run
+  39915054811; it last passed in Ubuntu run 39795286462 on 10-22), unseen in Ubuntu CI
+  because no Ubuntu run reached that section in between. Signature: HTTP 200 and 727 bytes
+  within 1 s listing one plate (SCA1017N), then nothing until scan closes the reply about
+  320 s after the request (curl exit 18), well inside the test's 900 s. The expected
+  plate's FITS file downloads from the archive at once; where the CGI blocks cannot be seen
+  from outside. The new UCAC5 VizieR fallback got no CI coverage: all 183 UCAC5 searches
+  were answered by our own servers; APASS used IDIA through the chooser (6 queries, all
+  fine).
+  The report upload's 'unexpected reply from the server' is in every CI run that reached the
+  end since at least 2026-08-19, passing runs included: vasttestreport.php is no longer run
+  as PHP on scan (a GET returns its source), so no report has been mailed. Even when it ran,
+  its success reply was a single space (the file ends with '?> '), so the check for 'Thanks
+  for the submission!' could never pass. The result does not affect the exit code.
+  PHP-free replacements were written on 2026-11-12/13 (Python CGI programs in scan's cgi-bin,
+  mapped to the old .php URLs with ScriptAlias; kept outside this repository) for
+  vasttestreport.php, vastemail.php (the mailing-list form of doc/README.html) and
+  anyemailkirx.php (used only by test_vast.sh of 2019-05-08). For a
+  report link during the outage: simbad.cfa.harvard.edu has V0615 Vul (PNV
+  J19430751+2100204), simbad.idia.ac.za does not.
+
+## Closed-roof detection: util/detect_closed_roof and the OBSERVATORY ROOF CLOSED alert (2026-11-15)
+- Problem: the NMW-TexasTech roof sometimes closes without NINA knowing, and NINA keeps
+  imaging the inside of the roof (13 nights between 2026-10-03 and 2026-11-13, both cameras,
+  often only one of them). Such runs used to end as "less than 4 images processed", or as
+  "passing clouds" when the roof moved between the two frames, and nobody was alerted.
+- What the frames look like (a year of logs plus all raw frames that were still on disk):
+  median(raw - matched master dark) is -1..+6 ADU (up to +18 ADU with moonlight or dawn
+  leaking in), the pixel noise is the read noise (5-7 ADU), and there are 0-1 star-like peaks.
+  The faintest open-roof sky in 11 months was +268 ADU (TTUQ2) / +326 ADU (TTUQ1) above the
+  dark at 20 s, and every open frame had thousands of peaks. TTUQ2 closed frames sit 0.2-1 ADU
+  BELOW their dark (bias offset), TTUQ1 ones 1-4 ADU above: that is why ms.c's
+  "dark mean >= image mean" ERROR fires mostly for TTUQ2 (79 of 97 closed frames) and only
+  occasionally for TTUQ1 (10 of 62) - do not use it as a roof indicator.
+- util/detect_closed_roof [-n MAX_STARS] [-r ADU_PER_SEC] [-b ADU] [-s MAX_NOISE_ADU] [-v] image [dark] prints
+  one line "VERDICT key=value ..." (OK, CLOSED_ROOF, NO_STARS, PARTLY_DARK); exit 0/1/2.
+  Star-like peak: local maximum > 5 sigma above the 128-255 px tile median, with >= 6 of 8
+  neighbours > 2 sigma (the neighbour rule rejects hot pixels and cosmic rays; a global
+  background instead of the tiles gives thousands of false peaks on closed frames).
+  The background limit is 5 ADU/s x EXPTIME (100 ADU at 20 s). Validated on all 1928 surviving
+  raw frames of 2026-11-10..13: 34/34 closed -> CLOSED_ROOF, 1889/1889 open -> OK, both
+  partly lit frames -> PARTLY_DARK (with the dark); without a dark closed -> NO_STARS.
+- util/ccd/ms stores |image - dark|, so in an already dark-subtracted frame (HISTORY
+  "Dark frame subtraction:") with a background near zero the noise is folded at zero: median
+  and MAD then underestimate the noise (and are coarsely quantized: medians of 3 or 4 ADU) and
+  ~20-230 folded noise peaks pass for stars. The tool measures the noise of such tiles as the
+  clipped RMS around zero instead (closed fd_ frames: 0-5 peaks).
+- Do not use src/quickselect.c on pixel data: it is quadratic in the number of equal values
+  (minutes for a 61 Mpix integer frame). detect_closed_roof has its own three-way-partition
+  quickselect; it reads the image strip by strip (one row of tiles + 2 rows), about 20 MB of
+  RAM and 0.8 s per 61 Mpix frame with a dark.
+- transient_factory_test31.sh runs the check after the Mean value check (new images only,
+  never the references) when CHECK_FOR_CLOSED_ROOF=yes (default for TTUQ1b1x1/TTUQ2b1x1 only).
+  The dark comes from util/find_best_dark.sh; if nothing matches the temperature/exposure,
+  find_any_dark_frame_of_the_same_size_as_image() takes the newest dark of the same size (the
+  bias level changes by only a few ADU between set-points). If the LATEST new image (by JD) is
+  CLOSED_ROOF, the field gets the banner "***** ACTION NEEDED - OBSERVATORY ROOF CLOSED? *****"
+  in transient_factory.log plus "ERROR: OBSERVATORY ROOF CLOSED? ..." in the filtering log and
+  is skipped (7 s instead of 33 s of failing VaST runs and blind solves). Other cases (roof
+  opening during the pair, part of the field dark, no stars on a bright background, no dark)
+  get their own ERROR without that phrase. "OBSERVATORY ROOF CLOSED" is a cross-repo contract:
+  unmw greps it to send the Slack alert, so no other message may contain it (only the two echo
+  lines of closed_roof_check_report_closed_roof do). The per-image part is the function
+  closed_roof_check_inspect_new_images; the "too few refereence images" branch calls it too, so
+  a closed roof is reported (and alerted) also for fields without reference images (For-03,
+  Scl-04): there only the alert case replaces the usual error, the field stays NOREF otherwise.
+- Tests: the "Test detect_closed_roof tool" block of test_vast.sh (runs on GitHub CI too; it
+  also checks that exactly two non-comment echo lines of the factory carry the contract phrase)
+  and util/examples/test_closed_roof_check.sh (factory level, about 3.3 min, not on CI). Data:
+  NMW-TexasTech__closed_roof_test.tar.bz2 - 1024x1024 crops of real closed, open, partly lit,
+  cloudy and already calibrated frames of both cameras with dark crops cut at the same pixels and
+  2 reference crops; its README.txt lists the expected verdict of every file. Raw img_* directories
+  are pruned after a few days, so new real cases must be saved promptly.
+- Review fixes (2026-11-15): util/find_best_dark.sh echoed the input image path to stdout
+  (a grep without -q in its fitsverify fallback), so a frame failing fitsverify got its own
+  path as "the dark": image - image = 0 looked like a closed roof, and in
+  try_to_calibrate_the_input_frame the two-line DARK_FRAME broke the dark subtraction. The
+  check now trusts find_best_dark.sh output only when it exits 0 and never compares an image
+  with itself; the tool also refuses an image identical to its dark. A dark that does not
+  match the camera settings (other OFFSET/readout mode) is the remaining false-alarm risk:
+  if its level is far above the image, bright overcast can come out near "the dark level".
+  The tool therefore sets zero_level=mismatch (no CLOSED_ROOF) when the background is more
+  than max(3 sigma, half the limit) below the dark, or - with -s, CLOSED_ROOF_CHECK_MAX_NOISE_ADU,
+  15 ADU for the TTU cameras - when a starless frame at the dark level is noisier than a frame
+  without sky light can be (closed 4.4-7.4 ADU, faintest open sky 35.6 ADU in the sweep).
+  Re-validated with the final binary called as the pipeline calls it (matching dark, -s 15):
+  1928/1928 surviving frames of 2026-11-10..13 got the expected verdict, and the mismatch rule
+  never fired on a real frame.

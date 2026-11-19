@@ -51,6 +51,13 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# JPL HORIZONS has answered every TLIST request with "LTP: input TIM outside +-500K range"
+# since (at least) 2026-11-09, whatever the time format, while START_TIME/STOP_TIME requests
+# work. Ask for a table that starts at the requested time (one row at that time and one a
+# minute later) and use its first row.
+JD_STOP=$(echo "$JD" | awk '{printf "%.8f", $1 + 0.0007}')
+HORIZONS_TIME_PARAMETERS="START_TIME='JD${JD}'&STOP_TIME='JD${JD_STOP}'&STEP_SIZE='1%20m'"
+
 
 
 for SPACECRAFT_NAME in JWST Chandra XMM-Newton ;do
@@ -65,15 +72,15 @@ for SPACECRAFT_NAME in JWST Chandra XMM-Newton ;do
  # As far as I can tell, JD is in UT time system
  # sed 's/ [*CNAmrets] /   /g' is to remove Moon Sun presence markers and the likes - they may appear if MPC_CODE is set
  #SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
- SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+ SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
  if [ -z "$SPACECRAFT_RA_DEC_MAG_STRING" ];then
   # something is wrong - let's try to reconnect via the reverse proxy
   #SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-  SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+  SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
   if [ -z "$SPACECRAFT_RA_DEC_MAG_STRING" ];then
    # last dirch effort - try to reconnect via HTTP reverse proxy
    #SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-   SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&TLIST='$JD'&QUANTITIES='1,9'" | grep -B1 '$$EOE' | head -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
+   SPACECRAFT_RA_DEC_MAG_STRING=$(curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --insecure --silent --show-error "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$SPACECRAFT_ID'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='$MPC_CODE'&$HORIZONS_TIME_PARAMETERS&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | sed 's/ [*CNAmrets][*CNAmrets ]/   /g' | awk '{printf "%02d:%02d:%05.2f %s:%02d:%04.1f %4.1fmag\n",$3,$4,$5,$6,$7,$8,$9}')
   fi
  fi
  # print results only if communication with Horizons worked

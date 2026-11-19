@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Headless metadata regression checks; run after make, optionally with a build path.
 
+Needs python3 >= 3.7 (standard library only) and a C compiler (cc, gcc or
+clang). util/examples/test_vast.sh runs it and skips it when these are missing.
 All generated data and report stubs live in a temporary directory.
 """
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -203,7 +206,8 @@ def test_no_fits_keywords(tmp):
 
 def test_writer(tmp):
     # A small harness around the production writer, including both compile-time formats.
-    source = (ROOT / 'src/vast.c').read_text()
+    # vast.c has a few non-ASCII comments: do not depend on the locale.
+    source = (ROOT / 'src/vast.c').read_text(encoding='utf-8', errors='replace')
     start = source.index('void write_obs_to_file(')
     writer = source[start:source.index('\n}', start) + 2]
     for apertures in (False, True):
@@ -220,7 +224,9 @@ def test_writer(tmp):
             ' for(i=0;i<256;i++) { obs.sextractor_flag=(unsigned char)i;'
             ' write_obs_to_file(stdout,&obs); }\n return 0;\n}\n')
         binary = program.with_suffix('')
-        run(['cc', '-I', str(ROOT / 'src'), str(program), '-lm', '-o', str(binary)], tmp)
+        compiler = shutil.which('cc') or shutil.which('gcc') or shutil.which('clang')
+        assert compiler, 'no C compiler (cc, gcc or clang) in PATH'
+        run([compiler, '-I', str(ROOT / 'src'), str(program), '-lm', '-o', str(binary)], tmp)
         lines = run([str(binary)], tmp).splitlines()
         assert len(lines) == 256
         for flag, line in enumerate(lines):

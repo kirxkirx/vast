@@ -178,7 +178,7 @@ EOF
  ##### 1003: a blue dwarf (the position of 2026.0) #####
  check 200.0003208 -29.9998611 2026.0 3.0
  if expect_exit 2 UVCETI_BLUE_EXIT ;then
-  expect_text 'dwarf earlier than K0' UVCETI_BLUE_VERDICT
+  expect_text 'dwarf earlier than K5' UVCETI_BLUE_VERDICT
   expect_text 'BP-RP = 0.60' UVCETI_BLUE_COLOUR
  fi
 

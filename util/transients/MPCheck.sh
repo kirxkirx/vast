@@ -82,28 +82,6 @@ lib/update_offline_catalogs.sh all
 
 
 if [ -x lib/astcheck ];then
- if [ ! -f astorb.dat ];then
-  # astorb.dat needs to be downloaded
-  echo "Downloading the asteroid database (astorb.dat)" 1>&2
-  curl $VAST_CURL_PROXY -k -L -C - --fail -O https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-  if [ $? -ne 0 ];then
-   # a desperate recovery attempt
-   curl $VAST_CURL_PROXY -L -C - --fail -O http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-   if [ $? -ne 0 ];then
-    echo "ERROR: cannot download astorb.dat.gz"
-    exit 1
-   fi
-  fi
-  gunzip astorb.dat.gz
-  if [ $? -ne 0 ];then
-   echo "ERROR: cannot gunzip astorb.dat.gz"
-   exit 1
-  fi
-  if [ ! -f astorb.dat ];then
-   echo "ERROR: cannot find astorb.dat"
-   exit 1
-  fi
- fi
 # echo "Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details."
  echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
  #lib/astcheck test.mpc -r100 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html

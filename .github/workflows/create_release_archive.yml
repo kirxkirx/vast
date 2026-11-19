@@ -29,8 +29,10 @@ jobs:
         ARCHIVE_NAME="vast-${TAG_NAME}"
         mkdir -p "${ARCHIVE_NAME}"
         
-        # Copy all files except .git directory
-        rsync -av --exclude='.git' --exclude="${ARCHIVE_NAME}" . "${ARCHIVE_NAME}/"
+        # Copy all files except the .git directory and the .claude directory
+        # (maintenance notes for Claude Code: kept in the repository, not in releases;
+        # .gitattributes keeps them out of GitHub's own 'Source code' archives)
+        rsync -av --exclude='/.git' --exclude='/.claude' --exclude="/${ARCHIVE_NAME}" . "${ARCHIVE_NAME}/"
         
         # Create tar.bz2 archive
         tar -cjf "${ARCHIVE_NAME}.tar.bz2" "${ARCHIVE_NAME}"

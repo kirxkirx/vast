@@ -741,7 +741,7 @@ static void get_filter_from_fits_header( char *fitsfilename, char *filter_value 
  }
 }
 
-void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images ) {
+void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images, int print_list_warnings ) {
  //
  fitsfile *fptr;       // FITS file pointer, defined in fitsio.h
  char card[FLEN_CARD]; // Standard string lengths defined in fitsio.h
@@ -750,6 +750,10 @@ void record_specified_fits_keywords( char *input_image, char *output_str_with_fi
  unsigned int number_of_keywords, i, j, good_keyword_flag;
  FILE *filelist_of_keywords_to_record;
  char list_of_keywords_to_record[MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC][81];
+ char line_from_list_of_keywords[FLEN_CARD];
+ char *keyword_name;
+ size_t keyword_name_length, card_length, output_length;
+ int character_after_long_line, inside_quoted_string;
  if ( NULL == input_image ) {
   fprintf( stderr, "ERROR in record_specified_fits_keywords() the input image string is NULL\n" );
   exit( EXIT_FAILURE );
@@ -766,29 +770,69 @@ void record_specified_fits_keywords( char *input_image, char *output_str_with_fi
  if ( NULL == filelist_of_keywords_to_record ) {
   return;
  }
- i= 0;
+ number_of_keywords= 0;
  // The keyword names may be up to 8 characters long and can only contain uppercase letters A to Z, the digits 0 to 9, the hyphen, and the underscore character.
  // https://fits.gsfc.nasa.gov/fits_primer.html
- while ( NULL != fgets( list_of_keywords_to_record[i], 9, filelist_of_keywords_to_record ) ) {
+ // One name per line: the name is the first word, anything after it is a
+ // comment (as with the old reader, which took the first 8 characters).
+ // Empty lines and lines starting with '#' are ignored. The whole line is
+ // read, so a name shorter than 8 characters is not rejected because of its
+ // newline, and the CR of a DOS line end ends the name.
+ while ( NULL != fgets( line_from_list_of_keywords, FLEN_CARD, filelist_of_keywords_to_record ) ) {
+  keyword_name_length= strlen( line_from_list_of_keywords );
+  // Discard the rest of a line that did not fit into the buffer, so it is
+  // not read as another name
+  if ( keyword_name_length > 0 && line_from_list_of_keywords[keyword_name_length - 1] != '\n' ) {
+   character_after_long_line= fgetc( filelist_of_keywords_to_record );
+   while ( character_after_long_line != EOF && character_after_long_line != '\n' ) {
+    character_after_long_line= fgetc( filelist_of_keywords_to_record );
+   }
+  }
+  keyword_name= line_from_list_of_keywords;
+  while ( keyword_name[0] == ' ' || keyword_name[0] == '\t' ) {
+   keyword_name++;
+  }
+  keyword_name_length= 0;
+  while ( keyword_name[keyword_name_length] != '\0' && keyword_name[keyword_name_length] != ' ' && keyword_name[keyword_name_length] != '\t' && keyword_name[keyword_name_length] != '\r' && keyword_name[keyword_name_length] != '\n' ) {
+   keyword_name_length++;
+  }
+  keyword_name[keyword_name_length]= '\0';
+  if ( keyword_name_length == 0 || keyword_name[0] == '#' ) {
+   continue;
+  }
   good_keyword_flag= 1;
-  list_of_keywords_to_record[i][9]= '\0';
-  for ( j= 0; j < strlen( list_of_keywords_to_record[i] ); j++ ) {
-   if ( list_of_keywords_to_record[i][j] >= '0' && list_of_keywords_to_record[i][j] <= '9' )
+  if ( keyword_name_length > 8 ) {
+   good_keyword_flag= 0;
+  }
+  for ( j= 0; good_keyword_flag == 1 && j < keyword_name_length; j++ ) {
+   if ( keyword_name[j] >= '0' && keyword_name[j] <= '9' )
     continue;
-   if ( list_of_keywords_to_record[i][j] >= 'A' && list_of_keywords_to_record[i][j] <= 'Z' )
+   if ( keyword_name[j] >= 'A' && keyword_name[j] <= 'Z' )
     continue;
-   if ( list_of_keywords_to_record[i][j] == '-' )
+   if ( keyword_name[j] == '-' )
     continue;
-   if ( list_of_keywords_to_record[i][j] == '_' )
+   if ( keyword_name[j] == '_' )
     continue;
    good_keyword_flag= 0;
+  }
+  if ( good_keyword_flag != 1 ) {
+   if ( print_list_warnings == 1 ) {
+    fprintf( stderr, "WARNING: ignoring '%s' in vast_list_of_FITS_keywords_to_record_in_lightcurves.txt - a FITS keyword name has 1 to 8 characters A-Z, 0-9, '-' or '_'\n", keyword_name );
+   }
+   continue;
+  }
+  // The list array holds MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC names
+  if ( number_of_keywords == MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC ) {
+   if ( print_list_warnings == 1 ) {
+    fprintf( stderr, "WARNING: vast_list_of_FITS_keywords_to_record_in_lightcurves.txt lists more than %d keywords, only the first %d will be recorded\n", MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC, MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC );
+   }
    break;
   }
-  if ( good_keyword_flag == 1 )
-   i++;
+  strncpy( list_of_keywords_to_record[number_of_keywords], keyword_name, 80 );
+  list_of_keywords_to_record[number_of_keywords][80]= '\0';
+  number_of_keywords++;
  }
  fclose( filelist_of_keywords_to_record );
- number_of_keywords= i;
  // fprintf(stderr,"DEBUG: trying to read %d keywords from %s \n",number_of_keywords,input_image);
  //  Open FITS image
  //  It is supposed to be checked above that this is a readable FITS image, but just in case let's check again
@@ -814,15 +858,34 @@ void record_specified_fits_keywords( char *input_image, char *output_str_with_fi
    status= 0;
    continue;
   }
-  // remove comments
-  for ( j= 0; j < strlen( card ); j++ ) {
-   if ( card[j] == '/' )
+  // Remove the comment: it starts at the first '/' outside a quoted string
+  // value ('NGC 224/M31' keeps its '/'). A quote inside a string is written
+  // twice, which leaves the quoting state unchanged.
+  inside_quoted_string= 0;
+  for ( j= 0; card[j] != '\0'; j++ ) {
+   if ( card[j] == '\'' ) {
+    inside_quoted_string= 1 - inside_quoted_string;
+   } else if ( card[j] == '/' && inside_quoted_string == 0 ) {
     card[j]= '\0';
+    break;
+   }
+  }
+  card_length= strlen( card );
+  while ( card_length > 0 && card[card_length - 1] == ' ' ) {
+   card_length--;
+   card[card_length]= '\0';
   }
   // fprintf(stderr,"-------%s------\n",card);
-  if ( FITS_KEYWORDS_IN_LC_LENGTH < strlen( output_str_with_fits_keywords_to_capture_from_input_images ) + FLEN_CARD ) {
+  output_length= strlen( output_str_with_fits_keywords_to_capture_from_input_images );
+  // Room for a separating space, the card and the terminating NUL
+  if ( FITS_KEYWORDS_IN_LC_LENGTH < output_length + 1 + FLEN_CARD ) {
    fprintf( stderr, "ERROR in record_specified_fits_keywords(): the output string is too long!\n" );
    break;
+  }
+  // A card without a comment ends with its value: separate the cards with a space
+  if ( output_length > 0 ) {
+   output_str_with_fits_keywords_to_capture_from_input_images[output_length]= ' ';
+   output_str_with_fits_keywords_to_capture_from_input_images[output_length + 1]= '\0';
   }
   strncat( output_str_with_fits_keywords_to_capture_from_input_images, card, FLEN_CARD );
  }
@@ -2111,8 +2174,8 @@ int main( int argc, char **argv ) {
    vast_report_memory_error();
    return EXIT_FAILURE;
   }
-  // populate the list of keywords to store
-  record_specified_fits_keywords( input_images[i], str_with_fits_keywords_to_capture_from_input_images[i] );
+  // populate the list of keywords to store (warn about the list only once, not for every image)
+  record_specified_fits_keywords( input_images[i], str_with_fits_keywords_to_capture_from_input_images[i], ( 0 == i ) );
  }
 
  // Num==3, 4, or 5 - is likely the triplet mode for transient detection, we'll skip the usual stupid warnings

@@ -104,6 +104,24 @@ function vizier_is_unreachable {
  [ "$VIZIER_UNREACHABLE" = "yes" ]
 }
 
+######### function to tell whether the online identification can reach VizieR #########
+# VIZIER_UNREACHABLE is about a mirror that serves the Gaia DR2 source table. The online
+# identification (util/search_databases_with_vizquery.sh) does not need that table: it asks
+# 2MASS and the variable star catalogs, which a mirror kept serving while CDS was down
+# (vizier.idia.ac.za, Nov 2026), so it asks lib/choose_vizier_mirror.sh about 2MASS (from the
+# shared record of recent probes; the mirrors are probed only when there is none). The answer
+# is kept in ONLINE_ID_VIZIER_UNREACHABLE for this process.
+function online_id_vizier_is_unreachable {
+ if [ "$ONLINE_ID_VIZIER_UNREACHABLE" != "yes" ] && [ "$ONLINE_ID_VIZIER_UNREACHABLE" != "no" ];then
+  if lib/choose_vizier_mirror.sh 2MASS > /dev/null 2>&1 ;then
+   ONLINE_ID_VIZIER_UNREACHABLE="no"
+  else
+   ONLINE_ID_VIZIER_UNREACHABLE="yes"
+  fi
+ fi
+ [ "$ONLINE_ID_VIZIER_UNREACHABLE" = "yes" ]
+}
+
 
 ######### function to query Gaia DR2 (or a local catalog standing in for it) #########
 # Uses the GAIA_DR2_CLIENT environment variable to select the source of the answer:
@@ -1153,8 +1171,8 @@ if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_A
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
   # The online name lookup asks VizieR about ten catalogs one after another. While CDS was
   # down (Nov 2026) each query waited for its timeout, costing 4-8 min per unidentified
-  # candidate for no answer, so skip the lookup when VizieR is unreachable.
-  if vizier_is_unreachable ;then
+  # candidate for no answer, so skip the lookup when no mirror serves its catalogs.
+  if online_id_vizier_is_unreachable ;then
    # No ' online_id ' with a space on both sides here: util/transients/make_report_in_HTML.sh
    # takes the object name from such a line
    echo "online_id skipped: VizieR is unreachable"
@@ -1198,8 +1216,8 @@ fi
 
 
 echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
-<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
-<a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.u-strasbg.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
+<a href=\"https://simbad.cds.unistra.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
+<a href=\"https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.cds.unistra.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
 # Dispaly SNAD ZTF link only if there is a hope to have ZTF data for this declination
 TEST=$(awk -v a="$DEC_MEAN" -v b="-30" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then

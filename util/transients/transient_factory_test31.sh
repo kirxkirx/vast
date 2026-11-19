@@ -220,8 +220,13 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list.txt"
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # Passing-clouds limits, relaxed in 2026-11 from 0.18 and 0.12: uniform dimming
+  # by thin clouds does not matter for bright transients. On the raw Stas images
+  # the SD ratio follows the transparency change between the two images: 0.70
+  # and 0.30 correspond to about 1.0 and 0.5 mag when the second image is the
+  # fainter one (2.3 and 0.7 mag when it is the brighter one).
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.70
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.30
   FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
   # NMW site coordinates for the airmass computations: never trust SITELAT/SITELONG
@@ -396,6 +401,19 @@ if [ -n "$CAMERA_SETTINGS" ];then
   if [ -z "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" ];then
    DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK="yes"
   fi
+  # Look for new images taken with the observatory roof closed while the camera
+  # kept imaging (no stars, background at the dark-frame level). Such a field is
+  # reported with an "OBSERVATORY ROOF CLOSED" ERROR, and unmw sends an alert.
+  # Export CHECK_FOR_CLOSED_ROOF=no to switch the check off.
+  if [ -z "$CHECK_FOR_CLOSED_ROOF" ];then
+   CHECK_FOR_CLOSED_ROOF="yes"
+  fi
+  # Frames taken with the roof closed show only the read noise (4-7 ADU for these
+  # cameras, the faintest sky gives more than 25 ADU): a starless frame at the dark
+  # level with more noise than this means the dark frame does not match the image.
+  if [ -z "$CLOSED_ROOF_CHECK_MAX_NOISE_ADU" ];then
+   CLOSED_ROOF_CHECK_MAX_NOISE_ADU=15
+  fi
   # This is NOT where the camera is actually located!
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
   export MPC_CODE=V36
@@ -510,6 +528,19 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # checks are unaffected and still guard against genuinely bright frames.
   if [ -z "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" ];then
    DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK="yes"
+  fi
+  # Look for new images taken with the observatory roof closed while the camera
+  # kept imaging (no stars, background at the dark-frame level). Such a field is
+  # reported with an "OBSERVATORY ROOF CLOSED" ERROR, and unmw sends an alert.
+  # Export CHECK_FOR_CLOSED_ROOF=no to switch the check off.
+  if [ -z "$CHECK_FOR_CLOSED_ROOF" ];then
+   CHECK_FOR_CLOSED_ROOF="yes"
+  fi
+  # Frames taken with the roof closed show only the read noise (4-7 ADU for these
+  # cameras, the faintest sky gives more than 25 ADU): a starless frame at the dark
+  # level with more noise than this means the dark frame does not match the image.
+  if [ -z "$CLOSED_ROOF_CHECK_MAX_NOISE_ADU" ];then
+   CLOSED_ROOF_CHECK_MAX_NOISE_ADU=15
   fi
   # This is NOT where the camera is actually located!
   # V36 is the nearest observatory that has an MPC code almost 200 miles away.
@@ -689,6 +720,13 @@ if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ];then
  if [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "YES" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "true" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "True" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "TRUE" ];then
   FPACK_FULLY_CALIBRATED_IMAGE="yes"
   export FPACK_FULLY_CALIBRATED_IMAGE
+ fi
+fi
+
+if [ -n "$CHECK_FOR_CLOSED_ROOF" ];then
+ if [ "$CHECK_FOR_CLOSED_ROOF" = "y" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "Y" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "yes" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "Yes" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "YES" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "true" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "True" ] || [ "$CHECK_FOR_CLOSED_ROOF" = "TRUE" ];then
+  CHECK_FOR_CLOSED_ROOF="yes"
+  export CHECK_FOR_CLOSED_ROOF
  fi
 fi
 
@@ -1046,6 +1084,166 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  return 0
 }
 
+function find_any_dark_frame_of_the_same_size_as_image {
+ # Print the newest dark frame in the directory $2 that has the same size as the image $1.
+ # The closed roof check uses it when util/find_best_dark.sh finds no dark frame matching
+ # the temperature and exposure time of the image: the dark (bias) level hardly depends
+ # on them (a few ADU), while the check needs it only to about 100 ADU.
+ local IMAGE_SIZE_STRING
+ local DARK_FRAME_TO_TEST
+ IMAGE_SIZE_STRING=$(lib/astrometry/get_image_dimentions "$1" 2>/dev/null)
+ if [ -z "$IMAGE_SIZE_STRING" ];then
+  return 1
+ fi
+ # ls -t lists the newest files first
+ ls -t "$2"/ 2>/dev/null | while read -r DARK_FRAME_TO_TEST ;do
+  if [ ! -f "$2/$DARK_FRAME_TO_TEST" ];then
+   continue
+  fi
+  if [ "$(lib/astrometry/get_image_dimentions "$2/$DARK_FRAME_TO_TEST" 2>/dev/null)" = "$IMAGE_SIZE_STRING" ];then
+   echo "$2/$DARK_FRAME_TO_TEST"
+   break
+  fi
+ done
+ return 0
+}
+
+function closed_roof_check_inspect_new_images {
+ # Run util/detect_closed_roof on every new image of the field $FIELD - never on the
+ # reference images, which may be background-subtracted stacks - and log one line per
+ # image. Sets the CLOSED_ROOF_CHECK__N_* counters, CLOSED_ROOF_CHECK__PROBLEM_IMAGES and
+ # CLOSED_ROOF_CHECK__LATEST_{JD,IMAGE,VERDICT} describing the latest image (by the
+ # observing date). Uses NEW_IMAGES, CALIBRATION_STATUS_PREFIX, FIELD, FITS_FILE_EXT,
+ # FITS_FILE_COMPRESSION_POSTFIX and DARK_FRAMES_DIR_OR_FILE of the field loop.
+ local FITS_FILE_TO_CHECK
+ local CLOSED_ROOF_CHECK__DARK
+ local CLOSED_ROOF_CHECK__OUTPUT
+ local CLOSED_ROOF_CHECK__VERDICT
+ local CLOSED_ROOF_CHECK__JD
+ # Optional overrides of the util/detect_closed_roof defaults (validated here, so a bad
+ # value is reported instead of making the tool fail on every image)
+ CLOSED_ROOF_CHECK__OPTIONS=""
+ if [ -n "$CLOSED_ROOF_CHECK_MAX_STARS" ];then
+  if echo "$CLOSED_ROOF_CHECK_MAX_STARS" | grep -q '^[0-9]\{1,9\}$' && [ "$CLOSED_ROOF_CHECK_MAX_STARS" -ge 1 ] 2>/dev/null ;then
+   CLOSED_ROOF_CHECK__OPTIONS="$CLOSED_ROOF_CHECK__OPTIONS -n $CLOSED_ROOF_CHECK_MAX_STARS"
+  else
+   echo "WARNING: ignoring CLOSED_ROOF_CHECK_MAX_STARS=$CLOSED_ROOF_CHECK_MAX_STARS (expecting a positive integer below 1000000000), using the default" | tee -a transient_factory_test31.txt
+  fi
+ fi
+ if [ -n "$CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC" ];then
+  if echo "$CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC" | grep -q -e '^[0-9][0-9]*$' -e '^[0-9][0-9]*[.][0-9]*$' -e '^[.][0-9][0-9]*$' ;then
+   CLOSED_ROOF_CHECK__OPTIONS="$CLOSED_ROOF_CHECK__OPTIONS -r $CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC"
+  else
+   echo "WARNING: ignoring CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC=$CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC (expecting a non-negative number), using the default" | tee -a transient_factory_test31.txt
+  fi
+ fi
+ if [ -n "$CLOSED_ROOF_CHECK_MAX_NOISE_ADU" ];then
+  if echo "$CLOSED_ROOF_CHECK_MAX_NOISE_ADU" | grep -q -e '^[0-9][0-9]*$' -e '^[0-9][0-9]*[.][0-9]*$' -e '^[.][0-9][0-9]*$' ;then
+   CLOSED_ROOF_CHECK__OPTIONS="$CLOSED_ROOF_CHECK__OPTIONS -s $CLOSED_ROOF_CHECK_MAX_NOISE_ADU"
+  else
+   echo "WARNING: ignoring CLOSED_ROOF_CHECK_MAX_NOISE_ADU=$CLOSED_ROOF_CHECK_MAX_NOISE_ADU (expecting a non-negative number), no noise limit" | tee -a transient_factory_test31.txt
+  fi
+ fi
+ CLOSED_ROOF_CHECK__N_NEW=0
+ CLOSED_ROOF_CHECK__N_OK=0
+ CLOSED_ROOF_CHECK__N_CLOSED=0
+ CLOSED_ROOF_CHECK__N_PARTLY_DARK=0
+ CLOSED_ROOF_CHECK__N_NO_STARS=0
+ CLOSED_ROOF_CHECK__NO_STARS_DARK_LEVEL_UNKNOWN=0
+ CLOSED_ROOF_CHECK__PROBLEM_IMAGES=""
+ CLOSED_ROOF_CHECK__LATEST_JD=""
+ CLOSED_ROOF_CHECK__LATEST_IMAGE=""
+ CLOSED_ROOF_CHECK__LATEST_VERDICT=""
+ for FITS_FILE_TO_CHECK in "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
+  if [ ! -f "$FITS_FILE_TO_CHECK" ];then
+   continue
+  fi
+  CLOSED_ROOF_CHECK__N_NEW=$((CLOSED_ROOF_CHECK__N_NEW + 1))
+  # The dark frame matching this image (not needed if the image has been dark-subtracted already)
+  CLOSED_ROOF_CHECK__DARK=""
+  if ! util/listhead "$FITS_FILE_TO_CHECK" 2>/dev/null | grep -q -e 'Dark frame subtraction' -e 'Bias frame subtraction' ;then
+   if [ -f "$DARK_FRAMES_DIR_OR_FILE" ];then
+    CLOSED_ROOF_CHECK__DARK="$DARK_FRAMES_DIR_OR_FILE"
+   elif [ -d "$DARK_FRAMES_DIR_OR_FILE" ];then
+    # Trust the output of util/find_best_dark.sh only if it succeeded (its stdout is the dark frame path)
+    if CLOSED_ROOF_CHECK__DARK=$(DARK_FRAMES_DIR="$DARK_FRAMES_DIR_OR_FILE" util/find_best_dark.sh "$FITS_FILE_TO_CHECK" 2>/dev/null) ;then
+     CLOSED_ROOF_CHECK__DARK=$(echo "$CLOSED_ROOF_CHECK__DARK" | tail -n1)
+    else
+     CLOSED_ROOF_CHECK__DARK=""
+    fi
+    if [ ! -f "$CLOSED_ROOF_CHECK__DARK" ] || [ "$CLOSED_ROOF_CHECK__DARK" = "$FITS_FILE_TO_CHECK" ];then
+     CLOSED_ROOF_CHECK__DARK=$(find_any_dark_frame_of_the_same_size_as_image "$FITS_FILE_TO_CHECK" "$DARK_FRAMES_DIR_OR_FILE")
+     if [ -f "$CLOSED_ROOF_CHECK__DARK" ] && [ "$CLOSED_ROOF_CHECK__DARK" != "$FITS_FILE_TO_CHECK" ];then
+      echo " no dark frame matches the temperature and exposure time of $(basename "$FITS_FILE_TO_CHECK"), using $(basename "$CLOSED_ROOF_CHECK__DARK") of the same size for this check" | tee -a transient_factory_test31.txt
+     else
+      CLOSED_ROOF_CHECK__DARK=""
+     fi
+    fi
+   fi
+  fi
+  # Never compare an image with itself
+  if [ "$CLOSED_ROOF_CHECK__DARK" = "$FITS_FILE_TO_CHECK" ];then
+   CLOSED_ROOF_CHECK__DARK=""
+  fi
+  if [ -n "$CLOSED_ROOF_CHECK__DARK" ];then
+   CLOSED_ROOF_CHECK__OUTPUT=$(util/detect_closed_roof $CLOSED_ROOF_CHECK__OPTIONS "$FITS_FILE_TO_CHECK" "$CLOSED_ROOF_CHECK__DARK" 2>/dev/null | head -n1)
+  else
+   CLOSED_ROOF_CHECK__OUTPUT=$(util/detect_closed_roof $CLOSED_ROOF_CHECK__OPTIONS "$FITS_FILE_TO_CHECK" 2>/dev/null | head -n1)
+  fi
+  CLOSED_ROOF_CHECK__VERDICT=$(echo "$CLOSED_ROOF_CHECK__OUTPUT" | awk '{print $1}')
+  case "$CLOSED_ROOF_CHECK__VERDICT" in
+   CLOSED_ROOF)
+    CLOSED_ROOF_CHECK__N_CLOSED=$((CLOSED_ROOF_CHECK__N_CLOSED + 1))
+    CLOSED_ROOF_CHECK__PROBLEM_IMAGES="$CLOSED_ROOF_CHECK__PROBLEM_IMAGES $(basename "$FITS_FILE_TO_CHECK")"
+    ;;
+   PARTLY_DARK)
+    CLOSED_ROOF_CHECK__N_PARTLY_DARK=$((CLOSED_ROOF_CHECK__N_PARTLY_DARK + 1))
+    CLOSED_ROOF_CHECK__PROBLEM_IMAGES="$CLOSED_ROOF_CHECK__PROBLEM_IMAGES $(basename "$FITS_FILE_TO_CHECK")"
+    ;;
+   NO_STARS)
+    CLOSED_ROOF_CHECK__N_NO_STARS=$((CLOSED_ROOF_CHECK__N_NO_STARS + 1))
+    CLOSED_ROOF_CHECK__PROBLEM_IMAGES="$CLOSED_ROOF_CHECK__PROBLEM_IMAGES $(basename "$FITS_FILE_TO_CHECK")"
+    # zero_level=none: no dark frame; zero_level=mismatch: the dark frame does not match the image
+    if echo "$CLOSED_ROOF_CHECK__OUTPUT" | grep -q -e ' zero_level=none ' -e ' zero_level=mismatch ' ;then
+     CLOSED_ROOF_CHECK__NO_STARS_DARK_LEVEL_UNKNOWN=1
+    fi
+    ;;
+   OK)
+    CLOSED_ROOF_CHECK__N_OK=$((CLOSED_ROOF_CHECK__N_OK + 1))
+    ;;
+   *)
+    # The tool failed on this image - do not reject the image because of that
+    CLOSED_ROOF_CHECK__VERDICT="UNKNOWN"
+    CLOSED_ROOF_CHECK__OUTPUT="UNKNOWN (cannot check) image=$(basename "$FITS_FILE_TO_CHECK")"
+    CLOSED_ROOF_CHECK__N_OK=$((CLOSED_ROOF_CHECK__N_OK + 1))
+    ;;
+  esac
+  echo " $CLOSED_ROOF_CHECK__OUTPUT" | tee -a transient_factory_test31.txt
+  # Remember the latest image (by the observing date)
+  CLOSED_ROOF_CHECK__JD=$(util/get_image_date "$FITS_FILE_TO_CHECK" 2>/dev/null | awk '$1 == "JD" {print $2; exit}')
+  if [ -z "$CLOSED_ROOF_CHECK__LATEST_IMAGE" ] || awk -v jd="$CLOSED_ROOF_CHECK__JD" -v latest="$CLOSED_ROOF_CHECK__LATEST_JD" 'BEGIN {if (jd + 0 > latest + 0) exit 0; exit 1}' ;then
+   CLOSED_ROOF_CHECK__LATEST_JD="$CLOSED_ROOF_CHECK__JD"
+   CLOSED_ROOF_CHECK__LATEST_IMAGE="$FITS_FILE_TO_CHECK"
+   CLOSED_ROOF_CHECK__LATEST_VERDICT="$CLOSED_ROOF_CHECK__VERDICT"
+  fi
+ done
+ CLOSED_ROOF_CHECK__N_PROBLEM=$((CLOSED_ROOF_CHECK__N_CLOSED + CLOSED_ROOF_CHECK__N_PARTLY_DARK + CLOSED_ROOF_CHECK__N_NO_STARS))
+ return 0
+}
+
+function closed_roof_check_report_closed_roof {
+ # The latest new image of the field was taken with the roof closed. The banner in
+ # transient_factory.log becomes the first ERROR line of the report, and every banner
+ # has its ERROR line in transient_factory_test31.txt. The phrase "OBSERVATORY ROOF
+ # CLOSED" is a contract with unmw, which sends an alert: these two lines are the only
+ # messages that may contain it.
+ print_image_date_for_logs_in_case_of_emergency_stop "$CLOSED_ROOF_CHECK__LATEST_IMAGE" >> transient_factory_test31.txt
+ echo "***** ACTION NEEDED - OBSERVATORY ROOF CLOSED? *****   IMAGE PROCESSING ERROR (no stars and no sky light on the latest new image - camera ${CAMERA_SETTINGS:-unknown} keeps imaging with the roof closed) " >> transient_factory.log
+ echo "###################################################################################" >> transient_factory.log
+ echo "ERROR: OBSERVATORY ROOF CLOSED? No stars and no sky light on the latest new image $(basename "$CLOSED_ROOF_CHECK__LATEST_IMAGE") of the field $FIELD (camera ${CAMERA_SETTINGS:-unknown}, $CLOSED_ROOF_CHECK__N_CLOSED of $CLOSED_ROOF_CHECK__N_NEW new images are dark)" | tee -a transient_factory_test31.txt
+ return 0
+}
+
 function report_second_epoch_image_altaz {
  # Report the header altitude and azimuth of each new image, independently.
  # CENTALT/CENTAZ take precedence over OBJCTALT/OBJCTAZ; azimuth is degrees
@@ -1140,6 +1338,178 @@ END {
    esac
   done
  done
+ return 0
+}
+
+function choose_second_epoch_pair_for_passing_clouds_check {
+ # Called when there are more than two second-epoch images, after the
+ # preliminary VaST run has picked the pair with the best seeing
+ # (SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE) and before that
+ # pair is written to the log. If the SD ratio of the pair fails the soft
+ # passing-clouds limit (the hard one when there is no soft limit), another
+ # pair of the images that passed the preliminary run may replace it: the pair
+ # with the best seeing (smallest sum of the two aperture sizes, the later pair
+ # on a tie) among those under the soft limit or, when the best-seeing pair
+ # also fails the hard limit, among those under the hard limit. A replacement
+ # pair has to pass the checks the chosen pair goes through below: the
+ # elongation (tracking error) check on both images, the bright background
+ # checks on the first image, the hard SD ratio limit and, if
+ # FILTER_BAD_IMG__MAX_FWHM_PIX is set, the FWHM limit on both images (measured
+ # here on the preliminary-run catalogs, which come from the same bright-star
+ # SExtractor settings as the catalogs that limit is checked on after the main
+ # VaST run). Without one, the best-seeing pair is kept and the checks below
+ # treat it as before. Nothing changes either when those checks would not run
+ # (no measurable mean value of the reference image or of the first image).
+ # Formerly a field was rejected whenever the best-seeing pair failed the hard
+ # limit, even if another pair of its images was fine: thin clouds over one
+ # image, an aircraft trail or a pointing jump between two images was enough.
+ # Set DISABLE_SECOND_EPOCH_PAIR_FALLBACK=yes to always keep the best-seeing pair.
+ # The SECOND_EPOCH__FIRST_IMAGE= and SECOND_EPOCH__SECOND_IMAGE= lines are
+ # written after this choice, so they name the pair that is actually used:
+ # the unmw summary takes the FWHM column from the first such lines.
+ local SECOND_EPOCH_IMAGE_TABLE
+ local IMAGE_AP
+ local IMAGE_JD
+ local IMAGE_PATH
+ local IMAGE_STATS
+ local IMAGE_MEAN
+ local IMAGE_SD
+ local IMAGE_CATALOG
+ local IMAGE_ELONGATION
+ local IMAGE_FWHM
+ local REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE
+ local MAX_MEAN_RATIO_FOR_PAIR_CHOICE
+ local PAIR_CHOICE
+ local PAIR_CHOICE_ACTION
+ local BEST_SEEING_PAIR_SD_RATIO
+ local FAILED_LIMIT
+ local SD_RATIO_LIMITS
+ local NEW_PAIR_SD_RATIO
+ local NEW_FIRST_IMAGE
+ local NEW_SECOND_IMAGE
+ if [ "$DISABLE_SECOND_EPOCH_PAIR_FALLBACK" = "yes" ];then
+  return 0
+ fi
+ # The passing-clouds checks run only when MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is set
+ if [ -z "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] || [ -z "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
+  return 0
+ fi
+ if [ ! -s vast_image_details.log ] || [ -z "$SECOND_EPOCH__FIRST_IMAGE" ] || [ -z "$SECOND_EPOCH__SECOND_IMAGE" ] || [ -z "$REFERENCE_EPOCH__FIRST_IMAGE" ];then
+  return 0
+ fi
+ # The bright background and passing-clouds checks below are all skipped when
+ # the mean value of the reference image cannot be measured
+ REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" 2> /dev/null | grep ' MEAN= ' | awk '{print $2}')
+ if [ -z "$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" ];then
+  return 0
+ fi
+ MAX_MEAN_RATIO_FOR_PAIR_CHOICE="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO"
+ if [ "$DISABLE_NEW_TO_REF_MEAN_IMG_RATIO_CHECK" = "yes" ];then
+  MAX_MEAN_RATIO_FOR_PAIR_CHOICE=""
+ fi
+ # One line per image that passed the preliminary run, with the same selection
+ # as above: aperture JD mean SD elongation FWHM image ('-' for what could not
+ # be measured; the FWHM only when FILTER_BAD_IMG__MAX_FWHM_PIX is set)
+ SECOND_EPOCH_IMAGE_TABLE=$(grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' vast_image_details.log | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print $9, $7, $17}' | while read -r IMAGE_AP IMAGE_JD IMAGE_PATH ;do
+  IMAGE_STATS=$(util/imstat_vast_fast "$IMAGE_PATH" 2> /dev/null)
+  IMAGE_MEAN=$(echo "$IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  IMAGE_SD=$(echo "$IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  # median (A-B) of the sources in the preliminary-run catalog, as in the
+  # elongation check below, and the median FWHM of its isolated stars, as in
+  # the FWHM check after the main VaST run
+  IMAGE_ELONGATION=""
+  IMAGE_FWHM=""
+  IMAGE_CATALOG=$(grep -F "$IMAGE_PATH" vast_images_catalogs.log 2> /dev/null | awk '{print $1}' | head -n1)
+  if [ -n "$IMAGE_CATALOG" ] && [ -s "$IMAGE_CATALOG" ];then
+   IMAGE_ELONGATION=$(awk '{print $18-$20}' "$IMAGE_CATALOG" | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
+   if [ -n "$FILTER_BAD_IMG__MAX_FWHM_PIX" ];then
+    IMAGE_FWHM=$(awk '{if( $22 < 2 && $23 > 0 ) print $23}' "$IMAGE_CATALOG" | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%.1f", $2}')
+   fi
+  fi
+  echo "$IMAGE_AP $IMAGE_JD ${IMAGE_MEAN:--} ${IMAGE_SD:--} ${IMAGE_ELONGATION:--} ${IMAGE_FWHM:--} $IMAGE_PATH"
+ done)
+ # Prints nothing when the best-seeing pair passes, else
+ # 'keep <SD ratio of the best-seeing pair> <soft|hard: the limit it fails>' or
+ # 'switch <SD ratio of the best-seeing pair> <SD ratio of the new pair> <first image> <second image>'
+ PAIR_CHOICE=$(echo "$SECOND_EPOCH_IMAGE_TABLE" | awk -v first="$SECOND_EPOCH__FIRST_IMAGE" -v second="$SECOND_EPOCH__SECOND_IMAGE" -v hard="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" -v soft="$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" -v max_elongation="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" -v max_fwhm="$FILTER_BAD_IMG__MAX_FWHM_PIX" -v max_mean="$MAX_NEW_IMG_MEAN_VALUE" -v max_mean_ratio="$MAX_MEAN_RATIO_FOR_PAIR_CHOICE" -v ref_mean="$REFERENCE_IMAGE_MEAN_FOR_PAIR_CHOICE" '
+# |SD(i1) - SD(i2)| / SD(i2) as the passing-clouds check computes it, -1 if undefined
+function sd_ratio(i1, i2) {
+ if ( sd[i1] == "-" || sd[i2] == "-" || sd[i2] + 0 == 0 ) return -1
+ return ( sd[i1] + 0 > sd[i2] + 0 ? sd[i1] - sd[i2] : sd[i2] - sd[i1] ) / sd[i2]
+}
+NF >= 7 {
+ n++
+ ap[n] = $1; jd[n] = $2; mean[n] = $3; sd[n] = $4; elongation[n] = $5; fwhm[n] = $6; image[n] = $7
+ if ( $7 == first ) best_seeing_first = n
+ if ( $7 == second ) best_seeing_second = n
+}
+END {
+ if ( best_seeing_first == "" || best_seeing_second == "" ) exit
+ # without the mean value of the first image the checks below are skipped
+ if ( mean[best_seeing_first] == "-" ) exit
+ r0 = sd_ratio(best_seeing_first, best_seeing_second)
+ # an undefined ratio is skipped by the check below as well
+ if ( r0 < 0 ) exit
+ hard_limit = hard + 0
+ have_soft_limit = ( soft != "" )
+ soft_limit = soft + 0
+ if ( r0 < ( have_soft_limit ? soft_limit : hard_limit ) ) exit
+ found = 0
+ for ( i = 1; i <= n; i++ ) {
+  for ( j = i + 1; j <= n; j++ ) {
+   if ( ( i == best_seeing_first && j == best_seeing_second ) || ( i == best_seeing_second && j == best_seeing_first ) ) continue
+   # the image with the better seeing first, the earlier one on a tie
+   a = i; b = j
+   if ( ap[j] + 0 < ap[i] + 0 || ( ap[j] + 0 == ap[i] + 0 && jd[j] + 0 < jd[i] + 0 ) ) { a = j; b = i }
+   if ( mean[a] == "-" || elongation[a] == "-" || elongation[b] == "-" ) continue
+   if ( max_elongation != "" && ( elongation[a] + 0 > max_elongation + 0 || elongation[b] + 0 > max_elongation + 0 ) ) continue
+   # an unmeasured FWHM is not checked after the main VaST run either
+   if ( max_fwhm != "" && ( ( fwhm[a] != "-" && fwhm[a] + 0 > max_fwhm + 0 ) || ( fwhm[b] != "-" && fwhm[b] + 0 > max_fwhm + 0 ) ) ) continue
+   if ( max_mean != "" && mean[a] + 0 > max_mean + 0 ) continue
+   if ( max_mean_ratio != "" && mean[a] + 0 > max_mean_ratio * ref_mean ) continue
+   r = sd_ratio(a, b)
+   if ( r < 0 || r >= hard_limit ) continue
+   tier = ( have_soft_limit && r < soft_limit ) ? 0 : 1
+   # rounded, so that equal sums of the 0.1 pix aperture sizes compare equal
+   sum_ap = sprintf("%.2f", ap[a] + ap[b]) + 0
+   sum_jd = jd[a] + jd[b]
+   if ( found == 0 || tier < best_tier || ( tier == best_tier && ( sum_ap < best_sum_ap || ( sum_ap == best_sum_ap && sum_jd > best_sum_jd ) ) ) ) {
+    found = 1; best_tier = tier; best_sum_ap = sum_ap; best_sum_jd = sum_jd; best_a = a; best_b = b; best_r = r
+   }
+  }
+ }
+ # A pair over the soft limit replaces the best-seeing one only if that one fails the hard limit
+ if ( found == 0 || ( best_tier == 1 && r0 < hard_limit ) ) {
+  printf "keep %.3f %s\n", r0, ( r0 < hard_limit ? "soft" : "hard" )
+  exit
+ }
+ printf "switch %.3f %.3f %s %s\n", r0, best_r, image[best_a], image[best_b]
+}')
+ if [ -z "$PAIR_CHOICE" ];then
+  return 0
+ fi
+ PAIR_CHOICE_ACTION=$(echo "$PAIR_CHOICE" | awk '{print $1}')
+ BEST_SEEING_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $2}')
+ if [ "$PAIR_CHOICE_ACTION" = "switch" ];then
+  NEW_PAIR_SD_RATIO=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+  NEW_FIRST_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $4}')
+  NEW_SECOND_IMAGE=$(echo "$PAIR_CHOICE" | awk '{print $5}')
+  if [ -z "$NEW_FIRST_IMAGE" ] || [ -z "$NEW_SECOND_IMAGE" ];then
+   return 0
+  fi
+  if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ];then
+   SD_RATIO_LIMITS="soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  else
+   SD_RATIO_LIMITS="hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS"
+  fi
+  # No 'ERROR' in this line: the unmw summary marks every field whose log has one as failed
+  echo "WARNING: passing clouds on the second-epoch images with the best seeing $(basename "$SECOND_EPOCH__FIRST_IMAGE") $(basename "$SECOND_EPOCH__SECOND_IMAGE") (SD ratio=$BEST_SEEING_PAIR_SD_RATIO $SD_RATIO_LIMITS), using $(basename "$NEW_FIRST_IMAGE") $(basename "$NEW_SECOND_IMAGE") (SD ratio=$NEW_PAIR_SD_RATIO) instead" | tee -a transient_factory_test31.txt
+  SECOND_EPOCH__FIRST_IMAGE="$NEW_FIRST_IMAGE"
+  SECOND_EPOCH__SECOND_IMAGE="$NEW_SECOND_IMAGE"
+  return 0
+ fi
+ FAILED_LIMIT=$(echo "$PAIR_CHOICE" | awk '{print $3}')
+ echo "INFO: keeping the second-epoch images with the best seeing (SD ratio=$BEST_SEEING_PAIR_SD_RATIO): no other pair of them passes the $FAILED_LIMIT passing-clouds limit" | tee -a transient_factory_test31.txt
  return 0
 }
 
@@ -2033,6 +2403,10 @@ AAVSO_COMMENT_STRING= $AAVSO_COMMENT_STRING
 ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC= $ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC
 BAD_REGION_FILE= $BAD_REGION_FILE
 CAMERA_SETTINGS= $CAMERA_SETTINGS
+CHECK_FOR_CLOSED_ROOF= $CHECK_FOR_CLOSED_ROOF
+CLOSED_ROOF_CHECK_MAX_STARS= $CLOSED_ROOF_CHECK_MAX_STARS
+CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC= $CLOSED_ROOF_CHECK_MAX_SKY_ADU_PER_SEC
+CLOSED_ROOF_CHECK_MAX_NOISE_ADU= $CLOSED_ROOF_CHECK_MAX_NOISE_ADU
 CHECK_POINTING_ACCURACY= $CHECK_POINTING_ACCURACY
 DARK_FRAMES_DIR_OR_FILE= $DARK_FRAMES_DIR_OR_FILE
 EXCLUSION_LIST= $EXCLUSION_LIST
@@ -2764,6 +3138,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # check if all images are actually there
  N=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | wc -l)
  if [ $N -lt 2 ];then
+  # The roof may also close while a field without reference images is imaged: report
+  # that (unmw then sends its alert) instead of the missing reference images
+  if [ "$CHECK_FOR_CLOSED_ROOF" = "yes" ] && [ -x util/detect_closed_roof ];then
+   echo "Closed roof check of the new images:" | tee -a transient_factory_test31.txt
+   closed_roof_check_inspect_new_images
+   if [ "$CLOSED_ROOF_CHECK__LATEST_VERDICT" = "CLOSED_ROOF" ];then
+    closed_roof_check_report_closed_roof
+    continue
+   fi
+  fi
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR: too few refereence images for the field $FIELD" | tee -a transient_factory_test31.txt
@@ -2930,6 +3314,51 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  fi # if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ]; then
  #
+ # Closed roof check: look for new images taken with the observatory roof (dome)
+ # closed - the camera control software may not know that the roof is closed and
+ # keep imaging. util/detect_closed_roof counts star-like peaks and compares the
+ # image background with the matching dark frame. Only the new (second-epoch)
+ # images are checked: the reference images may be background-subtracted stacks.
+ # The "OBSERVATORY ROOF CLOSED" ERROR is a contract with unmw (it sends an alert):
+ # it is written only when the latest new image of the field was taken with the
+ # roof closed, and no other message may contain this phrase.
+ if [ "$CHECK_FOR_CLOSED_ROOF" = "yes" ] && [ ! -x util/detect_closed_roof ];then
+  # e.g. the code was updated without running make
+  echo "WARNING: CHECK_FOR_CLOSED_ROOF=yes, but util/detect_closed_roof is not built - run make to enable the closed roof check" | tee -a transient_factory_test31.txt
+ fi
+ if [ "$CHECK_FOR_CLOSED_ROOF" = "yes" ] && [ -x util/detect_closed_roof ];then
+  echo "Closed roof check of the new images:" | tee -a transient_factory_test31.txt
+  closed_roof_check_inspect_new_images
+  if [ "$CLOSED_ROOF_CHECK__LATEST_VERDICT" = "CLOSED_ROOF" ];then
+   # The roof is closed now: this is the case unmw sends an alert for
+   closed_roof_check_report_closed_roof
+   continue
+  fi
+  if [ $CLOSED_ROOF_CHECK__N_PROBLEM -gt 0 ] && [ $CLOSED_ROOF_CHECK__N_OK -lt 2 ];then
+   # Fewer than two usable new images: the field cannot be processed
+   print_image_date_for_logs_in_case_of_emergency_stop "$CLOSED_ROOF_CHECK__LATEST_IMAGE" >> transient_factory_test31.txt
+   if [ $CLOSED_ROOF_CHECK__N_CLOSED -gt 0 ];then
+    echo "***** IMAGE PROCESSING ERROR (no stars and no sky light on $CLOSED_ROOF_CHECK__N_CLOSED of $CLOSED_ROOF_CHECK__N_NEW new images, but not on the latest one - was the roof opening?) *****" >> transient_factory.log
+    echo "ERROR: no stars and no sky light on $CLOSED_ROOF_CHECK__N_CLOSED of $CLOSED_ROOF_CHECK__N_NEW new images of the field $FIELD, but the latest image $(basename "$CLOSED_ROOF_CHECK__LATEST_IMAGE") is not dark (was the roof opening during the image series?):$CLOSED_ROOF_CHECK__PROBLEM_IMAGES" | tee -a transient_factory_test31.txt
+   elif [ $CLOSED_ROOF_CHECK__N_PARTLY_DARK -gt 0 ];then
+    echo "***** IMAGE PROCESSING ERROR (a part of the field of view gets no sky light on $CLOSED_ROOF_CHECK__N_PARTLY_DARK of $CLOSED_ROOF_CHECK__N_NEW new images - roof partly closed or moving? obstruction?) *****" >> transient_factory.log
+    echo "ERROR: a part of the field of view gets no sky light on $CLOSED_ROOF_CHECK__N_PARTLY_DARK of $CLOSED_ROOF_CHECK__N_NEW new images of the field $FIELD (roof partly closed or moving? obstruction?):$CLOSED_ROOF_CHECK__PROBLEM_IMAGES" | tee -a transient_factory_test31.txt
+   elif [ $CLOSED_ROOF_CHECK__NO_STARS_DARK_LEVEL_UNKNOWN -eq 1 ];then
+    echo "***** IMAGE PROCESSING ERROR (no stars on $CLOSED_ROOF_CHECK__N_NO_STARS of $CLOSED_ROOF_CHECK__N_NEW new images - closed roof or thick clouds? no matching dark frame to tell) *****" >> transient_factory.log
+    echo "ERROR: no stars on $CLOSED_ROOF_CHECK__N_NO_STARS of $CLOSED_ROOF_CHECK__N_NEW new images of the field $FIELD (closed roof or thick clouds? there is no matching dark frame to tell them apart):$CLOSED_ROOF_CHECK__PROBLEM_IMAGES" | tee -a transient_factory_test31.txt
+   else
+    echo "***** IMAGE PROCESSING ERROR (no stars on $CLOSED_ROOF_CHECK__N_NO_STARS of $CLOSED_ROOF_CHECK__N_NEW new images while the sky background is bright - thick clouds? fog? dew? light inside the dome?) *****" >> transient_factory.log
+    echo "ERROR: no stars on $CLOSED_ROOF_CHECK__N_NO_STARS of $CLOSED_ROOF_CHECK__N_NEW new images of the field $FIELD while the background is well above the dark level (thick clouds? fog? dew? light inside the dome?):$CLOSED_ROOF_CHECK__PROBLEM_IMAGES" | tee -a transient_factory_test31.txt
+   fi
+   echo "###################################################################################" >> transient_factory.log
+   continue
+  fi
+  if [ $CLOSED_ROOF_CHECK__N_PROBLEM -gt 0 ];then
+   echo "WARNING: no stars, or a part of the field of view gets no sky light, on $CLOSED_ROOF_CHECK__N_PROBLEM of $CLOSED_ROOF_CHECK__N_NEW new images of the field $FIELD:$CLOSED_ROOF_CHECK__PROBLEM_IMAGES" | tee -a transient_factory_test31.txt
+  fi
+  echo "closed-roof-check OK" | tee -a transient_factory_test31.txt
+ fi # if [ "$CHECK_FOR_CLOSED_ROOF" = "yes" ] && [ -x util/detect_closed_roof ];then
+ #
  # $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 is handled above
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
   SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | head -n1)
@@ -3041,12 +3470,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    # Take the last image as SECOND_EPOCH__SECOND_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   else
    # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
    echo "INFO: selecting two second-epoch images with best seeing (using aperture size as a proxy for seeing)" | tee -a transient_factory_test31.txt
@@ -3055,11 +3482,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
    SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
    SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
-   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   fi
   # Make sure SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE are set
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
@@ -3077,6 +3502,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
   fi
+  # If the brightness of the two images differs too much (the passing-clouds
+  # check below), another pair of the second-epoch images may replace them
+  choose_second_epoch_pair_for_passing_clouds_check
+  echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+  echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   ###
   # Check for elliptical star images (tracking error)
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=$(grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}')

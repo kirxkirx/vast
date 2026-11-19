@@ -36,7 +36,7 @@ SKIP_LINK_PATTERNS = (
     "cbat.eps.harvard.edu/tocp_report",
     "wis-tns.weizmann.ac.il",
     "wis-tns.org",
-    "aladin.u-strasbg.fr/AladinLite/",
+    "aladin.cds.unistra.fr/AladinLite/",
     "www.projectpluto.com/sat_id2.htm",
     "minorplanetcenter.net/cgi-bin/checkneocmt.cgi",
     "www.astrouw.edu.pl",
@@ -46,6 +46,9 @@ SKIP_LINK_PATTERNS = (
 # Links that are known to be flaky - failures are logged as warnings, not errors
 FLAKY_LINK_PATTERNS = (
     "minorplanetcenter.net",
+    # CDS (SIMBAD, VizieR) can be down for days: in November 2026 it answered
+    # every query with its 'Page unavailable' page (HTTP 404)
+    "cds.unistra.fr",
 )
 
 # Links already tested in selenium_NMW_V615Vul_test.py - skip here to avoid

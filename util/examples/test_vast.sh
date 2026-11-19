@@ -508,7 +508,6 @@ function test_https_connection() {
 
 
  # the following will not work at legacy systems that will try to connect via the disallowed SSLv3
- #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
  curl --max-time 10 --silent https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
@@ -525,7 +524,6 @@ function test_https_connection() {
     return 2
    fi
   fi
-  #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
   curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
    echo "ERROR in test_https_connection(): cannot connect to https://kirx.net"
@@ -582,7 +580,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../SIP_refit_policy_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ../NMW_calibration_lacosmic_test ../NMW-STL__find_Neptune_lacosmic_test ../NMW-STL__RefFrameMatchFail_lacosmic_test ../NMW-STL__STL-11000M__find_huge_comet_lacosmic_test ../NMW-STL__plate_solve_failure_lacosmic_test ../NMW-STL__NovaOph24N1_lacosmic_test ../NMW-TexasTech__Aur-02-Q2b1x1 ../NMW-TexasTech__Cas-04_platesolve_failure_test ../NMW-TexasTech__Aql-03-Q1b1x1_test ../NMW-TexasTech__Cas02_RA0_plate_solve_test ../NMW-TexasTech__Cas-04-Q2b1x1_TANonly_platesolve_test ../NMW-TexasTech__Cyg-05-Q1b1x1_SIP_settle_test ../NMW-TexasTech__Her-09-Q1b1x1_small_radius_test ../NMW-TexasTech__Her-09-Q1b1x1_valid_sip_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_test ../NMW-TexasTech__Sgr-04-Q1b1x1_nova_calibrated_test ../NMW-TexasTech__closed_roof_test ../SIP_refit_policy_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -664,16 +662,50 @@ function single_internet_connection_probe() {
   return 0
  fi
 
- # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
- # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
- VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1
- if [ $? -ne 0 ];then
-  echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
-  echo "ERROR in test_internet_connection(): cannot connect to VizieR"
-  return 1
- fi
+ # A VizieR outage is recorded, it does not make the check fail (see below)
+ probe_vizier_for_test_run
 
  return 0
+}
+
+# Since 2026-11-03 VizieR has been unreachable for days at a time: CDS drops the
+# connections and the mirrors that answer serve only some catalogs. The test run used to
+# stop at the first internet check whenever no VizieR mirror served Gaia DR2, before running
+# a single section (2026-11-09: 'still offline after 4 probe attempts' after 8 minutes).
+# Most of VaST no longer needs VizieR (the known-star check reads a local Gaia DR2 copy or
+# asks the ESA archive, plate solving asks our UCAC5 servers), so a VizieR outage is now
+# recorded under the informational code VIZIER_UNAVAILABLE and the run goes on; the sections
+# that still need VizieR fail on their own, which shows what the outage breaks. Only an
+# unreachable tau.kirx.net and scan.sai.msu.ru stops the run. A failed probe takes over two
+# minutes (137 s on 2026-11-09) and the check runs before dozens of sections, so after a
+# failure VizieR is probed again only once an hour.
+VIZIER_TEST_PROBE_UNIXSEC=""
+VIZIER_TEST_PROBE_RESULT=""
+function record_vizier_unavailable() {
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  if ! echo " $FAILED_TEST_CODES " | grep -q ' VIZIER_UNAVAILABLE ' ;then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZIER_UNAVAILABLE"
+  fi
+ fi
+}
+function probe_vizier_for_test_run() {
+ local now_unixsec
+ now_unixsec=$(date +%s)
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ] && [ -n "$VIZIER_TEST_PROBE_UNIXSEC" ] && [ $(( now_unixsec - VIZIER_TEST_PROBE_UNIXSEC )) -lt 3600 ];then
+  return 1
+ fi
+ VIZIER_TEST_PROBE_UNIXSEC="$now_unixsec"
+ # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
+ # VIZIER_MIRROR_RECORD=no: really probe, do not reuse the shared record of a recent probe
+ if VIZIER_MIRROR_RECORD=no lib/choose_vizier_mirror.sh 2>&1 ;then
+  VIZIER_TEST_PROBE_RESULT="available"
+  return 0
+ fi
+ VIZIER_TEST_PROBE_RESULT="unavailable"
+ echo "$(date "+%Y-%m-%dT%H:%M:%S") VizieR mirror probe failed (all mirrors)" >> "${WORKDIR:-.}/vast_test_internet_probe_failures.log"
+ echo "WARNING in test_internet_connection(): cannot connect to VizieR - continuing, the sections that need VizieR will fail (VIZIER_UNAVAILABLE)"
+ record_vizier_unavailable
+ return 1
 }
 
 function test_internet_connection() {
@@ -1030,6 +1062,8 @@ echo "
 ##### Set initial values for the variables #####
 DEBUG_OUTPUT=""
 FAILED_TEST_CODES=""
+# keep a VizieR outage found by the internet check at the start of the run
+record_vizier_unavailable
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
 VAST_BUILD_NUMBER=`cat .cc.build`
@@ -1699,6 +1733,50 @@ else
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
 
+##### Lightcurve metadata test #####
+# util/examples/test_lightcurve_metadata.py checks that SE_FLAGS=N and other
+# per-measurement metadata survive the tools that rewrite lightcurves, and that
+# the transient report table keeps the format its parsers expect. It needs
+# python3 >= 3.7 (standard library only) and a C compiler. If one of them is
+# missing the test is skipped (NOT_PERFORMED_LCMETADATA_*, not a failure).
+LCMETADATA_SKIP_REASON=""
+if ! command -v python3 &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopython3"
+elif ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="oldpython3"
+elif ! python3 -c 'import os, pathlib, re, shutil, subprocess, tempfile' &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nopythonmodules"
+elif ! command -v cc &> /dev/null && ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null ;then
+ LCMETADATA_SKIP_REASON="nocompiler"
+fi
+if [ -z "$LCMETADATA_SKIP_REASON" ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Lightcurve metadata test "
+ echo -n "Lightcurve metadata test: " >> vast_test_report.txt
+ LCMETADATA_OUTPUT=$(python3 util/examples/test_lightcurve_metadata.py "$PWD" 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LCMETADATA001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LCMETADATA001 ######
+$LCMETADATA_OUTPUT"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mLightcurve metadata test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ echo "Lightcurve metadata test: NOT PERFORMED ($LCMETADATA_SKIP_REASON)" | tee -a vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_LCMETADATA_$LCMETADATA_SKIP_REASON"
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+
 ########## remove bad regions file
 echo "Flusing bad_region.lst"
 if [ -f bad_region.lst ];then
@@ -1856,7 +1934,18 @@ remove_test_data_to_save_space
 
 
 ### Enable this test only for GitHub Actions where internet connection is sure to be very fast
-if [ "$GITHUB_ACTIONS" == "true" ];then
+# A VizieR outage must not end the whole run (see test_internet_connection() above). This test
+# called fail_early when its UCAC5 query got no complete reply, which stopped every CI system
+# test 14 minutes in while CDS was down (2026-11-09..11: CDS answered with a 'Page unavailable'
+# page, and vizier.idia.ac.za, which serves UCAC5, gives no catalog values to this query, which
+# names eight of the UCAC5 columns). When the internet check has already found VizieR
+# unavailable, the test is not performed and the outage is recorded under its own
+# informational code instead.
+if [ "$GITHUB_ACTIONS" == "true" ] && [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+ echo "vizquery test: NOT PERFORMED (VizieR unavailable)" >> vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_VIZIER_UNAVAILABLE"
+fi
+if [ "$GITHUB_ACTIONS" == "true" ] && [ "$VIZIER_TEST_PROBE_RESULT" != "unavailable" ];then
 
 #### vizquery test
 THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -2426,7 +2515,7 @@ fi
 lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep -q 'ASASSN-V J150207.95-450307.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020b"
 fi
 
 
@@ -2536,11 +2625,19 @@ if [ $? -ne 0 ];then
 fi
 rm -rf "$DUALMATCH_SANDBOX"
 
-# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
+# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names.
+# That is a search over all VizieR catalogs, which only the main CDS site can answer: a mirror
+# holds some catalogs only (vizier.idia.ac.za, which the identification used while CDS was down
+# in Nov 2026, does not list this star). When the internet check found no VizieR site serving
+# Gaia DR2 (VIZIER_UNAVAILABLE), a failure here is recorded under its own informational code.
 util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep -q 'may be a known variable'
 if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ if [ "$VIZIER_TEST_PROBE_RESULT" = "unavailable" ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE"
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+ fi
 fi
 
 # No false ID with Gaia DR2 high-amplitude variable
@@ -3191,7 +3288,7 @@ $GREP_RESULT"
    lib/remove_lightcurves_with_small_number_of_points 40
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_remove_lightcurves_with_small_number_of_points_exit_code"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_remove_lightcurves_with_small_number_of_points_exit_code"
    fi
    util/nopgplot.sh
    # Find star with the largest sigma in this field
@@ -6082,7 +6179,7 @@ $GREP_RESULT"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
- FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_TEST_NOT_PERFORMED"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -7584,11 +7681,14 @@ if [ -d ../sample_data ];then
  # Run the test
  echo "Small CCD images with FITS keyword recording test " 
  echo -n "Small CCD images with FITS keyword recording test: " >> vast_test_report.txt
- # Here is the main feature of this test
+ # Here is the main feature of this test. Besides CCD-TEMP the list has names
+ # shorter than 8 characters (EXPTIME, OBJECT), two cards without a comment
+ # (XBINNING, YBINNING), a DOS line end, blanks around a name, a comment line,
+ # a comment after a name and an invalid lower-case name that must be ignored.
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
-  echo "CCD-TEMP" > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
+ printf '# FITS keywords to record\nCCD-TEMP\r\n  EXPTIME \nexptime\nOBJECT\nXBINNING   # binning\nYBINNING\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  ./vast -u -f ../sample_data/*.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -7596,6 +7696,8 @@ if [ -d ../sample_data ];then
  fi
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+ else
+  rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  fi
  # Check results
  if [ -f vast_summary.log ];then
@@ -7706,8 +7808,69 @@ $GREP_RESULT"
    fi
   done
 
+  # Names shorter than 8 characters are recorded (exactly once: the invalid
+  # 'exptime' is ignored), and the cards without a comment are separated by a
+  # space instead of running into the next keyword name
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   if ! awk -v object_card="OBJECT  = 'Y Cam to Moffett@Barnes, 106-542'" '
+     { if (gsub(/ EXPTIME =   180\./, "&") != 1 || index($0, " " object_card " XBINNING=") == 0 || $0 !~ / XBINNING= +2 YBINNING= +2$/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD014"
+    break
+   fi
+  done
+
+  # A list with more names than the list array holds: only the first 10 are
+  # recorded (the 11th and 12th used to be written past the array), with one
+  # warning. The images also carry a '/' inside a quoted string value, which
+  # must not be taken for the start of the card comment.
+  util/clean_data.sh
+  KEYWORD_LIST_TEST_DIR="keyword_list_test_images_$$"
+  mkdir "$KEYWORD_LIST_TEST_DIR"
+  cp ../sample_data/f_72-00[1-3]r.fit "$KEYWORD_LIST_TEST_DIR"/
+  for KEYWORD_LIST_TEST_IMAGE in "$KEYWORD_LIST_TEST_DIR"/*.fit ;do
+   util/modhead "$KEYWORD_LIST_TEST_IMAGE" OBSERVER "'Volkov/Smith'" > /dev/null 2>&1
+  done
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+  fi
+  printf 'OBSERVER\nXBINNING\nYBINNING\nCCD-TEMP\nEXPTIME\nSET-TEMP\nXPIXSZ\nYPIXSZ\nXORGSUBF\nYORGSUBF\nIMAGETYP\nTELESCOP\n' > vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  ./vast -u -f "$KEYWORD_LIST_TEST_DIR"/*.fit > "keyword_list_test_$$.log" 2>&1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD015"
+  fi
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  else
+   rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  fi
+  if [ "$(grep -c 'lists more than 10 keywords' "keyword_list_test_$$.log")" != "1" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD016"
+  fi
+  KEYWORD_LIST_TEST_N_LC=0
+  for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+   [ -f "$LIGHTCURVEFILE_TO_TEST" ] || continue
+   KEYWORD_LIST_TEST_N_LC=$((KEYWORD_LIST_TEST_N_LC+1))
+   if ! awk -v slash_value="OBSERVER= 'Volkov/Smith' XBINNING=" '
+     { if (index($0, slash_value) == 0 || $0 !~ / YORGSUBF= +0$/ || $0 ~ /IMAGETYP=|TELESCOP=/) bad=1 }
+     END { exit bad }' "$LIGHTCURVEFILE_TO_TEST" ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017"
+    break
+   fi
+  done
+  if [ $KEYWORD_LIST_TEST_N_LC -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD017_NO_LIGHTCURVES"
+  fi
+  rm -f "keyword_list_test_$$.log"
+  rm -rf "$KEYWORD_LIST_TEST_DIR"
+
  else
-  echo "ERROR: cannot find vast_summary.log" 
+  echo "ERROR: cannot find vast_summary.log"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD_ALL"
  fi
@@ -10886,12 +11049,12 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  util/sysrem2
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM107"
  fi
  SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM202"
  fi
  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0254)*($1-0.0254) ) < 0.005 ) print 1 ;else print 0 }'`
@@ -10900,20 +11063,20 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   echo "TEST ERROR"
   TEST_PASSED=0
   TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM203_TEST_ERROR"
  fi
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM203"
  fi
  if [ ! -s vast_lightcurve_statistics.log ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM204"
  fi
  MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM205"
  fi
  #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
  TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.020588)*($1-0.020588) ) < 0.005 ) print 1 ;else print 0 }'`
@@ -10922,11 +11085,11 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   echo "TEST ERROR"
   TEST_PASSED=0
   TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM206_TEST_ERROR"
  fi
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM206"
  fi
  #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
@@ -12509,7 +12672,7 @@ $GREP_RESULT"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110b_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   #
@@ -13232,17 +13395,17 @@ $GREP_RESULT"
    util/listhead f_test.fit | grep -q 'HISTORY Dark frame subtraction:'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY01"
    fi
    util/listhead f_test.fit | grep 'HISTORY' | grep -q 'Cyg2_2023-11-5_16-35-31_001.fts'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY02"
    fi
    util/listhead f_test.fit | grep 'HISTORY' | grep -q 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_MS_HISTORY03"
    fi
    # The keys inserted by md
    util/listhead f_test.fit | grep -q 'HISTORY Flat fielding:'
@@ -13520,7 +13683,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_POSITION"
    GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNCASAUG310110a ######
+###### NMWNCASAUG310110a_POSITION ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -13792,15 +13955,15 @@ $GREP_RESULT"
   #grep -q "DP Pyx" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210"
   #fi
   #grep -q "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a"
   # GREP_RESULT=`grep "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html`
   # DEBUG_OUTPUT="$DEBUG_OUTPUT
-  ####### NMWLARGEOFFSET0110a ######
+  ####### NMWLARGEOFFSET0210a ######
   #$GREP_RESULT"
   #fi
   #RADECPOSITION_TO_TEST=`grep "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -13812,11 +13975,11 @@ $GREP_RESULT"
   # echo "TEST ERROR"
   # TEST_PASSED=0
   # TEST=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a_TOO_FAR_TEST_ERROR"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a_TOO_FAR_TEST_ERROR"
   #else
   # if [ $TEST -eq 0 ];then
   #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a_TOO_FAR_$DISTANCE_ARCSEC"
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0210a_TOO_FAR_$DISTANCE_ARCSEC"
   # fi
   #fi
   #
@@ -14596,7 +14759,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR20N4_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -14777,7 +14940,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a"
    GREP_RESULT=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N40110a ######
+###### NMWNSGR20N40310a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -14816,7 +14979,7 @@ $GREP_RESULT"
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40410a"
   # GREP_RESULT=`grep "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html`
   # DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR20N40110a ######
+###### NMWNSGR20N40410a ######
 #$GREP_RESULT"
   #fi
   #RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -16144,6 +16307,7 @@ else
  echo "FAILED" >> vast_test_report.txt
  FAILED_TEST_CODES="$FAILED_TEST_CODES ASTROMETRY_OUTPUT_SAFETY"
  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ASTROMETRY_OUTPUT_SAFETY ######
 $(cat "astrometry_safety_$$.log")"
 fi
 rm -f "astrometry_safety_$$.log"
@@ -16910,7 +17074,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N1_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR24N1_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -17069,7 +17233,7 @@ $GREP_RESULT"
   grep -q "TCP 2024 02 24.125.*  18 02 53\... -29 14 1[67]\..  11\.. U             Sgr       9 0" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110c"
   fi
 
   # V1770 Sgr
@@ -17117,7 +17281,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a"
    GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10310a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17150,7 +17314,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a"
    GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10410a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17182,7 +17346,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10411a"
    GREP_RESULT=`grep "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR24N10110a ######
+###### NMWNSGR24N10411a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -17311,7 +17475,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNVUL24ST_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNVUL24ST_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -17445,7 +17609,15 @@ $GREP_RESULT
 $CAT_RESULT"
       #
      else
-      rm -f selenium_TICA_TESS__zeroRA_test.
+      # The test passed, but links to flaky services (MPC, CDS) may have failed:
+      # keep their warnings in the report before the output file is removed
+      GREP_RESULT=$(grep -F '[WARNING]' selenium_NMW_V615Vul_test.txt)
+      if [ -n "$GREP_RESULT" ];then
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_SELENIUM_TEST passed with warnings ######
+$GREP_RESULT"
+      fi
+      rm -f selenium_NMW_V615Vul_test.txt
      fi
     else
      FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_NMWNVUL24ST_SELENIUM_TEST"
@@ -17456,7 +17628,7 @@ $CAT_RESULT"
   grep galactic transient_report/index.html | grep -q "PNV J19430751+2100204"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110b"
   fi
   grep -q "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
@@ -17777,7 +17949,7 @@ if [ $ARTSTARRECOVERY_TEST_CAN_RUN -eq 1 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_TIMEOUT_${ARTSTARRECOVERY_TIMEOUT_SEC}SEC"
    GREP_RESULT=$(tail -n 50 test_artificial_star_recovery_terminal_output$$.tmp 2>/dev/null)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### ARTSTARRECOVERY_TIMEOUT ######
+###### ARTSTARRECOVERY_TIMEOUT_${ARTSTARRECOVERY_TIMEOUT_SEC}SEC ######
 $GREP_RESULT"
   else
    FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_EXIT_CODE"
@@ -17802,7 +17974,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES ARTSTARRECOVERY_FRACTION_TOO_LOW_${RECOVERED_FRACTION}"
     GREP_RESULT=$(cat artificial_star_test_results.txt)
     DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### ARTSTARRECOVERY_FRACTION_TOO_LOW ######
+###### ARTSTARRECOVERY_FRACTION_TOO_LOW_${RECOVERED_FRACTION} ######
 $GREP_RESULT"
    fi
   fi
@@ -17907,7 +18079,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNHER21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNHER21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18179,7 +18351,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNCAS21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNCAS21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18450,7 +18622,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N2_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR21N2_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18624,7 +18796,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20211a"
    GREP_RESULT=`grep "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N20210a ######
+###### NMWNSGR21N20211a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -18656,7 +18828,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20212a"
    GREP_RESULT=`grep "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N20210a ######
+###### NMWNSGR21N20212a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -18779,7 +18951,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N1_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNSGR21N1_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -18959,7 +19131,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10211a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10211a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -18991,7 +19163,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10212a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  10\...  18:53:..\... -14:11:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10212a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  10\...  18:53:..\... -14:11:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19023,7 +19195,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10213a"
    GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  11\...  19:00:..\... -15:12:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNSGR21N10210a ######
+###### NMWNSGR21N10213a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  11\...  19:00:..\... -15:12:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19056,7 +19228,7 @@ $GREP_RESULT"
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10214a"
 #   GREP_RESULT=`grep "2021 04 07\.99..  2459312\.49..  12\...  18:47:..\... -15:45:..\.." transient_report/index.html`
 #   DEBUG_OUTPUT="$DEBUG_OUTPUT
-####### NMWNSGR21N10210a ######
+####### NMWNSGR21N10214a ######
 #$GREP_RESULT"
 #  fi
 #  RADECPOSITION_TO_TEST=`grep "2021 04 07\.997.  2459312\.497.  12\...  18:47:..\... -15:45:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -19182,7 +19354,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNVUL21_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNVUL21_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -19444,7 +19616,7 @@ if [ -d ../NMW_find_Mars_test ];then
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWMARS_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWMARS_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -19644,7 +19816,7 @@ $GREP_RESULT"
    #CAT_RESULT=$(cat transient_factory_test31.txt)
    CAT_RESULT="silenced"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWMARS3_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWMARS3_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
@@ -20486,7 +20658,7 @@ $GREP_RESULT"
   grep -q '18:31:5.\... -32:00:5.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_04"
   fi
   #
   
@@ -21123,7 +21295,7 @@ $GREP_RESULT"
 $GREP_RESULT"
    GREP_RESULT=$(grep -B20 "Neptune" transient_report/index.html)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
------- NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ######
+------ NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ------
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=$(grep "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}')
@@ -24999,7 +25171,7 @@ $CAT_RESULT"
   grep -q 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -25393,8 +25565,6 @@ $GREP_RESULT"
   # NMW-STL scale is 13.80"/pix
   # I cannot get WCS headers down to 1pix without running solve-field locally on the _image_ to verify its WCS header.
   # but the above test with transient position suggests that the local correction does the trick correcting source positions.
-  # Here is my manual test:
-  # rm -f wcs_025_2023-8-20_20-50-10_002.fts* local_wcs_cache/wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals ; ASTROMETRYNET_LOCAL_OR_REMOTE="local" FORCE_PLATE_SOLVE_SERVER="vast.sai.msu.ru" util/wcs_image_calibration.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts ; lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 ; lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' ) ; echo "######" ; util/solve_plate_with_UCAC5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts --no_photometric_catalog ; cat wcs_025_2023-8-20_20-50-10_002.fts.wcscat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}'
   #
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -26849,13 +27019,21 @@ $CAT_RESULT"
       GREP_RESULT=$(cat selenium_TICA_TESS__zeroRA_test.txt)
       CAT_RESULT="silenced"
       DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### TICATESSZERORA_ERROR_MESSAGE_IN_index_html ######
+###### TICATESSZERORA_Klio_SELENIUM_TEST ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
       #
      else
-      rm -f selenium_TICA_TESS__zeroRA_test.
+      # The test passed, but links to flaky services (MPC, CDS) may have failed:
+      # keep their warnings in the report before the output file is removed
+      GREP_RESULT=$(grep -F '[WARNING]' selenium_TICA_TESS__zeroRA_test.txt)
+      if [ -n "$GREP_RESULT" ];then
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA_Klio_SELENIUM_TEST passed with warnings ######
+$GREP_RESULT"
+      fi
+      rm -f selenium_TICA_TESS__zeroRA_test.txt
      fi
     else
      FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_TICATESSZERORA_Klio_SELENIUM_TEST"
@@ -28857,6 +29035,334 @@ fi
 
 
 
+######### Test detect_closed_roof tool
+# util/detect_closed_roof recognizes images taken with the observatory roof closed: the
+# NMW-TexasTech cameras keep imaging when the roof closes without the camera control software
+# knowing it, and such images show no stars and a background at the dark-frame level.
+# The test data are 1024x1024 crops of real raw frames of both NMW-TexasTech cameras (the roof
+# closed, open sky, the roof moving during the exposure, overcast) with crops of the matching
+# master darks, a closed-roof frame dark-subtracted and flat-fielded by VaST (cut at two places:
+# near the optical axis its noise folded at zero is the hardest case for the star counter) and
+# two calibrated reference images; README.txt of the dataset lists the expected verdict of every
+# file. The data are small (15 MB) and the tool needs no network, so this test runs everywhere,
+# GitHub Actions included. The files the test makes go to a private temporary directory.
+# (DCR_ stands for detect_closed_roof)
+if [ -x util/detect_closed_roof ];then
+ # Download the test dataset if needed
+ if [ ! -d ../NMW-TexasTech__closed_roof_test ];then
+  cd .. || exit 1
+  download_test_data_file NMW-TexasTech__closed_roof_test.tar.bz2 "http://tau.kirx.net/vast_test_data/NMW-TexasTech__closed_roof_test.tar.bz2" "http://scan.sai.msu.ru/~kirx/data/vast_tests/NMW-TexasTech__closed_roof_test.tar.bz2" && tar -xvjf NMW-TexasTech__closed_roof_test.tar.bz2 && rm -f NMW-TexasTech__closed_roof_test.tar.bz2
+  cd "$WORKDIR" || exit 1
+ fi
+ if [ -d ../NMW-TexasTech__closed_roof_test ];then
+  THIS_TEST_START_UNIXSEC=$(date +%s)
+  TEST_PASSED=1
+  util/clean_data.sh
+  # Run the test
+  echo "Test detect_closed_roof tool "
+  echo -n "Test detect_closed_roof tool: " >> vast_test_report.txt
+  DCR_DATA=../NMW-TexasTech__closed_roof_test
+  DCR_Q1_DARK="$DCR_DATA/TTUQ1b1x1/darks/mdark_TTUQ1b1x1_0C_20s_2026-08-12_multinight_x6529-7552_y4097-5120.fit"
+  DCR_Q1_CLOSED_0236="$DCR_DATA/TTUQ1b1x1/closed/Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_CLOSED_0237="$DCR_DATA/TTUQ1b1x1/closed/Pup-02-Q1b1x1_2026-11-12_04-34-11_20.00sec_-0.00C_LIGHTs_0237.fits"
+  DCR_Q1_CALIBRATED="$DCR_DATA/TTUQ1b1x1/closed_calibrated/fd_Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_CALIBRATED_CENTER="$DCR_DATA/TTUQ1b1x1/closed_calibrated_center/fd_Pup-02-Q1b1x1_2026-11-12_04-24-41_20.00sec_-0.00C_LIGHTs_0236.fits"
+  DCR_Q1_OPEN_CYG08="$DCR_DATA/TTUQ1b1x1/open/Cyg-08-Q1b1x1_2026-11-11_19-18-29_20.00sec_-0.00C_LIGHTs_0026.fits"
+  DCR_Q1_OPEN_TAU02="$DCR_DATA/TTUQ1b1x1/open/Tau-02-Q1b1x1_2026-11-13_02-28-11_20.00sec_-0.00C_LIGHTs_0323.fits"
+  DCR_Q1_PARTLY_DARK="$DCR_DATA/TTUQ1b1x1/partly_dark/Lyn-03-Q1b1x1_2026-11-13_04-50-43_20.00sec_-0.00C_LIGHTs_0395.fits"
+  DCR_Q1_CLOUDY="$DCR_DATA/TTUQ1b1x1/cloudy/Dra-07-Q1b1x1_2026-11-13_21-23-58_20.00sec_-0.00C_LIGHTs_0115.fits"
+  DCR_Q2_DARK="$DCR_DATA/TTUQ2b1x1/darks/mdark_TTUQ2b1x1_0C_20s_2026-08-12_multinight_x4225-5248_y3841-4864.fit"
+  DCR_Q2_CLOSED_0326="$DCR_DATA/TTUQ2b1x1/closed/Pup-02-Q2b1x1_2026-11-12_02-48-08_20.00sec_-0.00C_LIGHT_0326.fits"
+  DCR_Q2_CLOSED_0327="$DCR_DATA/TTUQ2b1x1/closed/Pup-02-Q2b1x1_2026-11-12_02-56-16_20.00sec_-0.00C_LIGHT_0327.fits"
+  DCR_Q2_OPEN_LAC01="$DCR_DATA/TTUQ2b1x1/open/Lac-01-Q2b1x1_2026-11-12_19-22-04_20.00sec_-0.00C_LIGHT_0042.fits"
+  DCR_Q2_OPEN_COM03="$DCR_DATA/TTUQ2b1x1/open/Com-03-Q2b1x1_2026-11-13_05-30-53_20.00sec_-0.00C_LIGHT_0521.fits"
+  DCR_Q2_OPEN_AND05="$DCR_DATA/TTUQ2b1x1/open/And-05-Q2b1x1_2026-11-11_23-37-44_20.00sec_-0.00C_LIGHT_0282.fits"
+  DCR_Q2_PARTLY_DARK="$DCR_DATA/TTUQ2b1x1/partly_dark/Com-01-Q2b1x1_2026-11-13_05-03-55_20.00sec_0.00C_LIGHT_0517.fits"
+  DCR_REF_0013="$DCR_DATA/reference_images/Pup-02-Q2b1x1_2026-03-20_21-03-09_20.00sec_-15.00C_LIGHT_0013.fits"
+  DCR_REF_0000="$DCR_DATA/reference_images/Pup-02-Q2b1x1_2026-04-05_21-28-35_20.00sec_-4.90C_LIGHTs_0000.fits"
+  # A private directory for the test files and the output of the tool
+  DCR_TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/vast_detect_closed_roof_test.XXXXXX" 2>/dev/null)
+  if [ -z "$DCR_TMP_DIR" ] || [ ! -d "$DCR_TMP_DIR" ];then
+   DCR_TMP_DIR="$PWD/vast_detect_closed_roof_test_$$"
+   mkdir -p "$DCR_TMP_DIR"
+  fi
+  # The test files: a file that is not a FITS image, an exact copy of an image, a dark frame of
+  # another size and an image too small to be checked (both cut with util/fitscopy), and two dark
+  # frames that do not match the images - the TTUQ1b1x1 dark with 2000 or 1350 ADU added
+  echo "This is not a FITS image" > "$DCR_TMP_DIR/not_a_fits_image.fits"
+  cp "$DCR_Q2_CLOSED_0326" "$DCR_TMP_DIR/copy_of_the_image.fits"
+  util/fitscopy "${DCR_Q2_DARK}[1:512,1:512]" "$DCR_TMP_DIR/dark_512x512.fits" > /dev/null 2>&1
+  util/fitscopy "${DCR_Q2_CLOSED_0326}[1:8,1:8]" "$DCR_TMP_DIR/image_8x8.fits" > /dev/null 2>&1
+  util/imarith "$DCR_Q1_DARK" 2000 add "$DCR_TMP_DIR/dark_plus_2000.fits" > /dev/null 2>&1
+  util/imarith "$DCR_Q1_DARK" 1350 add "$DCR_TMP_DIR/dark_plus_1350.fits" > /dev/null 2>&1
+  for DCR_TEST_FILE in not_a_fits_image copy_of_the_image dark_512x512 image_8x8 dark_plus_2000 dark_plus_1350 ;do
+   if [ ! -s "$DCR_TMP_DIR/$DCR_TEST_FILE.fits" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF010_$DCR_TEST_FILE"
+   fi
+  done
+  # Verdicts: one line per run of the tool, the columns (separated by |) are
+  #  the name of the case (it goes into the failure codes), the options, the image, the dark frame
+  #  (none if empty), the expected verdict, the expected zero level of the background, and
+  #  key=value fields the output line has to contain.
+  # The first 32 lines are every image of the dataset with the dark of its camera and without a
+  # dark. The fd_ images and the reference images are dark-subtracted (HISTORY Dark frame
+  # subtraction): their zero level comes from the header, and a dark given for them is not used.
+  # The other lines test the options and the dark frames that do not match the images:
+  #  - the overcast image (no stars, about 1400 ADU above the dark) with the dark plus 2000 ADU
+  #    has its background about 600 ADU below the dark level, which no matching dark allows;
+  #    without that guard this would be CLOSED_ROOF;
+  #  - with the dark plus 1350 ADU its background comes out near the dark level (+46 ADU), so
+  #    without -s it looks like a closed roof - the case for the noise limit -s that the transient
+  #    factory sets for the NMW-TexasTech cameras (15 ADU): its noise (62 ADU) then shows that the
+  #    dark does not match, while the closed-roof images (read noise, 4-6 ADU) stay CLOSED_ROOF;
+  #  - -b and -r (in ADU per second of the 20 s exposure) raise the background limit above the
+  #    background of the overcast image, and -b overrides -r;
+  #  - the open image Com-03-Q2b1x1 has about 230 star-like peaks: OK with -n 100, NO_STARS with
+  #    -n 1000.
+  # The verdict OK has to come with exit code 0, the other verdicts with exit code 1. The transient
+  # factory copies the output line to the report, so it has to be exactly one line naming the
+  # image, without 'ERROR' (unmw takes a report line with ERROR for a run status) and without '<'.
+  while IFS='|' read -r DCR_CASE DCR_OPTIONS DCR_IMAGE DCR_DARK DCR_EXPECTED_VERDICT DCR_EXPECTED_ZERO_LEVEL DCR_EXPECTED_FIELDS ;do
+   if [ -z "$DCR_CASE" ];then
+    continue
+   fi
+   if [ ! -f "$DCR_IMAGE" ] || { [ -n "$DCR_DARK" ] && [ ! -f "$DCR_DARK" ]; } ;then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF000_$DCR_CASE"
+    continue
+   fi
+   # The options are split into words on purpose
+   # shellcheck disable=SC2086
+   util/detect_closed_roof $DCR_OPTIONS "$DCR_IMAGE" ${DCR_DARK:+"$DCR_DARK"} > "$DCR_TMP_DIR/stdout.txt" 2> "$DCR_TMP_DIR/stderr.txt" < /dev/null
+   DCR_EXIT_CODE=$?
+   DCR_EXPECTED_EXIT_CODE=1
+   if [ "$DCR_EXPECTED_VERDICT" = "OK" ];then
+    DCR_EXPECTED_EXIT_CODE=0
+   fi
+   # The output line with a space at the end, so that every key=value field is followed by a space
+   DCR_OUTPUT_LINE="$(head -n 1 "$DCR_TMP_DIR/stdout.txt") "
+   DCR_CASE_FAILED_CODES=""
+   if [ "$(echo "$DCR_OUTPUT_LINE" | awk '{print $1}')" != "$DCR_EXPECTED_VERDICT" ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF001_$DCR_CASE"
+   fi
+   if [ $DCR_EXIT_CODE -ne $DCR_EXPECTED_EXIT_CODE ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF002_$DCR_CASE"
+   fi
+   if [ "$(wc -l < "$DCR_TMP_DIR/stdout.txt" | awk '{print $1}')" != "1" ] || [ "$(awk 'END {print NR}' "$DCR_TMP_DIR/stdout.txt")" != "1" ] || grep -q -e 'ERROR' -e '<' "$DCR_TMP_DIR/stdout.txt" || ! echo "$DCR_OUTPUT_LINE" | grep -q -F " image=$(basename "$DCR_IMAGE") " ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF003_$DCR_CASE"
+   fi
+   if ! echo "$DCR_OUTPUT_LINE" | grep -q -F " zero_level=$DCR_EXPECTED_ZERO_LEVEL " ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF004_$DCR_CASE"
+   fi
+   for DCR_EXPECTED_FIELD in $DCR_EXPECTED_FIELDS ;do
+    if ! echo "$DCR_OUTPUT_LINE" | grep -q -F " $DCR_EXPECTED_FIELD " ;then
+     DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF005_$DCR_CASE"
+     break
+    fi
+   done
+   if [ -n "$DCR_CASE_FAILED_CODES" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES$DCR_CASE_FAILED_CODES"
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DETECTCLOSEDROOF $DCR_CASE ######
+util/detect_closed_roof $DCR_OPTIONS $DCR_IMAGE $DCR_DARK
+expected $DCR_EXPECTED_VERDICT zero_level=$DCR_EXPECTED_ZERO_LEVEL $DCR_EXPECTED_FIELDS with exit code $DCR_EXPECTED_EXIT_CODE, got exit code $DCR_EXIT_CODE and
+$(head -n 3 "$DCR_TMP_DIR/stdout.txt")
+$(head -n 5 "$DCR_TMP_DIR/stderr.txt")"
+   fi
+  done << DCR_EOF
+Q1closed0236_dark||$DCR_Q1_CLOSED_0236|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0236_nodark||$DCR_Q1_CLOSED_0236||NO_STARS|none|
+Q1closed0237_dark||$DCR_Q1_CLOSED_0237|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0237_nodark||$DCR_Q1_CLOSED_0237||NO_STARS|none|
+Q1calibrated_dark||$DCR_Q1_CALIBRATED|$DCR_Q1_DARK|CLOSED_ROOF|header|
+Q1calibrated_nodark||$DCR_Q1_CALIBRATED||CLOSED_ROOF|header|
+Q1calibratedcenter_dark||$DCR_Q1_CALIBRATED_CENTER|$DCR_Q1_DARK|CLOSED_ROOF|header|
+Q1calibratedcenter_nodark||$DCR_Q1_CALIBRATED_CENTER||CLOSED_ROOF|header|
+Q1openCyg08_dark||$DCR_Q1_OPEN_CYG08|$DCR_Q1_DARK|OK|dark|
+Q1openCyg08_nodark||$DCR_Q1_OPEN_CYG08||OK|none|
+Q1openTau02_dark||$DCR_Q1_OPEN_TAU02|$DCR_Q1_DARK|OK|dark|
+Q1openTau02_nodark||$DCR_Q1_OPEN_TAU02||OK|none|
+Q1partlydark_dark||$DCR_Q1_PARTLY_DARK|$DCR_Q1_DARK|PARTLY_DARK|dark|
+Q1partlydark_nodark||$DCR_Q1_PARTLY_DARK||OK|none|
+Q1cloudy_dark||$DCR_Q1_CLOUDY|$DCR_Q1_DARK|NO_STARS|dark|
+Q1cloudy_nodark||$DCR_Q1_CLOUDY||NO_STARS|none|
+Q2closed0326_dark||$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|CLOSED_ROOF|dark|max_stars=20 max_above_dark=100.0 exptime=20.000
+Q2closed0326_nodark||$DCR_Q2_CLOSED_0326||NO_STARS|none|above_dark=unknown dark_regions=unknown
+Q2closed0327_dark||$DCR_Q2_CLOSED_0327|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q2closed0327_nodark||$DCR_Q2_CLOSED_0327||NO_STARS|none|
+Q2openLac01_dark||$DCR_Q2_OPEN_LAC01|$DCR_Q2_DARK|OK|dark|
+Q2openLac01_nodark||$DCR_Q2_OPEN_LAC01||OK|none|
+Q2openCom03_dark||$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|OK|dark|
+Q2openCom03_nodark||$DCR_Q2_OPEN_COM03||OK|none|
+Q2openAnd05_dark||$DCR_Q2_OPEN_AND05|$DCR_Q2_DARK|OK|dark|
+Q2openAnd05_nodark||$DCR_Q2_OPEN_AND05||OK|none|
+Q2partlydark_dark||$DCR_Q2_PARTLY_DARK|$DCR_Q2_DARK|PARTLY_DARK|dark|
+Q2partlydark_nodark||$DCR_Q2_PARTLY_DARK||OK|none|
+ref0013_dark||$DCR_REF_0013|$DCR_Q2_DARK|OK|header|
+ref0013_nodark||$DCR_REF_0013||OK|header|
+ref0000_dark||$DCR_REF_0000|$DCR_Q2_DARK|OK|header|
+ref0000_nodark||$DCR_REF_0000||OK|header|
+cloudy_darkplus2000||$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_2000.fits|NO_STARS|mismatch|
+cloudy_darkplus1350||$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_1350.fits|CLOSED_ROOF|dark|
+cloudy_darkplus1350_s15|-s 15|$DCR_Q1_CLOUDY|$DCR_TMP_DIR/dark_plus_1350.fits|NO_STARS|mismatch|
+Q1closed0236_s15|-s 15|$DCR_Q1_CLOSED_0236|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q1closed0237_s15|-s 15|$DCR_Q1_CLOSED_0237|$DCR_Q1_DARK|CLOSED_ROOF|dark|
+Q2closed0326_s15|-s 15|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q2closed0327_s15|-s 15|$DCR_Q2_CLOSED_0327|$DCR_Q2_DARK|CLOSED_ROOF|dark|
+Q1calibrated_s15|-s 15|$DCR_Q1_CALIBRATED||CLOSED_ROOF|header|
+Q1calibratedcenter_s15|-s 15|$DCR_Q1_CALIBRATED_CENTER||CLOSED_ROOF|header|
+Q2closed0326_s1|-s 1|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|NO_STARS|mismatch|
+cloudy_b2000|-b 2000|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|CLOSED_ROOF|dark|max_above_dark=2000.0
+cloudy_r100|-r 100|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|CLOSED_ROOF|dark|max_above_dark=2000.0
+cloudy_r100_b0|-r 100 -b 0|$DCR_Q1_CLOUDY|$DCR_Q1_DARK|NO_STARS|dark|max_above_dark=0.0
+Q2openCom03_n100|-n 100|$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|OK|dark|max_stars=100
+Q2openCom03_n1000|-n 1000|$DCR_Q2_OPEN_COM03|$DCR_Q2_DARK|NO_STARS|dark|max_stars=1000
+DCR_EOF
+  # Errors: exit code 2, nothing on stdout (the transient factory treats an image that the tool
+  # could not check as a good one), and the reason on stderr. The columns are the name of the
+  # case, the options, the image, the dark frame and a part of the expected error message.
+  # An image given as its own dark frame (image - image = 0 would look like a closed roof) is an
+  # error, whether it is the same file or an exact copy of it.
+  while IFS='|' read -r DCR_CASE DCR_OPTIONS DCR_IMAGE DCR_DARK DCR_EXPECTED_MESSAGE ;do
+   if [ -z "$DCR_CASE" ];then
+    continue
+   fi
+   # The options are split into words on purpose
+   # shellcheck disable=SC2086
+   util/detect_closed_roof $DCR_OPTIONS ${DCR_IMAGE:+"$DCR_IMAGE"} ${DCR_DARK:+"$DCR_DARK"} > "$DCR_TMP_DIR/stdout.txt" 2> "$DCR_TMP_DIR/stderr.txt" < /dev/null
+   DCR_EXIT_CODE=$?
+   DCR_CASE_FAILED_CODES=""
+   if [ $DCR_EXIT_CODE -ne 2 ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF006_$DCR_CASE"
+   fi
+   if [ -s "$DCR_TMP_DIR/stdout.txt" ];then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF007_$DCR_CASE"
+   fi
+   if ! grep -q -F -e "$DCR_EXPECTED_MESSAGE" "$DCR_TMP_DIR/stderr.txt" ;then
+    DCR_CASE_FAILED_CODES="$DCR_CASE_FAILED_CODES DETECTCLOSEDROOF008_$DCR_CASE"
+   fi
+   if [ -n "$DCR_CASE_FAILED_CODES" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES$DCR_CASE_FAILED_CODES"
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DETECTCLOSEDROOF $DCR_CASE ######
+util/detect_closed_roof $DCR_OPTIONS $DCR_IMAGE $DCR_DARK
+expected exit code 2, nothing on stdout and '$DCR_EXPECTED_MESSAGE' on stderr, got exit code $DCR_EXIT_CODE and
+$(head -n 3 "$DCR_TMP_DIR/stdout.txt")
+$(head -n 5 "$DCR_TMP_DIR/stderr.txt")"
+   fi
+  done << DCR_EOF
+missingimage||$DCR_TMP_DIR/no_such_image.fits||no_such_image.fits is not a readable FITS image
+missingdark||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/no_such_dark.fits|no_such_dark.fits is not a readable FITS image
+notfitsimage||$DCR_TMP_DIR/not_a_fits_image.fits||not_a_fits_image.fits is not a readable FITS image
+notfitsdark||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/not_a_fits_image.fits|not_a_fits_image.fits is not a readable FITS image
+samefile||$DCR_Q2_CLOSED_0326|$DCR_Q2_CLOSED_0326|is given as the image and as the dark frame
+identicalcopy||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/copy_of_the_image.fits|identical to the dark frame
+darksize||$DCR_Q2_CLOSED_0326|$DCR_TMP_DIR/dark_512x512.fits|is 512x512 pixels while the image
+toosmall||$DCR_TMP_DIR/image_8x8.fits||is too small
+n0|-n 0|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -n: 0
+nabc|-n abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -n: abc
+rabc|-r abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -r: abc
+rnegative|-r -5|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -r: -5
+bxyz|-b xyz|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -b: xyz
+sabc|-s abc|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|bad value of -s: abc
+unknownoption|-x|$DCR_Q2_CLOSED_0326|$DCR_Q2_DARK|Usage:
+noarguments||||Usage:
+DCR_EOF
+  # -v prints the diagnostics on stderr and does not change the output line
+  util/detect_closed_roof "$DCR_Q2_CLOSED_0326" "$DCR_Q2_DARK" > "$DCR_TMP_DIR/stdout.txt" 2> /dev/null < /dev/null
+  util/detect_closed_roof -v "$DCR_Q2_CLOSED_0326" "$DCR_Q2_DARK" > "$DCR_TMP_DIR/stdout_verbose.txt" 2> "$DCR_TMP_DIR/stderr_verbose.txt" < /dev/null
+  if [ ! -s "$DCR_TMP_DIR/stdout.txt" ] || ! cmp -s "$DCR_TMP_DIR/stdout.txt" "$DCR_TMP_DIR/stdout_verbose.txt" || ! grep -q 'Star-like peaks' "$DCR_TMP_DIR/stderr_verbose.txt" ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF009"
+  fi
+  # The phrase OBSERVATORY ROOF CLOSED is a contract with unmw: a report line with ERROR and this
+  # phrase makes unmw send an alert that the roof is closed. The transient factory may print it in
+  # exactly two lines, the ACTION NEEDED banner and the ERROR line of the closed-roof check (the
+  # comments that mention it do not count): any other message with it would send false alerts.
+  DCR_N_ROOF_CLOSED_ECHO_LINES=$(grep 'OBSERVATORY ROOF CLOSED' util/transients/transient_factory_test31.sh | grep -v '^[[:space:]]*#' | grep -c 'echo')
+  if [ "$DCR_N_ROOF_CLOSED_ECHO_LINES" != "2" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF011_$DCR_N_ROOF_CLOSED_ECHO_LINES"
+  fi
+  if [ -n "$DCR_TMP_DIR" ] && [ -d "$DCR_TMP_DIR" ];then
+   rm -rf "$DCR_TMP_DIR"
+  fi
+
+  THIS_TEST_STOP_UNIXSEC=$(date +%s)
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+  # Make an overall conclusion for this test
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mTest detect_closed_roof tool \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mTest detect_closed_roof tool \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  fi
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF_TEST_NOT_PERFORMED"
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DETECTCLOSEDROOF_TOOL_NOT_FOUND"
+fi
+
+
+
+######### Closed roof check of the transient factory
+# util/examples/test_closed_roof_check.sh runs util/transients/transient_factory_test31.sh on the
+# two TTUQ2b1x1 closed-roof images of the dataset of the test above (see the list of its checks
+# at the top of the script): with the default settings the field has to stop at the closed-roof
+# check at once, with the "ACTION NEEDED - OBSERVATORY ROOF CLOSED?" banner as the first ERROR line
+# of the report (unmw sends an alert for it); with CHECK_FOR_CLOSED_ROOF=no or without a dark
+# frame no closed roof may be reported. It is a separate script, like the other tests of a single
+# feature, so that it can be run alone (in a few minutes) after changing the check: this script takes
+# hours. With the check switched off the starless images go through the rest of the pipeline,
+# plate solving included (with the remote plate-solve service where there is no local
+# Astrometry.net), so like the other NMW-TexasTech transient search tests this one does not run
+# on GitHub Actions.
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ -d ../NMW-TexasTech__closed_roof_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Closed roof check of the transient factory test "
+ echo -n "Closed roof check of the transient factory test: " >> vast_test_report.txt
+ CLOSEDROOFCHECK_TEST_OUTPUT=$(util/examples/test_closed_roof_check.sh 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  # The failure codes of the script are in its "FAILED: CODE description" lines
+  CLOSEDROOFCHECK_CODES=$(echo "$CLOSEDROOFCHECK_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+  if [ -z "$CLOSEDROOFCHECK_CODES" ];then
+   CLOSEDROOFCHECK_CODES="CLOSEDROOFCHECK_UNKNOWN_FAILURE"
+  fi
+  FAILED_TEST_CODES="$FAILED_TEST_CODES $CLOSEDROOFCHECK_CODES"
+  echo "$CLOSEDROOFCHECK_TEST_OUTPUT"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CLOSEDROOFCHECK ######
+$(echo "$CLOSEDROOFCHECK_TEST_OUTPUT" | tail -n 40)"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mClosed roof check of the transient factory test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mClosed roof check of the transient factory test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES CLOSEDROOFCHECK_TEST_NOT_PERFORMED"
+fi
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
+
+
+
 ######### NMW archive image
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then
@@ -30176,7 +30682,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep 'FLAG_IMAGE' | grep -q 'WEIGHT_IMAGE'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_flag_weight"
  fi
  #
  util/wcs_image_calibration.sh ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
@@ -30523,7 +31029,6 @@ if [ -d ../individual_images_test ];then
  # Run the test
  echo "Test plate solving with remote servers " 
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
- #for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
  for FORCE_PLATE_SOLVE_SERVER in tau.kirx.net scan.sai.msu.ru ;do
   export FORCE_PLATE_SOLVE_SERVER
   unset TELESCOP
@@ -30948,7 +31453,7 @@ if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] ||
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_61CYG_001"
   DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### 61 Cyg ######
+###### SPECIAL_61CYG_001 ######
 $GREP_RESULT"
  fi
 
@@ -30970,7 +31475,7 @@ $GREP_RESULT"
 fi
 
 ####### Special test V2466 Cyg SAI600 #######
-# Run it only on vast, otherwise if /dataX is mounted over sshfs the test will be super slow
+# Run it only on vast, where the test data are on a local disk
 if [ "$HOSTNAME" = "vast" ];then
  # The test script will return 0 if there is no data or if everything is fine
  util/examples/test_V2466CygSAI600.sh
@@ -31228,7 +31733,7 @@ if [ $? -eq 0 ];then
     util/imstat_vast ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND034"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -31238,7 +31743,7 @@ if [ $? -eq 0 ];then
     done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND035"
     fi
     #
     #
@@ -31361,7 +31866,7 @@ if [ $? -eq 0 ];then
     lib/catalogs/check_catalogs_offline `lib/hms2deg 19:50:33.92439 +32:54:50.6097` &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND036"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -31371,14 +31876,14 @@ if [ $? -eq 0 ];then
     done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND037"
     fi
     #
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     util/get_image_date '2015-08-21T22:18:25.000000' &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND038"
     fi
     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
      if [ $ERRORS -ne 0 ];then
@@ -31781,8 +32286,6 @@ if [ ! -f ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat ];then
  cd "$WORKDIR" || exit 1
 fi
 
-#PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
-#PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
 PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
 
 # Disable server fallback in pokaz_laflerkinman.sh so we can detect individual server failures
@@ -32684,7 +33187,7 @@ $GREP_RESULT"
     for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
      if [ ! -s "$LOGFILE_TO_CHECK" ];then
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
+      FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
      fi
     done
     IMGNUM=$((IMGNUM+1))
@@ -32761,13 +33264,13 @@ if [ -d ../M31_ISON_test ];then
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003a"
   fi
   #grep -q "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003b"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -33061,7 +33564,7 @@ echo -n "Performing the second period search test: " >> vast_test_report.txt
 lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep 'LS' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH100"
 fi
 lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep 'LK' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
@@ -33387,17 +33890,17 @@ if [ $? -eq 0 ];then
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_105"
  fi
  lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_106"
  fi
  lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_107"
  fi
  # a complex exclusion list with comments
  echo "15:57:35.3 +26:52:40 Star1
@@ -33417,37 +33920,37 @@ if [ $? -eq 0 ];then
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_201"
  fi
  lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_202"
  fi
  lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_203"
  fi
  lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_204"
  fi
  lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_205"
  fi
  lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_206"
  fi
  lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_207"
  fi
  #
  rm -f exclusion_list_autotest.txt
@@ -33714,7 +34217,7 @@ fi
 util/get_image_date '2014-09-09T05:29' 2>&1 | grep -q 'JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006b"
 fi
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
@@ -34036,7 +34539,7 @@ fi
 util/get_image_date 2020 10 27 18:00:00 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025b"
 fi
 util/get_image_date 2020 10 27.75 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
@@ -34429,16 +34932,19 @@ curl  --insecure --connect-timeout 10 --retry 1 --max-time 300  --silent 'http:/
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_001"
-fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
-fi
-file wwwtest.png | grep -q 'PNG image data'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
+else
+ # Download and check the image only if the search listed it:
+ # otherwise there is no image URL, and 002 and 003 would only repeat 001
+ curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' "$(awk -F'"' '{print $2}' wwwtest.tmp | head -n1)"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
+ fi
+ file wwwtest.png | grep -q 'PNG image data'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
+ fi
 fi
 # clean-up
 if [ -f wwwtest.tmp ];then
@@ -34463,19 +34969,19 @@ curl  --insecure --connect-timeout 10 --retry 1 --max-time 900  --silent 'http:/
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
-fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
-fi
-file wwwtest.png | grep -q 'PNG image data'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- # most likely Kirill needs to do sshfs at scan: 
- # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataX /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataX
- # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataY /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataY
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
+else
+ # Download and check the image only if the search listed it:
+ # otherwise there is no image URL, and 002 and 003 would only repeat 001
+ curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png "$(awk -F'"' '{print $2}' wwwtest.tmp | head -n1)"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
+ fi
+ file wwwtest.png | grep -q 'PNG image data'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
+ fi
 fi
 # clean-up
 if [ -f wwwtest.tmp ];then
@@ -34494,11 +35000,13 @@ if [ $? -ne 0 ];then
 fi
 
 # Horizons direct and reverse proxy
-HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+# START_TIME/STOP_TIME (first row = the requested time), not TLIST: HORIZONS answered every
+# TLIST request with 'LTP: input TIM outside +-500K range' on 2026-11-09 (see util/planets.sh)
+HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 else
- HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='JD2460145.3926'&STOP_TIME='JD2460145.3933'&STEP_SIZE='1%20m'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
 fi
 if [ "$HORIZONS_DIRECT" != "$HORIZONS_REVERSE_PROXY" ] ;then
  if [ -n "$HORIZONS_DIRECT" ];then
@@ -34511,26 +35019,6 @@ if [ -z "$HORIZONS_DIRECT" ] && [ -z "$HORIZONS_REVERSE_PROXY" ] ;then
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_HORIZONS_DIRECT_AND_REVERSE_PROXY_FAILED"
 fi
 # if HORIZONS_DIRECT failed - that's not an error - that's why we need the reverse proxy
-
-# disable VSX test
-### VSX direct and reverse proxy
-#VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://vsx.aavso.org/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
-# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#else
-# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'http://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-#fi
-#if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
-# if [ -n "$VSX_DIRECT" ];then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
-# fi
-#fi
-#if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
-# TEST_PASSED=0
-# FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
-#fi
-### if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
 #### Test static pages for any unexpected changes
 
@@ -34691,32 +35179,6 @@ if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_YEAR_MISMATCH"
 fi
-
-## Fetch HTML and check for "morning summary" or "evening summary"
-#NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_VAST_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_VAST_SUMMARY_CHECK_FAILED"
-#fi
-#
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
-#fi
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar"
-#fi
-## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar2/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2"
-#fi
 
 ### Check directory listing where it's needed
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
@@ -35405,7 +35867,7 @@ fi
 N_REPLY_LINES=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@scan_ucac5_test.input -F submit="Upload Image" -F brightmag=2.000000 -F faintmag=13.500000 -F searcharcsec=23.350000 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py' | wc -l)
 if [ $N_REPLY_LINES -lt 600 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_scan"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_tau"
 fi
 # clean up
 if [ -f scan_ucac5_test.input ];then
@@ -35877,21 +36339,21 @@ echo "1
 3" | util/colstat 2> /dev/null | grep -q 'MAX= 3.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MAX"
 fi
 echo "1
 2
 3" | util/colstat 2> /dev/null | grep -q 'MEDIAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEDIAN"
 fi
 echo "1
 2
 3" | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN"
 fi
 echo "1
 2
@@ -35899,7 +36361,7 @@ echo "1
 " | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN_EMPTY_LINE"
 fi
 echo "1
 2
@@ -35909,7 +36371,7 @@ echo "1
 " | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MEAN_BLANK_LINES"
 fi
 
 
@@ -36254,14 +36716,14 @@ POSITION_AT_C32=$(MPC_CODE=C32 util/moons.sh 2460658.64631944 | grep Europa | aw
 POSITION_AT_500=$(util/moons.sh 2460658.64631944 | grep Europa | awk '{print $1" "$2}')
 if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.005 ? 0 : 1)}' ;then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_C32_500_MISMATCH"
 fi
 # 
 POSITION_AT_C32=$(MPC_CODE=C32 util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
 POSITION_AT_500=$(util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
 if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.3 ? 0 : 1)}' ;then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_SPACECRAFT_C32_500_MISMATCH"
 fi
 
 # -00:01:02.3 dec problem
@@ -37264,6 +37726,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_noscript/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nopython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_ARTSTARRECOVERY_nonumpyastropy/}"
+ # lightcurve metadata test: skipped without python3 >= 3.7 or a C compiler
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_oldpython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopythonmodules/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nocompiler/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.
@@ -37277,9 +37744,17 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # retry-marker code survives into FAILED_TEST_CODES even when the retry
  # succeeds (external VizieR flakiness, not a VaST-side failure).
  FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_RETRY/}"
+ # ...and is not performed at all while the internet check finds VizieR unavailable
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZQUERYTEST_VIZIER_UNAVAILABLE/}"
  # The optional ASAS-SN catalog could not be downloaded from any source: a mirror problem,
  # not a VaST code failure (the code stays in vast_test_report.txt)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// ASASSNV_CATALOG_UNAVAILABLE/}"
+ # No VizieR mirror served Gaia DR2 at one of the internet checks: an outage of an external
+ # service (the code stays in vast_test_report.txt); the sections that need VizieR report
+ # their own failure codes
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// VIZIER_UNAVAILABLE/}"
+ # ... like the search over all VizieR catalogs, which only the main CDS site can answer
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// STANDALONEDBSCRIPT_VIZKNOWNVAR_VIZIER_UNAVAILABLE/}"
  # The local Gaia DR2 copy is optional (lib/install_local_copy_of_GaiaDR2.sh, 13 GB):
  # on a machine without it the known-star check uses the online services
  FAILED_TEST_CODES="${FAILED_TEST_CODES// GAIADR2LOCAL_NOT_INSTALLED/}"
