@@ -801,23 +801,14 @@ function setup_remote_astrometry {
   return 1
  fi
 
- local N_REACHABLE_SERVERS=$(wc -l < servers$$.ping_ok)
- if [ $N_REACHABLE_SERVERS -eq 1 ];then
-  PLATE_SOLVE_SERVER=$(head -n1 servers$$.ping_ok)
- else
-  # Choose a random server among the available ones
-  PLATE_SOLVE_SERVER=$($TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1)
-  # If the above fails because sort doesn't understand the '--random-sort' option
-  if [ "$PLATE_SOLVE_SERVER" = "" ];then
-   PLATE_SOLVE_SERVER=$(head -n1 servers$$.ping_ok)
-  fi
- fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
-
- # Update the list of available servers
- PLATE_SOLVE_SERVERS=""
- while read SERVER ;do
-  PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVERS $SERVER"
+ local SERVER
+ local -a REACHABLE_SERVERS=()
+ while IFS= read -r SERVER ;do
+  REACHABLE_SERVERS+=("$SERVER")
  done < servers$$.ping_ok
+ # Bash can choose among the reachable servers on both GNU and BSD systems.
+ PLATE_SOLVE_SERVER=${REACHABLE_SERVERS[RANDOM % ${#REACHABLE_SERVERS[@]}]}
+ PLATE_SOLVE_SERVERS="${REACHABLE_SERVERS[*]}"
  echo "Updated list of available servers: $PLATE_SOLVE_SERVERS" 1>&2
 
  rm -f server$$_*.ping_ok servers$$.ping_ok
@@ -1463,6 +1454,7 @@ fi
    ERROR_STATUS=2
    break
   fi
+  ERROR_STATUS=0
  
   echo "Using the remote server with Astrometry.net code"
  
@@ -1548,23 +1540,23 @@ fi
    fi
    echo "#### Plate solution log ####"
    SOLVE_PROGRAM_LOG_URL=${EXPECTED_WCS_HEAD_URL//out.wcs/program.log}
-   #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
-   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
-   if [ $? != 0 ];then
+   if ! SOLVE_PROGRAM_LOG=$($TIMEOUT_COMMAND 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd);then
     echo "WARNING: cannot get the processing log from the server $PLATE_SOLVE_SERVER - trying the next plate-solve server"
     ERROR_STATUS=2
     continue
    fi
+   printf '%s\n' "$SOLVE_PROGRAM_LOG"
    echo "############################"
    SOLVE_FILE_URL=${EXPECTED_WCS_HEAD_URL//out.wcs/out.solved}
-   #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
-   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep '404 Not Found' >/dev/null
-   # Nope, this interfers with the if statement below
-   #if [ $? -ge 130 ];then
-   # # Exit if the process is killed by user
-   # exit 1
-   #fi
-   if [ $? -eq 1 ];then
+   # The web endpoint can respond even if its solver executable cannot start.
+   if printf '%s\n' "$SOLVE_PROGRAM_LOG" | grep -Eq 'error while loading shared libraries:|failed to run command .*solve-field|solve-field: ((command )?not found|Permission denied|No such file or directory)' ;then
+    echo "WARNING: the solver on $PLATE_SOLVE_SERVER could not start - trying the next plate-solve server"
+    ERROR_STATUS=2
+   elif $TIMEOUT_COMMAND 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep -q '404 Not Found' ;then
+    echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
+    echo "Try to set a smaller field of view size, for example:  $0 $1 " $(echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}')
+    ERROR_STATUS=1
+   else
     echo -e "Field \033[01;32mSOLVED\033[00m =)"
     rm -f out.solved
     echo -n "Downloading WCS header...  "
@@ -1661,10 +1653,6 @@ Retrying..."
      ERROR_STATUS=2
      continue
     fi
-   else
-    echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
-    echo "Try to set a smaller field of view size, for example:  $0 $1 " $(echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}')
-    ERROR_STATUS=1
    fi
    # At this point we should remove the completed job from the server
    SERVER_JOB_ID=$(grep "Job ID:" server_reply$$.html | head -n1 | awk '{print $3}')

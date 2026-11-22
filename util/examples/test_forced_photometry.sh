@@ -119,7 +119,8 @@ echo "  RA=$TARGET_RA Dec=$TARGET_DEC"
 echo "=============================================="
 echo ""
 
-util/forced_photometry.sh "$FITSFILE" "$TARGET_RA" "$TARGET_DEC" "$FILTER"
+# Use the local Tycho-2 V calibration for this pre-solved NMW field.
+FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 util/forced_photometry.sh "$FITSFILE" "$TARGET_RA" "$TARGET_DEC" "$FILTER"
 FORCED_EXIT=$?
 if [ $FORCED_EXIT -ne 0 ];then
  echo "ERROR: forced photometry on target failed with exit code $FORCED_EXIT"
@@ -139,8 +140,7 @@ echo ""
 
 # The forced_photometry.sh run above already produced:
 # - SExtractor catalog (wcs_*.wcscat)
-# - Plate solution (wcs_*.wcscat.ucac5)
-# - Calibration (calib.txt, calib.txt_param)
+# - Tycho-2 calibration (calib.txt, calib.txt_param)
 # We can reuse all of these.
 
 # Find the WCS catalog produced by forced_photometry.sh
@@ -154,11 +154,7 @@ if [ ! -s "$WCS_CATALOG" ];then
  exit 1
 fi
 echo "Using SExtractor catalog: $WCS_CATALOG"
-# The RA/Dec columns of that catalog describe the plate-solved copy of the
-# image in the current directory, not necessarily the input file: the UCAC5
-# SIP refit in util/solve_plate_with_UCAC5 may have improved the header of
-# the copy only. Convert sky back to pixels through the same file the
-# catalog describes, as util/forced_photometry.sh itself does.
+# Convert sky coordinates using the same WCS as the catalog, as the wrapper does.
 WCS_IMAGE_FOR_SKY2XY="${WCS_CATALOG%.wcscat}"
 if [ ! -s "$WCS_IMAGE_FOR_SKY2XY" ];then
  WCS_IMAGE_FOR_SKY2XY="$FITSFILE"

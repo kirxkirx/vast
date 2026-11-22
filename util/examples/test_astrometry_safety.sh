@@ -12,7 +12,7 @@ trap 'rm -rf -- "$TEST_DIR"' EXIT
 export REAL_VAST_PATH="$REPO/"
 export VAST_PATH="$TEST_DIR/stub/"
 mkdir -p "$VAST_PATH"lib/astrometry "$VAST_PATH"util "$TEST_DIR/bin"
-for name in vastrealpath wcs_header_file_looks_valid astrometry_wcs_is_valid log_astrometry_repair_strength start_astrometry_repair_budget astrometry_repair_seconds_left install_astrometry_wcs star_list_verify_retweak small_radius_hinted_resolve repair_tan_only_solution install_small_radius_retry ;do
+for name in vastrealpath wcs_header_file_looks_valid astrometry_wcs_is_valid log_astrometry_repair_strength start_astrometry_repair_budget astrometry_repair_seconds_left install_astrometry_wcs star_list_verify_retweak small_radius_hinted_resolve repair_tan_only_solution install_small_radius_retry setup_remote_astrometry ;do
  awk -v name="$name" '
   $0=="function " name " {" { copy=1 }
   copy { print }
@@ -348,4 +348,80 @@ source ./wait_calibrations.sh
 [ "$CALIBRATION_FAILED" -eq 1 ] && [ -s other_completed.txt ] || fail 'factory lost child failure or did not drain jobs'
 grep -q 'partial.fits' transient_factory_test31.txt || fail 'factory lost failed image name'
 N_CASES=$((N_CASES+1))
+
+# On macOS, server selection must work even when sort rejects a random seed.
+(
+ uname() { echo Darwin; }
+ ping() { return 0; }
+ sort() { touch sort_called; return 1; }
+ FORCE_PLATE_SOLVE_SERVER=
+ VAST_COUNTRY_CODE=US
+ setup_remote_astrometry > selection.log 2>&1 || fail 'macOS server selection failed'
+ [ ! -e sort_called ] || fail 'server selection requires sort'
+ case "$PLATE_SOLVE_SERVERS" in
+  'scan.sai.msu.ru tau.kirx.net'|'tau.kirx.net scan.sai.msu.ru') ;;
+  *) fail 'server selection lost a reachable server' ;;
+ esac
+ case "$PLATE_SOLVE_SERVER" in
+  scan.sai.msu.ru|tau.kirx.net) ;;
+  *) fail 'server selection chose an unreachable server' ;;
+ esac
+ FORCE_PLATE_SOLVE_SERVER=tau.kirx.net
+ setup_remote_astrometry > selection.log 2>&1 || fail 'forced server selection failed'
+ [ "$PLATE_SOLVE_SERVER" = tau.kirx.net ] && [ "$PLATE_SOLVE_SERVERS" = tau.kirx.net ] || fail 'forced server selection added an alternate'
+)
+N_CASES=$((N_CASES+1))
+
+# Run the remote solve block with a stub that distinguishes a loader error
+# from a real no-match result. A failed job must be removed before failover.
+awk '
+ /^ if \[ "\$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" \];then$/ {copy=1}
+ copy {print}
+ copy && /^ fi$/ {found=1; exit}
+ END {if (!found) exit 1}
+' "$REPO/util/identify.sh" > remote_solve.sh
+for case_name in loader_error unsolved ;do
+ (
+  probe_remote_curl() {
+   case "$*" in
+    */process_sextractor_list.py*)
+     printf 'submit %s\n' "$PLATE_SOLVE_SERVER" >> remote_calls
+     printf 'WCS_HEADER_FILE= http://%s/out.wcs\nJob ID: stub\n' "$PLATE_SOLVE_SERVER" ;;
+    *scan/program.log*)
+     if [ "$case_name" = loader_error ];then
+      echo 'solve-field: error while loading shared libraries: libgsl.so.27: cannot open shared object file'
+     else
+      echo 'No solution found'
+     fi ;;
+    *tau/program.log*) echo 'Field solved' ;;
+    *scan/out.solved*) echo '404 Not Found' ;;
+    *tau/out.solved*) printf 1 ;;
+    *tau/out.wcs*) cp good.wcs out$$.wcs ;;
+    */remove_job.py*) printf 'remove %s\n' "$PLATE_SOLVE_SERVER" >> remote_calls ;;
+    *) fail 'unexpected remote solver request' ;;
+   esac
+  }
+  setup_remote_astrometry() {
+   PLATE_SOLVE_SERVER=scan
+   PLATE_SOLVE_SERVERS='scan tau'
+   CURL=probe_remote_curl
+  }
+  : > remote_calls
+  cp input.xyls out$$.xyls
+  BASENAME_FITSFILE="$case_name.fits"
+  TRIAL_FIELD_OF_VIEW_ARCMIN=30
+  ERROR_STATUS=2
+  # shellcheck source=/dev/null
+  source ./remote_solve.sh > case.log 2>&1
+  printf '%s\n' 'submit scan' 'remove scan' > expected_remote_calls
+  if [ "$case_name" = loader_error ];then
+   printf '%s\n' 'submit tau' 'remove tau' >> expected_remote_calls
+   [ "$ERROR_STATUS" -eq 0 ] && astrometry_wcs_is_valid "wcs_$BASENAME_FITSFILE" sip || fail 'alternate server did not install its WCS'
+  else
+   [ "$ERROR_STATUS" -eq 1 ] && [ ! -e "wcs_$BASENAME_FITSFILE" ] || fail 'unsolved field lost its failure status'
+  fi
+  cmp expected_remote_calls remote_calls || fail "unexpected submissions or cleanup for $case_name"
+ )
+ N_CASES=$((N_CASES+1))
+done
 echo "All $N_CASES astrometry safety cases passed."

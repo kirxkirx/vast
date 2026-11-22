@@ -37292,8 +37292,10 @@ if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec
  # Set up SExtractor configuration for telephoto lens
  cp default.sex.telephoto_lens_vSTL default.sex
 
- # Run full forced photometry pipeline on target
- FORCEDPHOT_OUTPUT=$(util/forced_photometry.sh "$FORCEDPHOT_FITSFILE" "$FORCEDPHOT_TARGET_RA" "$FORCEDPHOT_TARGET_DEC" "$FORCEDPHOT_FILTER" 2>/dev/null)
+ # Calibrate the pre-solved NMW field with the local Tycho-2 catalog.
+ FORCEDPHOT_OUTPUT=$(FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2 util/forced_photometry.sh \
+  "$FORCEDPHOT_FITSFILE" "$FORCEDPHOT_TARGET_RA" "$FORCEDPHOT_TARGET_DEC" "$FORCEDPHOT_FILTER" \
+  2> forced_photometry_terminal_output.tmp)
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FORCEDPHOT001"
@@ -37353,14 +37355,7 @@ if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec
  ########################################################
  # The forced_photometry.sh run above produced calibration files and SExtractor catalog
  WCS_CATALOG="wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec_-15.00C_LIGHT_0682.fits.wcscat"
- # The RA/Dec columns of this catalog describe the plate-solved copy of the
- # image that util/forced_photometry.sh worked on in the current directory,
- # NOT the input file in ../individual_images_test/ - the UCAC5 SIP refit may
- # have improved the header of the copy only. Map sky back to pixels through
- # the same file the catalog describes, exactly as util/forced_photometry.sh
- # itself does; otherwise every aperture here is displaced by the difference
- # between the two solutions and the comparison measures that displacement
- # instead of the photometry.
+ # Convert sky coordinates using the same WCS as the catalog, as the wrapper does.
  FORCEDPHOT_WCS_IMAGE="${WCS_CATALOG%.wcscat}"
  if [ ! -s "$FORCEDPHOT_WCS_IMAGE" ];then
   FORCEDPHOT_WCS_IMAGE="$FORCEDPHOT_FITSFILE"
@@ -37486,9 +37481,11 @@ if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
+  rm -f forced_photometry_terminal_output.tmp
   echo -e "\n\033[01;34mForced photometry test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
+  save_test_artifact forced_photometry_terminal_output.tmp forced_photometry && rm -f forced_photometry_terminal_output.tmp
   echo -e "\n\033[01;34mForced photometry test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
@@ -37516,6 +37513,11 @@ if [ -f ../individual_images_test/wcs_Sgr-05-Q2b1x1_2026-03-26_06-11-57_20.00sec
   TEST_PASSED=0
   # Surface the standalone runner's log for debugging
   echo "$FORCEDPHOTLIST_OUTPUT" >&2
+  for FORCEDPHOTLIST_LOG in fp_initial.log fp_initial.err ;do
+   if [ -f "$FORCEDPHOTLIST_LOG" ];then
+    save_test_artifact "$FORCEDPHOTLIST_LOG" forced_photometry_list
+   fi
+  done
   # Propagate its specific failure codes so outer reporting stays useful
   FORCEDPHOTLIST_CODES=$(echo "$FORCEDPHOTLIST_OUTPUT" | awk '/^Failure codes:/ {sub(/^Failure codes:/, ""); print; exit}')
   if [ -n "$FORCEDPHOTLIST_CODES" ];then

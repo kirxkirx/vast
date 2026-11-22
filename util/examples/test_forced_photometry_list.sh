@@ -10,7 +10,7 @@
 #   5. util/forced_photometry.sh --list mode runs end-to-end and emits detections
 #
 # Run from the VaST top directory.  Uses the NMW telephoto-lens test image
-# already exercised by util/examples/test_vast.sh.
+# already exercised by util/examples/test_vast.sh, plus the local Tycho-2 catalog.
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -26,6 +26,8 @@ FP_FILTER="V"
 FP_TARGET_RA="19:32:43.67"
 FP_TARGET_DEC="-22:39:30.7"
 FP_N_STARS=20
+
+export FORCED_PHOTOMETRY_CALIBRATION_METHOD=tycho2
 
 TEST_PASSED=1
 FAILED_TEST_CODES=""
@@ -54,12 +56,10 @@ cp default.sex.telephoto_lens_vSTL default.sex
 # Step 1: run single-position pipeline once to produce calib files + catalog
 util/forced_photometry.sh "$FP_FITSFILE" "$FP_TARGET_RA" "$FP_TARGET_DEC" "$FP_FILTER" \
     > fp_initial.log 2>fp_initial.err
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES FPLIST001_PIPELINE_FAIL"
-fi
-if [ ! -s calib.txt_param ] || [ ! -s "$FP_WCS_CATALOG" ];then
- echo "Initial pipeline did not produce calib files or catalog; aborting." >&2
+FP_INITIAL_EXIT=$?
+if [ "$FP_INITIAL_EXIT" -ne 0 ] || [ ! -s calib.txt_param ] || [ ! -s "$FP_WCS_CATALOG" ];then
+ echo "Initial pipeline setup failed (pipeline exit $FP_INITIAL_EXIT). See fp_initial.log and fp_initial.err." >&2
+ echo "Failure codes: FPLIST001_PIPELINE_FAIL"
  exit 1
 fi
 
@@ -325,7 +325,7 @@ echo "Shell --list detections under C section: $FP_SHELL_N" >&2
 #################################
 rm -f fp_catalog_stars.tmp fp_pix_list.txt fp_sky_list.txt fp_sex_mags.txt
 rm -f fp_batch_c.txt fp_batch_c.err fp_batch_py.txt fp_batch_py.err
-rm -f fp_shell_out.txt fp_shell_out.err fp_initial.log fp_initial.err
+rm -f fp_shell_out.txt fp_shell_out.err
 
 #################################
 # Summary
@@ -334,6 +334,7 @@ THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 if [ "$TEST_PASSED" -eq 1 ];then
+ rm -f fp_initial.log fp_initial.err
  echo -e "\n\033[01;34mForced photometry list-mode test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  exit 0
 else
