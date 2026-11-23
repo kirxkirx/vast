@@ -15395,6 +15395,24 @@ if [ -d ../NMW-TexasTech__Aql-03-Q1b1x1_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_FIELD_ALTITUDE_IMAGE2"
   fi
+  # Both images were taken more than 20 degrees above the horizon, so the bright-star
+  # check of the first SExtractor pass has to count the stars on each of them (the
+  # factory copies its lines to the log), and on this clear pair it must not find too few
+  grep 'Bright-star check: ' transient_report/index.html | grep ' stars (' | grep -q -F 'Aql-03-Q1b1x1_2026-07-06_22-05-11_20.00sec_-0.00C_LIGHTs_0018.fits has '
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_BRIGHT_STAR_CHECK_IMAGE1"
+  fi
+  grep 'Bright-star check: ' transient_report/index.html | grep ' stars (' | grep -q -F 'Aql-03-Q1b1x1_2026-07-06_22-06-04_20.00sec_-0.00C_LIGHTs_0019.fits has '
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_BRIGHT_STAR_CHECK_IMAGE2"
+  fi
+  grep -q 'too few bright stars' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AQL03XCHK_BRIGHT_STAR_CHECK_REJECTED"
+  fi
   # Candidate count sanity (baseline 2026-07-07: 94 candidates, all identified;
   # the count varies with the success of the online Gaia/APASS exclusion queries)
   NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
@@ -16311,6 +16329,91 @@ else
 $(cat "astrometry_safety_$$.log")"
 fi
 rm -f "astrometry_safety_$$.log"
+
+##### Field altitude report of the transient factory and its bright-star check mask #####
+# util/examples/test_transient_altaz.sh runs two pieces of
+# util/transients/transient_factory_test31.sh on minimal FITS headers made on the spot: the
+# function that reports the altitude and azimuth of the new images, and the awk line that
+# turns their center altitudes into the mask of images for the bright-star check of VaST.
+# That line is run by the awk of this system: mawk cannot parse the form it had at first
+# (a comparison without parentheses in a printf argument list), the mask then came out
+# empty and VaST skipped the check without a word. Fast and offline, so it runs everywhere.
+# It needs python3 >= 3.7 (standard library only); without it the test is skipped
+# (NOT_PERFORMED_TRANSIENTALTAZ_*, not a failure).
+TRANSIENTALTAZ_SKIP_REASON=""
+if ! command -v python3 &> /dev/null ;then
+ TRANSIENTALTAZ_SKIP_REASON="nopython3"
+elif ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' &> /dev/null ;then
+ TRANSIENTALTAZ_SKIP_REASON="oldpython3"
+fi
+if [ -z "$TRANSIENTALTAZ_SKIP_REASON" ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Transient factory altitude report test "
+ echo -n "Transient factory altitude report test: " >> vast_test_report.txt
+ TRANSIENTALTAZ_OUTPUT=$(util/examples/test_transient_altaz.sh 2>&1)
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TRANSIENTALTAZ001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TRANSIENTALTAZ001 ######
+$TRANSIENTALTAZ_OUTPUT"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mTransient factory altitude report test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mTransient factory altitude report test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ echo "Transient factory altitude report test: NOT PERFORMED ($TRANSIENTALTAZ_SKIP_REASON)" | tee -a vast_test_report.txt
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_TRANSIENTALTAZ_$TRANSIENTALTAZ_SKIP_REASON"
+fi
+
+##### APASS through the ESA Gaia Archive: the client and the plate solver code that uses it #####
+# util/examples/test_apass_esa_tap.sh checks lib/apass_esa_tap.sh and the way
+# util/solve_plate_with_UCAC5 applies its result and falls back to VizieR (see the list of
+# its checks at the top of the script). Nothing is asked from ESA or VizieR: a stand-in for
+# curl answers, so the test is offline and runs everywhere. The plate solver part runs only
+# where the local UCAC5 copy lib/catalogs/ucac5 is installed (the plate solver matches the
+# stars with UCAC5 before it asks for photometry); elsewhere the script says so in a
+# NOT_PERFORMED line and the informational code NOT_PERFORMED_APASSESATAP_SOLVER_* is
+# recorded (not a failure).
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "APASS via ESA TAP test "
+echo -n "APASS via ESA TAP test: " >> vast_test_report.txt
+APASSESATAP_TEST_OUTPUT=$(util/examples/test_apass_esa_tap.sh 2>&1)
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ # The failure codes of the script are in its "FAILED: CODE description" lines
+ APASSESATAP_CODES=$(echo "$APASSESATAP_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+ if [ -z "$APASSESATAP_CODES" ];then
+  APASSESATAP_CODES="APASSESATAP_UNKNOWN_FAILURE"
+ fi
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $APASSESATAP_CODES"
+ echo "$APASSESATAP_TEST_OUTPUT"
+ DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### APASSESATAP ######
+$(echo "$APASSESATAP_TEST_OUTPUT" | tail -n 40)"
+fi
+# The reason why the plate solver part did not run, if it did not
+for APASSESATAP_NOT_PERFORMED_CODE in $(echo "$APASSESATAP_TEST_OUTPUT" | grep '^NOT_PERFORMED: ' | awk '{print $2}') ;do
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $APASSESATAP_NOT_PERFORMED_CODE"
+done
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mAPASS via ESA TAP test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mAPASS via ESA TAP test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 
 ##### NMW-TexasTech Cyg-05 re-match and Her-09 astrometry regressions #####
 # Cyg-05-Q1 0037 (2026-10-08): the old total-pair-count stop left only
@@ -29318,11 +29421,11 @@ fi
 # check at once, with the "ACTION NEEDED - OBSERVATORY ROOF CLOSED?" banner as the first ERROR line
 # of the report (unmw sends an alert for it); with CHECK_FOR_CLOSED_ROOF=no or without a dark
 # frame no closed roof may be reported. It is a separate script, like the other tests of a single
-# feature, so that it can be run alone (in a few minutes) after changing the check: this script takes
-# hours. With the check switched off the starless images go through the rest of the pipeline,
-# plate solving included (with the remote plate-solve service where there is no local
-# Astrometry.net), so like the other NMW-TexasTech transient search tests this one does not run
-# on GitHub Actions.
+# feature, so that it can be run alone (in under a minute) after changing the check: this script
+# takes hours. With the check switched off the starless images go on to the VaST run, where the
+# bright-star check stops them (see the next test); before that check took an image without
+# stars for what it is, they went through the rest of the pipeline, plate solving included.
+# Like the other NMW-TexasTech transient search tests this one does not run on GitHub Actions.
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ -d ../NMW-TexasTech__closed_roof_test ];then
@@ -29358,6 +29461,58 @@ else
 fi
 ### Disable the above test for GitHub Actions
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
+
+######### Bright-star check of the NMW-TexasTech transient search
+# util/examples/test_bright_star_check.sh runs VaST on images of the dataset of the two tests
+# above the way the transient factory runs its pass with the bright-star SExtractor settings,
+# with the two variables that request the check (see the list of its checks at the top of the
+# script): open-sky new images pass, an image that lost nearly all stars and images without
+# stars are rejected before the stars are matched, each digit of the image mask belongs to its
+# own image, and nothing is checked without the variables. It also runs the transient factory
+# on the two closed-roof images with the closed-roof check switched off: the bright-star check
+# has to stop them in seconds. The VaST runs need no network and take seconds, so they run
+# everywhere; the transient factory runs are left out on GitHub Actions, like the other
+# NMW-TexasTech transient factory tests.
+if [ -d ../NMW-TexasTech__closed_roof_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Bright-star check test "
+ echo -n "Bright-star check test: " >> vast_test_report.txt
+ if [ "$GITHUB_ACTIONS" = "true" ];then
+  BRIGHTSTARCHECK_TEST_OUTPUT=$(BRIGHT_STAR_CHECK_TEST_SKIP_FACTORY_RUNS=yes util/examples/test_bright_star_check.sh 2>&1)
+  BRIGHTSTARCHECK_TEST_EXIT_CODE=$?
+ else
+  BRIGHTSTARCHECK_TEST_OUTPUT=$(util/examples/test_bright_star_check.sh 2>&1)
+  BRIGHTSTARCHECK_TEST_EXIT_CODE=$?
+ fi
+ if [ $BRIGHTSTARCHECK_TEST_EXIT_CODE -ne 0 ];then
+  TEST_PASSED=0
+  # The failure codes of the script are in its "FAILED: CODE description" lines
+  BRIGHTSTARCHECK_CODES=$(echo "$BRIGHTSTARCHECK_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+  if [ -z "$BRIGHTSTARCHECK_CODES" ];then
+   BRIGHTSTARCHECK_CODES="BRIGHTSTARCHECK_UNKNOWN_FAILURE"
+  fi
+  FAILED_TEST_CODES="$FAILED_TEST_CODES $BRIGHTSTARCHECK_CODES"
+  echo "$BRIGHTSTARCHECK_TEST_OUTPUT"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BRIGHTSTARCHECK ######
+$(echo "$BRIGHTSTARCHECK_TEST_OUTPUT" | tail -n 40)"
+ fi
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mBright-star check test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mBright-star check test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BRIGHTSTARCHECK_TEST_NOT_PERFORMED"
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 
@@ -37733,6 +37888,14 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_oldpython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nopythonmodules/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_LCMETADATA_nocompiler/}"
+ # transient factory altitude report test: skipped without python3 >= 3.7
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_TRANSIENTALTAZ_nopython3/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_TRANSIENTALTAZ_oldpython3/}"
+ # APASS via ESA TAP test: its plate solver part needs the local UCAC5 copy, which is
+ # optional (lib/install_local_copy_of_UCAC5.sh), and one image of the test data; the
+ # client part always runs
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_APASSESATAP_SOLVER_noucac5/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_APASSESATAP_SOLVER_nodata/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.

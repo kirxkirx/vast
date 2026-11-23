@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Offline regression test of FITS coordinates reported by the transient factory.
+# Offline regression test of FITS coordinates reported by the transient factory,
+# and of the mask of images for the bright-star check it derives from them.
 # Uses the compiled util/listhead and temporary, minimal FITS images only.
+# Needs python3 >= 3.7 (standard library only).
 set -euo pipefail
 export LC_ALL=C
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -16,6 +18,20 @@ root = Path(sys.argv[1]).resolve()
 source = (root / 'util/transients/transient_factory_test31.sh').read_text()
 function = re.search(r'^function report_second_epoch_image_altaz \{\n.*?^ return 0\n\}\n',
                      source, re.M | re.S).group()
+# The line that turns the center altitudes of the two new images into the mask
+# for the bright-star check of VaST: one digit per image, 1 for an image taken
+# at least 20 degrees above the horizon.
+mask_lines = re.findall(r'^ *BRIGHT_STAR_CHECK_IMAGE_MASK=\$\(awk .*\)$', source, re.M)
+assert len(mask_lines) == 1, mask_lines
+# (case numbers of the first and the second image below, the expected mask)
+mask_cases = [
+    ((0, 2), '11'),   # 22.55 and 20 degrees
+    ((0, 6), '10'),   # 19.99 degrees is reported as 20.0, but it is below the limit
+    ((6, 2), '01'),
+    ((2, 1), '10'),   # no center altitude for the second image
+    ((1, 3), '00'),   # no center altitude at all
+    ((5, 10), '00'),  # -5 and -90 degrees
+]
 cases = [
     ('decimal', {'CENTALT': '22.55', 'CENTAZ': '239.7625'}, '22.6', '239.8'),
     ('sexagesimal', {'OBJCTALT': "'45 00 00'", 'OBJCTAZ': "'123:45:36'"}, '45.0', '123.8'),
@@ -54,6 +70,17 @@ with tempfile.TemporaryDirectory(prefix='vast-altaz-') as work:
     assert [float(deg) if deg else None for deg in center_altitudes] == [
         22.55, None, 20, None, None, -5, 19.99, None, None, None, -90,
     ]
+    # The factory's own line, run by the awk of this system: an awk that cannot
+    # parse it prints nothing but a complaint, and VaST then skips the check.
+    for (first, second), expected_mask in mask_cases:
+        mask_result = subprocess.run(
+            ['bash', '-c', 'SECOND_EPOCH_CENTER_ALTITUDES=("$1" "$2")\n' + mask_lines[0]
+             + '\nprintf "%s" "$BRIGHT_STAR_CHECK_IMAGE_MASK"',
+             'test', center_altitudes[first], center_altitudes[second]],
+            cwd=work, text=True, capture_output=True, check=True)
+        assert mask_result.stdout == expected_mask and mask_result.stderr == '', (
+            center_altitudes[first], center_altitudes[second], expected_mask,
+            mask_result.stdout, mask_result.stderr)
     for image, old_hash, (name, _, alt, az) in zip(images, hashes, cases):
         assert hashlib.sha256(Path(image).read_bytes()).digest() == old_hash
         for coordinate, expected in [('altitude', alt), ('azimuth', az)]:
@@ -65,5 +92,6 @@ with tempfile.TemporaryDirectory(prefix='vast-altaz-') as work:
             else:
                 assert lines[0].startswith(f'Field {coordinate} during imaging: {expected} deg '), lines
     assert 'ERROR' not in result.stdout
-print(f'PASS: {len(cases)} FITS coordinate cases; headers unchanged; stdout matches report log')
+print(f'PASS: {len(cases)} FITS coordinate cases; {len(mask_cases)} bright-star check mask cases; '
+      'headers unchanged; stdout matches report log')
 PY

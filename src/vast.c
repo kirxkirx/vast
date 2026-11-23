@@ -151,16 +151,38 @@ void report_and_handle_too_many_stars_error( void ) {
 
 // Count bright sources with usable flux measurements.
 // The caller uses SExtractor's bright-star configuration on all four images.
+// Returns the number of such sources, 0 for an image without stars and -1
+// if the number cannot be determined.
 static long count_bright_stars( char *image ) {
  char catalog[FILENAME_LENGTH];
+ char aperture_filename[FILENAME_LENGTH + 16];
  char line[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
  FILE *file;
  long count= 0;
+ long line_count= 0;
  int has_measurements= 0;
  int number, flag, external_flag;
  double flux, flux_error, mag, mag_error, x, y, a, a_error, b, b_error, psf_chi2;
+ double aperture= 99.0;
 
  if ( find_catalog_in_vast_images_catalogs_log( image, catalog ) != 0 ) {
+  // There is no catalog to count. autodetect_aperture() writes the aperture
+  // of an image before its main SExtractor run and skips that run when the
+  // aperture comes out below one pixel: SExtractor ran, but found no star
+  // to measure the seeing from. Such an image has no stars. A SExtractor
+  // run that failed leaves no aperture file: the number is unknown then.
+  snprintf( aperture_filename, sizeof( aperture_filename ), "%s.aperture", catalog );
+  file= fopen( aperture_filename, "r" );
+  if ( file == NULL ) {
+   return -1;
+  }
+  if ( 1 != fscanf( file, "%lf", &aperture ) ) {
+   aperture= 99.0;
+  }
+  fclose( file );
+  if ( aperture >= 0.0 && aperture < 1.0 ) {
+   return 0;
+  }
   return -1;
  }
  file= fopen( catalog, "r" );
@@ -168,6 +190,7 @@ static long count_bright_stars( char *image ) {
   return -1;
  }
  while ( fgets( line, sizeof( line ), file ) != NULL ) {
+  line_count++;
   if ( parse_sextractor_catalog_string( line, &number, &flux, &flux_error, &mag, &mag_error, &x, &y,
                                         &a, &a_error, &b, &b_error, &flag, &external_flag, &psf_chi2, NULL ) != 0 ) {
    continue;
@@ -179,7 +202,9 @@ static long count_bright_stars( char *image ) {
   }
   count++;
  }
- if ( ferror( file ) || !has_measurements ) {
+ // An empty catalog is an image without stars. A catalog none of whose
+ // lines can be parsed says nothing about the number of stars.
+ if ( ferror( file ) || ( line_count > 0 && !has_measurements ) ) {
   count= -1;
  }
  fclose( file );

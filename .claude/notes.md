@@ -1953,7 +1953,46 @@ Update this file as you learn new things.
   a message. Fixed 2026-11-23; it could not be run under mawk here (tau has only gawk, and
   'docker run' fails on tau with a containerd shim error).
 - Bright-star check of a1a03975 on the Gem-03-Q1b1x1 test field: the unmodified new images
-  have 87 percent of the reference star count; uniform extinction simulated by dimming all
+  have 87 percent of the reference star count (the clear Aql-03-Q1b1x1 test pair, taken 28
+  degrees above the horizon, has 49 and 51 percent); uniform extinction simulated by dimming all
   sources at constant sky noise gives 26 percent at 1 mag, 9.4 percent at 2 mag and 3 percent
   at 3 mag, so the 10 percent limit means about 2 mag of cloud. The camera settings come from
   the input path: a test directory needs Q1b1x1 or Q2b1x1 in its name or the check never runs.
+- An image without stars never gets a star catalog. autodetect_aperture() finds no star to
+  measure the seeing from, writes the aperture 0.0 to imageNNNNN.cat.aperture, warns that
+  'the estimated aperture is unrealistically small' and returns before the main SExtractor
+  run. count_bright_stars() in src/vast.c took the missing catalog for 'cannot tell'
+  ('Bright-star check: unavailable for ...'), so two starless new images went on to the star
+  matching, the pointing check with its blind plate solution and the passes with fainter
+  stars. Fixed 2026-11-23: with no catalog it reads the aperture file - an aperture below one
+  pixel means no stars (0), no aperture file means SExtractor failed (unknown); a catalog
+  that exists and is empty is 0 too, one whose lines cannot be parsed stays unknown. A
+  reference image without stars still gives 'unavailable': the check never rejects on a
+  reference it cannot use.
+- Tests added 2026-11-23, all runnable alone and called from test_vast.sh:
+  util/examples/test_bright_star_check.sh - VaST on the crops of the closed-roof dataset as
+  the factory runs its bright-star pass (17 runs in 9 s, everywhere), then two factory runs
+  on the closed-roof frames with CHECK_FOR_CLOSED_ROOF=no (2 s; left out on GitHub Actions
+  with BRIGHT_STAR_CHECK_TEST_SKIP_FACTORY_RUNS=yes). Star counts of that pass on the crops,
+  SExtractor 2.19.5 on tau: the two Pup-02 references 500 and 497, Lac-01 743, And-05 277,
+  Com-03 57, the partly dark Com-01 14, the closed-roof and the overcast Dra-07 frames 0.
+  The two reference crops overlap only in part, so VaST ends such a four-image run with exit
+  code 1 after the check - the test looks at the check lines and at 'Matching stars between
+  images', not at the exit code of a run that passed.
+  util/examples/test_apass_esa_tap.sh - the ESA client against canned replies (everywhere)
+  and util/solve_plate_with_UCAC5 on wcs_fd_Per3_2011-10-31_001.fts (only with the local
+  UCAC5 copy; 1000 positions, radius 23.4 arcsec, 50 s for five runs). The curl stand-in also
+  answers the vizquery requests (lib/my_vizquery.sh calls curl from PATH): '#END#   ' alone
+  is a complete reply without stars, which the solver does not retry. VIZIER_MIRROR_RECORD_ONLY=yes
+  keeps lib/choose_vizier_mirror.sh from probing through the stand-in and from recording the
+  result in lib/catalogs. The returned magnitudes encode the position number (V = base +
+  N/1000, base 10 for ESA, 13 for VizieR), which shows which position and which service a
+  magnitude in the output catalog came from. The VizieR reader gives a row to every matched
+  star in a box around the position, so the two readers need not write identical catalogs
+  on a crowded frame; the test asks the ESA path for the exact assignment and the VizieR
+  path only for VizieR values. The solver leaves image_pid<PID>.cat.aperture and .sex_log
+  files in the VaST directory (the test removes its own).
+  util/examples/test_transient_altaz.sh now also runs the factory's own mask line with the
+  awk of the system; it was not called from anywhere before.
+  test_closed_roof_check.sh takes 5 s instead of 3.3 min: in its runs without a dark frame
+  and with the check switched off the bright-star check now stops the starless images.

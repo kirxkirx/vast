@@ -25,8 +25,9 @@
 #    closed roof is still reported;
 #  - an empty dark-frame directory: without a dark frame a closed roof cannot be told from thick
 #    clouds, so no closed roof is reported, but an ERROR says that there is no matching dark frame;
-#  - CHECK_FOR_CLOSED_ROOF=no: nothing mentions a closed roof (the starless images then go through
-#    the rest of the pipeline, which takes a minute or more).
+#  - CHECK_FOR_CLOSED_ROOF=no: nothing mentions a closed roof (the starless images then go on to
+#    the VaST run, where the bright-star check stops them: util/examples/test_bright_star_check.sh
+#    tests that; in the run with the empty dark-frame directory they end there too).
 # The checks look for the stable parts of the messages, not for their exact wording.
 #
 # Usage: util/examples/test_closed_roof_check.sh
@@ -308,7 +309,7 @@ if [ "$FAILED_CODES" != "$FAILED_CODES_BEFORE_THIS_RUN" ];then
 fi
 
 ##### The check switched off #####
-echo "Transient factory run with CHECK_FOR_CLOSED_ROOF=no (the starless images go through the whole pipeline: a minute or more)"
+echo "Transient factory run with CHECK_FOR_CLOSED_ROOF=no (the starless images go on to the VaST run)"
 FAILED_CODES_BEFORE_THIS_RUN="$FAILED_CODES"
 run_factory checkoff CHECK_FOR_CLOSED_ROOF=no
 if [ $FACTORY_EXIT_CODE -ne 0 ] || [ ! -s transient_report/index.html ];then

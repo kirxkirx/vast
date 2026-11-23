@@ -196,6 +196,17 @@ else
     print_test_status "Field altitude lines 42.9 and 42.7 deg" 1
 fi
 
+# Both new images were taken more than 20 degrees above the horizon, so the bright-star
+# check of the first SExtractor pass has to count the stars on each of them, and on this
+# clear pair (about 87 percent of the reference star count) it must not find too few
+if grep 'Bright-star check: ' transient_report/index.html | grep ' stars (' | grep -q -F 'Gem-03-Q1b1x1_2026-01-21_02-42-26_20.00sec_-15.00C_LIGHT_0409.fits has ' && grep 'Bright-star check: ' transient_report/index.html | grep ' stars (' | grep -q -F 'Gem-03-Q1b1x1_2026-01-21_02-43-20_20.00sec_-15.00C_LIGHT_0410.fits has ' && ! grep -q 'too few bright stars' transient_report/index.html; then
+    print_test_status "Bright-star check counted the stars on both new images and kept them" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRIGHT_STAR_CHECK"
+    print_test_status "Bright-star check counted the stars on both new images and kept them" 1
+fi
+
 # Validate HTML format
 if util/transients/validate_HTML_list_of_candidates.sh 2>/dev/null; then
     print_test_status "HTML list format validation" 0
