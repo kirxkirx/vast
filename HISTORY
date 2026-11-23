@@ -1,4 +1,15 @@
 XX XXX XXXX: vast-1.0rc90
+	* util/solve_plate_with_UCAC5 now gets the APASS stars of the whole field at once, with the new
+	lib/photometric_field_catalog.sh (from the ESA Gaia Archive, then from SkyMapper; the tables are
+	cached in lib/catalogs/field_catalog_cache), and matches them itself. It used to ask a remote
+	service for the stars around each of the 1000 brightest reference stars, which the services
+	could no longer answer in time. Now all reference stars take part, so many more comparison
+	stars are used (about 2450 instead of about 300 on a TESS frame). As before, each reference star
+	gets the photometry of the brightest catalog star within the search radius, or none if that
+	star has incomplete photometry. A match whose catalog position differs from the measured
+	position by more than 5 robust sigmas is rejected, for every photometric catalog. The APASS
+	list query via VizieR and Pan-STARRS1 remain as fallbacks. With VAST_PHOTOMETRIC_CATALOG=gaia
+	the Gaia DR3 synthetic photometry (Johnson B V, Cousins R I, SDSS g r i) is tried before APASS.
 	* Fixed the Cousins I magnitudes that util/solve_plate_with_UCAC5 computes from the APASS
 	(and Pan-STARRS1) r and i magnitudes: the R-I term of the Jester et al. (2005)
 	transformation was added with the wrong sign, which made every such Ic 0.42 mag too faint.

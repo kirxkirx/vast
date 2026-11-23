@@ -16373,44 +16373,48 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_TRANSIENTALTAZ_$TRANSIENTALTAZ_SKIP_REASON"
 fi
 
-##### APASS through the ESA Gaia Archive: the client and the plate solver code that uses it #####
-# util/examples/test_apass_esa_tap.sh checks lib/apass_esa_tap.sh and the way
-# util/solve_plate_with_UCAC5 applies its result and falls back to VizieR (see the list of
-# its checks at the top of the script). Nothing is asked from ESA or VizieR: a stand-in for
-# curl answers, so the test is offline and runs everywhere. The plate solver part runs only
-# where the local UCAC5 copy lib/catalogs/ucac5 is installed (the plate solver matches the
-# stars with UCAC5 before it asks for photometry); elsewhere the script says so in a
-# NOT_PERFORMED line and the informational code NOT_PERFORMED_APASSESATAP_SOLVER_* is
-# recorded (not a failure).
+##### Photometric field catalogs: the fetcher and the plate solver code that matches them #####
+# util/examples/test_photometric_field_catalog.sh checks lib/photometric_field_catalog.sh,
+# which fetches the APASS DR9 or Gaia DR3 synthetic photometry stars around the reference
+# stars of an image, and the way util/solve_plate_with_UCAC5 matches them (the brightest star
+# within the search radius), rejects matches with discrepant positions and falls back to the
+# other providers, to the APASS list query via VizieR and to Pan-STARRS1 (see the list of its
+# checks at the top of the script). It also checks the Cousins R and I magnitudes derived from
+# APASS against the published Jester et al. (2005) relations. Nothing is asked from the real
+# services: a stand-in for curl answers, so the test is offline and runs everywhere. The plate
+# solver part runs only where the local UCAC5 copy lib/catalogs/ucac5 is installed (the plate
+# solver matches the stars with UCAC5 before it asks for photometry); elsewhere the script
+# says so in a NOT_PERFORMED line and the informational code NOT_PERFORMED_PHOTFIELDCAT_SOLVER_*
+# is recorded (not a failure).
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "APASS via ESA TAP test "
-echo -n "APASS via ESA TAP test: " >> vast_test_report.txt
-APASSESATAP_TEST_OUTPUT=$(util/examples/test_apass_esa_tap.sh 2>&1)
+echo "Photometric field catalog test "
+echo -n "Photometric field catalog test: " >> vast_test_report.txt
+PHOTFIELDCAT_TEST_OUTPUT=$(util/examples/test_photometric_field_catalog.sh 2>&1)
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  # The failure codes of the script are in its "FAILED: CODE description" lines
- APASSESATAP_CODES=$(echo "$APASSESATAP_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
- if [ -z "$APASSESATAP_CODES" ];then
-  APASSESATAP_CODES="APASSESATAP_UNKNOWN_FAILURE"
+ PHOTFIELDCAT_CODES=$(echo "$PHOTFIELDCAT_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+ if [ -z "$PHOTFIELDCAT_CODES" ];then
+  PHOTFIELDCAT_CODES="PHOTFIELDCAT_UNKNOWN_FAILURE"
  fi
- FAILED_TEST_CODES="$FAILED_TEST_CODES $APASSESATAP_CODES"
- echo "$APASSESATAP_TEST_OUTPUT"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $PHOTFIELDCAT_CODES"
+ echo "$PHOTFIELDCAT_TEST_OUTPUT"
  DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### APASSESATAP ######
-$(echo "$APASSESATAP_TEST_OUTPUT" | tail -n 40)"
+###### PHOTFIELDCAT ######
+$(echo "$PHOTFIELDCAT_TEST_OUTPUT" | tail -n 40)"
 fi
 # The reason why the plate solver part did not run, if it did not
-for APASSESATAP_NOT_PERFORMED_CODE in $(echo "$APASSESATAP_TEST_OUTPUT" | grep '^NOT_PERFORMED: ' | awk '{print $2}') ;do
- FAILED_TEST_CODES="$FAILED_TEST_CODES $APASSESATAP_NOT_PERFORMED_CODE"
+for PHOTFIELDCAT_NOT_PERFORMED_CODE in $(echo "$PHOTFIELDCAT_TEST_OUTPUT" | grep '^NOT_PERFORMED: ' | awk '{print $2}') ;do
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $PHOTFIELDCAT_NOT_PERFORMED_CODE"
 done
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mAPASS via ESA TAP test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo -e "\n\033[01;34mPhotometric field catalog test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mAPASS via ESA TAP test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo -e "\n\033[01;34mPhotometric field catalog test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -25329,7 +25333,9 @@ $GREP_RESULT"
   # The magnitude is APASS-calibrated Cousins I. It was 9.7-9.9 before 2026-11-23, when the
   # sign of the R-I term of the Jester et al. (2005) transformation was fixed: every APASS
   # Ic became 0.42 mag brighter, and so did the zero point of this I-band calibration.
-  grep -q "2024 07 29\.799.  2460521\.299.   9\.[2-5].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html
+  # Measured 9.55 on 2026-11-23 with the APASS field catalog from ESA (about 2450
+  # comparison stars instead of about 300).
+  grep -q "2024 07 29\.799.  2460521\.299.   9\.[4-6].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240110a"
@@ -25338,7 +25344,7 @@ $GREP_RESULT"
 ###### TICATESSFINDNVUL240110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 07 29\.799.  2460521\.299.   9\.[2-5].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.799.  2460521\.299.   9\.[4-6].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   # Position of Nova Vul 2024 from Henryk Sielewicz via astronomy.ru/Stanislav Korotkij 19:43:07.49 +21:00:21.6
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:43:07.49 +21:00:21.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS image scale is 20"/pix
@@ -26821,8 +26827,10 @@ $CAT_RESULT"
   # The limit is in the APASS-calibrated Cousins I band: 15.35 = 15.77 - 0.42 since the
   # sign of the R-I term of the Jester et al. (2005) transformation was fixed on
   # 2026-11-23 (every APASS Ic became 0.42 mag brighter, and so did the zero point).
+  # Measured 15.39 the same day with the APASS field catalog from ESA (the zero RA test
+  # below measured 16.04, exactly its value shifted by -0.42).
   MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.35)*($1 - 15.35) ) < 0.05 ) print 1 ;else print 0 }'`
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.39)*($1 - 15.39) ) < 0.05 ) print 1 ;else print 0 }'`
   #TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.48)*($1 - 15.48) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
@@ -37899,11 +37907,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # transient factory altitude report test: skipped without python3 >= 3.7
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_TRANSIENTALTAZ_nopython3/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_TRANSIENTALTAZ_oldpython3/}"
- # APASS via ESA TAP test: its plate solver part needs the local UCAC5 copy, which is
- # optional (lib/install_local_copy_of_UCAC5.sh), and one image of the test data; the
- # client part always runs
- FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_APASSESATAP_SOLVER_noucac5/}"
- FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_APASSESATAP_SOLVER_nodata/}"
+ # photometric field catalog test: its plate solver part needs the local UCAC5 copy, which
+ # is optional (lib/install_local_copy_of_UCAC5.sh), and one image of the test data; the
+ # fetcher part always runs
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTFIELDCAT_SOLVER_noucac5/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTFIELDCAT_SOLVER_nodata/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.

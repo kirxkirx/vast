@@ -22,6 +22,24 @@
 #define MAX_APASS_MAG_ERR 1.0
 #define MIN_APASS_MATCHES 4
 
+// Positional cut of the matches with a photometric catalog: a match is rejected when its
+// offset (catalog position minus the measured position of the image star) differs from the
+// median offset by more than PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA robust sigmas, computed
+// as 1.4826 * MAD in each coordinate but never below
+// PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_SIGMA_ARCSEC. With fewer than
+// PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_MATCHES matches the cut is not applied.
+#define PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA 5.0
+#define PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_SIGMA_ARCSEC 1.0
+#define PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_MATCHES 20
+
+// Gaia DR3 synthetic photometry: the brightest Gaia star near a reference star supplies the
+// photometry only if the absolute value of its corrected BP/RP flux excess factor c_star is
+// at most GAIA_SYNTHETIC_PHOTOMETRY_MAX_ABS_C_STAR (larger values mark blended or otherwise
+// disturbed BP/RP spectra) and it is not flagged as VARIABLE. Its magnitude errors, as small
+// as 0.001 mag for bright stars, are raised to GAIA_SYNTHETIC_PHOTOMETRY_MIN_MAG_ERR.
+#define GAIA_SYNTHETIC_PHOTOMETRY_MAX_ABS_C_STAR 0.1
+#define GAIA_SYNTHETIC_PHOTOMETRY_MIN_MAG_ERR 0.01
+
 #define DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN 40.0
 
 // Toggle median implementation:
@@ -158,6 +176,12 @@ struct detected_star {
  double estimated_local_correction_accuracy;
  //
  double observing_epoch_jd;
+ //
+ // Position of the catalog star that supplied the photometry, for the positional cut
+ // (at the epoch of the image for Gaia, at the catalog epoch for APASS and Pan-STARRS1)
+ double photometric_catalog_ra;
+ double photometric_catalog_dec;
+ int has_photometric_catalog_position;
 };
 
 // Compute RA difference normalized to [-180, +180] to handle the 0/360 boundary
@@ -1094,6 +1118,8 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   stars[i].catalog_mag= stars[i].catalog_mag_err= stars[i].APASS_B= stars[i].APASS_B_err= stars[i].APASS_V= stars[i].APASS_V_err= 0.0;
   stars[i].APASS_r= stars[i].APASS_r_err= stars[i].APASS_i= stars[i].APASS_i_err= stars[i].Rc_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri_err= stars[i].Ic_computed_from_APASS_ri= stars[i].Ic_computed_from_APASS_ri_err= 0.0;
   stars[i].APASS_g= stars[i].APASS_g_err= 0.0;
+  stars[i].photometric_catalog_ra= stars[i].photometric_catalog_dec= 0.0;
+  stars[i].has_photometric_catalog_position= 0;
   //
   stars[i].observing_epoch_jd= JD;
   //
@@ -1875,6 +1901,9 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
      if ( distance > catalog_search_parameters->search_radius_deg * 3600 )
       continue;
      stars[i].matched_with_photometric_catalog= 1;
+     stars[i].has_photometric_catalog_position= 1;
+     stars[i].photometric_catalog_ra= catalog_ra;
+     stars[i].photometric_catalog_dec= catalog_dec;
 
      // if the star is matched with APASS
      if ( 0.0 != APASS_B && 0.0 != APASS_V && 0.0 != APASS_r && 0.0 != APASS_i ) {
@@ -2016,6 +2045,126 @@ static void set_apass_photometry( struct detected_star *star, struct apass_photo
  star->APASS_g_err= photometry.g_err;
 }
 
+// Forget the photometric catalog match of a star together with its photometry, so that
+// no photometry from a source that failed is left in the output of the next source
+static void clear_photometric_catalog_match( struct detected_star *star ) {
+ star->matched_with_photometric_catalog= 0;
+ star->has_photometric_catalog_position= 0;
+ star->photometric_catalog_ra= star->photometric_catalog_dec= 0.0;
+ star->APASS_B= star->APASS_B_err= star->APASS_V= star->APASS_V_err= 0.0;
+ star->APASS_r= star->APASS_r_err= star->APASS_i= star->APASS_i_err= 0.0;
+ star->APASS_g= star->APASS_g_err= 0.0;
+ star->Rc_computed_from_APASS_ri= star->Rc_computed_from_APASS_ri_err= 0.0;
+ star->Ic_computed_from_APASS_ri= star->Ic_computed_from_APASS_ri_err= 0.0;
+}
+
+static void reset_photometric_catalog_matches( struct detected_star *stars, int N ) {
+ int i;
+ for ( i= 0; i < N; i++ ) {
+  clear_photometric_catalog_match( &stars[i] );
+ }
+}
+
+static int star_has_photometry( const struct detected_star *star ) {
+ if ( star->APASS_B != 0.0 || star->APASS_V != 0.0 || star->APASS_r != 0.0 || star->APASS_i != 0.0 ) {
+  return 1;
+ }
+ if ( star->Rc_computed_from_APASS_ri != 0.0 || star->Ic_computed_from_APASS_ri != 0.0 || star->APASS_g != 0.0 ) {
+  return 1;
+ }
+ return 0;
+}
+
+static int photometric_catalog_match_has_position_and_photometry( const struct detected_star *star ) {
+ if ( star->matched_with_photometric_catalog != 1 || star->has_photometric_catalog_position != 1 ) {
+  return 0;
+ }
+ return star_has_photometry( star );
+}
+
+// Reject the photometric catalog matches whose catalog position disagrees with the
+// measured position of the image star (the final corrected position, as written to the
+// output catalog): a blend, or another catalog star picked as the brightest one within
+// the search radius. The offsets are compared with their median in units of the robust
+// sigma of each coordinate (see PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA).
+// Returns the number of matches with photometry that are left.
+static int reject_photometric_catalog_position_outliers( struct detected_star *stars, int N, const char *catalog_name ) {
+ double *offset_ra= NULL;
+ double *offset_dec= NULL;
+ double *work= NULL;
+ double median_offset_ra, median_offset_dec, sigma_ra, sigma_dec;
+ double normalized_ra, normalized_dec;
+ int i, k, n, n_rejected;
+
+ n= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( 1 == photometric_catalog_match_has_position_and_photometry( &stars[i] ) ) {
+   n++;
+  }
+ }
+ if ( n < PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_MATCHES ) {
+  fprintf( stderr, "Positional cut of the %s matches not applied: %d matches, it needs at least %d\n", catalog_name, n, PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_MATCHES );
+  return n;
+ }
+ offset_ra= (double *)malloc( n * sizeof( double ) );
+ offset_dec= (double *)malloc( n * sizeof( double ) );
+ work= (double *)malloc( n * sizeof( double ) );
+ if ( NULL == offset_ra || NULL == offset_dec || NULL == work ) {
+  fprintf( stderr, "ERROR allocating memory for the positional cut of the %s matches - the cut is not applied\n", catalog_name );
+  free( offset_ra );
+  free( offset_dec );
+  free( work );
+  return n;
+ }
+ k= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( 1 != photometric_catalog_match_has_position_and_photometry( &stars[i] ) ) {
+   continue;
+  }
+  offset_ra[k]= ra_diff_normalized_for_wraparound( stars[i].photometric_catalog_ra, stars[i].corrected_ra_local ) * cos( stars[i].corrected_dec_local * M_PI / 180.0 ) * 3600.0;
+  offset_dec[k]= ( stars[i].photometric_catalog_dec - stars[i].corrected_dec_local ) * 3600.0;
+  k++;
+ }
+ // quickselect_median_double() reorders its input, so it gets a copy
+ for ( k= 0; k < n; k++ ) {
+  work[k]= offset_ra[k];
+ }
+ median_offset_ra= quickselect_median_double( work, n );
+ for ( k= 0; k < n; k++ ) {
+  work[k]= fabs( offset_ra[k] - median_offset_ra );
+ }
+ sigma_ra= MAX( 1.4826 * quickselect_median_double( work, n ), PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_SIGMA_ARCSEC );
+ for ( k= 0; k < n; k++ ) {
+  work[k]= offset_dec[k];
+ }
+ median_offset_dec= quickselect_median_double( work, n );
+ for ( k= 0; k < n; k++ ) {
+  work[k]= fabs( offset_dec[k] - median_offset_dec );
+ }
+ sigma_dec= MAX( 1.4826 * quickselect_median_double( work, n ), PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_SIGMA_ARCSEC );
+ // The stars are visited in the same order as above, so star i has the offsets number k
+ n_rejected= 0;
+ k= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( 1 != photometric_catalog_match_has_position_and_photometry( &stars[i] ) ) {
+   continue;
+  }
+  normalized_ra= ( offset_ra[k] - median_offset_ra ) / sigma_ra;
+  normalized_dec= ( offset_dec[k] - median_offset_dec ) / sigma_dec;
+  k++;
+  if ( normalized_ra * normalized_ra + normalized_dec * normalized_dec > PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA * PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA ) {
+   clear_photometric_catalog_match( &stars[i] );
+   n_rejected++;
+  }
+ }
+ fprintf( stderr, "Positional cut of the %s matches: %d matches, median offset of the catalog position from the measured one %+.2lf arcsec in RA*cos(Dec) and %+.2lf arcsec in Dec, robust sigma %.2lf and %.2lf arcsec (1.4826*MAD, at least %.1lf arcsec), %d rejected beyond %.1lf sigma\n",
+          catalog_name, n, median_offset_ra, median_offset_dec, sigma_ra, sigma_dec, PHOTOMETRIC_CATALOG_POSITION_CUT_MIN_SIGMA_ARCSEC, n_rejected, PHOTOMETRIC_CATALOG_POSITION_CUT_SIGMA );
+ free( offset_ra );
+ free( offset_dec );
+ free( work );
+ return n - n_rejected;
+}
+
 int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
  FILE *f;
  char string[1024];
@@ -2096,6 +2245,9 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
       continue;
      }
      stars[i].matched_with_photometric_catalog= 1;
+     stars[i].has_photometric_catalog_position= 1;
+     stars[i].photometric_catalog_ra= catalog_ra;
+     stars[i].photometric_catalog_dec= catalog_dec;
 
      set_apass_photometry( &stars[i], photometry );
 
@@ -4622,6 +4774,15 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
   }
  }
 
+ if ( vizquery_run_success == 0 ) {
+  // the same minimum number of matches as in read_PANSTARRS1_from_vizquery()
+  if ( reject_photometric_catalog_position_outliers( stars, N, "Pan-STARRS1" ) < 5 ) {
+   fprintf( stderr, "ERROR: too few Pan-STARRS1 matches are left after the positional cut\n" );
+   reset_photometric_catalog_matches( stars, N );
+   vizquery_run_success= 2;
+  }
+ }
+
  // delete temporary files only on success
  // if ( vizquery_run_success == 0 ) {
  if ( 0 != unlink( vizquery_input_filename ) )
@@ -4633,44 +4794,468 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  return vizquery_run_success;
 }
 
-static int read_APASS_from_esa_tap( struct detected_star *stars, const int *target_star_indices, int target_count, const char *filename ) {
- struct apass_photometry matches[MAX_STARS_IN_LOCAL_CAT_QUERY]= { { 0 } };
- struct apass_photometry photometry;
- char line[1024];
- int target_id, i, match_count= 0;
- int complete= 1;
- FILE *input= fopen( filename, "r" );
- if ( input == NULL )
-  return 1;
+// Photometric field catalogs. lib/photometric_field_catalog.sh fetches the stars of a
+// photometric catalog around all good reference stars (a few cones that cover the field)
+// and the functions below match them to the reference stars. This replaced one remote
+// search around each reference star (a list or upload query), which the remote services
+// cannot finish in time for hundreds of positions, so that it was limited to the
+// MAX_STARS_IN_LOCAL_CAT_QUERY brightest reference stars; the field catalogs have no limit.
+#define PHOTOMETRIC_FIELD_CATALOG_APASS 0
+#define PHOTOMETRIC_FIELD_CATALOG_GAIA 1
+// A row of the table: id ra dec pmra pmdec ref_mag in_phot c_star variable, then the
+// magnitude, its error and the flag of each band, the bands in this order
+#define FIELD_CATALOG_N_BANDS 7
+#define FIELD_CATALOG_BAND_B 0
+#define FIELD_CATALOG_BAND_V 1
+#define FIELD_CATALOG_BAND_RC 2
+#define FIELD_CATALOG_BAND_IC 3
+#define FIELD_CATALOG_BAND_SLOAN_G 4
+#define FIELD_CATALOG_BAND_SLOAN_R 5
+#define FIELD_CATALOG_BAND_SLOAN_I 6
+#define FIELD_CATALOG_N_NUMBERS_IN_ROW ( 8 + 3 * FIELD_CATALOG_N_BANDS )
+#define FIELD_CATALOG_MAX_ID_LENGTH 23
 
- while ( fgets( line, sizeof( line ), input ) != NULL ) {
-  if ( sscanf( line, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-               &target_id, &photometry.B, &photometry.B_err, &photometry.V, &photometry.V_err,
-               &photometry.r, &photometry.r_err, &photometry.i, &photometry.i_err,
-               &photometry.g, &photometry.g_err ) != 11 ||
-       target_id < 1 || target_id > target_count || matches[target_id - 1].V != 0.0 ||
-       photometry.B == 0.0 || photometry.V == 0.0 || photometry.r == 0.0 || photometry.i == 0.0 ) {
-   complete= 0;
+struct field_catalog_star {
+ double ra;      // degrees, at the epoch given in the table header (moved to the epoch of the image after reading)
+ double dec;     // degrees
+ double pmra;    // mas/yr, including cos(Dec); 0 if unknown
+ double pmdec;   // mas/yr; 0 if unknown
+ double ref_mag; // the magnitude the catalog stars are selected on: APASS V, Gaia G
+ double c_star;  // Gaia: corrected BP/RP flux excess factor; APASS: 0
+ double mag[FIELD_CATALOG_N_BANDS];     // 0.0 - no magnitude in this band
+ double mag_err[FIELD_CATALOG_N_BANDS]; //
+ int in_phot;                           // Gaia: 0 - no synthetic photometry; APASS: 1
+ int variable;                          // Gaia: 1 - phot_variable_flag is VARIABLE
+ char id[FIELD_CATALOG_MAX_ID_LENGTH + 1];
+};
+
+static int compare_field_catalog_star_on_dec( const void *a1, const void *a2 ) {
+ const struct field_catalog_star *s1= (const struct field_catalog_star *)a1;
+ const struct field_catalog_star *s2= (const struct field_catalog_star *)a2;
+ if ( s1->dec < s2->dec ) {
+  return -1;
+ }
+ if ( s1->dec > s2->dec ) {
+  return 1;
+ }
+ return 0;
+}
+
+// Returns 1 if catalog star a is brighter than b. Of two equally bright stars the one with
+// the smaller identifier counts as brighter, so that the choice does not depend on the order
+// of the rows (it differs between the providers). The identifiers are digit strings.
+static int field_catalog_star_is_brighter( const struct field_catalog_star *a, const struct field_catalog_star *b ) {
+ size_t length_a, length_b;
+ if ( a->ref_mag != b->ref_mag ) {
+  return ( a->ref_mag < b->ref_mag ) ? 1 : 0;
+ }
+ length_a= strlen( a->id );
+ length_b= strlen( b->id );
+ if ( length_a != length_b ) {
+  return ( length_a < length_b ) ? 1 : 0;
+ }
+ return ( strcmp( a->id, b->id ) < 0 ) ? 1 : 0;
+}
+
+// Convert a whole word into a finite number. Returns 0 on success.
+static int parse_field_catalog_number( const char *word, double *value ) {
+ char *endptr;
+ double x;
+ if ( NULL == word || '\0' == word[0] ) {
+  return 1;
+ }
+ x= strtod( word, &endptr );
+ if ( endptr == word || '\0' != *endptr ) {
+  return 1;
+ }
+ // this also rejects NaN and infinity
+ if ( !( x > -1.0e30 && x < 1.0e30 ) ) {
+  return 1;
+ }
+ *value= x;
+ return 0;
+}
+
+// Read a table written by lib/photometric_field_catalog.sh. Returns 0 and the stars, to be
+// freed by the caller, only if the table is complete (the number of rows given in its header)
+// and every row is valid; returns 1 otherwise.
+static int read_photometric_field_catalog( const char *filename, int catalog_type, struct field_catalog_star **catalog_out, int *n_catalog_out, char *provider, size_t provider_size, double *epoch_jy ) {
+ FILE *f;
+ char line[4096];
+ char key[64];
+ char value[64];
+ char *word;
+ struct field_catalog_star *catalog= NULL;
+ struct field_catalog_star *grown;
+ double numbers[FIELD_CATALOG_N_NUMBERS_IN_ROW];
+ size_t id_length;
+ int allocated= 0;
+ int n= 0;
+ int expected_rows= -1;
+ int format_ok= 0;
+ int catalog_ok= 0;
+ int epoch_ok= 0;
+ int valid= 1;
+ int n_numbers, b;
+
+ *catalog_out= NULL;
+ *n_catalog_out= 0;
+ provider[0]= '\0';
+ *epoch_jy= 0.0;
+ f= fopen( filename, "r" );
+ if ( NULL == f ) {
+  return 1;
+ }
+ while ( NULL != fgets( line, sizeof( line ), f ) ) {
+  if ( NULL == strchr( line, '\n' ) && 0 == feof( f ) ) {
+   // a line longer than the buffer
+   valid= 0;
    break;
   }
-  matches[target_id - 1]= photometry;
-  match_count++;
+  if ( '#' == line[0] ) {
+   key[0]= value[0]= '\0';
+   if ( 2 != sscanf( line, "# %63s %63s", key, value ) ) {
+    continue;
+   }
+   if ( 0 == strcmp( key, "vast_field_catalog" ) ) {
+    format_ok= ( 0 == strcmp( value, "1" ) ) ? 1 : 0;
+   } else if ( 0 == strcmp( key, "catalog" ) ) {
+    catalog_ok= ( 0 == strcmp( value, ( catalog_type == PHOTOMETRIC_FIELD_CATALOG_GAIA ) ? "gaia" : "apass" ) ) ? 1 : 0;
+   } else if ( 0 == strcmp( key, "provider" ) ) {
+    strncpy( provider, value, provider_size - 1 );
+    provider[provider_size - 1]= '\0';
+   } else if ( 0 == strcmp( key, "epoch" ) ) {
+    epoch_ok= ( 0 == parse_field_catalog_number( value, epoch_jy ) ) ? 1 : 0;
+   } else if ( 0 == strcmp( key, "rows" ) ) {
+    expected_rows= atoi( value );
+   }
+   continue;
+  }
+  word= strtok( line, " \t\r\n" );
+  if ( NULL == word ) {
+   // an empty line
+   continue;
+  }
+  id_length= strlen( word );
+  if ( id_length > FIELD_CATALOG_MAX_ID_LENGTH || strspn( word, "0123456789" ) != id_length ) {
+   valid= 0;
+   break;
+  }
+  if ( n == allocated ) {
+   allocated= ( 0 == allocated ) ? 4096 : 2 * allocated;
+   grown= (struct field_catalog_star *)realloc( catalog, allocated * sizeof( struct field_catalog_star ) );
+   if ( NULL == grown ) {
+    fprintf( stderr, "ERROR allocating memory for the photometric field catalog\n" );
+    valid= 0;
+    break;
+   }
+   catalog= grown;
+  }
+  memset( &catalog[n], 0, sizeof( struct field_catalog_star ) );
+  strncpy( catalog[n].id, word, FIELD_CATALOG_MAX_ID_LENGTH );
+  catalog[n].id[FIELD_CATALOG_MAX_ID_LENGTH]= '\0';
+  n_numbers= 0;
+  while ( NULL != ( word= strtok( NULL, " \t\r\n" ) ) ) {
+   if ( FIELD_CATALOG_N_NUMBERS_IN_ROW == n_numbers || 0 != parse_field_catalog_number( word, &numbers[n_numbers] ) ) {
+    valid= 0;
+    break;
+   }
+   n_numbers++;
+  }
+  if ( 0 == valid || FIELD_CATALOG_N_NUMBERS_IN_ROW != n_numbers ) {
+   valid= 0;
+   break;
+  }
+  if ( numbers[0] < 0.0 || numbers[0] > 360.0 || numbers[1] < -90.0 || numbers[1] > 90.0 ) {
+   valid= 0;
+   break;
+  }
+  catalog[n].ra= numbers[0];
+  catalog[n].dec= numbers[1];
+  catalog[n].pmra= numbers[2];
+  catalog[n].pmdec= numbers[3];
+  catalog[n].ref_mag= numbers[4];
+  catalog[n].in_phot= ( 0.0 != numbers[5] ) ? 1 : 0;
+  catalog[n].c_star= numbers[6];
+  catalog[n].variable= ( 0.0 != numbers[7] ) ? 1 : 0;
+  for ( b= 0; b < FIELD_CATALOG_N_BANDS; b++ ) {
+   catalog[n].mag[b]= numbers[8 + 3 * b];
+   catalog[n].mag_err[b]= numbers[9 + 3 * b];
+   if ( catalog[n].mag_err[b] < 0.0 ) {
+    valid= 0;
+   }
+  }
+  if ( 0 == valid ) {
+   break;
+  }
+  n++;
  }
- if ( ferror( input ) )
-  complete= 0;
- fclose( input );
- if ( !complete || match_count < MIN_APASS_MATCHES )
+ if ( 0 != ferror( f ) ) {
+  valid= 0;
+ }
+ fclose( f );
+ if ( 0 == valid || 0 == format_ok || 0 == catalog_ok || 0 == epoch_ok || expected_rows != n ) {
+  free( catalog );
   return 1;
+ }
+ *catalog_out= catalog;
+ *n_catalog_out= n;
+ return 0;
+}
 
- // Apply a complete result only. Failed ESA queries leave the VizieR input
- // stars in their original state, including when ESA found too few matches.
- for ( i= 0; i < target_count; i++ ) {
-  if ( matches[i].V != 0.0 ) {
-   set_apass_photometry( &stars[target_star_indices[i]], matches[i] );
-   stars[target_star_indices[i]].matched_with_photometric_catalog= 1;
+static double gaia_synthetic_mag_err( const struct field_catalog_star *gaia_star, int band ) {
+ if ( 0.0 == gaia_star->mag[band] ) {
+  return 0.0;
+ }
+ return MAX( gaia_star->mag_err[band], GAIA_SYNTHETIC_PHOTOMETRY_MIN_MAG_ERR );
+}
+
+// Gaia DR3 synthetic photometry: Johnson B and V, Cousins R and I, SDSS g, r and i. Every band
+// is used on its own: 0.0 where Gaia has no magnitude in that band (B is missing for about 12
+// percent of the stars). The Cousins magnitudes go into the columns that otherwise hold the
+// Rc and Ic computed from APASS r' and i'; SDSS g, r and i take the place of APASS g', r', i'.
+static void set_gaia_synthetic_photometry( struct detected_star *star, const struct field_catalog_star *gaia_star ) {
+ star->APASS_B= gaia_star->mag[FIELD_CATALOG_BAND_B];
+ star->APASS_B_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_B );
+ star->APASS_V= gaia_star->mag[FIELD_CATALOG_BAND_V];
+ star->APASS_V_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_V );
+ star->Rc_computed_from_APASS_ri= gaia_star->mag[FIELD_CATALOG_BAND_RC];
+ star->Rc_computed_from_APASS_ri_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_RC );
+ star->Ic_computed_from_APASS_ri= gaia_star->mag[FIELD_CATALOG_BAND_IC];
+ star->Ic_computed_from_APASS_ri_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_IC );
+ star->APASS_g= gaia_star->mag[FIELD_CATALOG_BAND_SLOAN_G];
+ star->APASS_g_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_SLOAN_G );
+ star->APASS_r= gaia_star->mag[FIELD_CATALOG_BAND_SLOAN_R];
+ star->APASS_r_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_SLOAN_R );
+ star->APASS_i= gaia_star->mag[FIELD_CATALOG_BAND_SLOAN_I];
+ star->APASS_i_err= gaia_synthetic_mag_err( gaia_star, FIELD_CATALOG_BAND_SLOAN_I );
+}
+
+// Match the catalog (sorted by Dec) to the good reference stars. As the list queries did,
+// take the brightest catalog star within the search radius that is inside the magnitude
+// range: the image star is often a blend of several catalog stars, of which the brightest
+// dominates, and the astrometry of an image may be poor. If that star has no usable
+// photometry, the reference star gets none: a fainter neighbour does not stand in for it.
+// APASS needs B, V, r' and i' (g' may be missing); a Gaia star needs synthetic photometry,
+// |c_star| <= GAIA_SYNTHETIC_PHOTOMETRY_MAX_ABS_C_STAR and no VARIABLE flag.
+// APASS is searched around the reference catalog positions at the catalog epoch (as the
+// list queries were), Gaia around the reference catalog positions at the epoch of the image,
+// as the Gaia positions are moved there before.
+// Returns the number of matched reference stars.
+static int match_photometric_field_catalog( struct detected_star *stars, int N, const struct field_catalog_star *catalog, int n_catalog, int catalog_type, struct str_catalog_search_parameters *catalog_search_parameters, int *n_searched, int *n_without_photometry ) {
+ const struct field_catalog_star *candidate;
+ struct apass_photometry photometry;
+ double center_ra, center_dec, radius_deg;
+ int i, k, low, high, middle, best;
+ int n_matched= 0;
+
+ radius_deg= catalog_search_parameters->search_radius_deg;
+ ( *n_searched )= 0;
+ ( *n_without_photometry )= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( 1 != stars[i].good_star || 1 != stars[i].matched_with_astrometric_catalog ) {
+   continue;
+  }
+  ( *n_searched )++;
+  if ( PHOTOMETRIC_FIELD_CATALOG_GAIA == catalog_type ) {
+   center_ra= stars[i].catalog_ra;
+   center_dec= stars[i].catalog_dec;
+  } else {
+   center_ra= stars[i].catalog_ra_original;
+   center_dec= stars[i].catalog_dec_original;
+  }
+  // the first catalog star at Dec >= center_dec - radius_deg
+  low= 0;
+  high= n_catalog;
+  while ( low < high ) {
+   middle= low + ( high - low ) / 2;
+   if ( catalog[middle].dec < center_dec - radius_deg ) {
+    low= middle + 1;
+   } else {
+    high= middle;
+   }
+  }
+  best= -1;
+  for ( k= low; k < n_catalog && catalog[k].dec <= center_dec + radius_deg; k++ ) {
+   if ( catalog[k].ref_mag < catalog_search_parameters->brightest_mag || catalog[k].ref_mag > catalog_search_parameters->faintest_mag ) {
+    continue;
+   }
+   if ( compute_distance_on_sphere( center_ra, center_dec, catalog[k].ra, catalog[k].dec ) > radius_deg ) {
+    continue;
+   }
+   if ( best < 0 || 1 == field_catalog_star_is_brighter( &catalog[k], &catalog[best] ) ) {
+    best= k;
+   }
+  }
+  if ( best < 0 ) {
+   continue;
+  }
+  candidate= &catalog[best];
+  if ( PHOTOMETRIC_FIELD_CATALOG_GAIA == catalog_type ) {
+   if ( 1 != candidate->in_phot || 0 != candidate->variable || fabs( candidate->c_star ) > GAIA_SYNTHETIC_PHOTOMETRY_MAX_ABS_C_STAR ) {
+    ( *n_without_photometry )++;
+    continue;
+   }
+   set_gaia_synthetic_photometry( &stars[i], candidate );
+  } else {
+   if ( 0.0 == candidate->mag[FIELD_CATALOG_BAND_B] || 0.0 == candidate->mag[FIELD_CATALOG_BAND_V] || 0.0 == candidate->mag[FIELD_CATALOG_BAND_SLOAN_R] || 0.0 == candidate->mag[FIELD_CATALOG_BAND_SLOAN_I] ) {
+    ( *n_without_photometry )++;
+    continue;
+   }
+   photometry.B= candidate->mag[FIELD_CATALOG_BAND_B];
+   photometry.B_err= candidate->mag_err[FIELD_CATALOG_BAND_B];
+   photometry.V= candidate->mag[FIELD_CATALOG_BAND_V];
+   photometry.V_err= candidate->mag_err[FIELD_CATALOG_BAND_V];
+   photometry.r= candidate->mag[FIELD_CATALOG_BAND_SLOAN_R];
+   photometry.r_err= candidate->mag_err[FIELD_CATALOG_BAND_SLOAN_R];
+   photometry.i= candidate->mag[FIELD_CATALOG_BAND_SLOAN_I];
+   photometry.i_err= candidate->mag_err[FIELD_CATALOG_BAND_SLOAN_I];
+   photometry.g= candidate->mag[FIELD_CATALOG_BAND_SLOAN_G];
+   photometry.g_err= candidate->mag_err[FIELD_CATALOG_BAND_SLOAN_G];
+   set_apass_photometry( &stars[i], photometry );
+  }
+  if ( 0 == star_has_photometry( &stars[i] ) ) {
+   clear_photometric_catalog_match( &stars[i] );
+   ( *n_without_photometry )++;
+   continue;
+  }
+  stars[i].matched_with_photometric_catalog= 1;
+  stars[i].has_photometric_catalog_position= 1;
+  stars[i].photometric_catalog_ra= candidate->ra;
+  stars[i].photometric_catalog_dec= candidate->dec;
+  n_matched++;
+ }
+ return n_matched;
+}
+
+// Get the stars of a photometric catalog around the field with lib/photometric_field_catalog.sh
+// and match them to the good reference stars (all of them: there is no limit on the number).
+// Returns 0 - at least MIN_APASS_MATCHES stars matched after the positional cut;
+//         1 - the catalog stars could not be fetched or read (another route may still work);
+//         2 - the complete catalog of the field has too few matching stars (no other copy of
+//             the same catalog can do better).
+static int search_photometric_field_catalog( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters, int catalog_type ) {
+ char command[BASE_COMMAND_LENGTH];
+ char positions_filename[FILENAME_LENGTH];
+ char table_filename[FILENAME_LENGTH];
+ char provider[64];
+ char path_to_vast_string[VAST_PATH_MAX];
+ const char *catalog_name;
+ FILE *positions_file;
+ struct field_catalog_star *catalog= NULL;
+ double table_epoch_jy, observing_epoch_jy, years, cos_dec;
+ int n_catalog= 0;
+ int i, k, n_positions, n_searched, n_without_photometry, n_matched, n_left;
+ int result= 1;
+ int pid= getpid();
+
+ catalog_name= ( PHOTOMETRIC_FIELD_CATALOG_GAIA == catalog_type ) ? "Gaia DR3 synthetic photometry" : "APASS DR9";
+ get_path_to_vast( path_to_vast_string );
+ snprintf( positions_filename, sizeof( positions_filename ), "photometric_field_catalog_%d.positions", pid );
+ snprintf( table_filename, sizeof( table_filename ), "photometric_field_catalog_%d.table", pid );
+
+ positions_file= fopen( positions_filename, "w" );
+ if ( NULL == positions_file ) {
+  fprintf( stderr, "ERROR in search_photometric_field_catalog(): cannot open %s for writing\n", positions_filename );
+  return 1;
+ }
+ n_positions= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( 1 == stars[i].good_star && 1 == stars[i].matched_with_astrometric_catalog ) {
+   if ( PHOTOMETRIC_FIELD_CATALOG_GAIA == catalog_type ) {
+    fprintf( positions_file, "%.8lf %+.8lf\n", stars[i].catalog_ra, stars[i].catalog_dec );
+   } else {
+    fprintf( positions_file, "%.8lf %+.8lf\n", stars[i].catalog_ra_original, stars[i].catalog_dec_original );
+   }
+   n_positions++;
   }
  }
- fprintf( stderr, "Matched %d stars with APASS via ESA TAP.\n", match_count );
+ if ( 0 != fclose( positions_file ) ) {
+  fprintf( stderr, "ERROR in search_photometric_field_catalog(): cannot write %s\n", positions_filename );
+  unlink( positions_filename );
+  return 1;
+ }
+ if ( n_positions < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  fprintf( stderr, "ERROR in search_photometric_field_catalog(): only %d reference stars are available\n", n_positions );
+  unlink( positions_filename );
+  return 1;
+ }
+
+ fprintf( stderr, "Getting the %s stars around the %d good reference stars...\n", catalog_name, n_positions );
+ snprintf( command, sizeof( command ), "\"%slib/photometric_field_catalog.sh\" %s %s %.3lf %.2lf %.2lf %s",
+           path_to_vast_string,
+           ( PHOTOMETRIC_FIELD_CATALOG_GAIA == catalog_type ) ? "gaia" : "apass",
+           positions_filename,
+           catalog_search_parameters->search_radius_deg * 3600.0,
+           catalog_search_parameters->brightest_mag,
+           catalog_search_parameters->faintest_mag,
+           table_filename );
+ fprintf( stderr, "%s\n", command );
+ if ( 0 != system( command ) ) {
+  fprintf( stderr, "WARNING: could not get the %s stars around the field\n", catalog_name );
+  goto cleanup;
+ }
+ if ( 0 != read_photometric_field_catalog( table_filename, catalog_type, &catalog, &n_catalog, provider, sizeof( provider ), &table_epoch_jy ) ) {
+  fprintf( stderr, "WARNING: the table of %s stars %s is incomplete or not valid\n", catalog_name, table_filename );
+  goto cleanup;
+ }
+
+ // Move the catalog positions to the epoch of the image (for the stars with a known proper
+ // motion, which are the Gaia stars), then sort them by Dec for the search
+ observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+ years= observing_epoch_jy - table_epoch_jy;
+ for ( k= 0; k < n_catalog; k++ ) {
+  if ( 0.0 == catalog[k].pmra && 0.0 == catalog[k].pmdec ) {
+   continue;
+  }
+  cos_dec= cos( catalog[k].dec * M_PI / 180.0 );
+  if ( cos_dec > 1.0e-6 ) {
+   catalog[k].ra+= catalog[k].pmra / 3600000.0 * years / cos_dec;
+  }
+  catalog[k].dec+= catalog[k].pmdec / 3600000.0 * years;
+  if ( catalog[k].dec > 90.0 ) {
+   catalog[k].dec= 90.0;
+  }
+  if ( catalog[k].dec < -90.0 ) {
+   catalog[k].dec= -90.0;
+  }
+  while ( catalog[k].ra < 0.0 ) {
+   catalog[k].ra+= 360.0;
+  }
+  while ( catalog[k].ra >= 360.0 ) {
+   catalog[k].ra-= 360.0;
+  }
+ }
+ qsort( catalog, n_catalog, sizeof( struct field_catalog_star ), compare_field_catalog_star_on_dec );
+
+ reset_photometric_catalog_matches( stars, N );
+ n_matched= match_photometric_field_catalog( stars, N, catalog, n_catalog, catalog_type, catalog_search_parameters, &n_searched, &n_without_photometry );
+ fprintf( stderr, "Matched %d of %d reference stars with %s (%d catalog stars from %s); for %d more the brightest catalog star within %.1lf arcsec has no usable photometry\n",
+          n_matched, n_searched, catalog_name, n_catalog, provider, n_without_photometry, catalog_search_parameters->search_radius_deg * 3600.0 );
+ n_left= reject_photometric_catalog_position_outliers( stars, N, catalog_name );
+ if ( n_left < MIN_APASS_MATCHES ) {
+  fprintf( stderr, "WARNING: too few stars matched with %s (%d, need at least %d)\n", catalog_name, n_left, MIN_APASS_MATCHES );
+  reset_photometric_catalog_matches( stars, N );
+  result= 2;
+  goto cleanup;
+ }
+ fprintf( stderr, "Using %d stars matched with %s (%s)\n", n_left, catalog_name, provider );
+ result= 0;
+
+cleanup:
+ free( catalog );
+ unlink( positions_filename );
+ unlink( table_filename );
+ return result;
+}
+
+// VAST_PHOTOMETRIC_CATALOG=gaia makes the solver try Gaia DR3 synthetic photometry before
+// APASS. Without it (or with any other value) APASS comes first, as before.
+static int gaia_synthetic_photometry_requested( void ) {
+ const char *value= getenv( "VAST_PHOTOMETRIC_CATALOG" );
+ if ( NULL != value && 0 == strcmp( value, "gaia" ) ) {
+  return 1;
+ }
  return 0;
 }
 
@@ -4687,10 +5272,25 @@ static int search_APASS( struct detected_star *stars, int N, struct str_catalog_
  char vizquery_output_filename[FILENAME_LENGTH];
  int vizquery_run_success;
  int search_stars_counter;
- int target_star_indices[MAX_STARS_IN_LOCAL_CAT_QUERY];
+ int field_catalog_result;
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
+
+ // The APASS stars around the field, matched here: all good reference stars take part
+ field_catalog_result= search_photometric_field_catalog( stars, N, catalog_search_parameters, PHOTOMETRIC_FIELD_CATALOG_APASS );
+ if ( 0 == field_catalog_result ) {
+  return 0;
+ }
+ if ( 2 == field_catalog_result ) {
+  // The table holds every APASS star around the field: VizieR would find no more
+  return 2;
+ }
+
+ // The old route: the APASS list query via VizieR, for at most MAX_STARS_IN_LOCAL_CAT_QUERY
+ // reference stars (the brightest ones, the stars are sorted by magnitude)
+ fprintf( stderr, "WARNING: trying the APASS list query via VizieR for up to %d reference stars...\n", MAX_STARS_IN_LOCAL_CAT_QUERY );
+ reset_photometric_catalog_matches( stars, N );
 
  // Initialize the allocated memory to null characters
  memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
@@ -4707,7 +5307,6 @@ static int search_APASS( struct detected_star *stars, int N, struct str_catalog_
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
    //  The reference catalog epoch is expected to be closer to APASS epoch than some of the images we are going to process
    fprintf( vizquery_input, "%lf %lf\n", stars[i].catalog_ra_original, stars[i].catalog_dec_original );
-   target_star_indices[search_stars_counter]= i;
    search_stars_counter++;
    if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
     break;
@@ -4726,20 +5325,6 @@ static int search_APASS( struct detected_star *stars, int N, struct str_catalog_
   return 1;
  }
 
- fprintf( stderr, "Searching APASS via ESA TAP for %d good reference stars...\n", search_stars_counter );
- snprintf( command, sizeof( command ), "\"%slib/apass_esa_tap.sh\" %s %.1f %.1f %.1f > %s",
-           path_to_vast_string,
-           vizquery_input_filename,
-           catalog_search_parameters->search_radius_deg * 3600,
-           catalog_search_parameters->brightest_mag,
-           catalog_search_parameters->faintest_mag,
-           vizquery_output_filename );
- if ( system( command ) == 0 && read_APASS_from_esa_tap( stars, target_star_indices, search_stars_counter, vizquery_output_filename ) == 0 ) {
-  vizquery_run_success= 0;
-  goto cleanup;
- }
-
- fprintf( stderr, "WARNING: APASS via ESA TAP failed or returned too few usable matches. Trying APASS via VizieR...\n" );
  sprintf( command,
           "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$(%slib/choose_vizier_mirror.sh APASS) -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string,
@@ -4780,7 +5365,14 @@ static int search_APASS( struct detected_star *stars, int N, struct str_catalog_
   }
  }
 
-cleanup:
+ if ( vizquery_run_success == 0 ) {
+  if ( reject_photometric_catalog_position_outliers( stars, N, "APASS DR9 (VizieR)" ) < MIN_APASS_MATCHES ) {
+   fprintf( stderr, "ERROR: too few APASS matches are left after the positional cut\n" );
+   reset_photometric_catalog_matches( stars, N );
+   vizquery_run_success= 2;
+  }
+ }
+
  if ( 0 != unlink( vizquery_input_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
  if ( 0 != unlink( vizquery_output_filename ) )
@@ -7583,6 +8175,7 @@ int main( int argc, char **argv ) {
  /////////////////////////////////////
 
  int use_photometric_catalog= 1;
+ int photometric_lookup_result;
  int requested_number_of_iterations= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH;
 
  int number_of_stars_in_wcs_catalog;
@@ -8299,15 +8892,23 @@ int main( int argc, char **argv ) {
 
  if ( use_photometric_catalog == 1 ) {
   // Photometric calibration
-  if ( 0 != search_APASS( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
+  photometric_lookup_result= 1;
+  if ( 1 == gaia_synthetic_photometry_requested() ) {
+   fprintf( stderr, "VAST_PHOTOMETRIC_CATALOG=gaia - trying Gaia DR3 synthetic photometry before APASS\n" );
+   photometric_lookup_result= search_photometric_field_catalog( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters, PHOTOMETRIC_FIELD_CATALOG_GAIA );
+   if ( 0 != photometric_lookup_result ) {
+    fprintf( stderr, "WARNING: no usable Gaia DR3 synthetic photometry for this field - trying APASS\n" );
+    reset_photometric_catalog_matches( stars, number_of_stars_in_wcs_catalog );
+   }
+  }
+  if ( 0 != photometric_lookup_result && 0 != search_APASS( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
    fprintf( stderr, "ERROR running search_APASS()\n" );
    fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nMaybe the image is too deep and narrow-field that there are not unaturated APASS stars in it?\n\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
-   // We need to reset matched_with_astrometric_catalog flags before re-running the search!
-   for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
-    stars[i].matched_with_photometric_catalog= 0;
-   }
+   // Forget whatever the APASS search left (matches and photometry) before the next search
+   reset_photometric_catalog_matches( stars, number_of_stars_in_wcs_catalog );
    if ( 0 != search_PANSTARRS1_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
     fprintf( stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n" );
+    reset_photometric_catalog_matches( stars, number_of_stars_in_wcs_catalog );
     // Fail if no photometric catalogs could be reached
     // free( stars );
     // return 1;

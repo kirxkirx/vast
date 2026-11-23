@@ -2068,3 +2068,51 @@ Update this file as you learn new things.
   (Gaia - UCAC5 is reduced with Gaia DR1), too narrow for a sigma cut without exact epochs.
   Gaia matched 974 of the 1000 TESS reference stars, APASS 319; I-band zero-point scatter
   0.10 mag with Gaia, 0.27 mag with APASS.
+
+## Photometric field catalogs: APASS and Gaia fetched per field, matched in the solver (2026-11-23)
+
+- lib/photometric_field_catalog.sh fetches the catalog stars around the good reference stars
+  (one cone, four in parallel for a field wider than VAST_FIELD_CATALOG_TILE_RADIUS_DEG=4 in
+  radius; Gaia cones 60 arcsec wider for proper motions) and writes one normalized table;
+  search_photometric_field_catalog() in src/solve_plate_with_UCAC5.c matches it. Providers:
+  APASS esa, skymapper; Gaia esa, ari (VAST_FIELD_CATALOG_PROVIDERS overrides). Exit codes:
+  0 table written (possibly empty), 1 bad arguments, 2 no provider delivered. A complete table
+  with < 4 matches makes the solver skip the VizieR APASS list query (same catalog) and go to
+  Pan-STARRS1. The list queries keep the 1000-star limit (user: drop it only where the search
+  goes through a cone).
+- Matching rule kept from the list queries on the user's request: the brightest catalog star
+  within the search radius and magnitude range; if it lacks photometry (APASS: B V r' i';
+  Gaia: no GSPC row, VARIABLE, |c_star| > 0.1) the reference star gets none. The fetcher lists
+  Gaia stars without synthetic photometry (LEFT OUTER JOIN) exactly so that this works.
+  APASS is searched around catalog_ra_original (UCAC5 at its epoch, as before), Gaia around
+  catalog_ra (UCAC5 at the image epoch) after moving the Gaia rows to the image epoch.
+- Positional cut for every source (field tables, VizieR APASS, Pan-STARRS1): offsets of the
+  catalog position from corrected_ra_local/corrected_dec_local (the positions written to the
+  .wcscat.ucac5), median and 1.4826*MAD per axis, sigma >= 1 arcsec, reject > 5 sigma, only
+  with >= 20 matches. Constants at the top of the solver. reset_photometric_catalog_matches()
+  now clears photometry too: before, a failed APASS attempt left its values behind for the
+  stars Pan-STARRS1 did not match.
+- Field-catalog cache: lib/catalogs/field_catalog_cache (git-ignored), reused when its cones
+  cover the positions plus margin and its mag range covers the request; LRU pruning above
+  VAST_FIELD_CATALOG_CACHE_MAX_MB (1000). Two traps found by the test: an awk "exit" in END
+  replaces the status of an earlier "exit 1" (use a flag), and the cone radii are written with
+  7 decimals, so the coverage check needs a 1e-6 deg tolerance or an identical request misses.
+- util/examples/test_photometric_field_catalog.sh (replaces test_apass_esa_tap.sh; codes
+  PHOTFIELDCAT*): a curl stand-in answers cone queries from sky stars made for the reference
+  stars of wcs_fd_Per3_2011-10-31_001.fts (positions captured from the
+  photometric_field_catalog_<PID>.positions file the solver writes). Gaia source_ids must be
+  written as strings in awk (doubles lose them; the fetcher then de-duplicated 4611 stars into
+  20). The first solver run on an image leaves a refined plate solution, so later runs match
+  more stars (4611 vs 4896): the test does a warm-up run. Its Rc/Ic check restates Jester et
+  al. (2005) as published (V-R, R-I), never the code's formula. Verified by planting bugs: old
+  Ic sign, cut disabled, faintest instead of brightest, no PM propagation, "vmag BETWEEN",
+  1e-9 cache tolerance - each one fails the test; about 1.5 min.
+- Live TESS reference frame: APASS 4464 positions, 72,456 stars from ESA in 11 s, 2695
+  matched, 249 cut, 2446 used (old: 319); Gaia 140,950 stars in 35 s, 3657 used; I zero points
+  25.825 (APASS, sigma 0.27) vs 25.820 (Gaia, sigma 0.14).
+- test_vast.sh sections calibrated against APASS, rerun by hand with the field-catalog code
+  (live ESA): TESS Nova Vul 9.55 (pattern now 9.[4-6]); TESS calibration failure limit 15.39
+  (now expected); TESS zero RA limit 16.04 and candidates 12.61 13.14 13.54 14.08 14.09 14.28
+  13.40 (old values -0.42..-0.44, inside the patterns shifted for the Cousins I fix); RC600
+  V/B/Rc fits and nova within 0.022 mag of the expectations (radius 2.3 arcsec: the cut never
+  bites on such fields). The field-catalog path moves zero points by 0.00-0.02 mag only.
