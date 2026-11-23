@@ -149,6 +149,120 @@ void report_and_handle_too_many_stars_error( void ) {
  return;
 }
 
+// Count bright sources with usable flux measurements.
+// The caller uses SExtractor's bright-star configuration on all four images.
+static long count_bright_stars( char *image ) {
+ char catalog[FILENAME_LENGTH];
+ char line[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
+ FILE *file;
+ long count= 0;
+ int has_measurements= 0;
+
+ if ( find_catalog_in_vast_images_catalogs_log( image, catalog ) != 0 ) {
+  return -1;
+ }
+ file= fopen( catalog, "r" );
+ if ( file == NULL ) {
+  return -1;
+ }
+ while ( fgets( line, sizeof( line ), file ) != NULL ) {
+  int number, flag, external_flag;
+  double flux, flux_error, mag, mag_error, x, y, a, a_error, b, b_error, psf_chi2;
+  if ( parse_sextractor_catalog_string( line, &number, &flux, &flux_error, &mag, &mag_error, &x, &y,
+                                        &a, &a_error, &b, &b_error, &flag, &external_flag, &psf_chi2, NULL ) != 0 ) {
+   continue;
+  }
+  has_measurements= 1;
+  if ( flux_error <= 0 || flux_error == 999999 ||
+       !( flux >= MIN_SNR * flux_error ) || mag == 99.0 || mag_error == 99.0 ) {
+   continue;
+  }
+  count++;
+ }
+ if ( ferror( file ) || !has_measurements ) {
+  count= -1;
+ }
+ fclose( file );
+ return count;
+}
+
+static double bright_star_check_exposure( const char *image ) {
+ fitsfile *file;
+ int status= 0;
+ double exposure= 0.0;
+
+ if ( fits_open_file( &file, image, READONLY, &status ) != 0 ) {
+  return 0.0;
+ }
+ fits_read_key( file, TDOUBLE, "EXPTIME", &exposure, NULL, &status );
+ fits_close_file( file, &status );
+ return status == 0 ? exposure : 0.0;
+}
+
+static int check_bright_star_counts( char **images ) {
+ const char *minimum_string= getenv( "VAST_MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT" );
+ // One digit per second-epoch image, in the order supplied by the factory.
+ const char *image_mask= getenv( "VAST_BRIGHT_STAR_CHECK_IMAGE_MASK" );
+ char *end;
+ double minimum, reference_exposure, second_reference_exposure;
+ long reference_counts[2], reference_count;
+ int i, reject= 0;
+
+ if ( minimum_string == NULL || minimum_string[0] == '\0' || image_mask == NULL || strlen( image_mask ) != 2 ||
+      ( image_mask[0] != '1' && image_mask[1] != '1' ) ) {
+  return 0;
+ }
+ minimum= strtod( minimum_string, &end );
+ if ( *end != '\0' || !( minimum > 0.0 && minimum <= 100.0 ) ) {
+  return 0;
+ }
+ reference_exposure= bright_star_check_exposure( images[0] );
+ second_reference_exposure= bright_star_check_exposure( images[1] );
+ // Depth changes with exposure time, so only compare like exposures.
+ if ( !( reference_exposure > 0.0 && second_reference_exposure > 0.0 &&
+         fabs( second_reference_exposure / reference_exposure - 1.0 ) <= 0.01 ) ) {
+  fprintf( stderr, "Bright-star check: unavailable (the references need matching exposure times)\n" );
+  return 0;
+ }
+ for ( i= 0; i < 2; i++ ) {
+  reference_counts[i]= count_bright_stars( images[i] );
+ }
+ // Use the shallower same-field reference, keeping the check conservative
+ // when the two references differ in depth. Unreadable catalogs are handled
+ // by the usual VaST image processing checks.
+ reference_count= MIN( reference_counts[0], reference_counts[1] );
+ if ( reference_count <= 0 ) {
+  fprintf( stderr, "Bright-star check: unavailable (no usable bright-star counts for both references)\n" );
+  return 0;
+ }
+ for ( i= 2; i < 4; i++ ) {
+  double exposure, percent;
+  long count;
+  if ( image_mask[i - 2] != '1' ) {
+   continue;
+  }
+  exposure= bright_star_check_exposure( images[i] );
+  if ( !( exposure > 0.0 && fabs( exposure / reference_exposure - 1.0 ) <= 0.01 ) ) {
+   fprintf( stderr, "Bright-star check: unavailable for %s (exposure time differs from the references)\n", images[i] );
+   continue;
+  }
+  count= count_bright_stars( images[i] );
+  if ( count < 0 ) {
+   fprintf( stderr, "Bright-star check: unavailable for %s\n", images[i] );
+   continue;
+  }
+  percent= 100.0 * (double)count / (double)reference_count;
+  fprintf( stderr, "Bright-star check: %s has %ld stars (%.1f%% of %ld on the shallower reference, minimum %.1f%%)\n",
+           images[i], count, percent, reference_count, minimum );
+  if ( percent < minimum ) {
+   fprintf( stderr, "ERROR: too few bright stars on second-epoch image %s (%ld of %ld, %.1f%% < %.1f%%) - heavy clouds or severely reduced depth\n",
+            images[i], count, reference_count, percent, minimum );
+   reject= 1;
+  }
+ }
+ return reject;
+}
+
 /* help_msg(const char* progname, int exit_code) - print help */
 void help_msg( const char *progname, int exit_code ) {
  fprintf( stdout, "Usage: %s [options] image1.fit image2.fit ... imageN.fit\n\n", progname );
@@ -2573,6 +2687,13 @@ int main( int argc, char **argv ) {
 
  } else {
   fprintf( stderr, "Fast processing hack: continue to star matching while SExtractor is still computing!\n" );
+ }
+
+ // The transient factory enables this only for its bright-star pass. At this
+ // point all four catalogs have been extracted, but matching and the search
+ // for new sources have yet to start.
+ if ( Num == 4 && check_bright_star_counts( input_images ) ) {
+  return EXIT_FAILURE;
  }
 
  fprintf( stderr, "\n\nMatching stars between images!\n\n" );

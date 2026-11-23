@@ -23,6 +23,7 @@ cases = [
     ('fallback', {'CENTALT': '999', 'OBJCTALT': '0', 'CENTAZ': "'N/A'", 'OBJCTAZ': '0'}, '0.0', '0.0'),
     ('azimuth_only', {'CENTAZ': '2.397625D2'}, None, '239.8'),
     ('altitude_only', {'CENTALT': '-5'}, '-5.0', None),
+    ('near_cloud_limit', {'CENTALT': '19.99'}, '20.0', None),
     ('missing', {}, None, None),
     ('invalid', {'CENTALT': "'NaN'", 'CENTAZ': '361'}, None, None),
     ('bad_minutes', {'OBJCTAZ': "'10 60 00'"}, None, None),
@@ -43,9 +44,16 @@ with tempfile.TemporaryDirectory(prefix='vast-altaz-') as work:
         image.write_bytes(''.join(card.ljust(80) for card in cards).ljust(2880).encode('ascii'))
         images.append(str(image))
         hashes.append(hashlib.sha256(image.read_bytes()).digest())
-    result = subprocess.run(['bash', '-c', function + '\nreport_second_epoch_image_altaz "$@"',
+    result = subprocess.run(['bash', '-c', function + '\nreport_second_epoch_image_altaz "$@"'
+                             '\nprintf "%s\\n" "${SECOND_EPOCH_CENTER_ALTITUDES[@]}" > center_altitudes.txt',
                              'test', *images], cwd=work, text=True, capture_output=True, check=True)
     assert result.stdout == (work / 'transient_factory_test31.txt').read_text()
+    # The cloud check uses only valid center altitudes at their original
+    # precision. A target altitude fallback is suitable for display only.
+    center_altitudes = (work / 'center_altitudes.txt').read_text().splitlines()
+    assert [float(deg) if deg else None for deg in center_altitudes] == [
+        22.55, None, 20, None, None, -5, 19.99, None, None, None, -90,
+    ]
     for image, old_hash, (name, _, alt, az) in zip(images, hashes, cases):
         assert hashlib.sha256(Path(image).read_bytes()).digest() == old_hash
         for coordinate, expected in [('altitude', alt), ('azimuth', az)]:

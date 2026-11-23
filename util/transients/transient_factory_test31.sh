@@ -1252,8 +1252,14 @@ function report_second_epoch_image_altaz {
  # existing altitude format and use the same format for azimuth. Reading the
  # headers here also works when no dark subtraction/header dump is performed.
  local IMAGE_TO_CHECK IMAGE_HEADER COORDINATE CENTER_KEY TARGET_KEY MIN_DEG MAX_DEG
- local COORDINATE_DEG_AND_KEYWORD
+ local COORDINATE_DEG_AND_KEYWORD COORDINATE_DEG COORDINATE_KEYWORD UNROUNDED_DEG
+ local IMAGE_INDEX=-1
+ # Keep the measured center altitudes in the order of the selected pair.
+ # The bright-star check needs the precision before rounding for display.
+ SECOND_EPOCH_CENTER_ALTITUDES=()
  for IMAGE_TO_CHECK in "$@" ;do
+  IMAGE_INDEX=$((IMAGE_INDEX + 1))
+  SECOND_EPOCH_CENTER_ALTITUDES[IMAGE_INDEX]=""
   if [ -z "$IMAGE_TO_CHECK" ] || [ ! -s "$IMAGE_TO_CHECK" ];then
    continue
   fi
@@ -1320,7 +1326,7 @@ function to_degrees(value,  n_parts, parts, i, sign, degrees) {
  if (key == target_key) { target_card = 1; if (target == "") target = to_degrees(card_value($0)) }
 }
 END {
- if (center != "" && center >= min_deg && center <= max_deg) { printf "%.1f %s\n", center, center_key; exit }
+ if (center != "" && center >= min_deg && center <= max_deg) { printf "%.1f %s %.17g\n", center, center_key, center; exit }
  if (target != "" && target >= min_deg && target <= max_deg) { printf "%.1f %s\n", target, target_key; exit }
  if (center_card) { print "unusable " center_key; exit }
  if (target_card) print "unusable " target_key
@@ -1333,7 +1339,11 @@ END {
      echo "No field $COORDINATE in the FITS header (the ${COORDINATE_DEG_AND_KEYWORD#unusable } value is not a valid $COORDINATE in degrees)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
      ;;
     *)
-     echo "Field $COORDINATE during imaging: ${COORDINATE_DEG_AND_KEYWORD% *} deg (FITS keyword ${COORDINATE_DEG_AND_KEYWORD#* })  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+     read -r COORDINATE_DEG COORDINATE_KEYWORD UNROUNDED_DEG <<< "$COORDINATE_DEG_AND_KEYWORD"
+     echo "Field $COORDINATE during imaging: $COORDINATE_DEG deg (FITS keyword $COORDINATE_KEYWORD)  $(basename "$IMAGE_TO_CHECK")" | tee -a transient_factory_test31.txt
+     if [ "$COORDINATE_KEYWORD" = CENTALT ];then
+      SECOND_EPOCH_CENTER_ALTITUDES[IMAGE_INDEX]="$UNROUNDED_DEG"
+     fi
      ;;
    esac
   done
@@ -3922,12 +3932,42 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   VAST_RUN_START_UNIXSEC=$(date +%s)
+  # Both new images can be heavily clouded at once, with similar backgrounds
+  # and enough peaks to pass the roof check. Compare bright-star counts to
+  # the same field's references before matching stars or looking for transients.
+  # Low elevation can also cause a large deficit in clear, moonlit images.
+  # Use only center altitudes already read and reported for this pair.
+  MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT=""
+  BRIGHT_STAR_CHECK_IMAGE_MASK="00"
+  if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_onlybrightstars_v1" ];then
+   case "$CAMERA_SETTINGS" in
+    TTUQ1b1x1|TTUQ2b1x1)
+     BRIGHT_STAR_CHECK_IMAGE_MASK=$(awk -v first="${SECOND_EPOCH_CENTER_ALTITUDES[0]}" -v second="${SECOND_EPOCH_CENTER_ALTITUDES[1]}" 'BEGIN {printf "%d%d", first != "" && first + 0 >= 20, second != "" && second + 0 >= 20}')
+     if [ "$BRIGHT_STAR_CHECK_IMAGE_MASK" != "00" ];then
+      MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT=10
+     fi
+     ;;
+   esac
+  fi
   # Run VaST
   echo "
   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " | tee -a transient_factory_test31.txt
-  ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
+  VAST_MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT="$MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT" VAST_BRIGHT_STAR_CHECK_IMAGE_MASK="$BRIGHT_STAR_CHECK_IMAGE_MASK" \
+   ./vast $VAST_OPTION_NOFLAGIMAGE --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   VAST_EXIT_CODE=$?
+  if [ -n "$MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT" ];then
+   grep '^Bright-star check:' vast_output_$$.tmp | tee -a transient_factory_test31.txt
+   if [ "$VAST_EXIT_CODE" -ne 0 ] && grep -q '^ERROR: too few bright stars on second-epoch image ' vast_output_$$.tmp;then
+    print_image_date_for_logs_in_case_of_emergency_stop "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+    grep '^ERROR: too few bright stars on second-epoch image ' vast_output_$$.tmp | tee -a transient_factory_test31.txt transient_factory.log
+    grep '^TIMING ' vast_output_$$.tmp >> "$PROFILING_LOG"
+    rm -f vast_output_$$.tmp
+    record_timing "    VAST_RUN_${SEXTRACTOR_CONFIG_FILE}" "$VAST_RUN_START_UNIXSEC"
+    # The faint passes would search the same shallow images.
+    break
+   fi
+  fi
   # Blurred second-epoch images (focus drift, dew) flood the candidate list. With
   # FILTER_BAD_IMG__MAX_FWHM_PIX set for the camera, reject the field when the median FWHM of the
   # isolated stars on either second-epoch image is larger. It is measured on the catalogs of the
