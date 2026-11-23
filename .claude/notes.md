@@ -1821,7 +1821,10 @@ Update this file as you learn new things.
   PHP-free replacements were written on 2026-11-12/13 (Python CGI programs in scan's cgi-bin,
   mapped to the old .php URLs with ScriptAlias; kept outside this repository) for
   vasttestreport.php, vastemail.php (the mailing-list form of doc/README.html) and
-  anyemailkirx.php (used only by test_vast.sh of 2019-05-08). For a
+  anyemailkirx.php (used only by test_vast.sh of 2019-05-08). They went live on scan on
+  2026-11-17, together with a rule that refuses every other .php file there (403 instead of
+  the source), so the report upload should pass from then on; if 'unexpected reply from the
+  server' comes back, look at scan first. For a
   report link during the outage: simbad.cfa.harvard.edu has V0615 Vul (PNV
   J19430751+2100204), simbad.idia.ac.za does not.
 
