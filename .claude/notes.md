@@ -45,7 +45,59 @@ Update this file as you learn new things.
 
 - Many scripts use `$RANDOM` and process substitution - require bash, not sh
 - `shellcheck` catches most issues but some warnings (SC2181, SC2034 for unused read vars) are intentional patterns
-- **Never use `gawk`** - rely only on portable `awk` functionality for maximum portability across platforms
+- **Never use `gawk`** (the command or its extensions) - write POSIX awk that works with gawk, mawk,
+  BSD awk and busybox awk alike (next section)
+
+## awk portability (gawk, mawk, BSD awk, busybox awk)
+
+Every script that uses awk - shell scripts, and awk commands that C code runs through system() -
+has to work with all four: gawk (Gentoo/tau, Fedora/RHEL; Scientific Linux 5.6 has gawk 3.1.5),
+mawk (the default awk of Debian and Ubuntu), BSD awk (the one-true-awk of macOS and FreeBSD) and
+busybox awk (Alpine). Consider it for every awk line written or reviewed, not only when something
+fails: the failures are often silent (empty output, a check skipped without a message), and tau
+has only gawk.
+
+Traps:
+- A comparison in a print or printf argument list. mawk takes '>' there, also the one of '>=',
+  for output redirection, and POSIX allows no unparenthesized comparison in a print list. Write
+  printf "%d", (a >= 20), or better compute the value with if/else first. gawk --posix and
+  gawk --lint both accept the bad form, so they do not catch it (the bright-star mask of
+  2026-11-23, see the APASS section below).
+- A print list that starts with a parenthesis followed by more expression - print (a) - (b),
+  print (c) ? x : y - can be read as the parenthesized print (expr_list) form: assign to a
+  variable first, then print it.
+- gawk-only features: gensub, asort, asorti, strftime, systime, mktime, patsplit, length(array),
+  IGNORECASE, PROCINFO, FPAT, FIELDWIDTHS, RT, BEGINFILE/ENDFILE, @include, switch, |&, ** (use
+  ^), and the regex escapes \y \< \> \s \w. Count array elements yourself.
+- Regex interval expressions {n,m}: missing in mawk 1.3.3 (Debian 10, Ubuntu 18.04) and off by
+  default in gawk 3.x (Scientific Linux 5.6). Write the repetition out. In a regex passed as a
+  string, prefer a bracket expression ([.]) to an escaped character ("\\.").
+- No space between the name of a user-defined function and "(" in a call: f(x), not f (x).
+- Numbers are doubles: integers above 2^53 lose digits (on 2026-11-23 every Gaia source_id
+  4000000000000000000 + k came out as the same number). Keep such identifiers as strings and
+  print them with %s; old mawk (1.3.3) also clips %d at 2^31-1, so use %.0f or strings.
+- The awks differ in turning strings like nan, inf or 0x10 into numbers (gawk gives 0, an awk
+  that uses the C library strtod may accept them): validate numeric input with a regex, as
+  lib/photometric_field_catalog.sh does.
+- An exit in END replaces the exit status of an earlier exit (all awks, POSIX): set a flag
+  and decide in END.
+- -v var=value processes backslash escapes: pass paths or regexes with backslashes through
+  ENVIRON.
+- RS longer than one character is an extension (RS = "" for paragraphs is POSIX). Start
+  substr() at 1. split(s, a, "") into characters is undefined in POSIX.
+- awk output into a pipe is block-buffered (notoriously by mawk): call fflush() where another
+  process has to see the lines as they come.
+- Run awk with LC_ALL=C, as VaST scripts do: character classes, ranges and length() then work
+  on bytes in all four.
+
+Checking:
+- gawk --posix rejects gawk extensions (gensub, asort, length(array), ** ...) and warns about
+  \y; gawk --lint reports, among other things, a space before "(" in a function call. Neither
+  catches the print/printf comparison trap or {n,m}.
+- Run the program with the other awks where possible: mawk and original-awk (the one-true-awk)
+  are Debian/Ubuntu packages, busybox awk is "busybox awk", and macOS and FreeBSD have the
+  one-true-awk as /usr/bin/awk. On tau only gawk is installed (2026-11-23), and docker run fails
+  there.
 
 ## bash 3.2 traps (macOS /bin/bash 3.2.57 runs every `#!/usr/bin/env bash` script on the macOS CI runner)
 
@@ -2116,3 +2168,32 @@ Update this file as you learn new things.
   13.40 (old values -0.42..-0.44, inside the patterns shifted for the Cousins I fix); RC600
   V/B/Rc fits and nova within 0.022 mag of the expectations (radius 2.3 arcsec: the cut never
   bites on such fields). The field-catalog path moves zero points by 0.00-0.02 mag only.
+- Guards against transformation errors like the Cousins I sign (user's request, 2026-11-23):
+  util/examples/check_photometric_catalog_colors.sh makes two checks on a .wcscat.ucac5:
+  median (Rc-Ic)-(V-Rc) of the stars with 0.25 <= V-Rc < 0.60 within -0.15..+0.10 (real F-K
+  stars about -0.01..-0.07; measured -0.024 APASS and -0.003 Gaia on TESS, -0.032 APASS on
+  RC600; the old sign gives -0.44), and the median V-Rc, V-Ic, Rc-Ic of the stars with
+  0.55 <= B-V < 0.75 AND B, V errors <= 0.05 (Sun 0.356, 0.701, 0.345, Ramirez et al. 2012;
+  windows 0.27-0.52, 0.58-0.98, 0.25-0.52; old sign V-Ic 0.35, Rc-Ic -0.05 on TESS). Lesson:
+  without the error limit the B-V check failed on the RC600 field (Nova Cas 2021, reddened):
+  its faint stars have APASS B errors of 0.27 mag, the B-V bin fills with red stars (V-Ic
+  1.03), and only 8 stars have good B and V - hence the B-free first check. test_vast.sh
+  calls it through check_reference_image_catalog_colors() in the
+  three TESS sections and the three RC600 sections (codes <PREFIX>_CATALOG_COLORS and
+  _CATALOG_COLORS_NOT_CHECKED). util/examples/test_photometric_catalog_agreement.sh solves
+  wcs_fd_Per3_2011-10-31_001.fts with APASS and with VAST_PHOTOMETRIC_CATALOG=gaia (live
+  services, fresh cache) and compares the same stars: limits 0.10 (B V g r i), 0.15 (Rc Ic);
+  NOT_PERFORMED_PHOTCATAGREE_nodata/noapass/nogaia when a catalog cannot be had. APASS and
+  Gaia do not agree exactly and the offset depends on the field: Per3 V -0.034, Rc -0.063,
+  Ic -0.067, r -0.027, i -0.038 (flat from V 10 to 13.5, so APASS zero points, not the bright
+  end); TESS V -0.010, Ic -0.053 - tighter limits would be flaky. The old Ic sign gives +0.35.
+  Gating in test_vast.sh: the agreement test runs everywhere, GitHub Actions included (the user:
+  the 9.7 MB Per3 image and about 11 MB of Gaia plus 2 MB of APASS stars fetched live are fine
+  for a GitHub runner; downloading a whole catalog, like the 42 GB Gaia synthetic photometry,
+  would not be). On GitHub there is no local UCAC5 copy, so its plate solver runs match UCAC5
+  remotely. The colour check runs inside the three TESS and three RC600 sections, with their
+  gating (on GitHub only the TICA TESS find Nova Vul 2024 section). The offline field-catalog
+  test needs no gate: without the local UCAC5 copy it skips its solver part before downloading
+  the image. Ubuntu's default awk is mawk (whether the GitHub runner image also has gawk was not
+  checked): the new awk code avoids comparisons and leading parentheses in print/printf
+  argument lists (if/else instead), see the awk portability section.

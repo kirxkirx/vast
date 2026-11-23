@@ -120,7 +120,7 @@ QUERY_MAG_MAX="$MAG_MAX"
 # reach 60 arcsec further, enough for 3 arcsec/yr over 20 years.
 CONE_MARGIN_ARCSEC="$MATCH_RADIUS_ARCSEC"
 if [ "$CATALOG" = "gaia" ];then
- QUERY_MAG_MAX=$(awk -v b="$MAG_MAX" 'BEGIN {printf "%s", (b + 0 > 17.7) ? "17.7" : b}')
+ QUERY_MAG_MAX=$(awk -v b="$MAG_MAX" 'BEGIN { if (b + 0 > 17.7) print "17.7" ; else print b }')
  CONE_MARGIN_ARCSEC=$(awk -v r="$MATCH_RADIUS_ARCSEC" 'BEGIN {printf "%.3f", r + 60}')
 fi
 

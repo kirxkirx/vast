@@ -32,6 +32,8 @@ Additional platform requirements:
 
 The core functionality of VaST should be available on all of the above platforms. Whenever a feature incompatible with these portability requirements is introduced, we must carefully consider the tradeoffs between the new feature for modern systems and breaking backward compatibility.
 
+awk: every script that uses awk (and every awk command that C code runs through `system()`) must work with gawk, mawk (the default awk of Debian and Ubuntu), BSD awk (the one-true-awk of macOS and FreeBSD) and busybox awk (Alpine). Always consider this when writing or reviewing awk code, not only when something fails: the failures are often silent, and tau has only gawk. Write POSIX awk; the known traps and how to check are in the "awk portability" section of `.claude/notes.md`.
+
 ## Building
 
 - Always recompile VaST fully with `make`. Never compile individual components separately - it usually does not work due to complex dependencies in the build system.

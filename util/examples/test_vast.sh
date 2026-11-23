@@ -977,6 +977,43 @@ fi
 
 
 ## These two functions are needed to check that no leftover files are produced by util/transients/report_transient.sh
+# Check that the photometry in the plate solver output catalog of the reference image of the
+# last VaST run follows the colours of real stars: util/examples/check_photometric_catalog_colors.sh
+# compares Rc-Ic with V-Rc for F to K stars, and V-Rc, V-Ic, Rc-Ic with B-V for G stars with
+# good B and V, with the colours of real stars, so it does not depend on numbers taken from
+# VaST itself. It would have caught the sign error that made the APASS Cousins I magnitudes
+# 0.42 mag too faint until 2026-11-23.
+# $1 - the prefix of the failure codes: ${1}_CATALOG_COLORS when the colours are wrong,
+# ${1}_CATALOG_COLORS_NOT_CHECKED when there is no catalog or it has too few such stars.
+function check_reference_image_catalog_colors() {
+ local REF_IMAGE_FOR_COLORS
+ local CATALOG_FOR_COLORS
+ local COLORS_OUTPUT
+ local COLORS_EXIT_CODE
+ REF_IMAGE_FOR_COLORS=$(grep 'Ref.  image:' vast_summary.log 2>/dev/null | awk '{print $6}')
+ # The same name util/magnitude_calibration.sh uses
+ case "$(basename "$REF_IMAGE_FOR_COLORS")" in
+  wcs_*) CATALOG_FOR_COLORS="$(basename "$REF_IMAGE_FOR_COLORS").wcscat.ucac5" ;;
+  *) CATALOG_FOR_COLORS="wcs_$(basename "$REF_IMAGE_FOR_COLORS").wcscat.ucac5" ;;
+ esac
+ COLORS_OUTPUT=$(util/examples/check_photometric_catalog_colors.sh "$CATALOG_FOR_COLORS" 2>&1)
+ COLORS_EXIT_CODE=$?
+ echo "$COLORS_OUTPUT"
+ if [ $COLORS_EXIT_CODE -eq 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ${1}_CATALOG_COLORS"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ${1}_CATALOG_COLORS ######
+$COLORS_OUTPUT"
+ elif [ $COLORS_EXIT_CODE -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ${1}_CATALOG_COLORS_NOT_CHECKED"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ${1}_CATALOG_COLORS_NOT_CHECKED ######
+$COLORS_OUTPUT"
+ fi
+}
+
 function test_if_test31_tmp_files_are_present() {
  for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
@@ -16419,6 +16456,54 @@ else
 fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 
+##### Photometric catalog agreement: APASS against Gaia DR3 synthetic photometry #####
+# util/examples/test_photometric_catalog_agreement.sh runs the plate solver twice on one image,
+# with APASS and with VAST_PHOTOMETRIC_CATALOG=gaia, and compares the magnitudes the two
+# independent catalogs give the same stars in B, V, Rc, Ic, g, r and i; it also checks both
+# against the colours of real stars. A wrong transformation shows up as an offset between the
+# catalogs: the sign error of the APASS Cousins I term (fixed on 2026-11-23) made APASS Ic
+# 0.35 mag fainter than Gaia Ic on this image, and no other test noticed it for seven years.
+# Both catalogs are fetched live, so where a service cannot be reached the script prints a
+# NOT_PERFORMED line and the informational code NOT_PERFORMED_PHOTCATAGREE_* is recorded (not
+# a failure).
+# It runs everywhere, GitHub Actions included: it downloads the NMW archive image
+# wcs_fd_Per3_2011-10-31_001.fts (9.7 MB) if it is not there yet and fetches about 13 MB of
+# APASS and Gaia stars for the 8 by 6 degree field of that image, and where there is no local
+# UCAC5 copy the plate solver matches UCAC5 remotely (1.3 min without the local copy on
+# 2026-11-23, 546 stars compared).
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Photometric catalog agreement test "
+echo -n "Photometric catalog agreement test: " >> vast_test_report.txt
+PHOTCATAGREE_TEST_OUTPUT=$(util/examples/test_photometric_catalog_agreement.sh 2>&1)
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ # The failure codes of the script are in its "FAILED: CODE description" lines
+ PHOTCATAGREE_CODES=$(echo "$PHOTCATAGREE_TEST_OUTPUT" | grep '^FAILED: ' | awk '{print $2}' | tr '\n' ' ')
+ if [ -z "$PHOTCATAGREE_CODES" ];then
+  PHOTCATAGREE_CODES="PHOTCATAGREE_UNKNOWN_FAILURE"
+ fi
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $PHOTCATAGREE_CODES"
+ DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### PHOTCATAGREE ######
+$(echo "$PHOTCATAGREE_TEST_OUTPUT" | tail -n 40)"
+fi
+echo "$PHOTCATAGREE_TEST_OUTPUT"
+# The reason why the comparison did not run, if it did not
+for PHOTCATAGREE_NOT_PERFORMED_CODE in $(echo "$PHOTCATAGREE_TEST_OUTPUT" | grep '^NOT_PERFORMED: ' | awk '{print $2}') ;do
+ FAILED_TEST_CODES="$FAILED_TEST_CODES $PHOTCATAGREE_NOT_PERFORMED_CODE"
+done
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mPhotometric catalog agreement test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mPhotometric catalog agreement test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+
 ##### NMW-TexasTech Cyg-05 re-match and Her-09 astrometry regressions #####
 # Cyg-05-Q1 0037 (2026-10-08): the old total-pair-count stop left only
 # 648 q4 matches and a saved header about 6 arcsec wrong in the far corner,
@@ -25369,6 +25454,8 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240110a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  # The photometry of the reference image has to follow the colours of real stars
+  check_reference_image_catalog_colors TICATESSFINDNVUL24
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then
@@ -26844,6 +26931,8 @@ $CAT_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MAG_ZP_OFFSET_LARGE_$MAG_ZP"
    fi
   fi
+  # The photometry of the reference image has to follow the colours of real stars
+  check_reference_image_catalog_colors TICATESSMAGCALIBFAILURE
   # 
   #
   #
@@ -27111,6 +27200,8 @@ $CAT_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MAG_ZP_OFFSET_LARGE_$MAG_ZP"
    fi
   fi
+  # The photometry of the reference image has to follow the colours of real stars
+  check_reference_image_catalog_colors TICATESSZERORA
   # 
   #
   if ! util/transients/validate_HTML_list_of_candidates.sh ;then
@@ -27818,6 +27909,8 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
         FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600_NCas21_wrong_photometry__$NOVA_MAG"
        fi
       fi # ligthcurve file found
+      # The photometry of the reference image has to follow the colours of real stars
+      check_reference_image_catalog_colors NCAS21RC600
       #
      fi # calib.txt_param
     fi # util/magnitude_calibration.sh V robust_linear OK
@@ -27920,6 +28013,8 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
         FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600B_NCas21_wrong_photometry__$NOVA_MAG"
        fi
       fi # ligthcurve file found
+      # The photometry of the reference image has to follow the colours of real stars
+      check_reference_image_catalog_colors NCAS21RC600B
       #
      fi # calib.txt_param
     fi # util/magnitude_calibration.sh V robust_linear OK
@@ -28024,6 +28119,8 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
         FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600Rc_NCas21_wrong_photometry__$NOVA_MAG"
        fi
       fi # ligthcurve file found
+      # The photometry of the reference image has to follow the colours of real stars
+      check_reference_image_catalog_colors NCAS21RC600Rc
       #
      fi # calib.txt_param
     fi # util/magnitude_calibration.sh V robust_linear OK
@@ -37912,6 +38009,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # fetcher part always runs
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTFIELDCAT_SOLVER_noucac5/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTFIELDCAT_SOLVER_nodata/}"
+ # photometric catalog agreement test: it needs the live services (ESA, SkyMapper, ARI) and
+ # one image of the test data
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTCATAGREE_nodata/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTCATAGREE_noapass/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_PHOTCATAGREE_nogaia/}"
  # Gaia DR2 clients test depends on two external services (ESA TAP + VizieR): an outage of
  # either is reported under its own code and does not fail the run. GAIADR2CLIENTS001 (the
  # client failed or a service replied with the wrong number of sources) does fail it.
