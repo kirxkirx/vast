@@ -49,6 +49,9 @@ fi
 
 # Use the brightest valid V match in each cone, as in the VizieR query.
 # The extra row lets us detect a capped response even in CSV format.
+# The ORDER BY names carry no table prefix: Gaia TAP services may reject a
+# table-qualified name there (the ARI one answers HTTP 400), and each of the
+# three names belongs to only one of the two tables.
 max_rows=10001
 query="SELECT TOP $max_rows t.target_id, a.bmag, a.e_bmag, a.vmag, a.e_vmag,
  a.r_mag, a.e_r_mag, a.i_mag, a.e_i_mag, a.g_mag, a.e_g_mag
@@ -57,7 +60,7 @@ query="SELECT TOP $max_rows t.target_id, a.bmag, a.e_bmag, a.vmag, a.e_vmag,
  CIRCLE('ICRS', t.target_ra, t.target_dec, $radius))
  WHERE a.vmag BETWEEN $brightest AND $faintest
  AND a.bmag IS NOT NULL AND a.r_mag IS NOT NULL AND a.i_mag IS NOT NULL
- ORDER BY t.target_id, a.vmag, a.recno"
+ ORDER BY target_id, vmag, recno"
 if ! curl --fail --silent --show-error --compressed --connect-timeout 10 --max-time 90 \
  --form REQUEST=doQuery --form LANG=ADQL --form FORMAT=csv --form "MAXREC=$max_rows" \
  --form 'UPLOAD=targets,param:positions' \

@@ -3942,7 +3942,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_onlybrightstars_v1" ];then
    case "$CAMERA_SETTINGS" in
     TTUQ1b1x1|TTUQ2b1x1)
-     BRIGHT_STAR_CHECK_IMAGE_MASK=$(awk -v first="${SECOND_EPOCH_CENTER_ALTITUDES[0]}" -v second="${SECOND_EPOCH_CENTER_ALTITUDES[1]}" 'BEGIN {printf "%d%d", first != "" && first + 0 >= 20, second != "" && second + 0 >= 20}')
+     # Each comparison is in parentheses: in a printf argument list mawk reads
+     # a bare '>' as output redirection, also the one of '>='.
+     BRIGHT_STAR_CHECK_IMAGE_MASK=$(awk -v first="${SECOND_EPOCH_CENTER_ALTITUDES[0]}" -v second="${SECOND_EPOCH_CENTER_ALTITUDES[1]}" 'BEGIN {printf "%d%d", (first != "" && first + 0 >= 20), (second != "" && second + 0 >= 20)}')
      if [ "$BRIGHT_STAR_CHECK_IMAGE_MASK" != "00" ];then
       MIN_NEW_IMAGE_BRIGHT_STAR_PERCENT=10
      fi

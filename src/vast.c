@@ -157,6 +157,8 @@ static long count_bright_stars( char *image ) {
  FILE *file;
  long count= 0;
  int has_measurements= 0;
+ int number, flag, external_flag;
+ double flux, flux_error, mag, mag_error, x, y, a, a_error, b, b_error, psf_chi2;
 
  if ( find_catalog_in_vast_images_catalogs_log( image, catalog ) != 0 ) {
   return -1;
@@ -166,8 +168,6 @@ static long count_bright_stars( char *image ) {
   return -1;
  }
  while ( fgets( line, sizeof( line ), file ) != NULL ) {
-  int number, flag, external_flag;
-  double flux, flux_error, mag, mag_error, x, y, a, a_error, b, b_error, psf_chi2;
   if ( parse_sextractor_catalog_string( line, &number, &flux, &flux_error, &mag, &mag_error, &x, &y,
                                         &a, &a_error, &b, &b_error, &flag, &external_flag, &psf_chi2, NULL ) != 0 ) {
    continue;
@@ -205,7 +205,9 @@ static int check_bright_star_counts( char **images ) {
  const char *image_mask= getenv( "VAST_BRIGHT_STAR_CHECK_IMAGE_MASK" );
  char *end;
  double minimum, reference_exposure, second_reference_exposure;
+ double exposure, percent;
  long reference_counts[2], reference_count;
+ long count;
  int i, reject= 0;
 
  if ( minimum_string == NULL || minimum_string[0] == '\0' || image_mask == NULL || strlen( image_mask ) != 2 ||
@@ -236,8 +238,6 @@ static int check_bright_star_counts( char **images ) {
   return 0;
  }
  for ( i= 2; i < 4; i++ ) {
-  double exposure, percent;
-  long count;
   if ( image_mask[i - 2] != '1' ) {
    continue;
   }

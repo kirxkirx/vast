@@ -1895,3 +1895,65 @@ Update this file as you learn new things.
   Re-validated with the final binary called as the pipeline calls it (matching dark, -s 15):
   1928/1928 surviving frames of 2026-11-10..13 got the expected verdict, and the mismatch rule
   never fired on a real frame.
+
+## APASS via ESA TAP, Gaia synthetic photometry facts, ESA and CDS down together (2026-11-23)
+- Review of 2518cd35 (lib/apass_esa_tap.sh, search_APASS() and read_APASS_from_esa_tap() in
+  src/solve_plate_with_UCAC5.c). ESA TAP was in maintenance all day, so the client has still
+  not been run against the live archive. Its query ordered by table-qualified names (ORDER BY
+  t.target_id, a.vmag, a.recno); the ARI Gaia TAP service, which has the same Gaia tables
+  (https://gaia.ari.uni-heidelberg.de/tap/sync), answers that with HTTP 400 'Encountered "."',
+  refuses a name two joined tables share (source_id: 'unresolved identifiers') and accepts
+  column positions and names unique in the join. Fixed the same day: ORDER BY target_id, vmag,
+  recno. Check on ESA before trusting the ESA path.
+- A TAP client can be tried on ARI while ESA is down even when ARI lacks the table: a curl
+  wrapper first in PATH swaps the URL, adds a second upload (a small VOTable) as
+  tap_upload.apass and renames the table in the QUERY field. The client as committed got the
+  HTTP 400 above; the fixed one got HTTP 200 in 0.6 s with the header line it checks for and
+  the right row per position (brightest first, recno as the tie-break, a NULL as an empty CSV
+  field). Two uploads are written UPLOAD=a,param:x;b,param:y and that field needs curl
+  --form-string: --form cuts the value at the semicolon. A join of two uploaded tables is
+  fast on ARI; only joins with gaia_source hang (see below).
+- How it was checked offline: a curl script placed first in PATH that passes every request
+  to /usr/bin/curl except the ESA URL, saves the uploaded VOTable and writes a prepared CSV to
+  the -o file; a reply with V = 10 + target_id/1000 shows at once whether each star received
+  its own row (it did, 1000 of 1000 on the TESS Nova Vul reference frame). Replacing
+  lib/vizquery by 'cat prepared_output' in a scratch clone drives the VizieR reader the same
+  way; both readers wrote byte-identical catalogs from the same values. The solver takes 5 s
+  on that frame once wcs_* exists; move the old *.wcscat.ucac5 away or it skips the lookup.
+- The ESA maintenance page comes with HTTP 200, and CDS was down at the same time (its page:
+  'Page unavailable - CDS', HTTP 404). The photometric lookup of that frame then took about
+  7 minutes to fail (ESA 1 s, 4 APASS and 4 Pan-STARRS1 attempts). The mirror chooser picked
+  vizier.idia.ac.za for APASS: its single-cone probe passes, but the 1000-position list query
+  returns nothing (20 positions take 37 s, a list of 150 is dropped after 80 s).
+  vizier.cfa.harvard.edu answers a list query at once with a complete but empty table. A
+  passed probe does not mean the list query works.
+- The solver sends the 1000 brightest good UCAC5-matched stars to the photometric lookup
+  (stars are sorted by instrumental magnitude; MAX_STARS_IN_LOCAL_CAT_QUERY), although the
+  local UCAC5 match uses up to 5000. On the TESS frame 15 of the 20 brightest have no APASS
+  source within the 35.4 arcsec cone: APASS is empty where these cameras need it.
+- Gaia DR3 synthetic photometry (gaiadr3.synthetic_photometry_gspc, VizieR I/360/syntphot),
+  measured on ARI: the per-band flag is 1 only inside the validated range - G >= 10.80 for
+  B, V, R, I (B also needs 0.50 <= BP-RP <= 1.70) and G >= 14.20 for g, r, i - so a flag = 1
+  requirement removes every bright comparison star. Magnitudes exist only for flux/error > 30
+  (formal error at most 0.036 mag, about 0.001 mag for bright stars). The 44 bulk files
+  (42.0 GB, _MD5SUM.txt) have no coordinates and are not in sky order; coordinates need the
+  gaia_source bulk files (3386 files, 753.0 GB), which are named by HEALPix level-8 ranges,
+  and source_id >> 43 is that pixel (checked on three sources). ARI answers a cone on
+  gaia_source joined to the GSPC in seconds when the cone is small (2 deg radius, G < 14.5:
+  8709 rows in 25 s) but not one the size of a TESS frame (8.5 deg, G < 10.5: nothing in
+  170 s), and never finishes a join of gaia_source with an uploaded table (120 s timeout for
+  two positions). Details and the plan: doc/gaia_synthetic_photometry_handoff.md.
+- awk: a comparison in a print or printf argument list needs parentheses. mawk (the default
+  awk of Debian and Ubuntu) takes any '>' there as output redirection, also the one of '>=',
+  and stops with a syntax error (scan.c, case SC_GT); POSIX does not allow unparenthesized
+  comparisons in a print expression list at all. gawk accepts them, so tau does not show it.
+  Write printf "%d", (a >= 20), not printf "%d", a >= 20. The altitude mask of the bright-star
+  check (BRIGHT_STAR_CHECK_IMAGE_MASK in transient_factory_test31.sh, a1a03975) was such a
+  line: under mawk the mask would come out empty and src/vast.c would skip the check without
+  a message. Fixed 2026-11-23; it could not be run under mawk here (tau has only gawk, and
+  'docker run' fails on tau with a containerd shim error).
+- Bright-star check of a1a03975 on the Gem-03-Q1b1x1 test field: the unmodified new images
+  have 87 percent of the reference star count; uniform extinction simulated by dimming all
+  sources at constant sky noise gives 26 percent at 1 mag, 9.4 percent at 2 mag and 3 percent
+  at 3 mag, so the 10 percent limit means about 2 mag of cloud. The camera settings come from
+  the input path: a test directory needs Q1b1x1 or Q2b1x1 in its name or the check never runs.
