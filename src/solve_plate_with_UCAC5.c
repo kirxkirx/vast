@@ -20,6 +20,7 @@
 #define MAX_APASS_MAG 18.0
 #define MIN_APASS_MAG_ERR 0.0
 #define MAX_APASS_MAG_ERR 1.0
+#define MIN_APASS_MATCHES 4
 
 #define DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN 40.0
 
@@ -1961,6 +1962,53 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
  return 0;
 }
 
+struct apass_photometry {
+ double B, B_err;
+ double V, V_err;
+ double r, r_err;
+ double i, i_err;
+ double g, g_err;
+};
+
+static void set_apass_photometry( struct detected_star *star, struct apass_photometry photometry ) {
+ if ( photometry.B == 0.0 || photometry.V == 0.0 || photometry.r == 0.0 || photometry.i == 0.0 ) {
+  memset( &photometry, 0, sizeof( photometry ) );
+  star->Rc_computed_from_APASS_ri= 0.0;
+  star->Rc_computed_from_APASS_ri_err= 0.0;
+  star->Ic_computed_from_APASS_ri= 0.0;
+  star->Ic_computed_from_APASS_ri_err= 0.0;
+ } else {
+  // Use the same missing-error default for both APASS providers.
+  if ( photometry.B_err == 0.0 )
+   photometry.B_err= 0.02;
+  if ( photometry.V_err == 0.0 )
+   photometry.V_err= 0.02;
+  if ( photometry.r_err == 0.0 )
+   photometry.r_err= 0.02;
+  if ( photometry.i_err == 0.0 )
+   photometry.i_err= 0.02;
+  if ( photometry.g_err == 0.0 )
+   photometry.g_err= 0.02;
+
+  // Jester et al. (2005), for stars with Rc-Ic < 1.15.
+  star->Rc_computed_from_APASS_ri= photometry.V - 1.09 * ( photometry.r - photometry.i ) - 0.22;
+  star->Rc_computed_from_APASS_ri_err= sqrt( 1.09 * 1.09 * ( photometry.r_err * photometry.r_err + photometry.i_err * photometry.i_err ) + 0.03 * 0.03 );
+  star->Rc_computed_from_APASS_ri_err= sqrt( star->Rc_computed_from_APASS_ri_err * star->Rc_computed_from_APASS_ri_err + photometry.V_err * photometry.V_err );
+  star->Ic_computed_from_APASS_ri= star->Rc_computed_from_APASS_ri - 1.00 * ( photometry.r - photometry.i ) + 0.21;
+  star->Ic_computed_from_APASS_ri_err= star->Rc_computed_from_APASS_ri_err;
+ }
+ star->APASS_B= photometry.B;
+ star->APASS_B_err= photometry.B_err;
+ star->APASS_V= photometry.V;
+ star->APASS_V_err= photometry.V_err;
+ star->APASS_r= photometry.r;
+ star->APASS_r_err= photometry.r_err;
+ star->APASS_i= photometry.i;
+ star->APASS_i_err= photometry.i_err;
+ star->APASS_g= photometry.g;
+ star->APASS_g_err= photometry.g_err;
+}
+
 int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
  FILE *f;
  char string[1024];
@@ -1972,16 +2020,7 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  int N_catalog_lines_parsed= 0;
  int N_rejected_on_distance= 0;
 
- double APASS_B;
- double APASS_B_err;
- double APASS_V;
- double APASS_V_err;
- double APASS_r;
- double APASS_r_err;
- double APASS_i;
- double APASS_i_err;
- double APASS_g;
- double APASS_g_err;
+ struct apass_photometry photometry;
 
  int found_end_marker= 0; // Variable to track if "#END#   " is present
                           // The presence of this marker will signify the VizieR output was not cut-off by a network error
@@ -2029,9 +2068,8 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
    continue;
   }
 
-  APASS_B= APASS_B_err= APASS_V= APASS_V_err= APASS_r= APASS_r_err= APASS_i= APASS_i_err= APASS_g= APASS_g_err= 0.0; // reset, just in case
   //                                            B  eB   V  eV   r  er   i  ei   g  eg
-  if ( 15 > sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err, &APASS_g, &APASS_g_err ) ) {
+  if ( 15 > sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &photometry.B, &photometry.B_err, &photometry.V, &photometry.V_err, &photometry.r, &photometry.r_err, &photometry.i, &photometry.i_err, &photometry.g, &photometry.g_err ) ) {
    continue;
   }
   N_catalog_lines_parsed++;
@@ -2052,58 +2090,7 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
      }
      stars[i].matched_with_photometric_catalog= 1;
 
-     // if the star is matched with APASS
-     if ( 0.0 != APASS_B && 0.0 != APASS_V && 0.0 != APASS_r && 0.0 != APASS_i ) {
-      // If there is no error estimate, assume some typical value
-      if ( 0.0 == APASS_B_err )
-       APASS_B_err= 0.02;
-      if ( 0.0 == APASS_V_err )
-       APASS_V_err= 0.02;
-      if ( 0.0 == APASS_r_err )
-       APASS_r_err= 0.02;
-      if ( 0.0 == APASS_i_err )
-       APASS_i_err= 0.02;
-      if ( 0.0 == APASS_g_err )
-       APASS_g_err= 0.02;
-      //
-      stars[i].APASS_B= APASS_B;
-      stars[i].APASS_B_err= APASS_B_err;
-      stars[i].APASS_V= APASS_V;
-      stars[i].APASS_V_err= APASS_V_err;
-      stars[i].APASS_r= APASS_r;
-      stars[i].APASS_r_err= APASS_r_err;
-      stars[i].APASS_i= APASS_i;
-      stars[i].APASS_i_err= APASS_i_err;
-      stars[i].APASS_g= APASS_g;
-      stars[i].APASS_g_err= APASS_g_err;
-
-      // Jester et al. (2005)
-      // All stars with Rc-Ic < 1.15
-      // V-R    =    1.09*(r-i) + 0.22        0.03
-      stars[i].Rc_computed_from_APASS_ri= APASS_V - 1.09 * ( APASS_r - APASS_i ) - 0.22;
-      stars[i].Rc_computed_from_APASS_ri_err= sqrt( 1.09 * 1.09 * ( APASS_r_err * APASS_r_err + APASS_i_err * APASS_i_err ) + 0.03 * 0.03 );
-      // Forgot the V error
-      stars[i].Rc_computed_from_APASS_ri_err= sqrt( stars[i].Rc_computed_from_APASS_ri_err * stars[i].Rc_computed_from_APASS_ri_err + APASS_V_err * APASS_V_err );
-      //////////////////////////////////////////////////
-      stars[i].Ic_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri - 1.00 * ( APASS_r - APASS_i ) + 0.21;
-      stars[i].Ic_computed_from_APASS_ri_err= stars[i].Rc_computed_from_APASS_ri_err; // above we assumed 1.09 ~ 1.00 to simplify error propagation, but what's the uncertainty of the relation?
-      //////////////////////////////////////////////////
-     } else {
-      stars[i].APASS_B= 0.0;
-      stars[i].APASS_B_err= 0.0;
-      stars[i].APASS_V= 0.0;
-      stars[i].APASS_V_err= 0.0;
-      stars[i].APASS_r= 0.0;
-      stars[i].APASS_r_err= 0.0;
-      stars[i].APASS_i= 0.0;
-      stars[i].APASS_i_err= 0.0;
-      stars[i].Rc_computed_from_APASS_ri= 0.0;
-      stars[i].Rc_computed_from_APASS_ri_err= 0.0;
-      stars[i].Ic_computed_from_APASS_ri= 0.0;
-      stars[i].Ic_computed_from_APASS_ri_err= 0.0;
-      stars[i].APASS_g= 0.0;
-      stars[i].APASS_g_err= 0.0;
-     }
+     set_apass_photometry( &stars[i], photometry );
 
      N_stars_matched_with_photometric_catalog++;
      // fprintf(stderr,"DEBUG MATCHED: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
@@ -2124,8 +2111,7 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  fprintf( stderr, "Parsed %d APASS catalog lines.\n", N_catalog_lines_parsed );
  fprintf( stderr, "%d stars rejected on distance.\n", N_rejected_on_distance );
  fprintf( stderr, "Matched %d stars with APASS.\n", N_stars_matched_with_photometric_catalog );
- // if( N_stars_matched_with_photometric_catalog < 5 ) {
- if ( N_stars_matched_with_photometric_catalog < 4 ) {
+ if ( N_stars_matched_with_photometric_catalog < MIN_APASS_MATCHES ) {
   // remove matched with photometric catalog marker from all stars
   for ( i= 0; i < N; i++ ) {
    stars[i].matched_with_photometric_catalog= 0;
@@ -4640,7 +4626,48 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  return vizquery_run_success;
 }
 
-int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+static int read_APASS_from_esa_tap( struct detected_star *stars, const int *target_star_indices, int target_count, const char *filename ) {
+ struct apass_photometry matches[MAX_STARS_IN_LOCAL_CAT_QUERY]= { { 0 } };
+ struct apass_photometry photometry;
+ char line[1024];
+ int target_id, i, match_count= 0;
+ int complete= 1;
+ FILE *input= fopen( filename, "r" );
+ if ( input == NULL )
+  return 1;
+
+ while ( fgets( line, sizeof( line ), input ) != NULL ) {
+  if ( sscanf( line, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+               &target_id, &photometry.B, &photometry.B_err, &photometry.V, &photometry.V_err,
+               &photometry.r, &photometry.r_err, &photometry.i, &photometry.i_err,
+               &photometry.g, &photometry.g_err ) != 11 ||
+       target_id < 1 || target_id > target_count || matches[target_id - 1].V != 0.0 ||
+       photometry.B == 0.0 || photometry.V == 0.0 || photometry.r == 0.0 || photometry.i == 0.0 ) {
+   complete= 0;
+   break;
+  }
+  matches[target_id - 1]= photometry;
+  match_count++;
+ }
+ if ( ferror( input ) )
+  complete= 0;
+ fclose( input );
+ if ( !complete || match_count < MIN_APASS_MATCHES )
+  return 1;
+
+ // Apply a complete result only. Failed ESA queries leave the VizieR input
+ // stars in their original state, including when ESA found too few matches.
+ for ( i= 0; i < target_count; i++ ) {
+  if ( matches[i].V != 0.0 ) {
+   set_apass_photometry( &stars[target_star_indices[i]], matches[i] );
+   stars[target_star_indices[i]].matched_with_photometric_catalog= 1;
+  }
+ }
+ fprintf( stderr, "Matched %d stars with APASS via ESA TAP.\n", match_count );
+ return 0;
+}
+
+static int search_APASS( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
  int backoff_retry_count= 0;
  int backoff_wait_time_sec= 1;
@@ -4653,6 +4680,7 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  char vizquery_output_filename[FILENAME_LENGTH];
  int vizquery_run_success;
  int search_stars_counter;
+ int target_star_indices[MAX_STARS_IN_LOCAL_CAT_QUERY];
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
@@ -4664,7 +4692,7 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  if ( vizquery_input == NULL ) {
-  fprintf( stderr, "ERROR in search_APASS_with_vizquery(): Cannot open file %s for writing.\n", vizquery_input_filename );
+  fprintf( stderr, "ERROR in search_APASS(): Cannot open file %s for writing.\n", vizquery_input_filename );
   return 1;
  }
  search_stars_counter= 0;
@@ -4672,25 +4700,39 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
    //  The reference catalog epoch is expected to be closer to APASS epoch than some of the images we are going to process
    fprintf( vizquery_input, "%lf %lf\n", stars[i].catalog_ra_original, stars[i].catalog_dec_original );
+   target_star_indices[search_stars_counter]= i;
    search_stars_counter++;
-   // if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
    if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
     break;
    }
   }
  }
- fclose( vizquery_input );
-
- if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
-  fprintf( stderr, "ERROR in search_APASS_with_vizquery(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
+ if ( fclose( vizquery_input ) != 0 ) {
+  fprintf( stderr, "ERROR in search_APASS(): Cannot write %s.\n", vizquery_input_filename );
+  unlink( vizquery_input_filename );
   return 1;
  }
 
- // Print search stat
- fprintf( stderr, "Searchig VizieR for %d good reference stars...\n", search_stars_counter );
+ if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  fprintf( stderr, "ERROR in search_APASS(): only %d reference stars are available.\n", search_stars_counter );
+  unlink( vizquery_input_filename );
+  return 1;
+ }
 
- // Photometric catalog search
- fprintf( stderr, "Searchig APASS...\n" );
+ fprintf( stderr, "Searching APASS via ESA TAP for %d good reference stars...\n", search_stars_counter );
+ snprintf( command, sizeof( command ), "\"%slib/apass_esa_tap.sh\" %s %.1f %.1f %.1f > %s",
+           path_to_vast_string,
+           vizquery_input_filename,
+           catalog_search_parameters->search_radius_deg * 3600,
+           catalog_search_parameters->brightest_mag,
+           catalog_search_parameters->faintest_mag,
+           vizquery_output_filename );
+ if ( system( command ) == 0 && read_APASS_from_esa_tap( stars, target_star_indices, search_stars_counter, vizquery_output_filename ) == 0 ) {
+  vizquery_run_success= 0;
+  goto cleanup;
+ }
+
+ fprintf( stderr, "WARNING: APASS via ESA TAP failed or returned too few usable matches. Trying APASS via VizieR...\n" );
  sprintf( command,
           "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$(%slib/choose_vizier_mirror.sh APASS) -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string,
@@ -4731,14 +4773,11 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
   }
  }
 
- // delete temporary files only on success
- // if ( vizquery_run_success == 0 ) {
+cleanup:
  if ( 0 != unlink( vizquery_input_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
  if ( 0 != unlink( vizquery_output_filename ) )
   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
- //}
-
  return vizquery_run_success;
 }
 
@@ -8253,8 +8292,8 @@ int main( int argc, char **argv ) {
 
  if ( use_photometric_catalog == 1 ) {
   // Photometric calibration
-  if ( 0 != search_APASS_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running search_APASS_with_vizquery()\n" );
+  if ( 0 != search_APASS( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
+   fprintf( stderr, "ERROR running search_APASS()\n" );
    fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nMaybe the image is too deep and narrow-field that there are not unaturated APASS stars in it?\n\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
    // We need to reset matched_with_astrometric_catalog flags before re-running the search!
    for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
