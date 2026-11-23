@@ -1,4 +1,9 @@
 XX XXX XXXX: vast-1.0rc90
+	* Fixed the Cousins I magnitudes that util/solve_plate_with_UCAC5 computes from the APASS
+	(and Pan-STARRS1) r and i magnitudes: the R-I term of the Jester et al. (2005)
+	transformation was added with the wrong sign, which made every such Ic 0.42 mag too faint.
+	Magnitudes calibrated in the I band against APASS (PHOTOMETRIC_CALIBRATION=APASS_I, used
+	for the TICA TESS images, or util/magnitude_calibration.sh I) are now 0.42 mag brighter.
 	* New tool util/detect_closed_roof finds images taken with the observatory roof (dome)
 	closed while the camera kept imaging: it counts star-like peaks and compares the image
 	background with a matching dark frame, and prints OK, CLOSED_ROOF (no stars, background

@@ -1941,8 +1941,8 @@ Update this file as you learn new things.
   and source_id >> 43 is that pixel (checked on three sources). ARI answers a cone on
   gaia_source joined to the GSPC in seconds when the cone is small (2 deg radius, G < 14.5:
   8709 rows in 25 s) but not one the size of a TESS frame (8.5 deg, G < 10.5: nothing in
-  170 s), and never finishes a join of gaia_source with an uploaded table (120 s timeout for
-  two positions). Details and the plan: doc/gaia_synthetic_photometry_handoff.md.
+  170 s), and did not finish a join of gaia_source with an uploaded table in 120 s (two
+  positions) or 300 s (1000 positions). Details and the plan: doc/gaia_synthetic_photometry_handoff.md.
 - awk: a comparison in a print or printf argument list needs parentheses. mawk (the default
   awk of Debian and Ubuntu) takes any '>' there as output redirection, also the one of '>=',
   and stops with a syntax error (scan.c, case SC_GT); POSIX does not allow unparenthesized
@@ -1996,3 +1996,75 @@ Update this file as you learn new things.
   awk of the system; it was not called from anywhere before.
   test_closed_roof_check.sh takes 5 s instead of 3.3 min: in its runs without a dark frame
   and with the check switched off the bright-star check now stops the starless images.
+- ESA came back at 17:34 UTC on 2026-11-23 (the VOSI availability endpoint
+  /tap-server/tap/availability says <available>true</available>; during the maintenance the
+  sync endpoint served the HTML page with HTTP 200). lib/apass_esa_tap.sh live: right columns,
+  right reply format, values identical to VizieR (IDIA) for the 3 of 3 stars both had among
+  the first 20 TESS positions. But the upload join costs about 5 s + 0.12 s per position at
+  35.4 arcsec (0.06 s at 10 arcsec), and ESA ends a sync query after about 60 s with HTTP 408
+  (body: QUERY_STATUS ERROR 'Job timeout/aborted.'), so the 1000 positions the solver sends
+  always fail and the solver goes on with VizieR. Exchanging POINT and CIRCLE is slower on
+  ESA and does not help on GAVO. A field cone without upload is fast: APASS, 4 deg
+  around the TESS field, 17331 rows in 5.0 s. 16 queries spaced 15-25 s apart got no 429.
+- Gaia DR3 on ESA, live: an upload join with gaiadr3.gaia_source costs about 0.5 s per
+  position (100 positions, 3 arcsec, G < 14.5: 52 s; with the synthetic photometry joined
+  too: 408). Lookups by source_id are fast (98 uploaded ids in 10.6 s), and so is a field
+  cone on gaia_source joined to the synthetic photometry (2 deg, G < 14.5: 8709 rows in 5.7 s,
+  ARI 25 s).
+- Who else serves the two catalogs over TAP (GAVO RegTAP search of table names and
+  descriptions, http://reg.g-vo.org/tap, plus direct tap_schema queries): APASS DR9 at CDS
+  TAPVizieR (II/336/apass9) and SkyMapper (https://api.skymapper.nci.org.au/public/tap,
+  ext.apass_dr9, the very same rows and values as ESA, VizieR column names gmag/rmag/imag, no
+  table upload, 4 deg cone in 19.5 s); APASS DR10 at GAVO (http://dc.g-vo.org/tap,
+  apass.dr10: another release, other values, errors its own notes call overly pessimistic;
+  uploads accepted but sync queries stop at 20 s and an async job stayed QUEUED for 7 min).
+  Gaia synthetic photometry: ARI and AIP (the ESA table names; AIP did not answer that day)
+  and CDS TAPVizieR I/360/syntphot (positions in the same table; down that day). ARI, AIP and
+  IRSA hold only Gaia-APASS cross-match tables, not APASS magnitudes; NOIRLab Data Lab and
+  MAST have neither catalog; JVO's Gaia TAP (jvo.nao.ac.jp/skynode/do/tap/gaia) lists no data
+  tables; SSDC (gaiaportal.ssdc.asi.it) answers 403. ESA's own list of Gaia partner data
+  centres is AIP, ARI, SSDC and JVO.
+- GAVO UWS jobs: the job URL is in the Location header of the creation reply
+  (http://dc.g-vo.org/__system__/tap/run/async/<id>, not /tap/async/<id>); PHASE=RUN in the
+  creation form did not start the job, a separate POST PHASE=RUN to <job>/phase did. Delete
+  jobs with POST ACTION=DELETE to the job URL.
+- ADQL magnitude conditions must not be able to use a magnitude index: with `vmag BETWEEN a
+  AND b` (or `vmag < b`) the database behind ESA's external.apassdr9 scanned by magnitude
+  for one of four equal 4-degree tiles of the TESS field and hit the 60 s limit even for
+  COUNT(*), which takes 1.4 s with `vmag + 0 BETWEEN a AND b`; one cone over the whole
+  8.27-degree field went from HTTP 408 to 11.4 s (83,722 rows). SkyMapper's copy: 19.5 s ->
+  1.9 s for a 4-degree cone. Gaia: write `phot_g_mean_mag + 0 < x`. The same rewrite speeds
+  the per-position upload join up only a little (0.12 -> 0.08 s per position).
+- Request shapes measured on ESA on 2026-11-23 (TESS field, 1000 positions): four parallel
+  upload batches of 250 positions finished in 30.7 s with no 429; back-to-back requests and
+  four parallel ones were never refused that day (on 11-09 they were). Gaia field cone
+  (gaia_source joined to the synthetic photometry, 8.27 deg, G + 0 < 13.5): 150,562 rows in
+  84 s with seven bands (59 MB), 34 s with one band and 1.0857*flux_error/flux computed in
+  ADQL (25 MB), 31 s as four parallel tiles. A 0.25-degree field: APASS 350 rows in 0.85 s,
+  Gaia (G < 20) 2454 rows in 9 s. ARI did not answer a 4-degree Gaia cone within 60 s.
+- A field cone matched locally with the rule of the current APASS queries (brightest V with
+  B, r', i' present, within the radius) gave exactly the rows of the ESA upload join, 319 of
+  319 for the 1000 TESS positions: the matching can move into the solver without changing
+  results.
+- The solver's APASS Cousins I was 0.42 mag too faint: set_apass_photometry() and the
+  Pan-STARRS1 reader computed Ic = Rc - (r - i) + 0.21, while Jester et al. (2005) give
+  R - I = 1.00 (r - i) + 0.21, i.e. Ic = Rc - (r - i) - 0.21 (formula unchanged since the
+  initial commit). Against Gaia synthetic photometry, 26,420 TESS-field stars: B, V, g', r',
+  i' within 0.02 mag, Rc -0.044, Ic +0.367 (-0.053 with the paper's sign). Every APASS_I
+  calibration (TICA TESS) was affected. Fixed on 2026-11-23 on the user's request. The
+  three TESS sections of test_vast.sh calibrate with APASS_I, and their expectations were
+  shifted by exactly -0.42 mag (a pure zero-point shift of the I-band zero_point
+  calibration): TICATESSFINDNVUL240110a 9.[7-9] -> 9.[2-5], the reference image limiting
+  magnitude of the calibration failure test 15.77 -> 15.35 and of the zero RA test
+  16.46 -> 16.04, and the six candidate magnitudes of the zero RA test (taken from the
+  values recorded in its comments). The last two sections are skipped on GitHub Actions,
+  which is why a plain grep for APASS_I in the test did not show them: grep for
+  "limiting mag" and for the candidate lines too. util/examples/test_apass_esa_tap.sh had
+  copied the wrong formula into its own check of the solver output.
+- Positional outlier cut tried on the TESS frame (offsets catalogue minus measured position,
+  median and 1.4826*MAD per axis, elliptical 5-sigma cut): APASS sigma 2.4 arcsec, 43 of 323
+  matches rejected, 39 of them photometric outliers; Gaia 23 of 974 rejected, 16 photometric
+  outliers. Against UCAC5 positions the core is 0.2-0.3 arcsec (APASS) and 0.02-0.03 arcsec
+  (Gaia - UCAC5 is reduced with Gaia DR1), too narrow for a sigma cut without exact epochs.
+  Gaia matched 974 of the 1000 TESS reference stars, APASS 319; I-band zero-point scatter
+  0.10 mag with Gaia, 0.27 mag with APASS.

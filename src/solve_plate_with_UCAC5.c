@@ -1902,12 +1902,15 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
       // Jester et al. (2005) https://ui.adsabs.harvard.edu/abs/2005AJ....130..873J
       // All stars with Rc-Ic < 1.15
       // V-R    =    1.09*(r-i) + 0.22        0.03
+      // R-I    =    1.00*(r-i) + 0.21        0.01
       stars[i].Rc_computed_from_APASS_ri= APASS_V - 1.09 * ( APASS_r - APASS_i ) - 0.22;
       stars[i].Rc_computed_from_APASS_ri_err= sqrt( 1.09 * 1.09 * ( APASS_r_err * APASS_r_err + APASS_i_err * APASS_i_err ) + 0.03 * 0.03 );
       // Forgot the V error
       stars[i].Rc_computed_from_APASS_ri_err= sqrt( stars[i].Rc_computed_from_APASS_ri_err * stars[i].Rc_computed_from_APASS_ri_err + APASS_V_err * APASS_V_err );
       //////////////////////////////////////////////////
-      stars[i].Ic_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri - 1.00 * ( APASS_r - APASS_i ) + 0.21;
+      // Ic = Rc - (R-I); until 2026-11-23 the 0.21 was added instead of subtracted,
+      // which made every Ic 0.42 mag too faint
+      stars[i].Ic_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri - 1.00 * ( APASS_r - APASS_i ) - 0.21;
       stars[i].Ic_computed_from_APASS_ri_err= stars[i].Rc_computed_from_APASS_ri_err;
       //////////////////////////////////////////////////
      } else {
@@ -1990,11 +1993,15 @@ static void set_apass_photometry( struct detected_star *star, struct apass_photo
   if ( photometry.g_err == 0.0 )
    photometry.g_err= 0.02;
 
-  // Jester et al. (2005), for stars with Rc-Ic < 1.15.
+  // Jester et al. (2005), for stars with Rc-Ic < 1.15:
+  // V-R = 1.09*(r-i) + 0.22 and R-I = 1.00*(r-i) + 0.21.
   star->Rc_computed_from_APASS_ri= photometry.V - 1.09 * ( photometry.r - photometry.i ) - 0.22;
   star->Rc_computed_from_APASS_ri_err= sqrt( 1.09 * 1.09 * ( photometry.r_err * photometry.r_err + photometry.i_err * photometry.i_err ) + 0.03 * 0.03 );
   star->Rc_computed_from_APASS_ri_err= sqrt( star->Rc_computed_from_APASS_ri_err * star->Rc_computed_from_APASS_ri_err + photometry.V_err * photometry.V_err );
-  star->Ic_computed_from_APASS_ri= star->Rc_computed_from_APASS_ri - 1.00 * ( photometry.r - photometry.i ) + 0.21;
+  // Ic = Rc - (R-I); until 2026-11-23 the 0.21 was added instead of subtracted,
+  // which made every Ic 0.42 mag too faint (APASS-derived Ic minus Gaia synthetic
+  // Ic was +0.37 mag for 26,420 stars, and -0.05 mag with the correct sign).
+  star->Ic_computed_from_APASS_ri= star->Rc_computed_from_APASS_ri - 1.00 * ( photometry.r - photometry.i ) - 0.21;
   star->Ic_computed_from_APASS_ri_err= star->Rc_computed_from_APASS_ri_err;
  }
  star->APASS_B= photometry.B;

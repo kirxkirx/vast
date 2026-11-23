@@ -25326,7 +25326,10 @@ $GREP_RESULT"
   # +21:00:19.3 and failed the test. The arcsecond digits are left loose
   # here and the actual position accuracy is enforced by the angular
   # distance test below, which is what it is for.
-  grep -q "2024 07 29\.799.  2460521\.299.   9\.[7-9].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html
+  # The magnitude is APASS-calibrated Cousins I. It was 9.7-9.9 before 2026-11-23, when the
+  # sign of the R-I term of the Jester et al. (2005) transformation was fixed: every APASS
+  # Ic became 0.42 mag brighter, and so did the zero point of this I-band calibration.
+  grep -q "2024 07 29\.799.  2460521\.299.   9\.[2-5].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240110a"
@@ -25335,7 +25338,7 @@ $GREP_RESULT"
 ###### TICATESSFINDNVUL240110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 07 29\.799.  2460521\.299.   9\.[7-9].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.799.  2460521\.299.   9\.[2-5].  19:43:07\... +21:00:[12][0-9]\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   # Position of Nova Vul 2024 from Henryk Sielewicz via astronomy.ru/Stanislav Korotkij 19:43:07.49 +21:00:21.6
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:43:07.49 +21:00:21.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS image scale is 20"/pix
@@ -26815,8 +26818,11 @@ $CAT_RESULT"
   # on 2026-09-12 (+0.23 mag, of which about half came from the 5.0 -> 4.5 step
   # of 2026-09-10 that went unnoticed because this whole section is skipped in
   # GitHub Actions - see the GITHUB_ACTIONS guard above).
+  # The limit is in the APASS-calibrated Cousins I band: 15.35 = 15.77 - 0.42 since the
+  # sign of the R-I term of the Jester et al. (2005) transformation was fixed on
+  # 2026-11-23 (every APASS Ic became 0.42 mag brighter, and so did the zero point).
   MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.77)*($1 - 15.77) ) < 0.05 ) print 1 ;else print 0 }'`
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.35)*($1 - 15.35) ) < 0.05 ) print 1 ;else print 0 }'`
   #TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.48)*($1 - 15.48) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
@@ -27082,8 +27088,10 @@ $CAT_RESULT"
   # As in the magnitude calibration failure test above, this number tracks
   # MIN_SNR_TRANSIENT_DETECTION (src/vast_limits.h). 16.23 was measured with the
   # cut at 5.0; measured 16.46 with the cut at 4.0 on 2026-09-12 - the same
-  # +0.23 mag shift.
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 16.46)*($1 - 16.46) ) < 0.05 ) print 1 ;else print 0 }'`  re='^[0-9]+$'
+  # +0.23 mag shift. 16.04 = 16.46 - 0.42 since the APASS Cousins I fix of 2026-11-23
+  # (see the magnitude calibration failure test above); the magnitudes of the
+  # candidates below moved by the same -0.42 mag.
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 16.04)*($1 - 16.04) ) < 0.05 ) print 1 ;else print 0 }'`  re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
    TEST_PASSED=0
@@ -27146,12 +27154,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.04  23:49:57.18 -01:15:22.0
-  grep -q "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  12\.[5-7].  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  12\.[5-7].  23:49:5[67]\... -01:15:2[1-3]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Klio position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:49:57.15 -01:15:22.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27177,12 +27185,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.58  23:52:16.53 -05:41:15.1
-  grep -q "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.[0-2].  23:52:16\... -05:41:1[45]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.[0-2].  23:52:16\... -05:41:1[45]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Stereoskopia position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:52:16.51 -05:41:15.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27208,12 +27216,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.97  23:22:05.14 -08:42:02.2
-  grep -q "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.[4-6].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.[4-6].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Italia position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:22:05.09 -08:42:02.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27239,12 +27247,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.51  00:00:00.08 -08:32:14.2
-  grep -q "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  1[34]\.[019].  00:00:00\... -08:32:1[34]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  1[34]\.[019].  00:00:00\... -08:32:1[34]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Whittemora position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:00:00.14 -08:32:13.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27270,12 +27278,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.53  23:29:58.96 -14:27:56.1
-  grep -q "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  1[34]\.[019].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  1[34]\.[019].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Otthild position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:29:58.85 -14:27:56.1  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27302,12 +27310,12 @@ $GREP_RESULT"
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.71  23:37:16.76 -07:54:39.2
   #             2025 05 25.4796  2460820.9796  14.69  23:37:16.82 -07:54:37.9
-  grep -q "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[789]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  14\.[23].  23:37:1[67]\... -07:54:3[789]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[23].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Laurentia position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:37:16.51 -07:54:45.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix
@@ -27333,12 +27341,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.84  23:39:27.54 -11:23:21.7
-  grep -q "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.[345].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_position"
   fi
-  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.[345].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # Melusina position as viewed from TESS via JPL Horizons
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:39:27.10 -11:23:18.1  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # TESS scale is 20"/pix

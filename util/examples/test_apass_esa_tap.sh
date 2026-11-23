@@ -450,7 +450,7 @@ if [ -z "$SOLVER_PART_SKIP_REASON" ];then
     if ($14 != "0.011" || $16 != "0.012" || $18 != "0.013" || $20 != "0.014" || $26 != "0.015") n_other_errors++
     # Cousins R and I as set_apass_photometry() derives them from V, r and i
     rc = $15 - 1.09 * ($17 - $19) - 0.22
-    if (abs($21 - rc) > 0.002 || abs($23 - (rc - ($17 - $19) + 0.21)) > 0.002) n_other_cousins++
+    if (abs($21 - rc) > 0.002 || abs($23 - (rc - ($17 - $19) - 0.21)) > 0.002) n_other_cousins++
     # The star lies where the position with this number was sent (the positions are those
     # of the UCAC5 epoch, so the limit is generous)
     d_dec = $3 - dec[id]
