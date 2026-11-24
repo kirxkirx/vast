@@ -95,6 +95,65 @@ Examples:
 "
 }
 
+# 2MASS, Gaia DR3 and the Gaia DR3 variability information are asked from the ESA Gaia archive
+# first and from VizieR only when the archive does not answer. Added in November 2026, when CDS
+# VizieR was down for weeks: the archive serves the 2MASS point source catalog
+# (gaiadr1.tmass_original_valid), gaiadr3.gaia_source and every gaiadr3.vari_* table, with the
+# same values as VizieR II/246, I/355/gaiadr3 and I/358 (checked 2026-11-23 on omi Cet,
+# OU Com and Gaia DR3 401287624918055680).
+ESA_GAIA_ARCHIVE_TAP_URL="https://gea.esac.esa.int/tap-server/tap/sync"
+# These small cone searches take a second or two; a stuck archive must not hold up every candidate
+if [ -z "$ESA_GAIA_ARCHIVE_TIMEOUT_SEC" ];then
+ ESA_GAIA_ARCHIVE_TIMEOUT_SEC=20
+fi
+
+# Usage: esa_gaia_archive_csv FIRST_COLUMN_NAME 'ADQL query'
+# Prints the data rows of the CSV reply (without the header line). Exit code 0: the archive
+# answered with the requested table - also when no row matched, which means there is no such
+# source. Exit code 1: it did not answer with the table (no reply in time, an HTTP error such as
+# the 429 rate limit, or a web page instead: the maintenance page comes with HTTP 200), so the
+# caller should ask VizieR instead.
+function esa_gaia_archive_csv() {
+ local FIRST_COLUMN_NAME="$1"
+ local ADQL_QUERY="$2"
+ local ESA_REPLY
+ local ESA_HTTP_STATUS
+ if [ "$ESA_GAIA_ARCHIVE_UNREACHABLE" = "yes" ];then
+  return 1
+ fi
+ if ! command -v curl &>/dev/null ;then
+  return 1
+ fi
+ # VAST_CURL_PROXY holds curl proxy options, if any, and has to be split into words
+ # shellcheck disable=SC2086
+ ESA_REPLY=$(curl $VAST_CURL_PROXY -s --max-time "$ESA_GAIA_ARCHIVE_TIMEOUT_SEC" -w '\n%{http_code}' "$ESA_GAIA_ARCHIVE_TAP_URL" \
+  -d "REQUEST=doQuery" -d "LANG=ADQL" -d "FORMAT=csv" --data-urlencode "QUERY=$ADQL_QUERY" 2>/dev/null) || return 1
+ ESA_HTTP_STATUS=$(echo "$ESA_REPLY" | tail -n 1)
+ if [ "$ESA_HTTP_STATUS" != "200" ];then
+  return 1
+ fi
+ ESA_REPLY=$(echo "$ESA_REPLY" | sed '$d' | tr -d '\r')
+ # The first line must be the header of the requested table
+ if [ "$(echo "$ESA_REPLY" | head -n 1 | cut -d',' -f1)" != "$FIRST_COLUMN_NAME" ];then
+  return 1
+ fi
+ echo "$ESA_REPLY" | sed '1d' | awk 'NF > 0'
+ return 0
+}
+
+# Usage: position_in_degrees RA DEC
+# Prints "RA_deg Dec_deg" for a position given in sexagesimal or decimal degrees
+function position_in_degrees() {
+ local POSITION_DEG
+ POSITION_DEG=$("$VAST_PATH"lib/hms2deg "$1" "$2" 2>/dev/null)
+ if [ $? -ne 0 ] || [ -z "$POSITION_DEG" ];then
+  # The input position is already in decimal degrees
+  POSITION_DEG="$1 $2"
+ fi
+ # lib/hms2deg prints RA and Dec on two lines
+ echo "$POSITION_DEG" | tr '\n' ' ' | awk '{printf "%.8f %.8f\n", $1, $2}'
+}
+
 # This function will search 2MASS catalog for the brightest source around the specified position
 function search_2mass_fixed_radius_results_to_2masstmp() {
  ###### 2MASS #####
@@ -116,9 +175,33 @@ function search_2mass_fixed_radius_results_to_2masstmp() {
  R_SEARCH_ARCSEC=2.5
  echo " "
  echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
- echo "$TIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c='$RA $DEC' -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag"
- $TIMEOUTCOMMAND "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag 2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec" | while read -r R TWOMASS_ID J eJ K eK REST ;do
+ TWOMASS_SEARCH_POSITION_DEG=$(position_in_degrees "$RA" "$DEC")
+ TWOMASS_SEARCH_RA_DEG=$(echo "$TWOMASS_SEARCH_POSITION_DEG" | awk '{print $1}')
+ TWOMASS_SEARCH_DEC_DEG=$(echo "$TWOMASS_SEARCH_POSITION_DEG" | awk '{print $2}')
+ TWOMASS_SEARCH_R_DEG=$(echo "$R_SEARCH_ARCSEC" | awk '{printf "%.9f", $1/3600}')
+ TWOMASS_RESULTS=$(esa_gaia_archive_csv designation "SELECT TOP 1 designation, j_m, j_msigcom, ks_m, ks_msigcom, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', $TWOMASS_SEARCH_RA_DEG, $TWOMASS_SEARCH_DEC_DEG)) * 3600 AS r FROM gaiadr1.tmass_original_valid WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', $TWOMASS_SEARCH_RA_DEG, $TWOMASS_SEARCH_DEC_DEG, $TWOMASS_SEARCH_R_DEG)) ORDER BY r")
+ if [ $? -eq 0 ];then
+  echo "(2MASS from the ESA Gaia archive, table gaiadr1.tmass_original_valid)"
+  # The columns of the VizieR query below, in the same format: r 2MASS Jmag e_Jmag Kmag e_Kmag
+  # (a missing value becomes '-', which the checks below treat like a missing VizieR value)
+  TWOMASS_RESULTS=$(echo "$TWOMASS_RESULTS" | awk -F',' 'function mag(x) { if (x == "") return "-" ; return sprintf("%.3f", x) } NF >= 6 { printf "%.3f %s %s %s %s %s\n", $6, $1, mag($2), mag($3), mag($4), mag($5) }')
+ elif [ "$VIZIER_QUERIES" = "yes" ];then
+  echo "$TIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c='$RA $DEC' -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag"
+  TWOMASS_RESULTS=$($TIMEOUTCOMMAND "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag 2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec")
+ else
+  echo "Cannot search 2MASS: neither the ESA Gaia archive nor VizieR answers"
+  TWOMASS_RESULTS=""
+ fi
+ echo "$TWOMASS_RESULTS" | while read -r R TWOMASS_ID J eJ K eK REST ;do
   if [ -n "$R" ];then
+   # A value missing in the ESA reply comes as '-': print a missing error as nothing, like a
+   # missing VizieR value (a missing magnitude fails the number check below)
+   if [ "$eJ" = "-" ];then
+    eJ=""
+   fi
+   if [ "$eK" = "-" ];then
+    eK=""
+   fi
    if [ -z "$J" ];then
     continue
    fi
@@ -229,8 +312,29 @@ fi
 
 #VIZIER_SITE=vizier.u-strasbg.fr
 # A mirror that serves 2MASS (and with it the variable star catalogs this script asks), not
-# necessarily the Gaia DR2 source table that the default mirror test requires
-VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh 2MASS)
+# necessarily the Gaia DR2 source table that the default mirror test requires.
+# When no mirror answers (lib/choose_vizier_mirror.sh exits with code 1), or when the caller
+# already knows that and sets SEARCH_DATABASES_SKIP_VIZIER=yes (util/transients/report_transient.sh
+# does), VizieR is not asked at all: 2MASS, Gaia DR3 and the Gaia DR3 variability information
+# then come from the ESA Gaia archive alone, and the catalogs only VizieR has are skipped instead
+# of waiting for one timeout after another. SEARCH_DATABASES_SKIP_ESA=yes keeps the ESA archive
+# out of the search (to test the VizieR path).
+VIZIER_QUERIES="yes"
+if [ "$SEARCH_DATABASES_SKIP_VIZIER" = "yes" ];then
+ VIZIER_QUERIES="no"
+ VIZIER_SITE="vizier.cds.unistra.fr"
+else
+ VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh 2MASS)
+ if [ $? -ne 0 ];then
+  VIZIER_QUERIES="no"
+ fi
+fi
+if [ "$SEARCH_DATABASES_SKIP_ESA" = "yes" ];then
+ ESA_GAIA_ARCHIVE_UNREACHABLE="yes"
+fi
+if [ "$VIZIER_QUERIES" != "yes" ];then
+ echo "No VizieR mirror answers: only the ESA Gaia archive and the local catalogs are searched"
+fi
 #
 echo -e "Starting $0" 1>&2
 
@@ -372,8 +476,37 @@ fi
 DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print ($1 > 12.5) ? 25 : 2*$1}')
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
-echo "$LONGTIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
-$LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v -e "#" -e "(" -e "\---" -e "sec" -e "Gma" -e "RA_ICRS" | grep -e "NOT_AVAILABLE" -e "CONSTANT" -e "VARIABLE" | while read -r R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
+GAIA_SEARCH_POSITION_DEG=$(position_in_degrees "$RA" "$DEC")
+GAIA_SEARCH_RA_DEG=$(echo "$GAIA_SEARCH_POSITION_DEG" | awk '{print $1}')
+GAIA_SEARCH_DEC_DEG=$(echo "$GAIA_SEARCH_POSITION_DEG" | awk '{print $2}')
+GAIA_SEARCH_R_DEG=$(echo "$R_SEARCH_ARCSEC" | awk '{printf "%.9f", $1/3600}')
+# GMAG_RANGE is written in the VizieR syntax: Gmag=MIN..MAX
+GAIA_SEARCH_GMAG_MIN=$(echo "$GMAG_RANGE" | sed -e 's/^Gmag=//' -e 's/[.][.].*$//')
+GAIA_SEARCH_GMAG_MAX=$(echo "$GMAG_RANGE" | sed -e 's/^.*[.][.]//')
+# The magnitude takes part only through expressions ('+ 0', the gmag_order alias), so that the
+# archive's database cannot choose to scan the whole table in magnitude order (TOP + ORDER BY)
+# instead of looking up the small cone by position.
+GAIA_DR3_RESULTS=$(esa_gaia_archive_csv source_id "SELECT TOP 10 source_id, ra, dec, phot_g_mean_mag, phot_variable_flag, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', $GAIA_SEARCH_RA_DEG, $GAIA_SEARCH_DEC_DEG)) * 3600 AS r, phot_g_mean_mag + 0 AS gmag_order FROM gaiadr3.gaia_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', $GAIA_SEARCH_RA_DEG, $GAIA_SEARCH_DEC_DEG, $GAIA_SEARCH_R_DEG)) AND phot_g_mean_mag + 0 BETWEEN $GAIA_SEARCH_GMAG_MIN AND $GAIA_SEARCH_GMAG_MAX ORDER BY gmag_order")
+if [ $? -eq 0 ];then
+ GAIA_DR3_SEARCHED="yes"
+ echo "(Gaia DR3 from the ESA Gaia archive, table gaiadr3.gaia_source)"
+ # The columns of the VizieR query below, in the same format: r Source RA_ICRS DE_ICRS Gmag VarFlag
+ # (NF >= 6: no source matched -> no row, not an empty line turned into a fake source)
+ GAIA_DR3_RESULTS=$(echo "$GAIA_DR3_RESULTS" | awk -F',' 'NF >= 6 { varflag = $5 ; if (varflag == "") varflag = "NOT_AVAILABLE" ; printf "%.3f %s %015.11f %+.11f %.6f %s\n", $6, $1, $2, $3, $4, varflag }')
+else
+ # Do not wait for the archive again in this run
+ ESA_GAIA_ARCHIVE_UNREACHABLE="yes"
+ if [ "$VIZIER_QUERIES" = "yes" ];then
+  GAIA_DR3_SEARCHED="yes"
+  echo "$LONGTIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
+  GAIA_DR3_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v -e "#" -e "(" -e "\---" -e "sec" -e "Gma" -e "RA_ICRS")
+ else
+  GAIA_DR3_SEARCHED="no"
+  echo "Cannot search Gaia DR3: neither the ESA Gaia archive nor VizieR answers"
+  GAIA_DR3_RESULTS=""
+ fi
+fi
+echo "$GAIA_DR3_RESULTS" | grep -e "NOT_AVAILABLE" -e "CONSTANT" -e "VARIABLE" | while read -r R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
  if [ -z "$GMAG" ] ;then
   continue
@@ -556,7 +689,7 @@ that the local search would have found.
 fi
 
 # GCVS
-if [ $KNOWN_VARIABLE -eq 0 ];then 
+if [ $KNOWN_VARIABLE -eq 0 ] && [ "$VIZIER_QUERIES" = "yes" ];then
  echo -n "GCVS (VizieR)  "
  #GCVS_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=GCVS,VarType,Period 2>/dev/null  | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -v "GCVS" |head -n2 |tail -n 1)
  # sed -n '2p'  prints out only the second line of the filtered output.
@@ -576,7 +709,9 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  fi
 fi
 if [ $KNOWN_VARIABLE -eq 0 ];then
- echo -n "VSX (VizieR)  "
+ if [ "$VIZIER_QUERIES" = "yes" ];then
+  echo -n "VSX (VizieR)  "
+ fi
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g')
  #echo "
  ##### DEBUG ####
@@ -586,7 +721,10 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
  # awk 'NF > 0' is to remove the empty lines
  #echo "lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period"
- VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | awk 'NF > 0' | tail -n1)
+ VSX_RESULT=""
+ if [ "$VIZIER_QUERIES" = "yes" ];then
+  VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | awk 'NF > 0' | tail -n1)
+ fi
  #echo "########$VSX_RESULT#########"
  VSX_V=$(echo "$VSX_RESULT" | awk '{print $1}')
  if [ "$VSX_V" != "" ] ;then
@@ -626,7 +764,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   else
    ### Check other large variable star lists
    # OGLE Bulge LPV
-   if [ $KNOWN_VARIABLE -eq 0 ];then
+   if [ $KNOWN_VARIABLE -eq 0 ] && [ "$VIZIER_QUERIES" = "yes" ];then
     echo -n "OGLE Bulge LPV (VizieR)  "
     #OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1)
     OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -vE '(#|\(|_|---)' | grep -A 1 'Star' | tail -n1)
@@ -641,7 +779,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     fi
    fi   
    # ATLAS
-   if [ $KNOWN_VARIABLE -eq 0 ];then
+   if [ $KNOWN_VARIABLE -eq 0 ] && [ "$VIZIER_QUERIES" = "yes" ];then
     echo -n "ATLAS (VizieR)  "
     #ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep J | tail -n1)
     ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -vE '(#|\(|_|---)' | grep 'J' | tail -n1)
@@ -671,16 +809,37 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #fi   
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo -n "Gaia DR3 variability info (VizieR)  "
     # Gaia goes deep and will surely find somethig variable within a search radius, if one goes to faint-enough magnitudes.
     # For this reason we go for a fixed small search radius.
-    #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
-    GAIA_DR3_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    GAIA_DR3_VAR_RESULTS=""
+    GAIA_DR3_VAR_TYPE_RESULTS=""
+    # GOOD_CATALOG_POSITION holds RA and Dec separated by a space
+    # shellcheck disable=SC2086
+    GAIA_VAR_SEARCH_POSITION_DEG=$(position_in_degrees $GOOD_CATALOG_POSITION)
+    GAIA_VAR_SEARCH_RA_DEG=$(echo "$GAIA_VAR_SEARCH_POSITION_DEG" | awk '{print $1}')
+    GAIA_VAR_SEARCH_DEC_DEG=$(echo "$GAIA_VAR_SEARCH_POSITION_DEG" | awk '{print $2}')
+    # One query instead of the two VizieR ones below: the nearest source of the variability
+    # summary (I/358/varisum) within 3" and its best class (I/358/vclassre). The variability
+    # tables have no positions, so the cone is searched in gaia_source.
+    GAIA_DR3_VAR_ESA_RESULTS=$(esa_gaia_archive_csv source_id "SELECT TOP 1 s.source_id, c.best_class_name, DISTANCE(POINT('ICRS', g.ra, g.dec), POINT('ICRS', $GAIA_VAR_SEARCH_RA_DEG, $GAIA_VAR_SEARCH_DEC_DEG)) * 3600 AS r FROM gaiadr3.vari_summary AS s JOIN gaiadr3.gaia_source AS g ON g.source_id = s.source_id LEFT OUTER JOIN gaiadr3.vari_classifier_result AS c ON c.source_id = s.source_id WHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', $GAIA_VAR_SEARCH_RA_DEG, $GAIA_VAR_SEARCH_DEC_DEG, 0.000833333)) ORDER BY r")
+    if [ $? -eq 0 ];then
+     echo -n "Gaia DR3 variability info (ESA)  "
+     GAIA_DR3_VAR_RESULTS=$(echo "$GAIA_DR3_VAR_ESA_RESULTS" | head -n 1 | awk -F',' '{print $1}')
+     GAIA_DR3_VAR_TYPE_RESULTS=$(echo "$GAIA_DR3_VAR_ESA_RESULTS" | head -n 1 | awk -F',' '{print $2}')
+    else
+     # Do not wait for the archive again in this run
+     ESA_GAIA_ARCHIVE_UNREACHABLE="yes"
+     if [ "$VIZIER_QUERIES" = "yes" ];then
+      echo -n "Gaia DR3 variability info (VizieR)  "
+      GAIA_DR3_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+      if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
+       GAIA_DR3_VAR_TYPE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source="$GAIA_DR3_VAR_RESULTS" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#)
+      fi
+     fi
+    fi
     if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
      SUGGESTED_TYPE_STRING=""
-     GAIA_DR3_VAR_TYPE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source="$GAIA_DR3_VAR_RESULTS" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#)
-     #GAIA_DR3_VAR_TYPE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source="$GAIA_DR3_VAR_RESULTS" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $4}' | grep -v \#)
      if [ -n "$GAIA_DR3_VAR_TYPE_RESULTS" ];then
       SUGGESTED_TYPE_STRING="$GAIA_DR3_VAR_TYPE_RESULTS (Gaia DR3)"
      fi
@@ -691,7 +850,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi
    #
    # Gaia DR2 large amplitude variable
-   if [ $KNOWN_VARIABLE -eq 0 ];then
+   if [ $KNOWN_VARIABLE -eq 0 ] && [ "$VIZIER_QUERIES" = "yes" ];then
     echo -n "Gaia DR2 large-amplitude variables (VizieR)  "
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
@@ -705,7 +864,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     fi
    fi
    #
-   if [ $NO_ONLINE_VSX -eq 0 ];then
+   if [ $NO_ONLINE_VSX -eq 0 ] && [ "$VIZIER_QUERIES" = "yes" ];then
     # Generic VizieR search for the word 'variable'
     if [ $KNOWN_VARIABLE -eq 0 ];then
      echo -n "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
@@ -757,14 +916,17 @@ fi
 
 # Try to get a spectral type
 SPECTRAL_TYPE=""
-# First try Skiff
+# First try Skiff (only VizieR has the spectral type catalogs)
+SKIFF_RESULTS=""
+if [ "$VIZIER_QUERIES" = "yes" ];then
 SKIFF_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g')
+fi
 if [ -n "$SKIFF_RESULTS" ];then
  SPECTRAL_TYPE="$SKIFF_RESULTS"
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
 fi
 # Then try LAMOST
-if [ -z "$SPECTRAL_TYPE" ];then
+if [ -z "$SPECTRAL_TYPE" ] && [ "$VIZIER_QUERIES" = "yes" ];then
  LAMOST_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}')
  if [ -n "$LAMOST_RESULTS" ];then
   SPECTRAL_TYPE="$LAMOST_RESULTS"
@@ -850,4 +1012,11 @@ for TMP_FILE_TO_REMOVE in "$TEMP_FILE__2MASS_LONG" "$TEMP_FILE__2MASS_SHORT" "$T
   rm -f "$TMP_FILE_TO_REMOVE"
  fi
 done
+
+# Exit code 3: no online search was possible at all (neither the ESA Gaia archive nor VizieR
+# answered), so the summary string above reflects the local catalogs only and must not be
+# taken for "not found online" - util/transients/report_transient.sh reports a skipped lookup
+if [ "$GAIA_DR3_SEARCHED" = "no" ];then
+ exit 3
+fi
 

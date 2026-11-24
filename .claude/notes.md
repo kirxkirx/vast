@@ -1746,6 +1746,32 @@ Checking:
   silently find nothing. Non-VizieR sources checked the same day: the ESA Gaia archive has
   2MASS (gaiadr1.tmass_original_valid) and every gaiadr3.vari_* table, and IRSA's cone search
   (SCS table fp_psc) serves 2MASS. (ESA TAP fails 'WHERE x IN (...)' with HTTP 500 - use OR.)
+- Since 2026-11-23 util/search_databases_with_vizquery.sh asks the ESA Gaia archive first for
+  2MASS (gaiadr1.tmass_original_valid), the Gaia DR3 cone (gaiadr3.gaia_source) and the Gaia DR3
+  variability lookup (ONE query: vari_summary JOIN gaia_source LEFT JOIN
+  vari_classifier_result, replacing the two VizieR queries varisum + vclassre); VizieR is the
+  fallback (esa_gaia_archive_csv exit 1) and stays the only source of the other catalogs. The
+  ESA rows are printed in VizieR's exact formats (%.3f, %015.11f, %+.11f, %.6f; a missing value
+  as '-', shown as nothing) so the old parsing loops are untouched. Checked on the 12
+  STANDALONEDBSCRIPT positions of test_vast.sh against the old script on IDIA: identical summary
+  lines; only two distances differ by 0.001" (VizieR measures from another epoch). ESA first
+  took 11-26 s per position, VizieR alone 32-51 s. When no mirror answers the 2MASS probe (or
+  SEARCH_DATABASES_SKIP_VIZIER=yes) no VizieR query is made at all; SEARCH_DATABASES_SKIP_ESA=yes
+  forces the VizieR path; exit code 3 = neither service searched Gaia DR3, and only then does
+  report_transient.sh print 'online_id skipped: neither VizieR nor the ESA Gaia archive answers'.
+  Pitfalls met: an empty ESA reply piped through the converter became a fake Gaia row (guard
+  NF >= 6); lib/hms2deg prints RA and Dec on two lines and fails on decimal input; ORDER BY a
+  computed alias (phot_g_mean_mag + 0 AS gmag_order) so that TOP + ORDER BY cannot make the
+  archive scan the magnitude index. Do not run 'make' while comparing script runs: the
+  rebuilt lib/hms2deg and lib/deg2hms vanish for a moment and the lookup fails to parse its
+  coordinates.
+- lib/install_local_copy_of_GaiaDR2.sh (2026-11-23) downloads the ready-made 13 GB copy from
+  the VaST mirrors (scan.sai.msu.ru/~kirx/data/gaia_dr2, tau.kirx.net/vast_catalogs/gaia_dr2:
+  the 1801 files as they are plus MD5SUM.txt) before it falls back to the 588 GB ESA build;
+  per-file md5, resumable, GAIA_DR2_SOURCE=auto|mirror|esa. Tested against a local http.server
+  mirror: full install, rerun, resume, a missing mirror skipped. The list for tau's copy is
+  /home/kirx/gaia_dr2_dist/MD5SUM.txt; publishing it is up to the user (DEPLOY note there).
+  GitHub releases would not do as a mirror: at most 1000 assets per release.
 - One failing server must not produce an ERROR line while another server may still answer:
   every ERROR marks the field as failed on the unmw summary page. On 2026-11-09 the UCAC5 search
   and the plate-solve CGIs of scan.sai.msu.ru answered HTTP 500. solve_plate_with_UCAC5 took
@@ -2209,3 +2235,47 @@ Checking:
   the image. Ubuntu's default awk is mawk (whether the GitHub runner image also has gawk was not
   checked): the new awk code avoids comparisons and leading parentheses in print/printf
   argument lists (if/else instead), see the awk portability section.
+
+## Archive frame-quality step: util/sun_moon, util/archive_frame_quality, unmw archive_frame_quality.sh (2026-11-23)
+- Purpose (user request): judge the frames sort_workdir_images.sh keeps in
+  <workdir>/good_wcs_fd_images/ and move the poor ones out (KEEP / REVIEW / REJECT, flat
+  folders frame_quality/{review,rejected}/<reason>/ with good/ and bad/ for the user's pgfv
+  loop; a frame put into good/ returns with the next --execute and is labelled). User
+  decisions: reject Sun > -18 deg and Krisciunas & Schaefer (1991) moonlight > 0.5 mag; judge
+  transparency against the field's own clear frames (fields never high in the sky keep their
+  better frames); REVIEW a frame more than 1 mag below the camera's clear sky; own Sun/Moon
+  code checked against astropy. The unmw script never deletes and never touches uncalibrated
+  frames; coord_forced_photometry.py was deliberately left alone (moved-out frames are
+  invisible to its backfills until returned).
+- src/sun_moon.c (Meeus 1998 ch. 25/47/40/21/12/48 + K&S 1991 + Young 1994 airmass) agrees with
+  astropy's built-in ephemeris to 0.012 deg (Sun), 0.003 deg (Moon, topocentric), 0.0001
+  (illuminated fraction) over 2000-2026 at three sites: util/examples/test_sun_moon_ephemeris.sh.
+  python3 -I hides the user site-packages (astropy on tau): run python from an empty
+  directory instead when only the current directory must be kept out of sys.path.
+- util/archive_frame_quality (run from the VaST directory): its own SExtractor pass (own
+  parameter list in a mkdtemp directory), the frame's TAN-SIP solution (SIP inverted by
+  iteration for Tycho-2 -> pixel), local Tycho-2 with proper motions, nearest detection within
+  2 px. 4 s per frame on a typical TTU field, about 18 s of CPU in Milky Way fields (120k
+  detections). Computed centre altitude vs N.I.N.A. CENTALT: 0.03-0.1 deg (CENTALT includes
+  refraction).
+- VaST's fitted SNR-model limiting magnitude (src/detection_limit.c) jumped by 1.2 mag between
+  the two frames of one upload taken a minute apart (Aur-05, 2026-11-09 and -11); the median
+  magnitude of the detections with SNR 4.5-5.5 agreed to 0.01 mag, so lim_mag is that and the
+  fit is printed as lim_mag_fit only.
+- The extinction coefficient of the unfiltered QHY600M (FILTER 'CV') is about 0.14 mag per
+  airmass (fitted from the clear-sky upper envelope of the raw cell zero points against cell
+  airmass, airmass 1.06-5.55): the V-band default 0.20 over-corrected the high-airmass cells by
+  up to 0.5 mag and made clear low-airmass frames look 0.8 mag deficient against per-cell
+  baselines. The unmw script fits k per camera on every run.
+- The worst of 24 cells is too noisy against 90th-percentile baselines (0.27-0.34 mag on clear
+  frames): the script judges the median cell (whole-frame transparency) and the third-worst
+  cell (a patch of cloud). First results on 20 Aur-05/Vir-05 frames: 8 KEEP (clear, airmass
+  1.0-1.7), the cloudy 2026-11-09 23:47 pair REJECT (median deficit 0.68-0.83), Moon, twilight
+  and horizon-obstructed frames REJECT, 5 REVIEW (airmass 3.8 with 5.7 px seeing, a lost
+  corner at airmass 4.4). All thresholds except the user's three are starting values.
+- awk trap met three times in one script: the NR == FNR idiom treats every line of the second
+  file as the first file's when the first file is EMPTY (no labels yet, no measurements yet,
+  no baselines). Read the first file with getline in BEGIN instead.
+- Example of a bright sky without Moon or twilight: Eri-10-Q1 2026-11-11 23:23, 16 deg up,
+  169 ADU/s against 27-60 on the same night, limiting magnitude 1.3 mag brighter while the
+  zero point and the found fraction were normal (light dome or city-lit haze).

@@ -159,6 +159,8 @@ lib/catalogs/.update_offline_catalogs.lock
 /util/phase_and_bin_lc
 /util/phase_lc
 /util/pixel_flux_airmass_correction
+/util/sun_moon
+/util/archive_frame_quality
 /util/rescale_photometric_errors
 /util/solve_plate_with_UCAC4
 /util/solve_plate_with_UCAC5

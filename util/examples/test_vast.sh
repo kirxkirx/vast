@@ -16504,6 +16504,47 @@ else
 fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 
+##### Sun and Moon positions (util/sun_moon) against astropy #####
+# util/sun_moon (src/sun_moon.c, own code for the archive frame-quality step) computes the
+# altitudes of the Sun and the Moon, the Moon's phase and the moonlight at a target. The test
+# compares it with astropy at three sites over 2000-2026 and checks the moonlight model
+# (Krisciunas & Schaefer 1991) against a second implementation. Gated like the other astropy
+# checks: it runs where python3 has astropy, offline (built-in ephemerides), in a few seconds.
+command -v python3 &> /dev/null
+if [ $? -eq 0 ];then
+ python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
+ if [ $? -eq 0 ];then
+  THIS_TEST_START_UNIXSEC=$(date +%s)
+  TEST_PASSED=1
+  echo "Sun and Moon positions test "
+  echo -n "Sun and Moon positions test: " >> vast_test_report.txt
+  SUNMOON_TEST_OUTPUT=$(util/examples/test_sun_moon_ephemeris.sh 2>&1)
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   # The failure codes of the script are in its "FAILED: CODE description" lines
+   SUNMOON_CODES=$(echo "$SUNMOON_TEST_OUTPUT" | grep -e '^FAILED: ' -e '^NOT_PERFORMED: ' | awk '{print $2}' | tr '\n' ' ')
+   if [ -z "$SUNMOON_CODES" ];then
+    SUNMOON_CODES="SUNMOON_UNKNOWN_FAILURE"
+   fi
+   FAILED_TEST_CODES="$FAILED_TEST_CODES $SUNMOON_CODES"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SUNMOON ######
+$(echo "$SUNMOON_TEST_OUTPUT" | tail -n 30)"
+  fi
+  echo "$SUNMOON_TEST_OUTPUT"
+  THIS_TEST_STOP_UNIXSEC=$(date +%s)
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mSun and Moon positions test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mSun and Moon positions test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  fi
+  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+ fi
+fi
+
 ##### NMW-TexasTech Cyg-05 re-match and Her-09 astrometry regressions #####
 # Cyg-05-Q1 0037 (2026-10-08): the old total-pair-count stop left only
 # 648 q4 matches and a saved header about 6 arcsec wrong in the far corner,

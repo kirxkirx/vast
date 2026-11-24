@@ -1171,11 +1171,19 @@ if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_A
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
   # The online name lookup asks VizieR about ten catalogs one after another. While CDS was
   # down (Nov 2026) each query waited for its timeout, costing 4-8 min per unidentified
-  # candidate for no answer, so skip the lookup when no mirror serves its catalogs.
+  # candidate for no answer. When no mirror serves its catalogs, the lookup runs without
+  # VizieR (SEARCH_DATABASES_SKIP_VIZIER=yes): 2MASS, Gaia DR3 and the Gaia DR3 variability
+  # information come from the ESA Gaia archive, the VizieR-only catalogs are skipped. Exit
+  # code 3 means the ESA archive did not answer either.
   if online_id_vizier_is_unreachable ;then
-   # No ' online_id ' with a space on both sides here: util/transients/make_report_in_HTML.sh
-   # takes the object name from such a line
-   echo "online_id skipped: VizieR is unreachable"
+   ONLINE_ID_RESULTS=$(SEARCH_DATABASES_SKIP_VIZIER=yes util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') no_online_vsx 2>&1)
+   if [ $? -eq 3 ];then
+    # No ' online_id ' with a space on both sides here: util/transients/make_report_in_HTML.sh
+    # takes the object name from such a line
+    echo "online_id skipped: neither VizieR nor the ESA Gaia archive answers"
+   else
+    echo "$ONLINE_ID_RESULTS" | grep '|' | tail -n1
+   fi
   else
    #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
    # Disable online VSX search

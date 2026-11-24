@@ -7,38 +7,6 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-function is_ssh_or_vnc() {
-  # Check environment variables for clues
-  command -v env &>/dev/null
-  if [ $? -eq 0 ];then
-   # vnc
-   env | grep -q VNCDESKTOP
-   if [ $? -eq 0 ];then
-    # Yes, we are over VNC
-    return 0
-   fi
-   # ssh
-   env | grep -q -e SSH_CLIENT -e SSH_CONNECTION
-   if [ $? -eq 0 ];then
-    # Yes, we are over ssh
-    return 0
-   fi
-  fi
-  ### ecursively search for sshd through the parent processes
-  ### The /proc thing obviously works only on linux
-  if [ -f /proc/$p/stat ];then
-   p=${1:-$PPID}
-   read pid name x ppid y < <( cat /proc/$p/stat )
-   # or: read pid name ppid < <(ps -o pid= -o comm= -o ppid= -p $p) 
-   [[ "$name" =~ sshd ]] && { return 0; }
-   [ "$ppid" -le 1 ]    && { return 1; }
-   is_ssh_or_vnc $ppid
-  else
-   # just assume the thing is running locally
-   return 1
-  fi # if [ -f /proc/$p/stat ];then
-}
-
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -201,6 +169,11 @@ remember_probe_result() {
 # them (no catalog values, 2026-11-12), so the UCAC5 test asks for all columns, as the plate
 # solver now does. IDIA is tried right after CDS because a mirror that lacks the catalog fails
 # the test in about a second, while china-vo and nao kept the probe waiting for a minute.
+# vizier.cfa.harvard.edu is left out on purpose: it answers, but on 2026-11-09 it returned
+# complete but empty tables for every query, and on 2026-11-23 still for 7 of the 12 catalogs of
+# the online identification (Gaia DR3, ATLAS, OGLE LPVs, Gaia DR3 variability summary, MK types,
+# LAMOST...). An empty table looks like "no source here", so a mirror that passes the probe for
+# one catalog would silently find nothing in the others.
 for vizier_mirror in vizier.cds.unistra.fr vizier.idia.ac.za vizier.china-vo.org vizier.nao.ac.jp ;do
  if [ "$CATALOG_TO_TEST" = "APASS" ];then
   "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep -q ' 15.0'
@@ -238,79 +211,4 @@ done
 # If no mirror passed the catalog-specific test, fall back to the primary mirror
 remember_probe_result 1 "vizier.cds.unistra.fr"
 echo "vizier.cds.unistra.fr"
-exit 1
-
-
-# The old code that returned the first responsive VizieR mirror
-##for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.ca vizier.nao.ac.jp ;do
-#for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
-# # 1252-0378302 is the USNO-B1.0 number of the test star
-# `"$VAST_PATH"lib/find_timeout_command.sh` 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep -q "1252-0378302"
-# if [ $? -eq 0 ];then
-#  echo $vizier_mirror
-#  exit 0
-# fi
-#done
-
-# The new code that should return the fastest VizieR mirror
-fastest_vizier_mirror=''
-fastest_time=30000000000
-
-temp_file=choose_vizier_mirror$$.tmp
-if [ -f $temp_file ];then
- rm -f $temp_file
-fi
-
-#for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
-for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu ;do
- (
-  # We are limited to 1sec accuracy if %N is not supported
-  #start_time=$(date +%s%N)
-  start_time=$(date +%s)
-  $("$VAST_PATH"lib/find_timeout_command.sh) 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep -q "1252-0378302"
-  if [ $? -eq 0 ];then
-   #end_time=$(date +%s%N)
-   end_time=$(date +%s)
-   elapsed_time=$((end_time - start_time))
-   echo $elapsed_time $vizier_mirror >> $temp_file
-  fi
- ) &
-done
-
-# wait for all background jobs to finish
-wait
-
-# find the fastest server
-if [ -s "$temp_file" ]; then
- fastest_vizier_mirror=$(sort -n -k1 $temp_file | head -n1 | awk '{print $2}')
-else
- echo "No server responded"
-fi
-
-# clean up
-rm $temp_file
-
-# print the fastest server
-if [ -n "$fastest_vizier_mirror" ]; then
- echo $fastest_vizier_mirror
- exit 0
-fi
-
-# If we are still here - somthing is wrong
-echo "ERROR in $0
-No VizieR mirrors could be reached!" 1>&2
-
-# Make sure we are not confusing the user with "check internet connection"
-# message if the user is already connected remorely
-if [ ! -z "$PPID" ];then
- is_ssh_or_vnc $PPID
- if [ $? -ne 0 ];then
-  echo "Please check your internet connection." 1>&2
- fi
-fi # if [ ! -z "$PPID" ];then
-
-# Print the default mirror in a faint hope that the connection will restore itself
-sleep 1
-echo "vizier.u-strasbg.fr"
-
 exit 1
