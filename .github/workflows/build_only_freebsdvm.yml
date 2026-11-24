@@ -7,10 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      # Example of how tokens are propagated to the VM
-      MYTOKEN : ${{ secrets.MYTOKEN }}
-      MYTOKEN2: "value2"
     steps:
     - uses: actions/checkout@v4
     - name: Check commit message
@@ -28,8 +24,6 @@ jobs:
       if: env.SKIP != 'true'
       uses: vmactions/freebsd-vm@v1
       with:
-        # Example of how tokens are propagated to the VM
-        envs: 'MYTOKEN MYTOKEN2'
         # Use sh shell
         usesh: true
         # When using rsync, you can define copyback: false to not copy files back from the VM in to the host.
