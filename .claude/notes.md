@@ -1734,6 +1734,18 @@ Checking:
   whether to skip it with online_id_vizier_is_unreachable (2MASS), not with VIZIER_UNREACHABLE,
   which is about Gaia DR2 for the known-star check. The search over all catalogs ('may be a
   known variable') needs CDS itself. test_vizier_mirror_record.sh counts four mirror probes.
+- 2026-11-23, CDS still down: the factory's 'WARNING: VizieR is unreachable ...' lines are
+  commented out at the user's request (they scared the users on every run; re-enable them
+  when CDS is back). On tau that warning was misleading anyway: VIZIER_UNREACHABLE is about
+  the Gaia DR2 table, while tau's known-star check reads the local copy and the online
+  identification ran through IDIA. Measured coverage of the 12 catalogs of the online
+  identification: IDIA returned rows for 11; J/A+A/648/A44 (Mowlavi+ 2021) returned none on
+  either mirror in a 10' bulge cone (inconclusive). vizier.cfa.harvard.edu now returns real
+  rows for 2MASS, GCVS, VSX, J/AcA/61/1 and I/358/vclassre but empty tables for the other
+  seven: never add it to the 2MASS probe list - the probe would pass and those catalogs would
+  silently find nothing. Non-VizieR sources checked the same day: the ESA Gaia archive has
+  2MASS (gaiadr1.tmass_original_valid) and every gaiadr3.vari_* table, and IRSA's cone search
+  (SCS table fp_psc) serves 2MASS. (ESA TAP fails 'WHERE x IN (...)' with HTTP 500 - use OR.)
 - One failing server must not produce an ERROR line while another server may still answer:
   every ERROR marks the field as failed on the unmw summary page. On 2026-11-09 the UCAC5 search
   and the plate-solve CGIs of scan.sai.msu.ru answered HTTP 500. solve_plate_with_UCAC5 took

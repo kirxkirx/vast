@@ -2694,13 +2694,16 @@ fi
 # Per .claude/notes.md a host-environment problem is a WARNING, never an ERROR (an ERROR
 # fails the field in unmw), and it is printed once, here, not repeated at the end of
 # the report, where it would hide the field-specific warnings on the unmw summary page.
-if [ "$VIZIER_UNREACHABLE" = "yes" ];then
- if [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ];then
-  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
- else
-  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the known-star check relies on the ESA Gaia archive alone and the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
- fi
-fi
+# DISABLED 2026-11-23 on the user's request: CDS VizieR has been down for days and the
+# warning on every run only scares the users. Re-enable these lines once VizieR is back
+# online. VIZIER_UNREACHABLE is still set and used above and in report_transient.sh.
+#if [ "$VIZIER_UNREACHABLE" = "yes" ];then
+# if [ "$GAIA_DR2_CLIENT" = "local" ] || [ "$GAIA_DR2_CLIENT" = "tycho2_ucac5" ] || [ "$GAIA_DR2_CLIENT" = "none" ];then
+#  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+# else
+#  echo "WARNING: VizieR is unreachable (no mirror answered the test query) - the known-star check relies on the ESA Gaia archive alone and the online identification of candidates is degraded for this run" | tee -a transient_factory_test31.txt
+# fi
+#fi
 ###
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
