@@ -1222,10 +1222,17 @@ if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
  ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2.5+$1}')
 fi
 
-
+# Aladin Lite: the fallback landing page CDS has served since 2026-11-10 reads the position
+# only from ra= and dec= (decimal degrees) and the field width from fov= (degrees); it ignores
+# target= and silently replaces a missing or out-of-range ra or dec with that of a random
+# popular object. Older copies of the page (one is at /AladinLite/old/) read only target=,
+# so the link gives the position both ways.
+# WISE: the current IRSA WISE app ignores the parameters of the old '#id=Hydra_wise...' links
+# and opens an empty search form; its URL API (api=searchPos ... execute=true) runs the
+# search (imagesize=600s is the old 10 arcmin cutout size).
 echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"https://simbad.cds.unistra.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
-<a href=\"https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.cds.unistra.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
+<a href=\"https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"https://irsa.ipac.caltech.edu/applications/wise/?api=searchPos&ra=$RA_MEAN&dec=$DEC_MEAN&imageset=allsky-4band&intersect=CENTER&imagesize=600s&dataproductlevel=3a&imageband=1,2,3,4&execute=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.cds.unistra.fr/AladinLite/?ra=$RA_MEAN&dec=$DEC_MEAN&fov=0.1&target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
 # Dispaly SNAD ZTF link only if there is a hope to have ZTF data for this declination
 TEST=$(awk -v a="$DEC_MEAN" -v b="-30" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then

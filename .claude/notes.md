@@ -1832,7 +1832,8 @@ Checking:
   passed in 289.7 min.
 - simbad.u-strasbg.fr, vizier.u-strasbg.fr and aladin.u-strasbg.fr have had no address
   records since the u-strasbg.fr zone change of 2026-11-10 (cdsarc. and cdsweb.u-strasbg.fr
-  still resolve). The transient report links (util/transients/report_transient.sh) and the
+  still resolve; the CDS names kept changing afterwards, see the 2026-11-25 Aladin Lite
+  section). The transient report links (util/transients/report_transient.sh) and the
   SIMBAD query of util/search_databases_with_curl.sh now use the cds.unistra.fr names; plain
   http works there without a redirect, which matters for old curl and for the POST. unmw's
   filter_report.py recognises both names, as older reports keep the old ones. Both selenium
@@ -2279,3 +2280,51 @@ Checking:
 - Example of a bright sky without Moon or twilight: Eri-10-Q1 2026-11-11 23:23, 16 deg up,
   169 ADU/s against 27-60 on the same night, limiting magnitude 1.3 mag brighter while the
   zero point and the found fraction were normal (light dome or city-lit haze).
+
+## Aladin Lite and WISE report links ignored the position; CDS host names gone again (2026-11-25)
+- Symptom (user report): the "Aladin Lite" link of every transient candidate opened Aladin Lite
+  on a random object (Sgr B2, RMC 136, NGC 6397, NGC 5548 ... a different one on each load).
+  The ?target=RA+DEC link made by util/transients/report_transient.sh was not at fault.
+- Cause: during its cybersecurity incident CDS put up a temporary "fallback" Aladin Lite landing
+  page on 2026-11-10 (Wayback: last old page 2026-10-25, first new one 2026-11-11). It reads
+  only ra= and dec= (decimal degrees, 0 <= ra < 360, -90 <= dec <= 90), fov= (deg, 0 < fov <=
+  180), hips=, catalogs= and theme=, never target=. Each of ra, dec and fov that is missing or
+  out of range is replaced on its own by that of a random entry of its simbadTop100Targets
+  list, so a lone bad ra (e.g. "360.000000") gives a random RA with the candidate's Dec. The
+  pre-incident page (js/app.js of 2026-08-25) read target= first and ra/dec only without it;
+  the copy CDS keeps at /AladinLite/old/ (like every app.js before 2024-03) reads only target=.
+  The link is now ?ra=&dec=&fov=0.1&target=RA+DEC, which works with all three. fov=0.1 is a
+  6 arcmin wide view (util/identify.sh zooms desktop Aladin to 5 arcmin); the old target-only
+  links got a random 0.1-6 deg zoom.
+- How it was checked: headless Chromium driven over the DevTools protocol from node (node 20
+  needs --experimental-websocket for the global WebSocket). The page exposes window.initialView
+  (what it hands to Aladin) and window.initialSimbadTarget (the random fallback); the
+  .aladin-location box shows the view centre. All 26 positions of the 2026-11-08 report, 14 of
+  the 2026-11-23 report (RA 0.75-359.76, Dec -37.8 to +88.3) and the edge cases ra=0,
+  ra=359.999999, a 7-decimal RA, dec=+-90 and dec=-0 centred within 0.04 arcsec. An HTTP status
+  check cannot see this failure (200 either way), and both selenium report tests skip AladinLite
+  links. CDS's own Aladin Lite library (v3.9.3) still makes ?target= share links.
+- WISE link, the same kind of failure: the old IRSA 'Hydra' link (#id=Hydra_wise_wise_1 ...
+  UserTargetWorldPt=RA;DEC;EQ_J2000) now loads the Firefly WISE app on an empty "Search by
+  Position" form and ignores every parameter. The app's URL API works: ?api=searchPos&ra=&dec=
+  &imageset=allsky-4band&intersect=CENTER&imagesize=600s&dataproductlevel=3a&imageband=1,2,3,4
+  &execute=true (Atlas level 3, 4 bands, 10 arcmin as before; checked at Dec +14.7 and -17.4;
+  HTTP 200 without redirects, as the selenium link check needs). The result takes 60-90 s to
+  render.
+- Published reports keep the broken links: unmw copies each candidate's HTML byte for byte into
+  *_filtered.html and its hrefs into *_filtered.json (external_links), and old pages are never
+  rebuilt. One-off rewrite on the server (GNU sed; '&' in a replacement must be written '\&').
+  Tested on copies of the 2026-11-08 and 2026-11-23 pages and the 2026-11-08 JSON: every link
+  rewritten, nothing else changed, a second run changes nothing:
+    sed -i -E \
+     -e 's#https?://aladin\.(u-strasbg\.fr|cds\.unistra\.fr)/AladinLite/\?target=([0-9.]+)\+(-?[0-9.]+)"#https://aladin.cds.unistra.fr/AladinLite/?ra=\2\&dec=\3\&fov=0.1\&target=\2+\3"#g' \
+     -e 's|https?://irsa\.ipac\.caltech\.edu/applications/wise/#id=Hydra_wise_wise_1[^"]*UserTargetWorldPt=([0-9.]+);(-?[0-9.]+);EQ_J2000[^"]*"|https://irsa.ipac.caltech.edu/applications/wise/?api=searchPos\&ra=\1\&dec=\2\&imageset=allsky-4band\&intersect=CENTER\&imagesize=600s\&dataproductlevel=3a\&imageband=1,2,3,4\&execute=true"|g' \
+     FILES
+- CDS host names: on 2026-11-24 aladin.u-strasbg.fr resolved again (same address and page as
+  aladin.cds.unistra.fr); on 2026-11-25 (zone serials 2026112501 and 2026112502) aladin.,
+  simbad. and vizier.cds.unistra.fr were NXDOMAIN, also at 8.8.8.8, and aladin.u-strasbg.fr had
+  no A record, so every CDS link failed outright. Before that SIMBAD and VizieR answered 404
+  "This page is currently unavailable" (the outage, not the link format); simbad.harvard.edu
+  answers the same sim-coo query.
+- TNS, in the same link block, works, but once answered "No results found" for the SN 2023ixf
+  position that the same URL found later: a failed search and an empty one look the same.
